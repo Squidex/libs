@@ -13,8 +13,8 @@ namespace Squidex.Messaging
     public abstract class SubscriptionStoreTestsBase
     {
         private readonly DateTime now = DateTime.UtcNow;
-        private readonly string queue1 = $"queue_{Guid.NewGuid()}";
-        private readonly string queue2 = $"queue_{Guid.NewGuid()}";
+        private readonly string queue1 = $"queue1_{Guid.NewGuid()}";
+        private readonly string queue2 = $"queue2_{Guid.NewGuid()}";
         private readonly string topic = $"topic_{Guid.NewGuid()}";
 
         public abstract Task<ISubscriptionStore> CreateSubscriptionStoreAsync();
@@ -27,7 +27,7 @@ namespace Squidex.Messaging
             await sut.SubscribeAsync(topic, queue1, now, TimeSpan.FromDays(30), default);
             await sut.SubscribeAsync(topic, queue2, now, TimeSpan.FromDays(30), default);
 
-            Assert.Equal(new[] { queue1, queue2 }, await sut.GetSubscriptionsAsync(topic, now, default));
+            Assert.Equal(new[] { queue1, queue2 }.ToHashSet(), (await sut.GetSubscriptionsAsync(topic, now, default)).ToHashSet());
         }
 
         [Fact]
@@ -65,7 +65,7 @@ namespace Squidex.Messaging
             // Does not expires because last activity is in the future.
             await sut.UpdateAliveAsync(new[] { queue2 }, now.AddDays(2), default);
 
-            Assert.Equal(new[] { queue1, queue2 }, await sut.GetSubscriptionsAsync(topic, now.AddDays(1), default));
+            Assert.Equal(new[] { queue1, queue2 }.ToHashSet(), (await sut.GetSubscriptionsAsync(topic, now.AddDays(1), default)).ToHashSet());
         }
 
         [Fact]

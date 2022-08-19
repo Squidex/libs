@@ -7,9 +7,11 @@
 
 namespace Squidex.Log
 {
+#pragma warning disable MA0048 // File name must match type name
     public delegate void LogFormatter(IObjectWriter writer);
 
     public delegate void LogFormatter<in T>(T context, IObjectWriter writer);
+#pragma warning restore MA0048 // File name must match type name
 
     public interface ISemanticLog
     {
