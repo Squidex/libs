@@ -14,6 +14,7 @@ using Xunit;
 
 namespace Squidex.Messaging
 {
+    [Trait("Category", "Dependencies")]
     public class MongoSubscriptionStoreTests : SubscriptionStoreTestsBase, IClassFixture<MongoFixture>
     {
         public MongoFixture _ { get; }
