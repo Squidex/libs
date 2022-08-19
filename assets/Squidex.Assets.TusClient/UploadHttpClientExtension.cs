@@ -187,7 +187,8 @@ namespace Squidex.Assets
             return bytes;
         }
 
-        private static async Task<(long, bool)> GetUploadProgressCoreAsync(this HttpClient httpClient, Uri uri, string fileId, CancellationToken ct)
+        private static async Task<(long, bool)> GetUploadProgressCoreAsync(this HttpClient httpClient, Uri uri, string fileId,
+            CancellationToken ct)
         {
             var request =
                 new HttpRequestMessage(HttpMethod.Head, GetFileIdUrl(uri, fileId))

@@ -18,7 +18,8 @@ namespace Squidex.Hosting.Configuration
             this.errorProviders = errorProviders;
         }
 
-        public Task InitializeAsync(CancellationToken ct)
+        public Task InitializeAsync(
+            CancellationToken ct)
         {
             var errors = errorProviders.SelectMany(x => x.GetErrors()).ToList();
 

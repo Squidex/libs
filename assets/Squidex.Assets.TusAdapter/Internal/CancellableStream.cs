@@ -23,7 +23,8 @@ namespace Squidex.Assets.Internal
             get => false;
         }
 
-        public CancellableStream(Stream innerStream, CancellationToken cancellationToken)
+        public CancellableStream(Stream innerStream,
+            CancellationToken cancellationToken)
             : base(innerStream)
         {
             this.cancellationToken = cancellationToken;

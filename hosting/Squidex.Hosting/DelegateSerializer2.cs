@@ -20,7 +20,8 @@ namespace Squidex.Hosting
             this.action = action;
         }
 
-        public Task InitializeAsync(CancellationToken ct)
+        public Task InitializeAsync(
+            CancellationToken ct)
         {
             return action(serviceProvider, ct);
         }

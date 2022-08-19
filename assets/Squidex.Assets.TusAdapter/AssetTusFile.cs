@@ -109,12 +109,14 @@ namespace Squidex.Assets
             return new NonDisposingStream(stream);
         }
 
-        public Task<Stream> GetContentAsync(CancellationToken cancellationToken)
+        public Task<Stream> GetContentAsync(
+            CancellationToken cancellationToken)
         {
             return Task.FromResult<Stream>(new NonDisposingStream(stream));
         }
 
-        public Task<Dictionary<string, Metadata>> GetMetadataAsync(CancellationToken cancellationToken)
+        public Task<Dictionary<string, Metadata>> GetMetadataAsync(
+            CancellationToken cancellationToken)
         {
             return Task.FromResult(MetadataRaw);
         }

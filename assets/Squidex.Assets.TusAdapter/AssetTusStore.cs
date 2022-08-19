@@ -246,7 +246,8 @@ namespace Squidex.Assets
             return deletionCount;
         }
 
-        public async Task DeleteFileAsync(string fileId, CancellationToken cancellationToken)
+        public async Task DeleteFileAsync(string fileId,
+            CancellationToken cancellationToken)
         {
             var metadata = await GetMetadataAsync(fileId, cancellationToken);
 
@@ -258,7 +259,8 @@ namespace Squidex.Assets
             await CleanupAsync(metadata, cancellationToken);
         }
 
-        private async Task CleanupAsync(TusMetadata metadata, CancellationToken cancellationToken)
+        private async Task CleanupAsync(TusMetadata metadata,
+            CancellationToken cancellationToken)
         {
             for (var i = 0; i < metadata.WrittenParts; i++)
             {

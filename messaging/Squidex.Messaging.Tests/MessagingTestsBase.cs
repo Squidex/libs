@@ -71,7 +71,8 @@ namespace Squidex.Messaging
                 });
             }
 
-            public Task HandleAsync(Message message, CancellationToken ct)
+            public Task HandleAsync(Message message,
+                CancellationToken ct)
             {
                 if (message.TestId == expectedId)
                 {

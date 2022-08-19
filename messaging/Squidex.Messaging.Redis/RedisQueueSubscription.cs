@@ -42,12 +42,14 @@ namespace Squidex.Messaging.Redis
             return timer.DisposeAsync();
         }
 
-        Task IMessageAck.OnErrorAsync(TransportResult result, CancellationToken ct)
+        Task IMessageAck.OnErrorAsync(TransportResult result,
+            CancellationToken ct)
         {
             return Task.CompletedTask;
         }
 
-        Task IMessageAck.OnSuccessAsync(TransportResult result, CancellationToken ct)
+        Task IMessageAck.OnSuccessAsync(TransportResult result,
+            CancellationToken ct)
         {
             return Task.CompletedTask;
         }

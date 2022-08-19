@@ -22,7 +22,8 @@ namespace Squidex.Hosting
             this.action = action;
         }
 
-        public Task InitializeAsync(CancellationToken ct)
+        public Task InitializeAsync(
+            CancellationToken ct)
         {
             var service = serviceProvider.GetRequiredService<T>();
 

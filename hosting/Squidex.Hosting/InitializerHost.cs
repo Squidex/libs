@@ -17,7 +17,8 @@ namespace Squidex.Hosting
         {
         }
 
-        public async Task StartAsync(CancellationToken cancellationToken)
+        public async Task StartAsync(
+            CancellationToken cancellationToken)
         {
             if (!Systems.Any())
             {
@@ -41,7 +42,8 @@ namespace Squidex.Hosting
             }
         }
 
-        public async Task StopAsync(CancellationToken cancellationToken)
+        public async Task StopAsync(
+            CancellationToken cancellationToken)
         {
             foreach (var (system, name) in Systems.Reverse())
             {
