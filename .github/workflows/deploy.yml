@@ -1,4 +1,4 @@
-name: Nuget Messaging
+name: Nuget Build
 
 on: [push, pull_request]
 
@@ -16,15 +16,12 @@ jobs:
 
     - name: test
       run: |
-        cd messaging
         dotnet test --filter Category!=Dependencies
 
     - name: pack
       run: |
-        cd messaging
         dotnet pack -c Release
 
     - name: publish
       run: |
-        cd messaging
         dotnet nuget push **/*.nupkg --source 'https://api.nuget.org/v3/index.json' --skip-duplicate -k ${{ secrets.nuget }}
