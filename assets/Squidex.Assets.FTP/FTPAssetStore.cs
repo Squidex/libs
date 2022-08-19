@@ -93,7 +93,7 @@ namespace Squidex.Assets
                 {
                     try
                     {
-                        var found = await client.DownloadAsync(stream, sourceName, token: ct);
+                        var found = await client.DownloadStreamAsync(stream, sourceName, token: ct);
 
                         if (!found)
                         {
@@ -169,7 +169,7 @@ namespace Squidex.Assets
 
             var mode = overwrite ? FtpRemoteExists.Overwrite : FtpRemoteExists.Skip;
 
-            await client.UploadAsync(stream, fileName, mode, true, null, ct);
+            await client.UploadStreamAsync(stream, fileName, mode, true, null, ct);
         }
 
         public async Task DeleteByPrefixAsync(string prefix,

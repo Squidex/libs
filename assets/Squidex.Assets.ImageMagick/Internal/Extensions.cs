@@ -116,7 +116,7 @@ namespace Squidex.Assets.Internal
             return result;
         }
 
-        public static ImageOrientation GetOrientation<T>(this IMagickImage<T> image) where T : struct
+        public static ImageOrientation GetOrientation<T>(this IMagickImage<T> image) where T : struct, IConvertible
         {
             return (ImageOrientation)(image.GetExifProfile()?.GetValue(ExifTag.Orientation)?.Value ?? 0);
         }
