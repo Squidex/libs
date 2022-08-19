@@ -5,8 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using NodaTime;
-
 namespace Squidex.Log
 {
     public interface IObjectWriter
@@ -21,7 +19,9 @@ namespace Squidex.Log
 
         IObjectWriter WriteProperty(string property, TimeSpan value);
 
-        IObjectWriter WriteProperty(string property, Instant value);
+        IObjectWriter WriteProperty(string property, DateTime value);
+
+        IObjectWriter WriteProperty(string property, DateTimeOffset value);
 
         IObjectWriter WriteObject(string property, Action<IObjectWriter> objectWriter);
 

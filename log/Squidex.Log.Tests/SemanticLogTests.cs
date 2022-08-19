@@ -9,7 +9,6 @@ using FakeItEasy;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using NodaTime;
 using Xunit;
 
 #pragma warning disable CA2253 // Named placeholders should not be numeric values
@@ -67,19 +66,16 @@ namespace Squidex.Log
         [Fact]
         public void Should_log_timestamp()
         {
-            var clock = A.Fake<IClock>();
+            var now = DateTime.UtcNow;
 
-            A.CallTo(() => clock.GetCurrentInstant())
-                .Returns(WithoutMs(SystemClock.Instance.GetCurrentInstant()));
-
-            appenders.Add(new TimestampLogAppender(clock));
+            appenders.Add(new TimestampLogAppender(() => now));
 
             Log.LogFatal(w => { /* Do Nothing */ });
 
             var expected =
                 LogTest(w => w
                     .WriteProperty("logLevel", "Fatal")
-                    .WriteProperty("timestamp", clock.GetCurrentInstant()));
+                    .WriteProperty("timestamp", now));
 
             Assert.Equal(expected, output);
         }
@@ -523,11 +519,6 @@ namespace Squidex.Log
             writer(sut);
 
             return sut.End();
-        }
-
-        private static Instant WithoutMs(Instant value)
-        {
-            return Instant.FromUnixTimeSeconds(value.ToUnixTimeSeconds());
         }
     }
 }

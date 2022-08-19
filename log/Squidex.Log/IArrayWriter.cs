@@ -1,11 +1,9 @@
-// ==========================================================================
+﻿// ==========================================================================
 //  Squidex Headless CMS
 // ==========================================================================
 //  Copyright (c) Squidex UG (haftungsbeschraenkt)
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
-
-using NodaTime;
 
 namespace Squidex.Log
 {
@@ -21,7 +19,9 @@ namespace Squidex.Log
 
         IArrayWriter WriteValue(TimeSpan value);
 
-        IArrayWriter WriteValue(Instant value);
+        IArrayWriter WriteValue(DateTime value);
+
+        IArrayWriter WriteValue(DateTimeOffset value);
 
         IArrayWriter WriteObject(Action<IObjectWriter> objectWriter);
 

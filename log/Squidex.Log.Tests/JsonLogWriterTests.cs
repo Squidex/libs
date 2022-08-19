@@ -5,7 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using NodaTime;
 using Xunit;
 
 namespace Squidex.Log
@@ -60,9 +59,19 @@ namespace Squidex.Log
         }
 
         [Fact]
-        public void Should_write_date_property()
+        public void Should_write_datetime_property()
         {
-            var value = Instant.FromUtc(2012, 11, 10, 9, 8, 45);
+            var value = new DateTime(2012, 11, 10, 9, 8, 45, DateTimeKind.Utc);
+
+            sut.WriteProperty("property", value);
+
+            Assert.Equal(@"{""property"":""2012-11-10T09:08:45Z""}", sut.End());
+        }
+
+        [Fact]
+        public void Should_write_datetime_offset_property()
+        {
+            var value = new DateTimeOffset(2012, 11, 10, 11, 8, 45, TimeSpan.FromHours(2));
 
             sut.WriteProperty("property", value);
 
@@ -134,9 +143,19 @@ namespace Squidex.Log
         }
 
         [Fact]
-        public void Should_write_date_value()
+        public void Should_write_datetime_value()
         {
-            var value = Instant.FromUtc(2012, 11, 10, 9, 8, 45);
+            var value = new DateTime(2012, 11, 10, 9, 8, 45, DateTimeKind.Utc);
+
+            sut.WriteArray("property", a => a.WriteValue(value));
+
+            Assert.Equal(@"{""property"":[""2012-11-10T09:08:45Z""]}", sut.End());
+        }
+
+        [Fact]
+        public void Should_write_datetime_offset_value()
+        {
+            var value = new DateTimeOffset(2012, 11, 10, 11, 8, 45, TimeSpan.FromHours(2));
 
             sut.WriteArray("property", a => a.WriteValue(value));
 

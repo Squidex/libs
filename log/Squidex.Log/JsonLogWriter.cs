@@ -5,9 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
-using NodaTime;
 
 namespace Squidex.Log
 {
@@ -68,9 +68,16 @@ namespace Squidex.Log
             return this;
         }
 
-        IArrayWriter IArrayWriter.WriteValue(Instant value)
+        IArrayWriter IArrayWriter.WriteValue(DateTime value)
         {
-            jsonWriter?.WriteStringValue(value.ToString());
+            jsonWriter?.WriteStringValue(ToIso8601(value.ToUniversalTime()));
+
+            return this;
+        }
+
+        IArrayWriter IArrayWriter.WriteValue(DateTimeOffset value)
+        {
+            jsonWriter?.WriteStringValue(ToIso8601(value.UtcDateTime));
 
             return this;
         }
@@ -110,9 +117,16 @@ namespace Squidex.Log
             return this;
         }
 
-        IObjectWriter IObjectWriter.WriteProperty(string property, Instant value)
+        IObjectWriter IObjectWriter.WriteProperty(string property, DateTime value)
         {
-            jsonWriter?.WriteString(property, value.ToString());
+            jsonWriter?.WriteString(property, ToIso8601(value.ToUniversalTime()));
+
+            return this;
+        }
+
+        IObjectWriter IObjectWriter.WriteProperty(string property, DateTimeOffset value)
+        {
+            jsonWriter?.WriteString(property, ToIso8601(value.UtcDateTime));
 
             return this;
         }
@@ -251,6 +265,11 @@ namespace Squidex.Log
             {
                 Reset();
             }
+        }
+
+        private static string ToIso8601(DateTime value)
+        {
+            return value.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture);
         }
     }
 }
