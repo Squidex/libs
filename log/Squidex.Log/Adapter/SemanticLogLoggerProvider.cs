@@ -9,8 +9,6 @@ using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-
 namespace Squidex.Log.Adapter
 {
     public class SemanticLogLoggerProvider : ILoggerProvider
@@ -50,12 +48,14 @@ namespace Squidex.Log.Adapter
 
             return loggers.TryGetValue(categoryName, out var logger) ?
                 logger :
+#pragma warning disable MA0106 // Avoid closure by using an overload with the 'factoryArgument' parameter
                 loggers.GetOrAdd(categoryName, x =>
                 {
                     var appender = new CategoryNameAppender(x);
 
                     return new SemanticLogLogger(log.CreateScope(appender));
                 });
+#pragma warning restore MA0106 // Avoid closure by using an overload with the 'factoryArgument' parameter
         }
 
         public void Dispose()

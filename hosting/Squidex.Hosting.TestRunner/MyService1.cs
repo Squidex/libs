@@ -7,7 +7,7 @@
 
 namespace Squidex.Hosting
 {
-    internal class MyService1 : IBackgroundProcess, IInitializable
+    internal sealed class MyService1 : IBackgroundProcess, IInitializable
     {
         public Task InitializeAsync(CancellationToken ct)
         {

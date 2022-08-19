@@ -9,7 +9,7 @@
 
 namespace Squidex.Caching
 {
-    internal class LRUCacheItem<TKey, TValue>
+    internal sealed class LRUCacheItem<TKey, TValue>
     {
         public TKey Key;
 
