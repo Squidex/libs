@@ -1,0 +1,34 @@
+# User-specific files
+*.suo
+*.user
+*.vs
+*.log
+
+.vs
+.git
+
+# Build results
+**/bin
+**/build
+**/obj
+**/out
+**/publish
+
+# Test Output
+**/_test-output
+
+# NodeJS 
+**/node_modules
+
+**/appsettings.Development.json
+**/appsettings.Production.json
+**/launchSettings.json
+
+# Build
+.drone.yml
+
+build.ps1
+build.sh
+
+# Documentation
+CHANGELOG.md

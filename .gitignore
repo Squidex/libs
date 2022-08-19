@@ -1,0 +1,28 @@
+# User-specific files
+*.suo
+*.user
+*.vs
+*.log
+
+.awCache
+.vscode
+.idea
+
+# Build results
+bin/
+build/
+obj/
+out/
+publish/
+uploads/
+
+# Test Output
+_test-output/
+
+# NodeJS 
+node_modules/
+
+appsettings.Development.json
+appsettings.Production.json
+launchSettings.json
+

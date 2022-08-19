@@ -1,0 +1,84 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>Latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>Squidex.Assets</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Images\feather.png" />
+    <None Remove="Images\landscape.png" />
+    <None Remove="Images\logo-wide-rotated.jpeg" />
+    <None Remove="Images\logo.avif" />
+    <None Remove="Images\logo.bmp" />
+    <None Remove="Images\logo.gif" />
+    <None Remove="Images\logo.jpeg" />
+    <None Remove="Images\logo.png" />
+    <None Remove="Images\logo.tga" />
+    <None Remove="Images\logo.tiff" />
+    <None Remove="Images\logo.webp" />
+    <None Remove="Images\sample.pdf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="3.1.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="FakeItEasy" Version="7.3.1" />
+    <PackageReference Include="Meziantou.Analyzer" Version="1.0.702">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="6.0.5" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.2.0" />
+    <PackageReference Include="RefactoringEssentials" Version="5.6.0" PrivateAssets="all" />
+    <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" PrivateAssets="all" />
+    <PackageReference Include="xunit" Version="2.4.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="..\..\stylecop.json" Link="stylecop.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Images\logo.avif" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Images\feather.png" />
+    <EmbeddedResource Include="Images\landscape.png" />
+    <EmbeddedResource Include="Images\logo-wide-rotated.jpeg" />
+    <EmbeddedResource Include="Images\logo.avif" />
+    <EmbeddedResource Include="Images\logo.bmp" />
+    <EmbeddedResource Include="Images\logo.gif" />
+    <EmbeddedResource Include="Images\logo.jpeg" />
+    <EmbeddedResource Include="Images\logo.png" />
+    <EmbeddedResource Include="Images\logo.tga" />
+    <EmbeddedResource Include="Images\logo.tiff" />
+    <EmbeddedResource Include="Images\logo.webp" />
+    <EmbeddedResource Include="Images\sample.pdf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Squidex.Assets.Azure\Squidex.Assets.Azure.csproj" />
+    <ProjectReference Include="..\Squidex.Assets.FTP\Squidex.Assets.FTP.csproj" />
+    <ProjectReference Include="..\Squidex.Assets.GoogleCloud\Squidex.Assets.GoogleCloud.csproj" />
+    <ProjectReference Include="..\Squidex.Assets.ImageMagick\Squidex.Assets.ImageMagick.csproj" />
+    <ProjectReference Include="..\Squidex.Assets.ImageSharp\Squidex.Assets.ImageSharp.csproj" />
+    <ProjectReference Include="..\Squidex.Assets.Mongo\Squidex.Assets.Mongo.csproj" />
+    <ProjectReference Include="..\Squidex.Assets.S3\Squidex.Assets.S3.csproj" />
+    <ProjectReference Include="..\Squidex.Assets.TusAdapter\Squidex.Assets.TusAdapter.csproj" />
+    <ProjectReference Include="..\Squidex.Assets.TusClient\Squidex.Assets.TusClient.csproj" />
+    <ProjectReference Include="..\Squidex.Assets\Squidex.Assets.csproj" />
+  </ItemGroup>
+
+</Project>

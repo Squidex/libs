@@ -1,0 +1,30 @@
+name: Nuget Assets
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+        
+    steps:
+    - uses: actions/checkout@v1
+ 
+    - name: setup dotnet
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.100
+
+    - name: test
+      run: |
+        cd assets
+        dotnet test --filter Category!=Dependencies
+
+    - name: pack
+      run: |
+        cd assets
+        dotnet pack -c Release
+
+    - name: publish
+      run: |
+        cd assets
+        dotnet nuget push **/*.nupkg --source 'https://api.nuget.org/v3/index.json' --skip-duplicate -k ${{ secrets.nuget }}

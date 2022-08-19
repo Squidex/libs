@@ -1,0 +1,22 @@
+version: '2.1'
+services:
+  messaging_mongo:
+    image: mongo:4.2.19
+    command: mongod
+    ports:
+      - "27018:27017"
+    restart: always
+
+  messaging_redis:
+    image: redis:6.2-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server --save 20 1 --loglevel warning
+
+  messaging_rabbit:
+    image: rabbitmq:3-management-alpine
+    container_name: 'rabbitmq'
+    ports:
+      - 5672:5672
+      - 15672:15672

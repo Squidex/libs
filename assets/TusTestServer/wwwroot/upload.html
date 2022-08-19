@@ -1,0 +1,191 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+
+    <script src="https://cdn.jsdelivr.net/npm/tus-js-client@latest/dist/tus.min.js"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        body {
+            background: #f0f0f0;
+            padding-top: 3rem;
+            padding-bottom: 3rem;
+        }
+
+        .card {
+            width: 500px;
+            margin-right: .5rem;
+            margin-block: .5rem;
+            display: inline-block;
+        }
+
+        textarea {
+            overflow-y: auto;
+            font-size: 90% !important;
+            font-weight: normal;
+            height: 300px;
+            resize: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                Upload to Controller
+            </div>
+            <div class="card-body">
+                <input class="form-control file" type="file" data-url="files/controller/" />
+            </div>
+            <div class="card-footer">
+                <textarea readonly class="form-control"></textarea>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                Upload to Controller without Slash
+            </div>
+            <div class="card-body">
+                <input class="form-control file" type="file" data-url="files/controller" />
+            </div>
+            <div class="card-footer">
+                <textarea readonly class="form-control"></textarea>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                Upload to Folder
+            </div>
+            <div class="card-body">
+                <input class="form-control file" type="file" data-url="files/folder/" />
+            </div>
+            <div class="card-footer">
+                <textarea readonly class="form-control"></textarea>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                Upload to Azure Blob
+            </div>
+            <div class="card-body">
+                <input class="form-control file" type="file" data-url="files/azure-blob/" />
+            </div>
+            <div class="card-footer">
+                <textarea readonly class="form-control"></textarea>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                Upload to Amazon S3
+            </div>
+            <div class="card-body">
+                <input class="form-control file" type="file" data-url="files/amazon-s3/" />
+            </div>
+            <div class="card-footer">
+                <textarea readonly class="form-control"></textarea>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                Upload to Google Cloud
+            </div>
+            <div class="card-body">
+                <input class="form-control file" type="file" data-url="files/google-cloud/" />
+            </div>
+            <div class="card-footer">
+                <textarea readonly class="form-control"></textarea>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                Upload to MongoDB
+            </div>
+            <div class="card-body">
+                <input class="form-control file" type="file" data-url="files/mongodb/" />
+            </div>
+            <div class="card-footer">
+                <textarea readonly class="form-control"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const inputs = document.getElementsByClassName('file');
+
+        for (const input of inputs) {
+            input.addEventListener("change", (e) => {
+                const file = e.target.files[0]
+
+                let notPausedYet = true;
+
+                const textarea = e.target.parentNode.parentNode.querySelector('textarea');
+
+                textarea.value = '';
+
+                const log = (message) => {
+                    const value = textarea.value;
+
+                    if (!value) {
+                        textarea.value = message;
+                    } else {
+                        textarea.value = value + '\n' + message;
+                    }
+                };
+
+                const upload = new tus.Upload(file, {
+                    endpoint: e.target.dataset.url,
+                    metadata: {
+                        fileName: file.name,
+                        fileType: file.type
+                    },
+                    onError: error => {
+                        log(`> Upload failed with ${error}.`);
+                    },
+                    onProgress: (bytesUploaded, bytesTotal) => {
+                        const percentage = (bytesUploaded / bytesTotal * 100).toFixed(2);
+
+                        if (percentage > 50 && percentage < 100 && notPausedYet) {
+                            upload.abort();
+
+                            log('----- Waiting 2 seconds to continue -----');
+
+                            setTimeout(() => {
+                                startOrResumeUpload(upload);
+                            }, 2000);
+
+                            notPausedYet = false;
+                        }
+
+                        log(`> Upload progress: ${bytesUploaded} of ${bytesTotal}, percent: ${percentage}.`);
+                    },
+                    onSuccess: () => {
+                        log(`> Upload file ${upload.file.name} to ${upload.url} completed.`);
+                    },
+                    retryDelays: [0, 3000, 5000, 10000, 20000]
+                });
+
+                startOrResumeUpload(upload);
+            });
+        }
+
+
+        function startOrResumeUpload(upload) {
+            upload.findPreviousUploads().then((previousUploads) => {
+                if (previousUploads.length) {
+                    upload.resumeFromPreviousUpload(previousUploads[0]);
+                }
+
+                upload.start()
+            })
+        }
+    </script>
+</body>
+</html>
