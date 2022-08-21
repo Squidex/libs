@@ -27,7 +27,7 @@ namespace Squidex.Messaging
             await sut.SubscribeAsync(topic, queue1, now, TimeSpan.FromDays(30), default);
             await sut.SubscribeAsync(topic, queue2, now, TimeSpan.FromDays(30), default);
 
-            Assert.Equal(new[] { queue1, queue2 }.ToHashSet(), (await sut.GetSubscriptionsAsync(topic, now, default)).ToHashSet());
+            SetEquals(new[] { queue1, queue2 }.ToHashSet(), await sut.GetSubscriptionsAsync(topic, now, default));
         }
 
         [Fact]
@@ -40,7 +40,7 @@ namespace Squidex.Messaging
 
             await sut.UnsubscribeAsync(topic, queue1, default);
 
-            Assert.Equal(new[] { queue2 }, await sut.GetSubscriptionsAsync(topic, now, default));
+            SetEquals(new[] { queue2 }, await sut.GetSubscriptionsAsync(topic, now, default));
         }
 
         [Fact]
@@ -51,7 +51,7 @@ namespace Squidex.Messaging
             await sut.SubscribeAsync(topic, queue1, now, TimeSpan.FromDays(30), default);
             await sut.SubscribeAsync(topic, queue2, now, TimeSpan.FromSeconds(30), default);
 
-            Assert.Equal(new[] { queue1 }, await sut.GetSubscriptionsAsync(topic, now.AddDays(1), default));
+            SetEquals(new[] { queue1 }, await sut.GetSubscriptionsAsync(topic, now.AddDays(1), default));
         }
 
         [Fact]
@@ -65,7 +65,7 @@ namespace Squidex.Messaging
             // Does not expires because last activity is in the future.
             await sut.UpdateAliveAsync(new[] { queue2 }, now.AddDays(2), default);
 
-            Assert.Equal(new[] { queue1, queue2 }.ToHashSet(), (await sut.GetSubscriptionsAsync(topic, now.AddDays(1), default)).ToHashSet());
+            SetEquals(new[] { queue1, queue2 }, await sut.GetSubscriptionsAsync(topic, now.AddDays(1), default));
         }
 
         [Fact]
@@ -79,11 +79,11 @@ namespace Squidex.Messaging
             // Expires in the future to force expiration.
             await sut.CleanupAsync(now.AddDays(20), default);
 
-            Assert.Equal(new[] { queue1 }, await sut.GetSubscriptionsAsync(topic, now.AddDays(1), default));
+            SetEquals(new[] { queue1 }, await sut.GetSubscriptionsAsync(topic, now.AddDays(1), default));
         }
 
         [Fact]
-        public async Task Should_not_cleanup_subscriptions_that_never_expire()
+        public async Task Should_not_cleanup_subscriptions_that_never_expires()
         {
             var sut = await CreateSubscriptionStoreAsync();
 
@@ -93,7 +93,12 @@ namespace Squidex.Messaging
             // Expires in the future to force expiration.
             await sut.CleanupAsync(now.AddDays(30), default);
 
-            Assert.Equal(new[] { queue1, queue2 }, await sut.GetSubscriptionsAsync(topic, now, default));
+            SetEquals(new[] { queue1, queue2 }, await sut.GetSubscriptionsAsync(topic, now, default));
+        }
+
+        private static void SetEquals<T>(IEnumerable<T> expected, IEnumerable<T> actual)
+        {
+            Assert.Equal(expected.OrderBy(x => x).ToArray(), actual.OrderBy(x => x).ToArray());
         }
     }
 }
