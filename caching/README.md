@@ -1,0 +1,3 @@
+# Squidex.Caching
+
+Caching implementations.

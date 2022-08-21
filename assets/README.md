@@ -1,8 +1,8 @@
 # Squidex.Assets
 
-This library provides an abstraction over several asset storages.
+Abstraction over several asset storages like Amazon S3.
 
-It provives 3 services:
+It provides 4 services:
 
 1. An abstraction to store assets and files in different providers: `IAssetStore` with several implementations.
 2. An abstraction to resize images: `IAssetThumbnailGenerator` with several implementations.
