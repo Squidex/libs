@@ -9,6 +9,8 @@ namespace Squidex.Messaging.Subscriptions
 {
     public interface IPayloadWrapper<T>
     {
+        object Payload { get; }
+
         ValueTask<T> CreatePayloadAsync();
     }
 }

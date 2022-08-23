@@ -176,7 +176,7 @@ namespace Squidex.Messaging.Subscriptions
             var messageValue = default(T);
             var messageCreated = false;
 
-            foreach (var id in await messageEvaluator.GetSubscriptionsAsync(wrapper))
+            foreach (var id in await messageEvaluator.GetSubscriptionsAsync(wrapper.Payload))
             {
                 if (localSubscriptions.TryGetValue(id, out var localSubscription))
                 {
