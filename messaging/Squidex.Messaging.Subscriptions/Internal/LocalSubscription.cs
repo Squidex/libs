@@ -10,15 +10,15 @@ namespace Squidex.Messaging.Subscriptions.Internal
     internal sealed class LocalSubscription<TMessage, TSubscription> : ILocalSubscription<TMessage>, IUntypedLocalSubscription, IDisposable
         where TSubscription : ISubscription
     {
-        private readonly SubscriptionService subscriptionService;
+        private readonly SubscriptionService subscriptions;
         private readonly ISubscription subscription;
         private IObserver<TMessage>? currentObserver;
 
         public Guid Id { get; } = Guid.NewGuid();
 
-        public LocalSubscription(SubscriptionService subscriptionService, TSubscription subscription)
+        public LocalSubscription(SubscriptionService subscriptions, TSubscription subscription)
         {
-            this.subscriptionService = subscriptionService;
+            this.subscriptions = subscriptions;
             this.subscription = subscription;
         }
 
@@ -29,7 +29,7 @@ namespace Squidex.Messaging.Subscriptions.Internal
                 throw new InvalidOperationException("Can only have one observer.");
             }
 
-            subscriptionService.SubscribeCore(Id, this, subscription);
+            subscriptions.SubscribeCore(Id, this, subscription);
 
             currentObserver = observer;
         }
@@ -41,7 +41,7 @@ namespace Squidex.Messaging.Subscriptions.Internal
                 return;
             }
 
-            subscriptionService.UnsubscribeCore(Id);
+            subscriptions.UnsubscribeCore(Id);
 
             currentObserver = null;
         }

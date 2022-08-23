@@ -27,6 +27,8 @@ namespace Squidex.Messaging.Subscriptions
         private readonly ILogger<SubscriptionService> log;
         private readonly SimpleTimer cleanupTimer;
 
+        public bool HasSubscriptions => clusterSubscriptions.Any();
+
         public SubscriptionService(
             IInstanceNameProvider instanceNameProvider,
             IMessageBus messageBus,
@@ -164,9 +166,63 @@ namespace Squidex.Messaging.Subscriptions
                 return;
             }
 
+            await PublichCoreasync(remoteSubscriptionIds, message);
+        }
+
+        public async Task PublishWrapperAsync<T>(IPayloadWrapper<T> wrapper) where T : notnull
+        {
+            List<Guid>? remoteSubscriptionIds = null;
+
+            var messageValue = default(T);
+            var messageCreated = false;
+
+            foreach (var id in await messageEvaluator.GetSubscriptionsAsync(wrapper))
+            {
+                if (localSubscriptions.TryGetValue(id, out var localSubscription))
+                {
+                    if (!messageCreated)
+                    {
+                        messageCreated = true;
+                        messageValue = await wrapper.CreatePayloadAsync();
+                    }
+
+                    if (messageValue is not null)
+                    {
+                        localSubscription.OnNext(messageValue);
+                    }
+                }
+                else
+                {
+                    remoteSubscriptionIds ??= new List<Guid>();
+                    remoteSubscriptionIds.Add(id);
+                }
+            }
+
+            if (remoteSubscriptionIds == null)
+            {
+                return;
+            }
+
+            if (!messageCreated)
+            {
+                messageValue = await wrapper.CreatePayloadAsync();
+            }
+
+            if (messageValue is null)
+            {
+                return;
+            }
+
+            await PublichCoreasync(remoteSubscriptionIds, messageValue!);
+        }
+
+        private async Task PublichCoreasync<T>(List<Guid> remoteSubscriptionIds, T message) where T : notnull
+        {
             await messageBus.PublishAsync(new PayloadMessage<T>
             {
-                Payload = message,
+                Payload = message!,
+
+                // Publish multiple subscription IDs together.
                 SubscriptionIds = remoteSubscriptionIds,
 
                 // Ensure that we do not publish to the the current instance.
