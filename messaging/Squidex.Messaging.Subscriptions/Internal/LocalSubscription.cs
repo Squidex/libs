@@ -11,7 +11,7 @@ namespace Squidex.Messaging.Subscriptions.Internal
         where TSubscription : ISubscription
     {
         private readonly SubscriptionService subscriptions;
-        private readonly ISubscription subscription;
+        private readonly TSubscription subscription;
         private IObserver<TMessage>? currentObserver;
 
         public Guid Id { get; } = Guid.NewGuid();
