@@ -31,7 +31,7 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.Services.AddServices(config);
         }
 
-        private static void AddServices(this IServiceCollection services, IConfiguration config)
+        private static IServiceCollection AddServices(this IServiceCollection services, IConfiguration config)
         {
             services.Configure<SemanticLogOptions>(config, "logging");
             services.Configure<SemanticLogDefaultOptions>(config, "logging");
@@ -68,6 +68,8 @@ namespace Microsoft.Extensions.DependencyInjection
 
             services.AddSingletonAs<SemanticLog>()
                 .As<ISemanticLog>();
+
+            return services;
         }
     }
 }

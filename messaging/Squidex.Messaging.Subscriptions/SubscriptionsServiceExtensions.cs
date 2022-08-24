@@ -21,6 +21,9 @@ namespace Microsoft.Extensions.DependencyInjection
             services.TryAddSingleton<ISubscriptionService,
                 SubscriptionService>();
 
+            services.TryAddSingleton<IMessageEvaluator,
+                DefaultMessageEvaluator>();
+
             services.AddMessaging(channel, consume, configure);
 
             services.Configure<MessagingOptions>(options =>

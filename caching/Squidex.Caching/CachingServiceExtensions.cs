@@ -13,17 +13,21 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class CachingServiceExtensions
     {
-        public static void AddBackgroundCache(this IServiceCollection services)
+        public static IServiceCollection AddBackgroundCache(this IServiceCollection services)
         {
             services.TryAddSingleton<IBackgroundCache, BackgroundCache>();
+
+            return services;
         }
 
-        public static void AddAsyncLocalCache(this IServiceCollection services)
+        public static IServiceCollection AddAsyncLocalCache(this IServiceCollection services)
         {
             services.TryAddSingleton<ILocalCache, AsyncLocalCache>();
+
+            return services;
         }
 
-        public static void AddReplicatedCache(this IServiceCollection services, Action<ReplicatedCacheOptions>? configureOptions = null)
+        public static IServiceCollection AddReplicatedCache(this IServiceCollection services, Action<ReplicatedCacheOptions>? configureOptions = null)
         {
             if (configureOptions != null)
             {
@@ -41,9 +45,11 @@ namespace Microsoft.Extensions.DependencyInjection
 
             services.TryAddSingleton<IMessageHandler<CacheInvalidateMessage>>(
                 c => c.GetRequiredService<ReplicatedCache>());
+
+            return services;
         }
 
-        public static void AddReplicatedCacheMessaging(this IServiceCollection services, bool consume = true, Action<ChannelOptions>? configure = null, string channelName = "caching")
+        public static IServiceCollection AddReplicatedCacheMessaging(this IServiceCollection services, bool consume = true, Action<ChannelOptions>? configure = null, string channelName = "caching")
         {
             var channel = new ChannelName(channelName, ChannelType.Topic);
 
@@ -53,6 +59,8 @@ namespace Microsoft.Extensions.DependencyInjection
             {
                 options.Routing.Add(x => x is CacheInvalidateMessage, channel);
             });
+
+            return services;
         }
     }
 }
