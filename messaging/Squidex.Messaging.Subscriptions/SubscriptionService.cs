@@ -134,12 +134,12 @@ namespace Squidex.Messaging.Subscriptions
             return Task.CompletedTask;
         }
 
-        public ILocalSubscription<T> Subscribe<T, TSubscription>(TSubscription subscription) where TSubscription : ISubscription, new()
+        public IObservable<T> Subscribe<T, TSubscription>(TSubscription subscription) where TSubscription : ISubscription, new()
         {
             return new LocalSubscription<T, TSubscription>(this, subscription);
         }
 
-        public ILocalSubscription<T> Subscribe<T>()
+        public IObservable<T> Subscribe<T>()
         {
             return new LocalSubscription<T, Subscription<T>>(this, new Subscription<T>());
         }

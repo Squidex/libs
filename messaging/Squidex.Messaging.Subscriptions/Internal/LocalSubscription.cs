@@ -7,7 +7,7 @@
 
 namespace Squidex.Messaging.Subscriptions.Internal
 {
-    internal sealed class LocalSubscription<TMessage, TSubscription> : ILocalSubscription<TMessage>, IUntypedLocalSubscription, IDisposable
+    internal sealed class LocalSubscription<TMessage, TSubscription> : IObservable<TMessage>, IUntypedLocalSubscription, IDisposable
         where TSubscription : ISubscription
     {
         private readonly SubscriptionService subscriptions;

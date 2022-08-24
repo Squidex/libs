@@ -15,8 +15,8 @@ namespace Squidex.Messaging.Subscriptions
 
         Task PublishWrapperAsync<T>(IPayloadWrapper<T> wrapper) where T : notnull;
 
-        ILocalSubscription<T> Subscribe<T, TSubscription>(TSubscription subscription) where TSubscription : ISubscription, new();
+        IObservable<T> Subscribe<T, TSubscription>(TSubscription subscription) where TSubscription : ISubscription, new();
 
-        ILocalSubscription<T> Subscribe<T>();
+        IObservable<T> Subscribe<T>();
     }
 }
