@@ -52,12 +52,12 @@ namespace Squidex.Messaging.GoogleCloud
             publishers.Clear();
         }
 
-        public Task CreateChannelAsync(ChannelName channel, ProducerOptions producerOptions,
+        public Task<IAsyncDisposable?> CreateChannelAsync(ChannelName channel, string instanceName, bool consume, ProducerOptions producerOptions,
             CancellationToken ct)
         {
             if (publishers.ContainsKey(channel.Name))
             {
-                return Task.CompletedTask;
+                return Task.FromResult<IAsyncDisposable?>(null);
             }
 
             publishers[channel.Name] = new Func<Task<PublisherClient>>(async () =>
@@ -74,7 +74,7 @@ namespace Squidex.Messaging.GoogleCloud
                 return await PublisherClient.CreateAsync(topicName);
             })();
 
-            return Task.CompletedTask;
+            return Task.FromResult<IAsyncDisposable?>(null);
         }
 
         private async Task CreateTopicAsync(TopicName name,
@@ -159,7 +159,7 @@ namespace Squidex.Messaging.GoogleCloud
             }
         }
 
-        public async Task ProduceAsync(ChannelName channel, TransportMessage transportMessage,
+        public async Task ProduceAsync(ChannelName channel, string instanceName, TransportMessage transportMessage,
             CancellationToken ct)
         {
             var publisherClient = await GetPublisherAsync(channel.Name);

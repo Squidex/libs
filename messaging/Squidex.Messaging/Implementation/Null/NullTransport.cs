@@ -15,13 +15,13 @@ namespace Squidex.Messaging.Implementation.Null
             return Task.CompletedTask;
         }
 
-        public Task CreateChannelAsync(ChannelName channel, ProducerOptions options,
+        public Task<IAsyncDisposable?> CreateChannelAsync(ChannelName channel, string instanceName, bool consume, ProducerOptions options,
             CancellationToken ct)
         {
-            return Task.CompletedTask;
+            return Task.FromResult<IAsyncDisposable?>(null);
         }
 
-        public Task ProduceAsync(ChannelName channel, TransportMessage transportMessage,
+        public Task ProduceAsync(ChannelName channel, string instanceName, TransportMessage transportMessage,
             CancellationToken ct)
         {
             return Task.CompletedTask;

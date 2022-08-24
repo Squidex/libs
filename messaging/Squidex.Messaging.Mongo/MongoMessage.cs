@@ -17,6 +17,8 @@ namespace Squidex.Messaging.Mongo
 
         public string? PrefetchId { get; init; }
 
+        public string QueueName { get; init; }
+
         public byte[] MessageData { get; init; }
 
         public TransportHeaders MessageHeaders { get; init; }

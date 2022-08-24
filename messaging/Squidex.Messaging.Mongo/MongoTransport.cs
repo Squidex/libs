@@ -45,13 +45,38 @@ namespace Squidex.Messaging.Mongo
             return Task.CompletedTask;
         }
 
-        public Task CreateChannelAsync(ChannelName channel, ProducerOptions options,
+        public async Task<IAsyncDisposable?> CreateChannelAsync(ChannelName channel, string instanceName, bool consume, ProducerOptions options,
             CancellationToken ct)
         {
-            return Task.CompletedTask;
+            if (!consume)
+            {
+                return null;
+            }
+
+            var collectionName = channel.Name;
+            var collectionInstance = await GetCollectionAsync(collectionName);
+
+            IAsyncDisposable? subscription = null;
+
+            if (channel.Type == ChannelType.Topic)
+            {
+                subscription = await subscriptions.SubscribeAsync(channel.Name, instanceName, ct);
+            }
+
+            IAsyncDisposable result = new MongoTransportCleaner(collectionInstance, collectionName,
+                options.Timeout,
+                options.Expires,
+                this.options.UpdateInterval, log, clock);
+
+            if (subscription != null)
+            {
+                result = new AggregateAsyncDisposable(result, subscription);
+            }
+
+            return result;
         }
 
-        public async Task ProduceAsync(ChannelName channel, TransportMessage transportMessage,
+        public async Task ProduceAsync(ChannelName channel, string instanceName, TransportMessage transportMessage,
             CancellationToken ct)
         {
             IReadOnlyList<string> queues;
@@ -70,68 +95,33 @@ namespace Squidex.Messaging.Mongo
                 return;
             }
 
-            var request = new MongoMessage
-            {
-                Id = transportMessage.Headers[HeaderNames.Id],
-                MessageData = transportMessage.Data,
-                MessageHeaders = transportMessage.Headers,
-                TimeToLive = GetTimeToLive(transportMessage.Headers),
-            };
+            // Only use one collection per topic for all queues, because it is easier to deal with outdated subscriptions.
+            var collection = await GetCollectionAsync(channel.Name);
 
             foreach (var queueName in queues)
             {
-                await ProduceCoreAsync(queueName, request, ct);
+                var request = new MongoMessage
+                {
+                    Id = $"{transportMessage.Headers[HeaderNames.Id]}_{queueName}",
+                    QueueName = queueName,
+                    MessageData = transportMessage.Data,
+                    MessageHeaders = transportMessage.Headers,
+                    TimeToLive = GetTimeToLive(transportMessage.Headers),
+                };
+
+                await collection.InsertOneAsync(request, null, ct);
             }
-        }
-
-        private async Task ProduceCoreAsync(string queueName, MongoMessage request,
-            CancellationToken ct)
-        {
-            var collection = await GetCollectionAsync(queueName);
-
-            await collection.InsertOneAsync(request, null, ct);
         }
 
         public async Task<IAsyncDisposable> SubscribeAsync(ChannelName channel, string instanceName, MessageTransportCallback callback,
             CancellationToken ct)
         {
-            var collectionName = GetCollectioName(channel, instanceName);
+            var collectionName = channel.Name;
             var collectionInstance = await GetCollectionAsync(collectionName);
 
-            return new MongoSubscription(callback, collectionInstance, collectionName, options, clock, log);
-        }
+            var queueFilter = channel.Type == ChannelType.Topic ? instanceName : null;
 
-        public async Task<IAsyncDisposable?> CreateCleanerAsync(ChannelName channel, string instanceName, TimeSpan timeout, TimeSpan expires,
-            CancellationToken ct)
-        {
-            var collectionName = GetCollectioName(channel, instanceName);
-            var collectionInstance = await GetCollectionAsync(collectionName);
-
-            IAsyncDisposable? subscription = null;
-
-            if (channel.Type == ChannelType.Topic)
-            {
-                subscription = await subscriptions.SubscribeAsync(channel.Name, collectionName, ct);
-            }
-
-            IAsyncDisposable result = new MongoTransportCleaner(collectionInstance, collectionName, timeout, expires, options.UpdateInterval, log, clock);
-
-            if (subscription != null)
-            {
-                result = new AggregateAsyncDisposable(result, subscription);
-            }
-
-            return result;
-        }
-
-        private static string GetCollectioName(ChannelName channel, string instanceName)
-        {
-            if (channel.Type == ChannelType.Topic)
-            {
-                return $"{channel.Name}_{instanceName}";
-            }
-
-            return channel.Name;
+            return new MongoSubscription(callback, collectionInstance, collectionName, queueFilter, options, clock, log);
         }
 
         private async Task<IMongoCollection<MongoMessage>> GetCollectionAsync(string name)
@@ -149,7 +139,8 @@ namespace Squidex.Messaging.Mongo
                         {
                             new CreateIndexModel<MongoMessage>(
                                 Builders<MongoMessage>.IndexKeys
-                                    .Ascending(x => x.TimeHandled)),
+                                    .Ascending(x => x.TimeHandled)
+                                    .Ascending(x => x.QueueName)),
                             new CreateIndexModel<MongoMessage>(
                                 Builders<MongoMessage>.IndexKeys
                                     .Ascending(x => x.TimeToLive),

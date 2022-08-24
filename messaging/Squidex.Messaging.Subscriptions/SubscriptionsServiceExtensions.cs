@@ -14,7 +14,7 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class SubscriptionsServiceExtensions
     {
-        public static void AddSubscriptions(this IServiceCollection services, bool consume = true, Action<ChannelOptions>? configure = null, string channelName = "subscriptions")
+        public static IServiceCollection AddMessagingSubscriptions(this IServiceCollection services, bool consume = true, Action<ChannelOptions>? configure = null, string channelName = "subscriptions")
         {
             var channel = new ChannelName(channelName, ChannelType.Topic);
 
@@ -27,6 +27,8 @@ namespace Microsoft.Extensions.DependencyInjection
             {
                 options.Routing.Add(x => x is SubscriptionsMessageBase, channel);
             });
+
+            return services;
         }
     }
 }

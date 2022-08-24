@@ -44,7 +44,7 @@ namespace Squidex.Messaging
 
         protected virtual bool CanHandleAndSimulateTimeout { get; } = true;
 
-        protected virtual string TopicOrQueueName { get; } = $"channel_{Guid.NewGuid()}";
+        protected virtual string TopicOrQueueName { get; } = $"channel_topic_{Guid.NewGuid()}";
 
         private sealed class ExpectationHandler : IMessageHandler<Message>
         {

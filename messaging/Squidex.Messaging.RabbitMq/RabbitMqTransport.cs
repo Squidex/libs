@@ -53,13 +53,13 @@ namespace Squidex.Messaging.RabbitMq
             return Task.CompletedTask;
         }
 
-        public Task CreateChannelAsync(ChannelName channel, ProducerOptions producerOptions,
+        public Task<IAsyncDisposable?> CreateChannelAsync(ChannelName channel, string instanceName, bool consume, ProducerOptions producerOptions,
             CancellationToken ct)
         {
             if (model == null)
             {
                 ThrowHelper.InvalidOperationException("Transport not initialized yet.");
-                return Task.CompletedTask;
+                return Task.FromResult<IAsyncDisposable?>(null);
             }
 
             lock (model)
@@ -74,10 +74,10 @@ namespace Squidex.Messaging.RabbitMq
                 }
             }
 
-            return Task.CompletedTask;
+            return Task.FromResult<IAsyncDisposable?>(null);
         }
 
-        public Task ProduceAsync(ChannelName channel, TransportMessage transportMessage,
+        public Task ProduceAsync(ChannelName channel, string instanceName, TransportMessage transportMessage,
             CancellationToken ct)
         {
             if (model == null)

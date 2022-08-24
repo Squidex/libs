@@ -48,7 +48,7 @@ namespace Squidex.Messaging.Kafka
             return Task.CompletedTask;
         }
 
-        public Task CreateChannelAsync(ChannelName channel, ProducerOptions producerOptions,
+        public Task<IAsyncDisposable?> CreateChannelAsync(ChannelName channel, string instanceName, bool consume, ProducerOptions producerOptions,
             CancellationToken ct)
         {
             if (channel.Type == ChannelType.Topic)
@@ -56,10 +56,10 @@ namespace Squidex.Messaging.Kafka
                 ThrowHelper.InvalidOperationException("Topics are not supported.");
             }
 
-            return Task.CompletedTask;
+            return Task.FromResult<IAsyncDisposable?>(null);
         }
 
-        public async Task ProduceAsync(ChannelName channel, TransportMessage transportMessage,
+        public async Task ProduceAsync(ChannelName channel, string instanceName, TransportMessage transportMessage,
             CancellationToken ct)
         {
             if (producer == null)

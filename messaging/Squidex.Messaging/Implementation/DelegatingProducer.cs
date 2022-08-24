@@ -15,18 +15,21 @@ namespace Squidex.Messaging.Implementation
     {
         private readonly HashSet<string> initializedChannels = new HashSet<string>();
         private readonly SemaphoreSlim semaphore = new SemaphoreSlim(1);
+        private readonly string instanceName;
         private readonly ITransportList transportList;
         private readonly ITransportSerializer transportSerializer;
         private readonly IOptionsMonitor<ChannelOptions> channelOptions;
         private readonly IClock clock;
 
         public DelegatingProducer(
+            IInstanceNameProvider instanceName,
             ITransportList transportList,
             ITransportSerializer transportSerializer,
             IOptionsMonitor<ChannelOptions> channelOptions,
             IClock clock)
         {
             this.channelOptions = channelOptions;
+            this.instanceName = instanceName.Name;
             this.transportList = transportList;
             this.transportSerializer = transportSerializer;
             this.clock = clock;
@@ -48,7 +51,7 @@ namespace Squidex.Messaging.Implementation
             {
                 if (initializedChannels.Add(channel.Name))
                 {
-                    await transportAdapter.CreateChannelAsync(channel, options, default);
+                    await transportAdapter.CreateChannelAsync(channel, instanceName, false, options, default);
                 }
             }
             finally
@@ -83,7 +86,7 @@ namespace Squidex.Messaging.Implementation
 
                 var transportMessage = new TransportMessage(data, key, headers);
 
-                await transportAdapter.ProduceAsync(channel, transportMessage, ct);
+                await transportAdapter.ProduceAsync(channel, instanceName, transportMessage, ct);
             }
         }
     }

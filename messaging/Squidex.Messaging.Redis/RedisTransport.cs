@@ -39,13 +39,13 @@ namespace Squidex.Messaging.Redis
             subscriber = connection.GetSubscriber();
         }
 
-        public Task CreateChannelAsync(ChannelName channel, ProducerOptions producerOptions,
+        public Task<IAsyncDisposable?> CreateChannelAsync(ChannelName channel, string instanceName, bool consume, ProducerOptions producerOptions,
             CancellationToken ct)
         {
-            return Task.CompletedTask;
+            return Task.FromResult<IAsyncDisposable?>(null);
         }
 
-        public async Task ProduceAsync(ChannelName target, TransportMessage transportMessage,
+        public async Task ProduceAsync(ChannelName target, string instanceName, TransportMessage transportMessage,
             CancellationToken ct)
         {
             if (subscriber == null || database == null)

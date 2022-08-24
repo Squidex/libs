@@ -16,10 +16,10 @@ namespace Squidex.Messaging
 
     public interface ITransport : IInitializable
     {
-        Task CreateChannelAsync(ChannelName channel, ProducerOptions options,
+        Task<IAsyncDisposable?> CreateChannelAsync(ChannelName channel, string instanceName, bool consume, ProducerOptions options,
             CancellationToken ct);
 
-        Task ProduceAsync(ChannelName channel, TransportMessage transportMessage,
+        Task ProduceAsync(ChannelName channel, string instanceName, TransportMessage transportMessage,
             CancellationToken ct);
 
         Task<IAsyncDisposable> SubscribeAsync(ChannelName channel, string instanceName, MessageTransportCallback callback,

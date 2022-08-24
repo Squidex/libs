@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Linq.Expressions;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using Squidex.Messaging.Implementation;
@@ -14,16 +15,20 @@ namespace Squidex.Messaging.Mongo
     internal sealed class MongoSubscription : IAsyncDisposable, IMessageAck
     {
         private static readonly UpdateDefinitionBuilder<MongoMessage> Update = Builders<MongoMessage>.Update;
-        private readonly string collectionName;
+        private readonly string? collectionName;
+        private readonly string? queueFilter;
         private readonly IMongoCollection<MongoMessage> collection;
         private readonly MongoTransportOptions options;
         private readonly IClock clock;
         private readonly ILogger log;
         private readonly SimpleTimer timer;
 
-        public MongoSubscription(MessageTransportCallback callback, IMongoCollection<MongoMessage> collection, string collectionName,
+        public MongoSubscription(MessageTransportCallback callback, IMongoCollection<MongoMessage> collection,
+            string? collectionName,
+            string? queueFilter,
             MongoTransportOptions options, IClock clock, ILogger log)
         {
+            this.queueFilter = queueFilter;
             this.collectionName = collectionName;
             this.collection = collection;
             this.options = options;
@@ -59,7 +64,7 @@ namespace Squidex.Messaging.Mongo
 
             // We can fetch an document in one go with this operation.
             var mongoMessage =
-                await collection.FindOneAndUpdateAsync(x => x.TimeHandled == null && x.TimeToLive > now,
+                await collection.FindOneAndUpdateAsync(CreateFilter(now),
                     Update
                         .Set(x => x.TimeHandled, now),
                     cancellationToken: ct);
@@ -80,7 +85,7 @@ namespace Squidex.Messaging.Mongo
 
             // There is no way to limit the updates, therefore we have to query candidates first.
             var candidates =
-                await collection.Find(x => x.TimeHandled == null && x.TimeToLive > now)
+                await collection.Find(CreateFilter(now))
                     .Limit(options.Prefetch)
                     .Project<MongoMessageId>(Builders<MongoMessage>.Projection.Include(x => x.Id))
                     .ToListAsync(ct);
@@ -129,6 +134,18 @@ namespace Squidex.Messaging.Mongo
             }
 
             return true;
+        }
+
+        private Expression<Func<MongoMessage, bool>> CreateFilter(DateTime now)
+        {
+            if (queueFilter != null)
+            {
+                return x => x.TimeHandled == null && x.QueueName == queueFilter && x.TimeToLive > now;
+            }
+            else
+            {
+                return x => x.TimeHandled == null && x.QueueName != null && x.TimeToLive > now;
+            }
         }
 
         public ValueTask DisposeAsync()

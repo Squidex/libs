@@ -26,7 +26,7 @@ namespace Squidex.Messaging.Implementation
         private readonly ITransportSerializer transportSerializer;
         private readonly ITransport transportAdapter;
         private readonly ILogger<DelegatingConsumer> log;
-        private IAsyncDisposable? cleaner;
+        private IAsyncDisposable? channelDisposable;
         private bool isReleased;
 
         public string Name => $"Messaging.Consumer({channel.Name})";
@@ -38,7 +38,7 @@ namespace Squidex.Messaging.Implementation
         public DelegatingConsumer(
             ChannelName channel,
             HandlerPipeline pipeline,
-            IInstanceNameProvider instanceNameProvider,
+            IInstanceNameProvider instanceName,
             ITransportList transportList,
             ITransportSerializer transportSerializer,
             IOptionsMonitor<ChannelOptions> channelOptions,
@@ -48,7 +48,7 @@ namespace Squidex.Messaging.Implementation
 
             this.channel = channel;
             this.channelOptions = channelOptions.Get(channel.ToString());
-            this.instanceName = instanceNameProvider.Name;
+            this.instanceName = instanceName.Name;
             this.pipeline = pipeline;
             this.scheduler = this.channelOptions.Scheduler ?? InlineScheduler.Instance;
             this.transportAdapter = this.channelOptions.SelectTransport(transportList, channel);
@@ -61,7 +61,8 @@ namespace Squidex.Messaging.Implementation
         {
             if (pipeline.HasHandlers)
             {
-                await transportAdapter.CreateChannelAsync(channel, channelOptions, ct);
+                // Manage the lifetime of the channel here, so we do not have to do it in the transport.
+                channelDisposable = await transportAdapter.CreateChannelAsync(channel, instanceName, true, channelOptions, ct);
 
                 for (var i = 0; i < channelOptions.NumSubscriptions; i++)
                 {
@@ -69,9 +70,6 @@ namespace Squidex.Messaging.Implementation
 
                     openSubscriptions.Add(subscription);
                 }
-
-                // Manage the lifetime of the cleaner here, so we do not have to do it in the transport.
-                cleaner = await transportAdapter.CreateCleanerAsync(channel, instanceName, channelOptions.Timeout, channelOptions.Expires, ct);
             }
         }
 
@@ -85,9 +83,9 @@ namespace Squidex.Messaging.Implementation
                 await subscription.DisposeAsync();
             }
 
-            if (cleaner != null)
+            if (channelDisposable != null)
             {
-                await cleaner.DisposeAsync();
+                await channelDisposable.DisposeAsync();
             }
         }
 

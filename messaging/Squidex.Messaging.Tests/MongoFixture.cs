@@ -17,7 +17,7 @@ namespace Squidex.Messaging
 
         public MongoFixture()
         {
-            var mongoClient = new MongoClient("mongodb://localhost:27018");
+            var mongoClient = new MongoClient("mongodb://localhost:27017");
             var mongoDatabase = mongoClient.GetDatabase("Messaging_Tests");
 
             Database = mongoDatabase;
@@ -36,7 +36,7 @@ namespace Squidex.Messaging
 
             foreach (var collectionName in collections.Where(x => collectionsToClean.Any(p => p(x))))
             {
-                Database.DropCollection(collectionName);
+                // Database.DropCollection(collectionName);
             }
         }
     }
