@@ -5,10 +5,10 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Messaging.Implementation
+namespace Squidex.Messaging.Mongo
 {
-    public sealed class DefaultClock : IClock
+    internal sealed class MongoSubscriptionValue
     {
-        public DateTime UtcNow => DateTime.UtcNow;
+        public string InstanceName { get; init; }
     }
 }

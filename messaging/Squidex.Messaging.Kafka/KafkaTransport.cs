@@ -12,7 +12,7 @@ using Squidex.Messaging.Internal;
 
 namespace Squidex.Messaging.Kafka
 {
-    public sealed class KafkaTransport : ITransport
+    public sealed class KafkaTransport : IMessagingTransport
     {
         private readonly KafkaOwner owner;
         private readonly ILogger<KafkaTransport> log;

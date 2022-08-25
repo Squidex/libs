@@ -13,6 +13,8 @@ namespace Squidex.Messaging.Implementation
 
         public const string Type = "messaging.type";
 
+        public const string Format = "messaging.format";
+
         public const string TimeCreated = "messaging.created";
 
         public const string TimeExpires = "messaging.expires";

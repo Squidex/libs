@@ -7,7 +7,7 @@
 
 namespace Squidex.Messaging.Implementation.Null
 {
-    public sealed class NullTransport : ITransport
+    public sealed class NullTransport : IMessagingTransport
     {
         public Task InitializeAsync(
             CancellationToken ct)

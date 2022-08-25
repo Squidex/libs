@@ -21,9 +21,15 @@ namespace Squidex.Messaging.Mongo
         {
             public string Id { get; set; }
 
-            public string Queue { get; set; }
+            public string Group { get; set; }
 
-            public string Topic { get; set; }
+            public string Key { get; set; }
+
+            public string ValueType { get; set; }
+
+            public string ValueFormat { get; set; }
+
+            public byte[] ValueData { get; set; }
 
             public TimeSpan ExpiresAfter { get; set; }
 
@@ -42,18 +48,18 @@ namespace Squidex.Messaging.Mongo
                 new[]
                 {
                     new CreateIndexModel<Entity>(
-                        Builders<Entity>.IndexKeys.Ascending(x => x.Topic)),
-                    new CreateIndexModel<Entity>(
-                        Builders<Entity>.IndexKeys.Ascending(x => x.Queue))
+                        Builders<Entity>.IndexKeys
+                            .Ascending(x => x.Group)
+                            .Ascending(x => x.Key))
                 }, ct);
         }
 
-        public async Task<IReadOnlyList<string>> GetSubscriptionsAsync(string topic, DateTime now,
+        public async Task<IReadOnlyList<(string Key, SerializedObject Value)>> GetSubscriptionsAsync(string group, DateTime now,
             CancellationToken ct)
         {
-            var result = new List<string>();
+            var result = new List<(string, SerializedObject)>();
 
-            var cursor = await collection.Find(x => x.Topic == topic).ToCursorAsync(ct);
+            var cursor = await collection.Find(x => x.Group == group).ToCursorAsync(ct);
 
             while (await cursor.MoveNextAsync(ct))
             {
@@ -61,7 +67,9 @@ namespace Squidex.Messaging.Mongo
                 {
                     if (!IsExpired(item, now))
                     {
-                        result.Add(item.Queue);
+                        var value = new SerializedObject(item.ValueData, item.ValueType, item.ValueFormat);
+
+                        result.Add((item.Key, value));
                     }
                 }
             }
@@ -69,16 +77,19 @@ namespace Squidex.Messaging.Mongo
             return result;
         }
 
-        public Task SubscribeAsync(string topic, string queue, DateTime now, TimeSpan expiresAfter,
+        public Task SubscribeAsync(string group, string key, SerializedObject value, DateTime now, TimeSpan expiresAfter,
             CancellationToken ct)
         {
-            string id = GetId(topic, queue);
+            string id = GetId(group, key);
 
             return collection.UpdateOneAsync(x => x.Id == id,
                 Builders<Entity>.Update
-                    .SetOnInsert(x => x.Topic, topic)
-                    .SetOnInsert(x => x.Queue, queue)
+                    .SetOnInsert(x => x.Group, group)
+                    .SetOnInsert(x => x.Key, key)
                     .Set(x => x.ExpiresAfter, expiresAfter)
+                    .Set(x => x.ValueType, value.TypeString)
+                    .Set(x => x.ValueFormat, value.Format)
+                    .Set(x => x.ValueData, value.Data)
                     .Set(x => x.LastActivity, now),
                 new UpdateOptions
                 {
@@ -95,10 +106,12 @@ namespace Squidex.Messaging.Mongo
             return collection.DeleteOneAsync(x => x.Id == id, ct);
         }
 
-        public Task UpdateAliveAsync(string[] queues, DateTime now,
+        public Task UpdateAliveAsync(string group, string[] queues, DateTime now,
             CancellationToken ct)
         {
-            return collection.UpdateOneAsync(x => queues.Contains(x.Queue),
+            var ids = queues.Select(x => GetId(group, x)).ToList();
+
+            return collection.UpdateManyAsync(x => ids.Contains(x.Id),
                 Builders<Entity>.Update
                     .Set(x => x.LastActivity, now),
                 null, ct);

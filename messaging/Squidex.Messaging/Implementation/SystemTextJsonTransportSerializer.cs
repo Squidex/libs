@@ -9,11 +9,13 @@ using System.Text.Json;
 
 namespace Squidex.Messaging.Implementation
 {
-    public sealed class SystemTextJsonTransportSerializer : ITransportSerializer
+    public sealed class SystemTextJsonTransportSerializer : TransportSerializerBase
     {
         private readonly JsonSerializerOptions? options;
 
-        public SystemTextJsonTransportSerializer(JsonSerializerOptions? options)
+        protected override string Format => "text/json";
+
+        public SystemTextJsonTransportSerializer(JsonSerializerOptions? options = null)
         {
             this.options = options;
         }
@@ -25,18 +27,18 @@ namespace Squidex.Messaging.Implementation
             configure?.Invoke(options);
         }
 
-        public object? Deserialize(byte[] data, Type type)
+        protected override object? DeserializeCore(byte[] data, Type type)
         {
             using var streamBuffer = new MemoryStream(data);
 
             return JsonSerializer.Deserialize(streamBuffer, type, options);
         }
 
-        public byte[] Serialize(object? value)
+        protected override byte[] SerializeCore(object message)
         {
             using var streamBuffer = new MemoryStream();
 
-            JsonSerializer.Serialize(streamBuffer, value, options);
+            JsonSerializer.Serialize(streamBuffer, message, options);
 
             return streamBuffer.ToArray();
         }

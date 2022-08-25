@@ -16,7 +16,7 @@ using GooglePushConfig = Google.Cloud.PubSub.V1.PushConfig;
 
 namespace Squidex.Messaging.GoogleCloud
 {
-    public sealed class GooglePubSubTransport : ITransport
+    public sealed class GooglePubSubTransport : IMessagingTransport
     {
         private readonly Dictionary<string, Task<PublisherClient>> publishers = new Dictionary<string, Task<PublisherClient>>();
         private readonly GooglePubSubTransportOptions options;

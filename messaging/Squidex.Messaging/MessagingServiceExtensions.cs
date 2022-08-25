@@ -11,6 +11,7 @@ using Squidex.Messaging;
 using Squidex.Messaging.Implementation;
 using Squidex.Messaging.Implementation.InMemory;
 using Squidex.Messaging.Implementation.Null;
+using Squidex.Messaging.Internal;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -23,22 +24,19 @@ namespace Microsoft.Extensions.DependencyInjection
                 configure?.Invoke(options);
             });
 
-            services.TryAddSingleton<ITransportSerializer,
+            services.TryAddSingleton<IMessagingSerializer,
                 NewtonsoftJsonTransportSerializer>();
-
-            services.TryAddSingleton<IBackgroundProcess,
-                SubscriptionCleaner>();
 
             services.TryAddSingleton<IMessageBus,
                 DefaultMessageBus>();
 
-            services.TryAddSingleton<ISubscriptionManager,
+            services.TryAddSingleton<IMessagingSubscriptions,
                 DefaultSubscriptionManager>();
 
             services.TryAddSingleton<ISubscriptionStore,
                 InMemorySubscriptionStore>();
 
-            services.TryAddSingleton<ITransport,
+            services.TryAddSingleton<IMessagingTransport,
                 NullTransport>();
 
             services.TryAddSingleton<IInstanceNameProvider,

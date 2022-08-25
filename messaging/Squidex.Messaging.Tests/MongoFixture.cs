@@ -36,7 +36,7 @@ namespace Squidex.Messaging
 
             foreach (var collectionName in collections.Where(x => collectionsToClean.Any(p => p(x))))
             {
-                // Database.DropCollection(collectionName);
+                Database.DropCollection(collectionName);
             }
         }
     }

@@ -25,10 +25,10 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             services.AddSingletonAs<MongoTransport>()
-                .As<ITransport>();
+                .As<IMessagingTransport>();
 
             services.AddSingletonAs<MongoSubscriptionStore>()
-                .As<ISubscriptionStore>();
+                .As<IMessagingSubscriptionStore>();
 
             return services;
         }

@@ -23,7 +23,7 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             services.AddSingletonAs<RedisTransport>()
-                .As<ITransport>();
+                .As<IMessagingTransport>();
 
             return services;
         }

@@ -7,7 +7,7 @@
 
 using Microsoft.Extensions.Logging;
 
-namespace Squidex.Messaging.Implementation
+namespace Squidex.Messaging.Internal
 {
     public sealed class SimpleTimer : IAsyncDisposable
     {

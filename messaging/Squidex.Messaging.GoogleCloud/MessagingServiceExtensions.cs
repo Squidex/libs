@@ -23,7 +23,7 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             services.AddSingletonAs<GooglePubSubTransport>()
-                .As<ITransport>();
+                .As<IMessagingTransport>();
 
             return services;
         }

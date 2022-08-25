@@ -10,9 +10,11 @@ using Newtonsoft.Json;
 
 namespace Squidex.Messaging.Implementation
 {
-    public sealed class NewtonsoftJsonTransportSerializer : ITransportSerializer
+    public sealed class NewtonsoftJsonTransportSerializer : TransportSerializerBase
     {
         private readonly JsonSerializer serializer;
+
+        protected override string Format => "text/json";
 
         public NewtonsoftJsonTransportSerializer()
         {
@@ -24,7 +26,7 @@ namespace Squidex.Messaging.Implementation
             serializer = JsonSerializer.CreateDefault(settings);
         }
 
-        public object? Deserialize(byte[] data, Type type)
+        protected override object? DeserializeCore(byte[] data, Type type)
         {
             using var streamBuffer = new MemoryStream(data);
             using var streamReader = new StreamReader(streamBuffer, Encoding.UTF8);
@@ -34,7 +36,7 @@ namespace Squidex.Messaging.Implementation
             return serializer.Deserialize(jsonReader, type);
         }
 
-        public byte[] Serialize(object? value)
+        protected override byte[] SerializeCore(object message)
         {
             using var streamBuffer = new MemoryStream();
 
@@ -42,7 +44,7 @@ namespace Squidex.Messaging.Implementation
             {
                 using var jsonWriter = new JsonTextWriter(streamWriter);
 
-                serializer.Serialize(jsonWriter, value);
+                serializer.Serialize(jsonWriter, message);
 
                 streamBuffer.Position = 0;
             }

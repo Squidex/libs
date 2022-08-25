@@ -8,7 +8,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
 using System.Text;
-using Squidex.Assets.Internal;
 
 namespace Squidex.Assets.Remote
 {

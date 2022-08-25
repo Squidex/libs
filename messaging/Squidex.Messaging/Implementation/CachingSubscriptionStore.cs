@@ -9,30 +9,30 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace Squidex.Messaging.Implementation
 {
-    public sealed class CachingSubscriptionStore : ISubscriptionStore
+    public sealed class CachingSubscriptionStore : IMessagingSubscriptionStore
     {
-        private readonly ISubscriptionStore inner;
+        private readonly IMessagingSubscriptionStore inner;
         private readonly IMemoryCache cache;
         private readonly TimeSpan cacheDuration;
 
-        public CachingSubscriptionStore(ISubscriptionStore inner, IMemoryCache cache, TimeSpan cacheDuration)
+        public CachingSubscriptionStore(IMessagingSubscriptionStore inner, IMemoryCache cache, TimeSpan cacheDuration)
         {
             this.inner = inner;
             this.cache = cache;
             this.cacheDuration = cacheDuration;
         }
 
-        public async Task<IReadOnlyList<string>> GetSubscriptionsAsync(string topic, DateTime now,
+        public async Task<IReadOnlyList<(string Key, SerializedObject Value)>> GetSubscriptionsAsync(string group, DateTime now,
             CancellationToken ct)
         {
-            var cacheKey = CacheKey(topic);
+            var cacheKey = CacheKey(group);
             try
             {
                 return await cache.GetOrCreate(cacheKey, entry =>
                 {
                     entry.AbsoluteExpirationRelativeToNow = cacheDuration;
 
-                    return inner.GetSubscriptionsAsync(topic, now, ct);
+                    return inner.GetSubscriptionsAsync(group, now, ct);
                 });
             }
             catch
@@ -42,26 +42,26 @@ namespace Squidex.Messaging.Implementation
             }
         }
 
-        public async Task SubscribeAsync(string topic, string queue, DateTime now, TimeSpan expiresAfter,
+        public async Task SubscribeAsync(string group, string key, SerializedObject value, DateTime now, TimeSpan expiresAfter,
             CancellationToken ct)
         {
-            await inner.SubscribeAsync(topic, queue, now, expiresAfter, ct);
+            await inner.SubscribeAsync(group, key, value, now, expiresAfter, ct);
 
-            cache.Remove(CacheKey(topic));
+            cache.Remove(CacheKey(group));
         }
 
-        public async Task UnsubscribeAsync(string topic, string queue,
+        public async Task UnsubscribeAsync(string group, string key,
             CancellationToken ct)
         {
-            await inner.UnsubscribeAsync(topic, queue, ct);
+            await inner.UnsubscribeAsync(group, key, ct);
 
-            cache.Remove(CacheKey(topic));
+            cache.Remove(CacheKey(group));
         }
 
-        public Task UpdateAliveAsync(string[] queues, DateTime now,
+        public Task UpdateAliveAsync(string group, string[] keys, DateTime now,
             CancellationToken ct)
         {
-            return inner.UpdateAliveAsync(queues, now, ct);
+            return inner.UpdateAliveAsync(group, keys, now, ct);
         }
 
         public Task CleanupAsync(DateTime now,
@@ -70,9 +70,9 @@ namespace Squidex.Messaging.Implementation
             return inner.CleanupAsync(now, ct);
         }
 
-        private static string CacheKey(string topic)
+        private static string CacheKey(string group)
         {
-            return $"Squidex.Messaging.Subcriptions_{topic}";
+            return $"Squidex.Messaging.Subcriptions_{group}";
         }
     }
 }

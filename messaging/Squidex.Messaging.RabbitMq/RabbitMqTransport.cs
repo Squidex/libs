@@ -11,7 +11,7 @@ using Squidex.Messaging.Internal;
 
 namespace Squidex.Messaging.RabbitMq
 {
-    public sealed class RabbitMqTransport : ITransport
+    public sealed class RabbitMqTransport : IMessagingTransport
     {
         private readonly RabbitMqOwner owner;
         private readonly ILogger<RabbitMqTransport> log;
