@@ -12,7 +12,7 @@ namespace Squidex.Messaging
 {
     public record struct SerializedObject(byte[] Data, string TypeString, string Format);
 
-    public interface ITransportSerializer
+    public interface IMessagingSerializer
     {
         (object Message, Type Type) Deserialize(SerializedObject source);
 

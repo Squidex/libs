@@ -31,9 +31,9 @@ namespace Microsoft.Extensions.DependencyInjection
                 DefaultMessageBus>();
 
             services.TryAddSingleton<IMessagingSubscriptions,
-                DefaultSubscriptionManager>();
+                DefaultMessagingSubscriptions>();
 
-            services.TryAddSingleton<ISubscriptionStore,
+            services.TryAddSingleton<IMessagingSubscriptionStore,
                 InMemorySubscriptionStore>();
 
             services.TryAddSingleton<IMessagingTransport,

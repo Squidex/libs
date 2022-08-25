@@ -168,7 +168,6 @@ namespace Squidex.Messaging.Implementation
                         startTime: created)?.Stop();
                 }
 
-
                 var typeString = transportResult.Message.Headers?.GetValueOrDefault(HeaderNames.Type);
 
                 if (string.IsNullOrWhiteSpace(typeString))

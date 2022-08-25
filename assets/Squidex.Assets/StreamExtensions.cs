@@ -7,6 +7,8 @@
 
 using System.Buffers;
 
+#pragma warning disable CA1835 // Prefer the 'Memory'-based overloads for 'ReadAsync' and 'WriteAsync'
+
 namespace Squidex.Assets
 {
     public static class StreamExtensions
@@ -36,7 +38,6 @@ namespace Squidex.Assets
 
                     ct.ThrowIfCancellationRequested();
 
-#pragma warning disable CA1835 // Prefer the 'Memory'-based overloads for 'ReadAsync' and 'WriteAsync'
                     var readLength = (int)Math.Min(buffer.Length, bytesLeft);
                     var readBytes = await source.ReadAsync(buffer, 0, readLength, ct);
 
@@ -50,7 +51,6 @@ namespace Squidex.Assets
                     ct.ThrowIfCancellationRequested();
 
                     await target.WriteAsync(buffer, 0, readBytes, ct);
-#pragma warning restore CA1835 // Prefer the 'Memory'-based overloads for 'ReadAsync' and 'WriteAsync'
                 }
             }
             finally

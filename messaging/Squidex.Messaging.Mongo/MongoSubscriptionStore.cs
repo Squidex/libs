@@ -13,7 +13,7 @@ using Squidex.Messaging.Implementation;
 
 namespace Squidex.Messaging.Mongo
 {
-    public sealed class MongoSubscriptionStore : ISubscriptionStore, IInitializable
+    public sealed class MongoSubscriptionStore : IMessagingSubscriptionStore, IInitializable
     {
         private readonly IMongoCollection<Entity> collection;
 

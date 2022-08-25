@@ -31,7 +31,7 @@ namespace Squidex.Messaging
                 .ReturnsLazily(() => now);
         }
 
-        public abstract Task<ISubscriptionStore> CreateSubscriptionStoreAsync();
+        public abstract Task<IMessagingSubscriptionStore> CreateSubscriptionStoreAsync();
 
         [Fact]
         public async Task Should_subscribe()
@@ -136,20 +136,20 @@ namespace Squidex.Messaging
             SetEquals(new[] { key1, key2 }.ToHashSet(), subscriptions.Select(x => x.Value.Value));
         }
 
-        private async Task<DefaultSubscriptionManager> CreateSubscriptionManagerAsync()
+        private async Task<DefaultMessagingSubscriptions> CreateSubscriptionManagerAsync()
         {
             var store = await CreateSubscriptionStoreAsync();
 
             var serviceProvider =
                 new ServiceCollection()
                     .AddLogging()
-                    .AddSingleton<DefaultSubscriptionManager>()
+                    .AddSingleton<DefaultMessagingSubscriptions>()
                     .AddSingleton(store)
                     .AddSingleton(clock)
-                    .AddSingleton<ITransportSerializer>(new SystemTextJsonTransportSerializer())
+                    .AddSingleton<IMessagingSerializer>(new SystemTextJsonTransportSerializer())
                     .BuildServiceProvider();
 
-            return serviceProvider.GetRequiredService<DefaultSubscriptionManager>();
+            return serviceProvider.GetRequiredService<DefaultMessagingSubscriptions>();
         }
 
         private static void SetEquals<T>(IEnumerable<T> expected, IEnumerable<T> actual)

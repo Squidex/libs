@@ -9,7 +9,7 @@ using Squidex.Messaging.Internal;
 
 namespace Squidex.Messaging.Implementation
 {
-    public abstract class TransportSerializerBase : ITransportSerializer
+    public abstract class TransportSerializerBase : IMessagingSerializer
     {
         protected abstract string Format { get; }
 

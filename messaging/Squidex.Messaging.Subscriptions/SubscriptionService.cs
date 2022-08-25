@@ -16,9 +16,8 @@ using Squidex.Messaging.Subscriptions.Messages;
 
 namespace Squidex.Messaging.Subscriptions
 {
-    public sealed class SubscriptionService : ISubscriptionService, IAsyncDisposable, IMessageHandler<SubscriptionsMessageBase>, IInitializable
+    public sealed class SubscriptionService : ISubscriptionService, IInitializable, IMessageHandler<SubscriptionsMessageBase>
     {
-        private const string Group = "Subscriptions";
         private readonly ConcurrentDictionary<Guid, IUntypedLocalSubscription> localSubscriptions = new ConcurrentDictionary<Guid, IUntypedLocalSubscription>();
         private readonly ConcurrentDictionary<Guid, SubscriptionEntry> clusterSubscriptions = new ConcurrentDictionary<Guid, SubscriptionEntry>();
         private readonly SubscriptionOptions options;
@@ -54,20 +53,21 @@ namespace Squidex.Messaging.Subscriptions
             cleanupTimer = new SimpleTimer(CleanupAsync, options.Value.SubscriptionUpdateTime, log);
         }
 
-        public ValueTask DisposeAsync()
-        {
-            return cleanupTimer.DisposeAsync();
-        }
-
         public async Task InitializeAsync(
             CancellationToken ct)
         {
-            var subscriptions = await messagingSubscriptions.GetSubscriptionsAsync<ISubscription>(Group, ct);
+            var subscriptions = await messagingSubscriptions.GetSubscriptionsAsync<ISubscription>(options.GroupName, ct);
 
             foreach (var (key, subscription) in subscriptions)
             {
                 SubscribeAsClusterSubscription(Guid.Parse(key), subscription);
             }
+        }
+
+        public Task ReleaseAsync(
+            CancellationToken ct)
+        {
+            return cleanupTimer.DisposeAsync().AsTask();
         }
 
         public async Task CleanupAsync(
@@ -168,7 +168,7 @@ namespace Squidex.Messaging.Subscriptions
 
             foreach (var id in await messageEvaluator.GetSubscriptionsAsync(message))
             {
-                if (localSubscriptions.TryGetValue(id, out var localSubscription))
+                if (!options.SendMessagesToSelf && localSubscriptions.TryGetValue(id, out var localSubscription))
                 {
                     localSubscription.OnNext(message);
                 }
@@ -184,7 +184,7 @@ namespace Squidex.Messaging.Subscriptions
                 return;
             }
 
-            await PublichCoreasync(remoteSubscriptionIds, message);
+            await PublishCoreAsync(remoteSubscriptionIds, message);
         }
 
         public async Task PublishWrapperAsync<T>(IPayloadWrapper<T> wrapper) where T : notnull
@@ -196,7 +196,7 @@ namespace Squidex.Messaging.Subscriptions
 
             foreach (var id in await messageEvaluator.GetSubscriptionsAsync(wrapper.Payload))
             {
-                if (localSubscriptions.TryGetValue(id, out var localSubscription))
+                if (!options.SendMessagesToSelf && localSubscriptions.TryGetValue(id, out var localSubscription))
                 {
                     if (!messageCreated)
                     {
@@ -231,20 +231,18 @@ namespace Squidex.Messaging.Subscriptions
                 return;
             }
 
-            await PublichCoreasync(remoteSubscriptionIds, messageValue!);
+            await PublishCoreAsync(remoteSubscriptionIds, messageValue!);
         }
 
-        private async Task PublichCoreasync<T>(List<Guid> remoteSubscriptionIds, T message) where T : notnull
+        private async Task PublishCoreAsync<T>(List<Guid> remoteSubscriptionIds, T message) where T : notnull
         {
             await messageBus.PublishAsync(new PayloadMessage<T>
             {
-                Payload = message!,
-
-                // Publish multiple subscription IDs together.
+                SubscriptionMessage = message!,
                 SubscriptionIds = remoteSubscriptionIds,
 
                 // Ensure that we do not publish to the the current instance.
-                SourceId = instanceName
+                SourceId = !options.SendMessagesToSelf ? instanceName : null!,
             });
         }
 
@@ -253,7 +251,7 @@ namespace Squidex.Messaging.Subscriptions
             var expires = options.SubscriptionExpirationTime;
 
             // Also store the subscription in the database to have them available for the next start.
-            messagingSubscriptions.SubscribeAsync(Group, id.ToString(), subscription, expires).Forget();
+            messagingSubscriptions.SubscribeAsync(options.GroupName, id.ToString(), subscription, expires).Forget();
 
             messageBus.PublishAsync(new SubscribeMessage<TSubscription>
             {
@@ -272,7 +270,7 @@ namespace Squidex.Messaging.Subscriptions
         internal void UnsubscribeCore(Guid id)
         {
             // Also remove the subscription from the store, so it does not get restored.
-            messagingSubscriptions.UnsubscribeAsync(Group, id.ToString()).Forget();
+            messagingSubscriptions.UnsubscribeAsync(options.GroupName, id.ToString()).Forget();
 
             messageBus.PublishAsync(new UnsubscribeMessage
             {

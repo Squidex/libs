@@ -18,8 +18,8 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             var channel = new ChannelName(channelName, ChannelType.Topic);
 
-            services.TryAddSingleton<ISubscriptionService,
-                SubscriptionService>();
+            services.AddSingletonAs<SubscriptionService>()
+                .As<ISubscriptionService>().As<IMessageHandler>();
 
             services.TryAddSingleton<IMessageEvaluator,
                 DefaultMessageEvaluator>();
