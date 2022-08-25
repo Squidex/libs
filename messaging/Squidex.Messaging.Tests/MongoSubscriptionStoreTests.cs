@@ -6,7 +6,6 @@
 // ==========================================================================
 
 using Microsoft.Extensions.Options;
-using Squidex.Messaging.Implementation;
 using Squidex.Messaging.Mongo;
 using Xunit;
 

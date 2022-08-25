@@ -9,7 +9,6 @@ using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Squidex.Hosting;
-using Squidex.Messaging.Implementation;
 
 namespace Squidex.Messaging.Mongo
 {

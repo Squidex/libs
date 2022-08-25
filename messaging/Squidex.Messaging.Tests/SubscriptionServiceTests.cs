@@ -15,9 +15,10 @@ using Xunit;
 
 namespace Squidex.Messaging
 {
+    [Trait("Category", "Dependencies")]
     public class SubscriptionServiceTests : IClassFixture<MongoFixture>
     {
-        private readonly string groupName = $"subscriptions-{Guid.NewGuid()}";
+        private readonly string groupName = $"group-{Guid.NewGuid()}";
 
         public MongoFixture _ { get; }
 
@@ -203,7 +204,7 @@ namespace Squidex.Messaging
                     .Configure<SubscriptionOptions>(options =>
                     {
                         options.GroupName = groupName;
-                        options.SendMessagesToSelf = true;
+                        options.SendMessagesToSelf = sendToSelf;
                     })
                     .BuildServiceProvider();
 
