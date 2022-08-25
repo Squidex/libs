@@ -7,7 +7,7 @@
 
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
-using Squidex.Messaging.Implementation;
+using Squidex.Messaging.Internal;
 using StackExchange.Redis;
 
 namespace Squidex.Messaging.Redis

@@ -6,7 +6,6 @@
 // ==========================================================================
 
 using Microsoft.Extensions.Options;
-using Squidex.Messaging.Implementation;
 using Squidex.Messaging.Mongo;
 using Xunit;
 
@@ -24,7 +23,7 @@ namespace Squidex.Messaging
             _ = fixture;
         }
 
-        public async override Task<ISubscriptionStore> CreateSubscriptionStoreAsync()
+        public async override Task<IMessagingSubscriptionStore> CreateSubscriptionStoreAsync()
         {
             var options = Options.Create(new MongoSubscriptionStoreOptions());
 

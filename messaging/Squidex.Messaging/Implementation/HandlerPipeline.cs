@@ -9,7 +9,7 @@ using System.Reflection;
 
 namespace Squidex.Messaging.Implementation
 {
-    internal sealed class HandlerPipeline
+    public sealed class HandlerPipeline
     {
         private readonly Dictionary<Type, List<Func<object, CancellationToken, Task>>> handlersByType = new Dictionary<Type, List<Func<object, CancellationToken, Task>>>();
 
@@ -53,12 +53,22 @@ namespace Squidex.Messaging.Implementation
 
         public IEnumerable<Func<object, CancellationToken, Task>> GetHandlers(Type type)
         {
-            if (handlersByType.TryGetValue(type, out var handlers))
+            HashSet<Func<object, CancellationToken, Task>>? result = null;
+
+            foreach (var item in handlersByType)
             {
-                return handlers;
+                if (type.IsAssignableTo(item.Key))
+                {
+                    result ??= new HashSet<Func<object, CancellationToken, Task>>();
+
+                    foreach (var handler in item.Value)
+                    {
+                        result.Add(handler);
+                    }
+                }
             }
 
-            return Enumerable.Empty<Func<object, CancellationToken, Task>>();
+            return result ?? Enumerable.Empty<Func<object, CancellationToken, Task>>();
         }
 
         private static Func<object, CancellationToken, Task>? BuildCaller<T>(IMessageHandler handler)

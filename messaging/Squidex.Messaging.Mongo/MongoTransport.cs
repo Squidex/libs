@@ -9,19 +9,20 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using Squidex.Messaging.Implementation;
+using Squidex.Messaging.Internal;
 
 namespace Squidex.Messaging.Mongo
 {
-    public sealed class MongoTransport : ITransport
+    public sealed class MongoTransport : IMessagingTransport
     {
         private readonly Dictionary<string, Task<IMongoCollection<MongoMessage>>> collections = new Dictionary<string, Task<IMongoCollection<MongoMessage>>>();
         private readonly MongoTransportOptions options;
         private readonly IMongoDatabase database;
-        private readonly ISubscriptionManager subscriptions;
+        private readonly IMessagingSubscriptions subscriptions;
         private readonly IClock clock;
         private readonly ILogger<MongoTransport> log;
 
-        public MongoTransport(IMongoDatabase database, ISubscriptionManager subscriptions,
+        public MongoTransport(IMongoDatabase database, IMessagingSubscriptions subscriptions,
             IOptions<MongoTransportOptions> options, IClock clock, ILogger<MongoTransport> log)
         {
             this.options = options.Value;
@@ -60,7 +61,12 @@ namespace Squidex.Messaging.Mongo
 
             if (channel.Type == ChannelType.Topic)
             {
-                subscription = await subscriptions.SubscribeAsync(channel.Name, instanceName, ct);
+                var value = new MongoSubscriptionValue
+                {
+                    InstanceName = instanceName
+                };
+
+                subscription = await subscriptions.SubscribeAsync(channel.Name, instanceName, value, this.options.SubscriptionExpiration, ct);
             }
 
             IAsyncDisposable result = new MongoTransportCleaner(collectionInstance, collectionName,
@@ -87,7 +93,9 @@ namespace Squidex.Messaging.Mongo
             }
             else
             {
-                queues = await subscriptions.GetSubscriptionsAsync(channel.Name, ct);
+                var subscribed = await subscriptions.GetSubscriptionsAsync<MongoSubscriptionValue>(channel.Name, ct);
+
+                queues = subscribed.Select(x => x.Value.InstanceName).ToList();
             }
 
             if (queues.Count == 0)

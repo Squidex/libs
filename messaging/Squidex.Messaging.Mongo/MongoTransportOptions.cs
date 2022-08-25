@@ -19,6 +19,8 @@ namespace Squidex.Messaging.Mongo
 
         public TimeSpan PollingInterval { get; set; } = TimeSpan.FromSeconds(1);
 
+        public TimeSpan SubscriptionExpiration { get; set; } = TimeSpan.FromSeconds(30);
+
         public IEnumerable<ConfigurationError> Validate()
         {
             if (string.IsNullOrWhiteSpace(CollectionName))

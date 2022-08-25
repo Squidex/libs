@@ -14,7 +14,7 @@ namespace Squidex.Messaging
     public delegate Task MessageTransportCallback(TransportResult transportResult, IMessageAck ack,
             CancellationToken ct);
 
-    public interface ITransport : IInitializable
+    public interface IMessagingTransport : IInitializable
     {
         Task<IAsyncDisposable?> CreateChannelAsync(ChannelName channel, string instanceName, bool consume, ProducerOptions options,
             CancellationToken ct);

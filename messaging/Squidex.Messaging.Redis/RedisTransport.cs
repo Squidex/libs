@@ -13,7 +13,7 @@ using StackExchange.Redis;
 
 namespace Squidex.Messaging.Redis
 {
-    public sealed class RedisTransport : ITransport
+    public sealed class RedisTransport : IMessagingTransport
     {
         private readonly ILogger<RedisTransport> log;
         private readonly RedisTransportOptions options;

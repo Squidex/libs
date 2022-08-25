@@ -26,7 +26,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AsSelf();
 
             services.AddSingletonAs<RabbitMqTransport>()
-                .As<ITransport>();
+                .As<IMessagingTransport>();
 
             return services;
         }

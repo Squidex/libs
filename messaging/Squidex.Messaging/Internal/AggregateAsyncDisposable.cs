@@ -5,7 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Messaging.Implementation
+namespace Squidex.Messaging.Internal
 {
     public sealed class AggregateAsyncDisposable : IAsyncDisposable
     {

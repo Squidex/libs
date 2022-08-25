@@ -9,64 +9,67 @@ using System.Collections.Concurrent;
 
 namespace Squidex.Messaging.Implementation.InMemory
 {
-    public class InMemorySubscriptionStore : ISubscriptionStore
+    public class InMemorySubscriptionStore : IMessagingSubscriptionStore
     {
-        private readonly ConcurrentDictionary<(string Topic, string Queue), Subscription> subscriptions = new ();
+        private readonly ConcurrentDictionary<(string Group, string Key), Subscription> subscriptions = new ();
 
         private sealed class Subscription
         {
             public TimeSpan Expires { get; set; }
 
             public DateTime LastUpdate { get; set; }
+
+            public SerializedObject Value { get; set; }
         }
 
-        public Task<IReadOnlyList<string>> GetSubscriptionsAsync(string topic, DateTime now,
+        public Task<IReadOnlyList<(string Key, SerializedObject Value)>> GetSubscriptionsAsync(string group, DateTime now,
             CancellationToken ct)
         {
-            var result = new List<string>();
+            var result = new List<(string Key, SerializedObject Value)>();
 
             foreach (var (key, subscription) in subscriptions)
             {
-                if (key.Topic == topic && !IsExpired(subscription, now))
+                if (key.Group == group && !IsExpired(subscription, now))
                 {
-                    result.Add(key.Queue);
+                    result.Add((key.Key, subscription.Value));
                 }
             }
 
-            return Task.FromResult<IReadOnlyList<string>>(result);
+            return Task.FromResult<IReadOnlyList<(string Key, SerializedObject Value)>>(result);
         }
 
-        public Task SubscribeAsync(string topic, string queue, DateTime now, TimeSpan expiresAfter,
+        public Task SubscribeAsync(string group, string key, SerializedObject value, DateTime now, TimeSpan expiresAfter,
             CancellationToken ct)
         {
-            subscriptions.AddOrUpdate((topic, queue), (key, arg) =>
+            subscriptions.AddOrUpdate((group, key), (key, arg) =>
             {
-                return new Subscription { Expires = arg.expiresAfter, LastUpdate = arg.now };
+                return new Subscription { Expires = arg.expiresAfter, LastUpdate = arg.now, Value = arg.value };
             },
             (key, subscription, arg) =>
             {
                 subscription.Expires = arg.expiresAfter;
+                subscription.Value = arg.value;
 
                 return subscription;
-            }, (expiresAfter, now));
+            }, (expiresAfter, now, value));
 
             return Task.CompletedTask;
         }
 
-        public Task UnsubscribeAsync(string topic, string queue,
+        public Task UnsubscribeAsync(string group, string key,
             CancellationToken ct)
         {
-            subscriptions.TryRemove((topic, queue), out _);
+            subscriptions.TryRemove((group, key), out _);
 
             return Task.CompletedTask;
         }
 
-        public Task UpdateAliveAsync(string[] queues, DateTime now,
+        public Task UpdateAliveAsync(string group, string[] keys, DateTime now,
             CancellationToken ct)
         {
             foreach (var (key, subscription) in subscriptions)
             {
-                if (queues.Contains(key.Queue))
+                if (key.Group == group && keys.Contains(key.Key))
                 {
                     subscription.LastUpdate = now;
                 }

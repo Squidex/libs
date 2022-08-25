@@ -15,6 +15,6 @@ namespace Squidex.Messaging
 
         public TimeSpan SubscriptionUpdateInterval { get; set; } = TimeSpan.FromSeconds(30);
 
-        public TimeSpan SubscriptionTimeout { get; set; } = TimeSpan.FromMinutes(10);
+        public TimeSpan SubscriptionCleanupInterval { get; set; } = TimeSpan.FromSeconds(60);
     }
 }

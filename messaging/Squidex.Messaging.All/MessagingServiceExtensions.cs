@@ -6,8 +6,6 @@
 // ==========================================================================
 
 using Microsoft.Extensions.Configuration;
-using Squidex.Messaging;
-using Squidex.Messaging.RabbitMq;
 
 namespace Microsoft.Extensions.DependencyInjection
 {

@@ -5,12 +5,10 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Messaging
+namespace Squidex.Messaging.Internal
 {
-    public interface ITransportSerializer
+    public interface IClock
     {
-        object? Deserialize(byte[] data, Type type);
-
-        byte[] Serialize(object? value);
+        DateTime UtcNow { get; }
     }
 }

@@ -8,7 +8,7 @@
 using System.Linq.Expressions;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
-using Squidex.Messaging.Implementation;
+using Squidex.Messaging.Internal;
 
 namespace Squidex.Messaging.Mongo
 {

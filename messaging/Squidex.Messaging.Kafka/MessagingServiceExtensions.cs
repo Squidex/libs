@@ -26,7 +26,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AsSelf();
 
             services.AddSingletonAs<KafkaTransport>()
-                .As<ITransport>();
+                .As<IMessagingTransport>();
 
             return services;
         }

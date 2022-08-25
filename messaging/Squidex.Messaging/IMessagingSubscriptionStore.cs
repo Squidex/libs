@@ -5,20 +5,20 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Messaging.Implementation
+namespace Squidex.Messaging
 {
-    public interface ISubscriptionStore
+    public interface IMessagingSubscriptionStore
     {
-        Task<IReadOnlyList<string>> GetSubscriptionsAsync(string topic, DateTime now,
+        Task<IReadOnlyList<(string Key, SerializedObject Value)>> GetSubscriptionsAsync(string group, DateTime now,
             CancellationToken ct);
 
-        Task SubscribeAsync(string topic, string queue, DateTime now, TimeSpan expiresAfter,
+        Task SubscribeAsync(string group, string key, SerializedObject value, DateTime now, TimeSpan expiresAfter,
             CancellationToken ct);
 
-        Task UnsubscribeAsync(string topic, string queue,
+        Task UnsubscribeAsync(string group, string key,
             CancellationToken ct);
 
-        Task UpdateAliveAsync(string[] queues, DateTime now,
+        Task UpdateAliveAsync(string group, string[] keys, DateTime now,
             CancellationToken ct);
 
         Task CleanupAsync(DateTime now,

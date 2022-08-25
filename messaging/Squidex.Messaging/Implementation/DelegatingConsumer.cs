@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Squidex.Hosting;
 using Squidex.Messaging.Implementation.Scheduler;
-using ITransportList = System.Collections.Generic.IEnumerable<Squidex.Messaging.ITransport>;
+using IMessagingTransports = System.Collections.Generic.IEnumerable<Squidex.Messaging.IMessagingTransport>;
 
 namespace Squidex.Messaging.Implementation
 {
@@ -18,41 +18,41 @@ namespace Squidex.Messaging.Implementation
     {
         private readonly string instanceName;
         private readonly string activity;
-        private readonly ChannelName channel;
         private readonly List<IAsyncDisposable> openSubscriptions = new List<IAsyncDisposable>();
+        private readonly ChannelName channelName;
         private readonly ChannelOptions channelOptions;
         private readonly HandlerPipeline pipeline;
         private readonly IScheduler scheduler;
-        private readonly ITransportSerializer transportSerializer;
-        private readonly ITransport transportAdapter;
+        private readonly IMessagingSerializer messagingSerializer;
+        private readonly IMessagingTransport messagingTransport;
         private readonly ILogger<DelegatingConsumer> log;
         private IAsyncDisposable? channelDisposable;
         private bool isReleased;
 
-        public string Name => $"Messaging.Consumer({channel.Name})";
+        public string Name => $"Messaging.Consumer({channelName.Name})";
 
-        public ChannelName Channel => channel;
+        public ChannelName Channel => channelName;
 
         public int Order => int.MaxValue;
 
         public DelegatingConsumer(
-            ChannelName channel,
+            ChannelName channelName,
             HandlerPipeline pipeline,
             IInstanceNameProvider instanceName,
-            ITransportList transportList,
-            ITransportSerializer transportSerializer,
+            IMessagingTransports messagingTransports,
+            IMessagingSerializer messagingSerializer,
             IOptionsMonitor<ChannelOptions> channelOptions,
             ILogger<DelegatingConsumer> log)
         {
-            activity = $"Messaging.Consume({channel.Name})";
+            activity = $"Messaging.Consume({channelName.Name})";
 
-            this.channel = channel;
-            this.channelOptions = channelOptions.Get(channel.ToString());
+            this.channelName = channelName;
+            this.channelOptions = channelOptions.Get(channelName.ToString());
             this.instanceName = instanceName.Name;
+            this.messagingSerializer = messagingSerializer;
+            this.messagingTransport = this.channelOptions.SelectTransport(messagingTransports, channelName);
             this.pipeline = pipeline;
             this.scheduler = this.channelOptions.Scheduler ?? InlineScheduler.Instance;
-            this.transportAdapter = this.channelOptions.SelectTransport(transportList, channel);
-            this.transportSerializer = transportSerializer;
             this.log = log;
         }
 
@@ -62,11 +62,11 @@ namespace Squidex.Messaging.Implementation
             if (pipeline.HasHandlers)
             {
                 // Manage the lifetime of the channel here, so we do not have to do it in the transport.
-                channelDisposable = await transportAdapter.CreateChannelAsync(channel, instanceName, true, channelOptions, ct);
+                channelDisposable = await messagingTransport.CreateChannelAsync(channelName, instanceName, true, channelOptions, ct);
 
                 for (var i = 0; i < channelOptions.NumSubscriptions; i++)
                 {
-                    var subscription = await transportAdapter.SubscribeAsync(channel, instanceName, OnMessageAsync, ct);
+                    var subscription = await messagingTransport.SubscribeAsync(channelName, instanceName, OnMessageAsync, ct);
 
                     openSubscriptions.Add(subscription);
                 }
@@ -89,31 +89,25 @@ namespace Squidex.Messaging.Implementation
             }
         }
 
-        private async Task OnScheduledMessage((Type type, TransportResult TtransportResult, IMessageAck Ack) args,
+        private async Task OnScheduledMessage((SerializedObject source, TransportResult transportResult, IMessageAck Ack) args,
             CancellationToken ct)
         {
-            var (type, transportResult, ack) = args;
+            var (source, transportResult, ack) = args;
             try
             {
-                object? message = null;
-
+                (object Message, Type Type) deserialized;
                 try
                 {
-                    message = transportSerializer.Deserialize(transportResult.Message.Data, type);
+                    deserialized = messagingSerializer.Deserialize(source);
                 }
                 catch (Exception ex)
                 {
-                    log.LogError(ex, "Failed to deserialize message with type {type}.", type);
+                    // The message is broken, we cannot handle it, even if we would retry.
+                    log.LogError(ex, "Failed to deserialize message with type {type}.", source.TypeString);
                     return;
                 }
 
-                if (message == null)
-                {
-                    log.LogError("Failed to deserialize message with type {type}.", type);
-                    return;
-                }
-
-                var handlers = pipeline.GetHandlers(type);
+                var handlers = pipeline.GetHandlers(deserialized.Type);
 
                 foreach (var handler in handlers)
                 {
@@ -128,7 +122,7 @@ namespace Squidex.Messaging.Implementation
                         {
                             using (var linked = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, ct))
                             {
-                                await handler(message, linked.Token);
+                                await handler(deserialized.Message, linked.Token);
                             }
                         }
                     }
@@ -138,13 +132,13 @@ namespace Squidex.Messaging.Implementation
                     }
                     catch (Exception ex)
                     {
-                        log.LogError(ex, "Failed to consume message for system {system} with type {type}.", Name, type);
+                        log.LogError(ex, "Failed to consume message for system {system} with type {type}.", Name, source.TypeString);
                     }
                 }
             }
             catch (Exception ex)
             {
-                log.LogError(ex, "Failed to consume message with type {type}.", type);
+                log.LogError(ex, "Failed to consume message with type {type}.", source.TypeString);
             }
             finally
             {
@@ -174,7 +168,7 @@ namespace Squidex.Messaging.Implementation
                         startTime: created)?.Stop();
                 }
 
-                var typeString = transportResult.Message.Headers?.GetValueOrDefault(HeaderNames.Type) ?? string.Empty;
+                var typeString = transportResult.Message.Headers?.GetValueOrDefault(HeaderNames.Type);
 
                 if (string.IsNullOrWhiteSpace(typeString))
                 {
@@ -185,18 +179,10 @@ namespace Squidex.Messaging.Implementation
                     return;
                 }
 
-                var type = Type.GetType(typeString);
+                var valueFormat = transportResult.Message.Headers?.GetValueOrDefault(HeaderNames.Type) ?? "unknown";
+                var valueObject = new SerializedObject(transportResult.Message.Data, typeString, valueFormat);
 
-                if (type == null)
-                {
-                    // The message is broken, we cannot handle it, even if we would retry.
-                    await ack.OnSuccessAsync(transportResult, default);
-
-                    log.LogWarning("Message has invalid or unknown type {type}.", typeString);
-                    return;
-                }
-
-                await scheduler.ExecuteAsync((type, transportResult, ack), (args, ct) => OnScheduledMessage(args, ct), ct);
+                await scheduler.ExecuteAsync((valueObject, transportResult, ack), (args, ct) => OnScheduledMessage(args, ct), ct);
             }
         }
     }

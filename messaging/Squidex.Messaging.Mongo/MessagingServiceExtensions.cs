@@ -7,7 +7,6 @@
 
 using Microsoft.Extensions.Configuration;
 using Squidex.Messaging;
-using Squidex.Messaging.Implementation;
 using Squidex.Messaging.Mongo;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -25,10 +24,10 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             services.AddSingletonAs<MongoTransport>()
-                .As<ITransport>();
+                .As<IMessagingTransport>();
 
             services.AddSingletonAs<MongoSubscriptionStore>()
-                .As<ISubscriptionStore>();
+                .As<IMessagingSubscriptionStore>();
 
             return services;
         }

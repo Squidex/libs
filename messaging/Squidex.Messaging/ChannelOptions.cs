@@ -12,7 +12,7 @@ using Squidex.Messaging.Internal;
 
 namespace Squidex.Messaging
 {
-    public delegate ITransport TransportSelector(IEnumerable<ITransport> transports, ChannelName name);
+    public delegate IMessagingTransport TransportSelector(IEnumerable<IMessagingTransport> transports, ChannelName name);
 
     public sealed class ChannelOptions : ProducerOptions
     {
@@ -22,7 +22,7 @@ namespace Squidex.Messaging
 
         public IScheduler Scheduler { get; set; } = InlineScheduler.Instance;
 
-        public ITransport SelectTransport(IEnumerable<ITransport> transports, ChannelName name)
+        public IMessagingTransport SelectTransport(IEnumerable<IMessagingTransport> transports, ChannelName name)
         {
             var result = TransportSelector?.Invoke(transports, name);
 
