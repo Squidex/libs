@@ -30,9 +30,6 @@ namespace Microsoft.Extensions.DependencyInjection
             services.TryAddSingleton<IMessageBus,
                 DefaultMessageBus>();
 
-            services.TryAddSingleton<IMessagingSubscriptions,
-                DefaultMessagingSubscriptions>();
-
             services.TryAddSingleton<IMessagingSubscriptionStore,
                 InMemorySubscriptionStore>();
 
@@ -50,6 +47,9 @@ namespace Microsoft.Extensions.DependencyInjection
 
             services.AddSingleton<IInternalMessageProducer,
                 DelegatingProducer>();
+
+            services.AddSingletonAs<DefaultMessagingSubscriptions>()
+                .As<IMessagingSubscriptions>();
 
             return services;
         }

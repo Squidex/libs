@@ -7,51 +7,37 @@
 
 using System.Collections.Concurrent;
 
+#pragma warning disable RECS0082 // Parameter has the same name as a member and hides it
+#pragma warning disable SA1313 // Parameter names should begin with lower-case letter
+
 namespace Squidex.Messaging.Implementation.InMemory
 {
     public class InMemorySubscriptionStore : IMessagingSubscriptionStore
     {
         private readonly ConcurrentDictionary<(string Group, string Key), Subscription> subscriptions = new ();
 
-        private sealed class Subscription
-        {
-            public TimeSpan Expires { get; set; }
+        private sealed record Subscription(SerializedObject Value, DateTime Expiration);
 
-            public DateTime LastUpdate { get; set; }
-
-            public SerializedObject Value { get; set; }
-        }
-
-        public Task<IReadOnlyList<(string Key, SerializedObject Value)>> GetSubscriptionsAsync(string group, DateTime now,
+        public Task<IReadOnlyList<(string Key, SerializedObject Value, DateTime Expiration)>> GetSubscriptionsAsync(string group,
             CancellationToken ct)
         {
-            var result = new List<(string Key, SerializedObject Value)>();
+            var result = new List<(string Key, SerializedObject Value, DateTime Expiration)>();
 
-            foreach (var (key, subscription) in subscriptions)
+            foreach (var (key, subscription) in subscriptions.Where(x => x.Key.Group == group))
             {
-                if (key.Group == group && !IsExpired(subscription, now))
-                {
-                    result.Add((key.Key, subscription.Value));
-                }
+                 result.Add((key.Key, subscription.Value, subscription.Expiration));
             }
 
-            return Task.FromResult<IReadOnlyList<(string Key, SerializedObject Value)>>(result);
+            return Task.FromResult<IReadOnlyList<(string Key, SerializedObject Value, DateTime Expiration)>>(result);
         }
 
-        public Task SubscribeAsync(string group, string key, SerializedObject value, DateTime now, TimeSpan expiresAfter,
+        public Task SubscribeManyAsync(SubscribeRequest[] requests,
             CancellationToken ct)
         {
-            subscriptions.AddOrUpdate((group, key), (key, arg) =>
+            foreach (var (group, key, value, expiration) in requests)
             {
-                return new Subscription { Expires = arg.expiresAfter, LastUpdate = arg.now, Value = arg.value };
-            },
-            (key, subscription, arg) =>
-            {
-                subscription.Expires = arg.expiresAfter;
-                subscription.Value = arg.value;
-
-                return subscription;
-            }, (expiresAfter, now, value));
+                subscriptions[(group, key)] = new Subscription(value, expiration);
+            }
 
             return Task.CompletedTask;
         }
@@ -64,37 +50,18 @@ namespace Squidex.Messaging.Implementation.InMemory
             return Task.CompletedTask;
         }
 
-        public Task UpdateAliveAsync(string group, string[] keys, DateTime now,
-            CancellationToken ct)
-        {
-            foreach (var (key, subscription) in subscriptions)
-            {
-                if (key.Group == group && keys.Contains(key.Key))
-                {
-                    subscription.LastUpdate = now;
-                }
-            }
-
-            return Task.CompletedTask;
-        }
-
         public Task CleanupAsync(DateTime now,
             CancellationToken ct)
         {
             foreach (var (key, subscription) in subscriptions.ToList())
             {
-                if (IsExpired(subscription, now))
+                if (subscription.Expiration < now)
                 {
                     subscriptions.TryRemove(key, out _);
                 }
             }
 
             return Task.CompletedTask;
-        }
-
-        private static bool IsExpired(Subscription subscription, DateTime now)
-        {
-            return subscription.Expires > TimeSpan.Zero && subscription.LastUpdate + subscription.Expires < now;
         }
     }
 }

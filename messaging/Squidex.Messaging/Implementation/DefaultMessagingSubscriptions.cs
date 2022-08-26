@@ -14,7 +14,7 @@ namespace Squidex.Messaging.Implementation
 {
     public sealed class DefaultMessagingSubscriptions : IMessagingSubscriptions, IBackgroundProcess
     {
-        private readonly Dictionary<string, HashSet<string>> localSubscriptions = new ();
+        private readonly Dictionary<(string Group, string Key), (SerializedObject Value, TimeSpan Expires)> localSubscriptions = new ();
         private readonly MessagingOptions options;
         private readonly IMessagingSubscriptionStore messagingSubscriptionStore;
         private readonly IMessagingSerializer messagingSerializer;
@@ -53,44 +53,40 @@ namespace Squidex.Messaging.Implementation
             return Task.CompletedTask;
         }
 
-        public async Task UpdateAliveAsync(
+        public Task UpdateAliveAsync(
             CancellationToken ct)
         {
-            Dictionary<string, string[]>? targets = null;
+            KeyValuePair<(string Group, string Key), (SerializedObject Value, TimeSpan Expires)>[] subscriptions;
 
             lock (localSubscriptions)
             {
-                foreach (var (group, keys) in localSubscriptions.Where(x => x.Value.Count > 0))
-                {
-                    targets ??= new Dictionary<string, string[]>();
-                    targets[group] = keys.ToArray();
-                }
+                subscriptions = localSubscriptions.ToArray();
             }
 
-            if (targets == null)
+            if (subscriptions.Length == 0)
             {
-                return;
+                return Task.CompletedTask;
             }
 
             var now = clock.UtcNow;
 
-            foreach (var (group, keys) in targets)
-            {
-                try
-                {
-                    await messagingSubscriptionStore.UpdateAliveAsync(group, keys, clock.UtcNow, ct);
-                }
-                catch (Exception ex)
-                {
-                    log.LogWarning(ex, "Failed to update alive for {grou}.", group);
-                }
-            }
+            var requests =
+                subscriptions
+                    .Select(x =>
+                        new SubscribeRequest(
+                            x.Key.Group,
+                            x.Key.Key,
+                            x.Value.Value,
+                            CalculateExpiration(now, x.Value.Expires)))
+                        .ToArray();
+
+            return messagingSubscriptionStore.SubscribeManyAsync(requests, ct);
         }
 
-        public async Task CleanupAsync(
+        public Task CleanupAsync(
             CancellationToken ct)
         {
-            await messagingSubscriptionStore.CleanupAsync(clock.UtcNow, ct);
+            return messagingSubscriptionStore.CleanupAsync(clock.UtcNow, ct);
         }
 
         public async Task StopAsync(
@@ -116,8 +112,15 @@ namespace Squidex.Messaging.Implementation
         {
             var result = new Dictionary<string, T>();
 
-            foreach (var (key, value) in await messagingSubscriptionStore.GetSubscriptionsAsync(group, clock.UtcNow, ct))
+            var now = clock.UtcNow;
+
+            foreach (var (key, value, expiration) in await messagingSubscriptionStore.GetSubscriptionsAsync(group, ct))
             {
+                if (expiration < now)
+                {
+                    continue;
+                }
+
                 var deserialized = messagingSerializer.Deserialize(value);
 
                 if (deserialized.Message is T typed)
@@ -132,14 +135,16 @@ namespace Squidex.Messaging.Implementation
         public async Task<IAsyncDisposable> SubscribeAsync<T>(string group, string key, T value, TimeSpan expiresAfter,
             CancellationToken ct = default) where T : notnull
         {
-            lock (localSubscriptions)
-            {
-                localSubscriptions.GetOrAddNew(group).Add(key);
-            }
-
             var serialized = messagingSerializer.Serialize(value);
 
-            await messagingSubscriptionStore.SubscribeAsync(group, key, serialized, clock.UtcNow, expiresAfter, ct);
+            lock (localSubscriptions)
+            {
+                localSubscriptions[(group, key)] = (serialized, expiresAfter);
+            }
+
+            var request = new SubscribeRequest(group, key, serialized, CalculateExpiration(clock.UtcNow, expiresAfter));
+
+            await messagingSubscriptionStore.SubscribeManyAsync(new[] { request }, ct);
 
             return new DelegateAsyncDisposable(() =>
             {
@@ -152,10 +157,20 @@ namespace Squidex.Messaging.Implementation
         {
             lock (localSubscriptions)
             {
-                localSubscriptions.Remove(key);
+                localSubscriptions.Remove((group, key));
             }
 
             return messagingSubscriptionStore.UnsubscribeAsync(group, key, ct);
+        }
+
+        private static DateTime CalculateExpiration(DateTime now, TimeSpan expires)
+        {
+            if (expires <= TimeSpan.Zero)
+            {
+                return DateTime.MaxValue;
+            }
+
+            return now + expires;
         }
     }
 }

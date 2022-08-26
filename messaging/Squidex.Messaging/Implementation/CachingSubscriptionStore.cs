@@ -22,7 +22,7 @@ namespace Squidex.Messaging.Implementation
             this.cacheDuration = cacheDuration;
         }
 
-        public async Task<IReadOnlyList<(string Key, SerializedObject Value)>> GetSubscriptionsAsync(string group, DateTime now,
+        public async Task<IReadOnlyList<(string Key, SerializedObject Value, DateTime Expiration)>> GetSubscriptionsAsync(string group,
             CancellationToken ct)
         {
             var cacheKey = CacheKey(group);
@@ -32,7 +32,7 @@ namespace Squidex.Messaging.Implementation
                 {
                     entry.AbsoluteExpirationRelativeToNow = cacheDuration;
 
-                    return inner.GetSubscriptionsAsync(group, now, ct);
+                    return inner.GetSubscriptionsAsync(group, ct);
                 });
             }
             catch
@@ -42,12 +42,15 @@ namespace Squidex.Messaging.Implementation
             }
         }
 
-        public async Task SubscribeAsync(string group, string key, SerializedObject value, DateTime now, TimeSpan expiresAfter,
+        public async Task SubscribeManyAsync(SubscribeRequest[] requests,
             CancellationToken ct)
         {
-            await inner.SubscribeAsync(group, key, value, now, expiresAfter, ct);
+            await inner.SubscribeManyAsync(requests, ct);
 
-            cache.Remove(CacheKey(group));
+            foreach (var group in requests.Select(x => x.Group).Distinct())
+            {
+                cache.Remove(CacheKey(group));
+            }
         }
 
         public async Task UnsubscribeAsync(string group, string key,
@@ -56,12 +59,6 @@ namespace Squidex.Messaging.Implementation
             await inner.UnsubscribeAsync(group, key, ct);
 
             cache.Remove(CacheKey(group));
-        }
-
-        public Task UpdateAliveAsync(string group, string[] keys, DateTime now,
-            CancellationToken ct)
-        {
-            return inner.UpdateAliveAsync(group, keys, now, ct);
         }
 
         public Task CleanupAsync(DateTime now,

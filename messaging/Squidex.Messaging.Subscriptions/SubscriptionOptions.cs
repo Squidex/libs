@@ -13,7 +13,7 @@ namespace Squidex.Messaging.Subscriptions
 
         public TimeSpan SubscriptionUpdateTime { get; set; } = TimeSpan.FromMinutes(5);
 
-        public string GroupName { get; set; } = "subscriptions";
+        public string GroupName { get; set; } = "__subscriptions";
 
         public bool SendMessagesToSelf { get; set; }
     }

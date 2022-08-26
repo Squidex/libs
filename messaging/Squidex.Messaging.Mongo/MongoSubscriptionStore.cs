@@ -30,9 +30,7 @@ namespace Squidex.Messaging.Mongo
 
             public byte[] ValueData { get; set; }
 
-            public TimeSpan ExpiresAfter { get; set; }
-
-            public DateTime LastActivity { get; set; }
+            public DateTime Expiration { get; set; }
         }
 
         public MongoSubscriptionStore(IMongoDatabase database, IOptions<MongoSubscriptionStoreOptions> options)
@@ -49,14 +47,21 @@ namespace Squidex.Messaging.Mongo
                     new CreateIndexModel<Entity>(
                         Builders<Entity>.IndexKeys
                             .Ascending(x => x.Group)
-                            .Ascending(x => x.Key))
+                            .Ascending(x => x.Key)),
+                    new CreateIndexModel<Entity>(
+                        Builders<Entity>.IndexKeys
+                            .Ascending(x => x.Expiration),
+                        new CreateIndexOptions
+                        {
+                            ExpireAfter = TimeSpan.Zero
+                        })
                 }, ct);
         }
 
-        public async Task<IReadOnlyList<(string Key, SerializedObject Value)>> GetSubscriptionsAsync(string group, DateTime now,
+        public async Task<IReadOnlyList<(string Key, SerializedObject Value, DateTime Expiration)>> GetSubscriptionsAsync(string group,
             CancellationToken ct)
         {
-            var result = new List<(string, SerializedObject)>();
+            var result = new List<(string Key, SerializedObject Value, DateTime Expiration)>();
 
             var cursor = await collection.Find(x => x.Group == group).ToCursorAsync(ct);
 
@@ -64,91 +69,60 @@ namespace Squidex.Messaging.Mongo
             {
                 foreach (var item in cursor.Current)
                 {
-                    if (!IsExpired(item, now))
-                    {
-                        var value = new SerializedObject(item.ValueData, item.ValueType, item.ValueFormat);
+                    var value = new SerializedObject(item.ValueData, item.ValueType, item.ValueFormat);
 
-                        result.Add((item.Key, value));
-                    }
+                    result.Add((item.Key, value, item.Expiration));
                 }
             }
 
             return result;
         }
 
-        public Task SubscribeAsync(string group, string key, SerializedObject value, DateTime now, TimeSpan expiresAfter,
+        public async Task SubscribeManyAsync(SubscribeRequest[] requests,
+            CancellationToken ct)
+        {
+            List<WriteModel<Entity>>? updates = null;
+
+            foreach (var (group, key, value, expiration) in requests)
+            {
+                updates ??= new List<WriteModel<Entity>>();
+                updates.Add(new UpdateOneModel<Entity>(
+                    Builders<Entity>.Filter.Eq(x => x.Id, GetId(group, key)),
+                    Builders<Entity>.Update
+                        .SetOnInsert(x => x.Group, group)
+                        .SetOnInsert(x => x.Key, key)
+                        .Set(x => x.Expiration, expiration)
+                        .Set(x => x.ValueType, value.TypeString)
+                        .Set(x => x.ValueFormat, value.Format)
+                        .Set(x => x.ValueData, value.Data))
+                {
+                    IsUpsert = true
+                });
+            }
+
+            if (updates?.Count > 0)
+            {
+                await collection.BulkWriteAsync(updates, cancellationToken: ct);
+            }
+        }
+
+        public Task UnsubscribeAsync(string group, string key,
             CancellationToken ct)
         {
             string id = GetId(group, key);
 
-            return collection.UpdateOneAsync(x => x.Id == id,
-                Builders<Entity>.Update
-                    .SetOnInsert(x => x.Group, group)
-                    .SetOnInsert(x => x.Key, key)
-                    .Set(x => x.ExpiresAfter, expiresAfter)
-                    .Set(x => x.ValueType, value.TypeString)
-                    .Set(x => x.ValueFormat, value.Format)
-                    .Set(x => x.ValueData, value.Data)
-                    .Set(x => x.LastActivity, now),
-                new UpdateOptions
-                {
-                    IsUpsert = true
-                },
-                ct);
-        }
-
-        public Task UnsubscribeAsync(string topic, string queue,
-            CancellationToken ct)
-        {
-            string id = GetId(topic, queue);
-
             return collection.DeleteOneAsync(x => x.Id == id, ct);
         }
 
-        public Task UpdateAliveAsync(string group, string[] queues, DateTime now,
+        public Task CleanupAsync(DateTime now,
             CancellationToken ct)
         {
-            var ids = queues.Select(x => GetId(group, x)).ToList();
-
-            return collection.UpdateManyAsync(x => ids.Contains(x.Id),
-                Builders<Entity>.Update
-                    .Set(x => x.LastActivity, now),
-                null, ct);
+            return Task.CompletedTask;
         }
 
-        public async Task CleanupAsync(DateTime now,
-            CancellationToken ct)
+        private static string GetId(string group, string key)
         {
-            List<DeleteOneModel<Entity>>? deletions = null;
-
-            var cursor = await collection.Find(new BsonDocument()).ToCursorAsync(ct);
-
-            while (await cursor.MoveNextAsync(ct))
-            {
-                foreach (var item in cursor.Current)
-                {
-                    if (IsExpired(item, now))
-                    {
-                        deletions ??= new List<DeleteOneModel<Entity>>();
-                        deletions.Add(new DeleteOneModel<Entity>(Builders<Entity>.Filter.Eq(x => x.Id, item.Id)));
-                    }
-                }
-            }
-
-            if (deletions?.Count > 0)
-            {
-                await collection.BulkWriteAsync(deletions, cancellationToken: ct);
-            }
-        }
-
-        private static bool IsExpired(Entity item, DateTime now)
-        {
-            return item.ExpiresAfter > TimeSpan.Zero && item.LastActivity + item.ExpiresAfter < now;
-        }
-
-        private static string GetId(string topic, string queue)
-        {
-            return $"{topic}/{queue}";
+            return $"{group}/{key}";
         }
     }
 }
