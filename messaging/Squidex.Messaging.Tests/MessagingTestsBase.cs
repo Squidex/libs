@@ -22,32 +22,11 @@ namespace Squidex.Messaging
 
         protected abstract void ConfigureServices(IServiceCollection services, ChannelName channel, bool consume);
 
-        private sealed class Message : BaseMessage
-        {
-            public int Value { get; }
-
-            public Message(Guid testId, int value)
-                : base(testId)
-            {
-                Value = value;
-            }
-        }
-
-        private abstract class BaseMessage
-        {
-            public Guid TestId { get; }
-
-            protected BaseMessage(Guid testId)
-            {
-                TestId = testId;
-            }
-        }
-
         protected virtual bool CanHandleAndSimulateTimeout { get; } = true;
 
         protected virtual string TopicOrQueueName { get; } = $"channel_topic_{Guid.NewGuid()}";
 
-        private sealed class ExpectationHandler : IMessageHandler<Message>
+        private sealed class ExpectationHandler : IMessageHandler<TestTypes.Message>
         {
             private readonly int expectCount;
             private readonly Guid expectedId;
@@ -72,7 +51,7 @@ namespace Squidex.Messaging
                 });
             }
 
-            public Task HandleAsync(Message message,
+            public Task HandleAsync(TestTypes.Message message,
                 CancellationToken ct)
             {
                 if (message.TestId == expectedId)
@@ -160,7 +139,7 @@ namespace Squidex.Messaging
         [Fact]
         public async Task Should_throw_exception_if_no_route_found()
         {
-            var consumer = new DelegatingHandler<Message>(message =>
+            var consumer = new DelegatingHandler<TestTypes.Message>(message =>
             {
                 return Task.CompletedTask;
             });
@@ -179,7 +158,7 @@ namespace Squidex.Messaging
         [Fact]
         public async Task Should_not_throw_exception_if_no_channel_found()
         {
-            var consumer = new DelegatingHandler<Message>(message =>
+            var consumer = new DelegatingHandler<TestTypes.Message>(message =>
             {
                 return Task.CompletedTask;
             });
@@ -191,7 +170,7 @@ namespace Squidex.Messaging
 
             await using (app)
             {
-                var message = new Message(Guid.NewGuid(), 10);
+                var message = new TestTypes.Message(Guid.NewGuid(), 10);
 
                 await bus.PublishToChannelAsync(message, new ChannelName("invalid"));
             }
@@ -211,7 +190,7 @@ namespace Squidex.Messaging
                 {
                     var key = message.ToString(CultureInfo.InvariantCulture);
 
-                    await bus.PublishAsync(new Message(testIdentifier, message) as BaseMessage, key);
+                    await bus.PublishAsync((TestTypes.BaseMessage)new TestTypes.Message(testIdentifier, message), key);
                 }
 
                 await testHandler.Completion;
@@ -244,7 +223,7 @@ namespace Squidex.Messaging
                 {
                     var key = message.ToString(CultureInfo.InvariantCulture);
 
-                    await bus.PublishAsync(new Message(testIdentifier, message), key);
+                    await bus.PublishAsync(new TestTypes.Message(testIdentifier, message), key);
                 }
 
                 await testHandler.Completion;
@@ -270,7 +249,7 @@ namespace Squidex.Messaging
 
             var testMessages = Enumerable.Range(0, 20).ToList();
 
-            var consumer1 = new DelegatingHandler<Message>(message =>
+            var consumer1 = new DelegatingHandler<TestTypes.Message>(message =>
             {
                 return Task.Delay(TimeSpan.FromDays(30));
             });
@@ -283,7 +262,7 @@ namespace Squidex.Messaging
                 {
                     var key = message.ToString(CultureInfo.InvariantCulture);
 
-                    await bus1.PublishAsync(new Message(testIdentifier, message), key);
+                    await bus1.PublishAsync(new TestTypes.Message(testIdentifier, message), key);
                 }
             }
 
@@ -326,7 +305,7 @@ namespace Squidex.Messaging
                 {
                     var key = message.ToString(CultureInfo.InvariantCulture);
 
-                    await bus1.PublishAsync(new Message(testIdentifier, message), key);
+                    await bus1.PublishAsync(new TestTypes.Message(testIdentifier, message), key);
                 }
 
                 await testHandler1.Completion;

@@ -152,17 +152,33 @@ namespace Squidex.Messaging.Subscriptions
             return Task.CompletedTask;
         }
 
-        public IObservable<T> Subscribe<T, TSubscription>(TSubscription subscription) where TSubscription : ISubscription, new()
-        {
-            return new LocalSubscription<T, TSubscription>(this, subscription);
-        }
-
         public IObservable<T> Subscribe<T>()
         {
-            return new LocalSubscription<T, Subscription<T>>(this, new Subscription<T>());
+            return new LocalSubscription<T>(this, new Subscription<T>());
         }
 
-        public async Task PublishAsync<T>(T message) where T : notnull
+        public IObservable<T> Subscribe<T>(ISubscription subscription)
+        {
+            Guard.NotNull(subscription, nameof(subscription));
+
+            return new LocalSubscription<T>(this, subscription);
+        }
+
+        public Task PublishAsync(object message)
+        {
+            Guard.NotNull(message, nameof(message));
+
+            if (message is IPayloadWrapper wrapper)
+            {
+                return PublishWrapperAsync(wrapper);
+            }
+            else
+            {
+                return PublishCoreAsync(message);
+            }
+        }
+
+        private async Task PublishCoreAsync(object message)
         {
             List<Guid>? remoteSubscriptionIds = null;
 
@@ -187,26 +203,24 @@ namespace Squidex.Messaging.Subscriptions
             await PublishCoreAsync(remoteSubscriptionIds, message);
         }
 
-        public async Task PublishWrapperAsync<T>(IPayloadWrapper<T> wrapper) where T : notnull
+        private async Task PublishWrapperAsync(IPayloadWrapper wrapper)
         {
             List<Guid>? remoteSubscriptionIds = null;
 
-            var messageValue = default(T);
-            var messageCreated = false;
+            var message = (object)null!;
 
-            foreach (var id in await messageEvaluator.GetSubscriptionsAsync(wrapper.Payload))
+            foreach (var id in await messageEvaluator.GetSubscriptionsAsync(wrapper.Message))
             {
                 if (!options.SendMessagesToSelf && localSubscriptions.TryGetValue(id, out var localSubscription))
                 {
-                    if (!messageCreated)
+                    if (message == null)
                     {
-                        messageCreated = true;
-                        messageValue = await wrapper.CreatePayloadAsync();
+                        message = await wrapper.CreatePayloadAsync();
                     }
 
-                    if (messageValue is not null)
+                    if (message != null)
                     {
-                        localSubscription.OnNext(messageValue);
+                        localSubscription.OnNext(message);
                     }
                 }
                 else
@@ -221,46 +235,36 @@ namespace Squidex.Messaging.Subscriptions
                 return;
             }
 
-            if (!messageCreated)
+            if (message == null)
             {
-                messageValue = await wrapper.CreatePayloadAsync();
+                message = await wrapper.CreatePayloadAsync();
             }
 
-            if (messageValue is null)
+            if (message == null)
             {
                 return;
             }
 
-            await PublishCoreAsync(remoteSubscriptionIds, messageValue!);
+            await PublishCoreAsync(remoteSubscriptionIds, message!);
         }
 
-        private async Task PublishCoreAsync<T>(List<Guid> remoteSubscriptionIds, T message) where T : notnull
+        private Task PublishCoreAsync(List<Guid> remoteSubscriptionIds, object message)
         {
-            await messageBus.PublishAsync(new PayloadMessage<T>
-            {
-                SubscriptionMessage = message!,
-                SubscriptionIds = remoteSubscriptionIds,
+            var sourceId = options.SendMessagesToSelf ? null : instanceName;
 
-                // Ensure that we do not publish to the the current instance.
-                SourceId = !options.SendMessagesToSelf ? instanceName : null!,
-            });
+            return messageBus.PublishAsync(
+                MessageFactories.Payload(remoteSubscriptionIds, message, sourceId));
         }
 
-        internal void SubscribeCore<TSubscription>(Guid id, IUntypedLocalSubscription localSubscription, TSubscription subscription) where TSubscription : ISubscription
+        internal void SubscribeCore(Guid id, IUntypedLocalSubscription localSubscription, ISubscription subscription)
         {
             var expires = options.SubscriptionExpirationTime;
 
             // Also store the subscription in the database to have them available for the next start.
             messagingSubscriptions.SubscribeAsync(options.GroupName, id.ToString(), subscription, expires).Forget();
 
-            messageBus.PublishAsync(new SubscribeMessage<TSubscription>
-            {
-                SubscriptionId = id,
-                Subscription = subscription,
-
-                // Ensure that we do not publish to the the current instance.
-                SourceId = instanceName
-            }).Forget();
+            messageBus.PublishAsync(
+                MessageFactories.Subscribe(id, subscription, instanceName)).Forget();
 
             localSubscriptions[id] = localSubscription;
 
@@ -272,13 +276,8 @@ namespace Squidex.Messaging.Subscriptions
             // Also remove the subscription from the store, so it does not get restored.
             messagingSubscriptions.UnsubscribeAsync(options.GroupName, id.ToString()).Forget();
 
-            messageBus.PublishAsync(new UnsubscribeMessage
-            {
-                SubscriptionId = id,
-
-                // Ensure that we do not publish to the the current instance.
-                SourceId = instanceName
-            }).Forget();
+            messageBus.PublishAsync(
+                MessageFactories.Unsubscribe(id, instanceName)).Forget();
 
             localSubscriptions.TryRemove(id, out _);
 

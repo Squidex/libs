@@ -9,6 +9,6 @@ namespace Squidex.Messaging.Subscriptions.Messages
 {
     public abstract record SubscriptionsMessageBase
     {
-        public string SourceId { get; init; }
+        public string? SourceId { get; set; }
     }
 }

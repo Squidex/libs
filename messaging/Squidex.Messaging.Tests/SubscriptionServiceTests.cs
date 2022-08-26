@@ -95,19 +95,20 @@ namespace Squidex.Messaging
 
             var received = Completion();
 
-            using (var subscription = sut.Subscribe<Guid>().Subscribe(x =>
+            using (var subscription = sut.Subscribe<TestTypes.Message>().Subscribe(x =>
             {
                 received.TrySetResult(x);
             }))
             {
                 while (received.Task.Status is not TaskStatus.Faulted and not TaskStatus.RanToCompletion)
                 {
-                    await sut.PublishAsync(Guid.NewGuid());
+                    await sut.PublishAsync(new TestTypes.Message(Guid.NewGuid(), 42));
+
                     await Task.Delay(100);
                 }
             }
 
-            Assert.NotEqual(default, await received.Task);
+            Assert.Equal(42, (await received.Task).Value);
         }
 
         [Fact]
@@ -117,19 +118,20 @@ namespace Squidex.Messaging
 
             var received = Completion();
 
-            using (var subscription = sut.Subscribe<Guid>().Subscribe(x =>
+            using (var subscription = sut.Subscribe<TestTypes.Message>().Subscribe(x =>
             {
                 received.TrySetResult(x);
             }))
             {
                 while (received.Task.Status is not TaskStatus.Faulted and not TaskStatus.RanToCompletion)
                 {
-                    await sut.PublishAsync(Guid.NewGuid());
+                    await sut.PublishAsync(new TestTypes.Message(Guid.NewGuid(), 42));
+
                     await Task.Delay(100);
                 }
             }
 
-            Assert.NotEqual(default, await received.Task);
+            Assert.Equal(42, (await received.Task).Value);
         }
 
         [Fact]
@@ -140,19 +142,54 @@ namespace Squidex.Messaging
 
             var received = Completion();
 
-            using (var subscription = sut1.Subscribe<Guid>().Subscribe(x =>
+            using (var subscription = sut1.Subscribe<TestTypes.Message>().Subscribe(x =>
             {
                 received.TrySetResult(x);
             }))
             {
                 while (received.Task.Status is not TaskStatus.Faulted and not TaskStatus.RanToCompletion)
                 {
-                    await sut2.PublishAsync(Guid.NewGuid());
+                    await sut2.PublishAsync(new TestTypes.Message(Guid.NewGuid(), 42));
+
                     await Task.Delay(100);
                 }
             }
 
-            Assert.NotEqual(default, await received.Task);
+            Assert.Equal(42, (await received.Task).Value);
+        }
+
+        [Fact]
+        public async Task Should_publish_to_other_instances_with_wrapper()
+        {
+            var sut1 = await CreateSubscriptionServiceAsync();
+            var sut2 = await CreateSubscriptionServiceAsync();
+
+            var received = Completion();
+
+            using (var subscription = sut1.Subscribe<TestTypes.Message>().Subscribe(x =>
+            {
+                received.TrySetResult(x);
+            }))
+            {
+                while (received.Task.Status is not TaskStatus.Faulted and not TaskStatus.RanToCompletion)
+                {
+                    await sut2.PublishAsync(new Wrapper());
+
+                    await Task.Delay(100);
+                }
+            }
+
+            Assert.Equal(42, (await received.Task).Value);
+        }
+
+        private sealed class Wrapper : IPayloadWrapper
+        {
+            public object Message { get; } = new TestTypes.Message(Guid.NewGuid(), 42);
+
+            public ValueTask<object> CreatePayloadAsync()
+            {
+                return new ValueTask<object>(Message);
+            }
         }
 
         private static async Task<bool> WaitForSubscriptions(ISubscriptionService sut, bool expected)
@@ -172,9 +209,9 @@ namespace Squidex.Messaging
             return !expected;
         }
 
-        private static TaskCompletionSource<Guid> Completion()
+        private static TaskCompletionSource<TestTypes.Message> Completion()
         {
-            var received = new TaskCompletionSource<Guid>();
+            var received = new TaskCompletionSource<TestTypes.Message>();
 
             var cts = new CancellationTokenSource(30_000);
 

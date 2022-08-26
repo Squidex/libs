@@ -139,6 +139,7 @@ namespace Squidex.Messaging.Implementation
 
             lock (localSubscriptions)
             {
+                // Store complete subscriptions as local copy to update them periodically. Otherwise we could loose information in race conditions.
                 localSubscriptions[(group, key)] = (serialized, expiresAfter);
             }
 

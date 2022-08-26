@@ -7,22 +7,21 @@
 
 namespace Squidex.Messaging.Subscriptions.Internal
 {
-    internal sealed class LocalSubscription<TMessage, TSubscription> : IObservable<TMessage>, IUntypedLocalSubscription, IDisposable
-        where TSubscription : ISubscription
+    internal sealed class LocalSubscription<T> : IObservable<T>, IUntypedLocalSubscription, IDisposable
     {
         private readonly SubscriptionService subscriptions;
-        private readonly TSubscription subscription;
-        private IObserver<TMessage>? currentObserver;
+        private readonly ISubscription subscription;
+        private IObserver<T>? currentObserver;
 
         public Guid Id { get; } = Guid.NewGuid();
 
-        public LocalSubscription(SubscriptionService subscriptions, TSubscription subscription)
+        public LocalSubscription(SubscriptionService subscriptions, ISubscription subscription)
         {
             this.subscriptions = subscriptions;
             this.subscription = subscription;
         }
 
-        private void SubscribeCore(IObserver<TMessage> observer)
+        private void SubscribeCore(IObserver<T> observer)
         {
             if (currentObserver != null)
             {
@@ -46,7 +45,7 @@ namespace Squidex.Messaging.Subscriptions.Internal
             currentObserver = null;
         }
 
-        public IDisposable Subscribe(IObserver<TMessage> observer)
+        public IDisposable Subscribe(IObserver<T> observer)
         {
             SubscribeCore(observer);
 
@@ -63,7 +62,7 @@ namespace Squidex.Messaging.Subscriptions.Internal
 
         public void OnNext(object? value)
         {
-            if (value is TMessage typed)
+            if (value is T typed)
             {
                 currentObserver?.OnNext(typed);
             }

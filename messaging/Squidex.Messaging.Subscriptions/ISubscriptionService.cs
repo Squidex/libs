@@ -11,11 +11,9 @@ namespace Squidex.Messaging.Subscriptions
     {
         bool HasSubscriptions { get; }
 
-        Task PublishAsync<T>(T message) where T : notnull;
+        Task PublishAsync(object message);
 
-        Task PublishWrapperAsync<T>(IPayloadWrapper<T> wrapper) where T : notnull;
-
-        IObservable<T> Subscribe<T, TSubscription>(TSubscription subscription) where TSubscription : ISubscription, new();
+        IObservable<T> Subscribe<T>(ISubscription subscription);
 
         IObservable<T> Subscribe<T>();
     }
