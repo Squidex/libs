@@ -11,6 +11,7 @@ namespace Squidex.Messaging.Implementation
 {
     public sealed class HandlerPipeline
     {
+        private readonly HashSet<Func<object, CancellationToken, Task>> emptyHandlers = new HashSet<Func<object, CancellationToken, Task>>();
         private readonly Dictionary<Type, List<Func<object, CancellationToken, Task>>> handlersByType = new Dictionary<Type, List<Func<object, CancellationToken, Task>>>();
 
         public bool HasHandlers => handlersByType.Count > 0;
@@ -51,7 +52,7 @@ namespace Squidex.Messaging.Implementation
             }
         }
 
-        public IEnumerable<Func<object, CancellationToken, Task>> GetHandlers(Type type)
+        public IReadOnlySet<Func<object, CancellationToken, Task>> GetHandlers(Type type)
         {
             HashSet<Func<object, CancellationToken, Task>>? result = null;
 
@@ -68,7 +69,7 @@ namespace Squidex.Messaging.Implementation
                 }
             }
 
-            return result ?? Enumerable.Empty<Func<object, CancellationToken, Task>>();
+            return result ?? emptyHandlers;
         }
 
         private static Func<object, CancellationToken, Task>? BuildCaller<T>(IMessageHandler handler)

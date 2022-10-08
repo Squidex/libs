@@ -109,6 +109,13 @@ namespace Squidex.Messaging.Implementation
 
                 var handlers = pipeline.GetHandlers(deserialized.Type);
 
+                if (handlers.Count == 0)
+                {
+                    return;
+                }
+
+                var shouldLog = channelOptions.LogMessage?.Invoke(deserialized.Message) == true;
+
                 foreach (var handler in handlers)
                 {
                     if (isReleased)
@@ -118,12 +125,22 @@ namespace Squidex.Messaging.Implementation
 
                     try
                     {
+                        if (shouldLog)
+                        {
+                            log.LogInformation("Handling {message} for {channel} with {handler}.", deserialized.Message, channelName, handler);
+                        }
+
                         using (var cts = new CancellationTokenSource(channelOptions.Timeout))
                         {
                             using (var linked = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, ct))
                             {
                                 await handler(deserialized.Message, linked.Token);
                             }
+                        }
+
+                        if (shouldLog)
+                        {
+                            log.LogInformation("Handled {message} for {channel} with {handler}.", deserialized.Message, channelName, handler);
                         }
                     }
                     catch (OperationCanceledException)
@@ -132,7 +149,7 @@ namespace Squidex.Messaging.Implementation
                     }
                     catch (Exception ex)
                     {
-                        log.LogError(ex, "Failed to consume message for system {system} with type {type}.", Name, source.TypeString);
+                        log.LogInformation(ex, "Failed to handle {message} for {channel} with {handler}.", deserialized.Message, channelName, handler);
                     }
                 }
             }

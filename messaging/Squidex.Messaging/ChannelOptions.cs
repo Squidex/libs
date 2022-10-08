@@ -18,6 +18,8 @@ namespace Squidex.Messaging
     {
         public int NumSubscriptions { get; set; } = 1;
 
+        public Func<object, bool>? LogMessage { get; set; }
+
         public TransportSelector? TransportSelector { get; set; }
 
         public IScheduler Scheduler { get; set; } = InlineScheduler.Instance;

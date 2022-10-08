@@ -28,6 +28,13 @@ namespace Microsoft.Extensions.DependencyInjection
             return services;
         }
 
+        public static IServiceCollection Configure<T>(this IServiceCollection services, string name, Action<IServiceProvider, T> configure) where T : class
+        {
+            services.AddSingleton<IConfigureNamedOptions<T>>(c => new ConfigureNamedOptions<T>(name, o => configure(c, o)));
+
+            return services;
+        }
+
         public static IServiceCollection Configure<T>(this IServiceCollection services, IConfiguration config, string path) where T : class
         {
             services.AddOptions<T>().Bind(config.GetSection(path));
