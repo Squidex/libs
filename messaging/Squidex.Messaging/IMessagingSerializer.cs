@@ -10,7 +10,7 @@
 
 namespace Squidex.Messaging
 {
-    public record struct SerializedObject(byte[] Data, string TypeString, string Format);
+    public record struct SerializedObject(byte[] Data, string TypeString, string? Format);
 
     public interface IMessagingSerializer
     {

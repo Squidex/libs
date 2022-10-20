@@ -146,7 +146,7 @@ namespace Squidex.Messaging
                     .AddSingleton<DefaultMessagingSubscriptions>()
                     .AddSingleton(store)
                     .AddSingleton(clock)
-                    .AddSingleton<IMessagingSerializer>(new SystemTextJsonTransportSerializer())
+                    .AddSingleton<IMessagingSerializer>(new SystemTextJsonMessagingSerializer())
                     .BuildServiceProvider();
 
             return serviceProvider.GetRequiredService<DefaultMessagingSubscriptions>();

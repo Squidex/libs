@@ -35,12 +35,13 @@ namespace TusTestServer.Controller
 
                 await using (pausingFile.Stream)
                 {
-                    using var cts = new CancellationTokenSource(10000);
-                    using var cts2 = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, HttpContext.RequestAborted);
+                    using var cts = CancellationTokenSource.CreateLinkedTokenSource(HttpContext.RequestAborted);
+
+                    cts.CancelAfter(10_000);
 
                     while (!completed)
                     {
-                        cts2.Token.ThrowIfCancellationRequested();
+                        cts.Token.ThrowIfCancellationRequested();
 
                         pausingStream.Reset();
 
@@ -60,7 +61,7 @@ namespace TusTestServer.Controller
                                 }
                             },
                             FileId = fileId
-                        }, cts2.Token);
+                        }, cts.Token);
 
                         numWrites++;
                     }

@@ -130,12 +130,11 @@ namespace Squidex.Messaging.Implementation
                             log.LogInformation("Handling {message} for {channel} with {handler}.", deserialized.Message, channelName, handler);
                         }
 
-                        using (var cts = new CancellationTokenSource(channelOptions.Timeout))
+                        using (var linked = CancellationTokenSource.CreateLinkedTokenSource(ct))
                         {
-                            using (var linked = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, ct))
-                            {
-                                await handler(deserialized.Message, linked.Token);
-                            }
+                            linked.CancelAfter(channelOptions.Timeout);
+
+                            await handler(deserialized.Message, linked.Token);
                         }
 
                         if (shouldLog)
@@ -196,10 +195,10 @@ namespace Squidex.Messaging.Implementation
                     return;
                 }
 
-                var valueFormat = transportResult.Message.Headers?.GetValueOrDefault(HeaderNames.Type) ?? "unknown";
-                var valueObject = new SerializedObject(transportResult.Message.Data, typeString, valueFormat);
+                var serializedFormat = transportResult.Message.Headers?.GetValueOrDefault(HeaderNames.Format);
+                var serializedObject = new SerializedObject(transportResult.Message.Data, typeString, serializedFormat);
 
-                await scheduler.ExecuteAsync((valueObject, transportResult, ack), (args, ct) => OnScheduledMessage(args, ct), ct);
+                await scheduler.ExecuteAsync((serializedObject, transportResult, ack), OnScheduledMessage, ct);
             }
         }
     }

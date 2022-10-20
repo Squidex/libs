@@ -9,9 +9,11 @@ using Squidex.Messaging.Internal;
 
 namespace Squidex.Messaging.Implementation
 {
-    public abstract class TransportSerializerBase : IMessagingSerializer
+    public abstract class MessagingSerializerBase : IMessagingSerializer
     {
         protected abstract string Format { get; }
+
+        public bool IgnoreVersionInTypeString { get; set; } = true;
 
         public (object Message, Type Type) Deserialize(SerializedObject source)
         {
@@ -44,7 +46,10 @@ namespace Squidex.Messaging.Implementation
                 return default;
             }
 
-            var typeString = message.GetType().AssemblyQualifiedName;
+            var typeString =
+                IgnoreVersionInTypeString ?
+                    message.GetType().GetShortTypeName() :
+                    message.GetType().AssemblyQualifiedName;
 
             if (string.IsNullOrWhiteSpace(typeString))
             {

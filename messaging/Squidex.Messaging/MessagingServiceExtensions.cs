@@ -25,7 +25,7 @@ namespace Microsoft.Extensions.DependencyInjection
             });
 
             services.TryAddSingleton<IMessagingSerializer,
-                NewtonsoftJsonTransportSerializer>();
+                NewtonsoftJsonMessagingSerializer>();
 
             services.TryAddSingleton<IMessageBus,
                 DefaultMessageBus>();

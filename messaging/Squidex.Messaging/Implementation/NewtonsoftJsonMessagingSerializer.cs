@@ -10,18 +10,18 @@ using Newtonsoft.Json;
 
 namespace Squidex.Messaging.Implementation
 {
-    public sealed class NewtonsoftJsonTransportSerializer : TransportSerializerBase
+    public sealed class NewtonsoftJsonMessagingSerializer : MessagingSerializerBase
     {
         private readonly JsonSerializer serializer;
 
         protected override string Format => "text/json";
 
-        public NewtonsoftJsonTransportSerializer()
+        public NewtonsoftJsonMessagingSerializer()
         {
             serializer = JsonSerializer.CreateDefault();
         }
 
-        public NewtonsoftJsonTransportSerializer(JsonSerializerSettings settings)
+        public NewtonsoftJsonMessagingSerializer(JsonSerializerSettings settings)
         {
             serializer = JsonSerializer.CreateDefault(settings);
         }

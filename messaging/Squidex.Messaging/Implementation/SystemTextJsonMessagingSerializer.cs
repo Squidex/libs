@@ -9,18 +9,18 @@ using System.Text.Json;
 
 namespace Squidex.Messaging.Implementation
 {
-    public sealed class SystemTextJsonTransportSerializer : TransportSerializerBase
+    public sealed class SystemTextJsonMessagingSerializer : MessagingSerializerBase
     {
         private readonly JsonSerializerOptions? options;
 
         protected override string Format => "text/json";
 
-        public SystemTextJsonTransportSerializer(JsonSerializerOptions? options = null)
+        public SystemTextJsonMessagingSerializer(JsonSerializerOptions? options = null)
         {
             this.options = options;
         }
 
-        public SystemTextJsonTransportSerializer(Action<JsonSerializerOptions> configure)
+        public SystemTextJsonMessagingSerializer(Action<JsonSerializerOptions> configure)
         {
             options = new JsonSerializerOptions();
 
