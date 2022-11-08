@@ -5,10 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Assets.ResizeService
+namespace Squidex.Assets.ResizeService;
+
+public class ImageResizeOptions
 {
-    public class ImageResizeOptions
-    {
-        public int MaxTasks { get; set; }
-    }
+    public int MaxTasks { get; set; }
 }

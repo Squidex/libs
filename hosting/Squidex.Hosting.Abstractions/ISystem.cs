@@ -5,12 +5,11 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Hosting
-{
-    public interface ISystem
-    {
-        string Name => GetType().Name;
+namespace Squidex.Hosting;
 
-        int Order => 0;
-    }
+public interface ISystem
+{
+    string Name => GetType().Name;
+
+    int Order => 0;
 }

@@ -7,27 +7,26 @@
 
 using Xunit;
 
-namespace Squidex.Text.Translations
+namespace Squidex.Text.Translations;
+
+public class DeepLTranslationServiceTests : TranslationServiceTestsBase<DeepLTranslationService>
 {
-    public class DeepLTranslationServiceTests : TranslationServiceTestsBase<DeepLTranslationService>
+    protected override DeepLTranslationService CreateService()
     {
-        protected override DeepLTranslationService CreateService()
-        {
-            return new DeepLTranslationService(
-                new DeepLOptions
-                {
-                    AuthKey = Environment.GetEnvironmentVariable("DEEPL_KEY")!
-                });
-        }
+        return new DeepLTranslationService(
+            new DeepLOptions
+            {
+                AuthKey = Environment.GetEnvironmentVariable("DEEPL_KEY")!
+            });
+    }
 
-        [Fact]
-        public async Task Should_return_result_if_not_configured()
-        {
-            var sut = new DeepLTranslationService(new DeepLOptions());
+    [Fact]
+    public async Task Should_return_result_if_not_configured()
+    {
+        var sut = new DeepLTranslationService(new DeepLOptions());
 
-            var results = await sut.TranslateAsync(new[] { "Hello" }, "en");
+        var results = await sut.TranslateAsync(new[] { "Hello" }, "en");
 
-            Assert.All(results, x => Assert.Equal(TranslationResultCode.NotConfigured, x.Code));
-        }
+        Assert.All(results, x => Assert.Equal(TranslationResultCode.NotConfigured, x.Code));
     }
 }

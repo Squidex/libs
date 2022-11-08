@@ -27,174 +27,173 @@ using Squidex.Assets.Internal;
 using ISResizeMode = SixLabors.ImageSharp.Processing.ResizeMode;
 using ISResizeOptions = SixLabors.ImageSharp.Processing.ResizeOptions;
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+public sealed class ImageSharpThumbnailGenerator : AssetThumbnailGeneratorBase
 {
-    public sealed class ImageSharpThumbnailGenerator : AssetThumbnailGeneratorBase
+    private readonly Encoder blurHashEncoder = new Encoder();
+    private readonly HashSet<string> mimeTypes;
+
+    public ImageSharpThumbnailGenerator()
     {
-        private readonly Encoder blurHashEncoder = new Encoder();
-        private readonly HashSet<string> mimeTypes;
+        mimeTypes = Configuration.Default.ImageFormatsManager.ImageFormats.SelectMany(x => x.MimeTypes).ToHashSet();
+    }
 
-        public ImageSharpThumbnailGenerator()
-        {
-            mimeTypes = Configuration.Default.ImageFormatsManager.ImageFormats.SelectMany(x => x.MimeTypes).ToHashSet();
-        }
+    public override bool CanReadAndWrite(string mimeType)
+    {
+        return mimeType != null && mimeTypes.Contains(mimeType);
+    }
 
-        public override bool CanReadAndWrite(string mimeType)
-        {
-            return mimeType != null && mimeTypes.Contains(mimeType);
-        }
+    public override bool CanComputeBlurHash()
+    {
+        return true;
+    }
 
-        public override bool CanComputeBlurHash()
+    protected override async Task<string?> ComputeBlurHashCoreAsync(Stream source, string mimeType, BlurOptions options,
+        CancellationToken ct = default)
+    {
+        try
         {
-            return true;
-        }
-
-        protected override async Task<string?> ComputeBlurHashCoreAsync(Stream source, string mimeType, BlurOptions options,
-            CancellationToken ct = default)
-        {
-            try
+            using (var image = await Image.LoadAsync<Rgb24>(source, ct))
             {
-                using (var image = await Image.LoadAsync<Rgb24>(source, ct))
-                {
-                    return blurHashEncoder.Encode(image, options.ComponentX, options.ComponentY);
-                }
+                return blurHashEncoder.Encode(image, options.ComponentX, options.ComponentY);
             }
-            catch
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    protected override async Task CreateThumbnailCoreAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,
+        CancellationToken ct = default)
+    {
+        var w = options.TargetWidth ?? 0;
+        var h = options.TargetHeight ?? 0;
+
+        using (var image = Image.Load(source, out var format))
+        {
+            image.Mutate(x => x.AutoOrient());
+
+            if (w > 0 || h > 0)
+            {
+                var isCropUpsize = options.Mode == ResizeMode.CropUpsize;
+
+                if (!Enum.TryParse<ISResizeMode>(options.Mode.ToString(), true, out var resizeMode))
+                {
+                    resizeMode = ISResizeMode.Max;
+                }
+
+                if (isCropUpsize)
+                {
+                    resizeMode = ISResizeMode.Crop;
+                }
+
+                if (w >= image.Width && h >= image.Height && resizeMode == ISResizeMode.Crop && !isCropUpsize)
+                {
+                    resizeMode = ISResizeMode.BoxPad;
+                }
+
+                var resizeOptions = new ISResizeOptions { Size = new Size(w, h), Mode = resizeMode, PremultiplyAlpha = true };
+
+                if (options.FocusX.HasValue && options.FocusY.HasValue)
+                {
+                    resizeOptions.CenterCoordinates = new PointF(
+                        +(options.FocusX.Value / 2f) + 0.5f,
+                        -(options.FocusY.Value / 2f) + 0.5f
+                    );
+                }
+
+                image.Mutate(operation =>
+                {
+                    operation.Resize(resizeOptions);
+
+                    if (Color.TryParse(options.Background, out var color))
+                    {
+                         operation.BackgroundColor(color);
+                    }
+                    else
+                    {
+                        operation.BackgroundColor(Color.Transparent);
+                    }
+                });
+            }
+
+            var encoder = options.GetEncoder(format);
+
+            await image.SaveAsync(destination, encoder, ct);
+        }
+    }
+
+    protected override async Task<ImageInfo?> GetImageInfoCoreAsync(Stream source, string mimeType,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            var (image, format) = await Image.IdentifyWithFormatAsync(source, ct);
+
+            if (image == null || format == null)
             {
                 return null;
             }
-        }
 
-        protected override async Task CreateThumbnailCoreAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,
-            CancellationToken ct = default)
+            return GetImageInfo(image, format);
+        }
+        catch
         {
-            var w = options.TargetWidth ?? 0;
-            var h = options.TargetHeight ?? 0;
-
-            using (var image = Image.Load(source, out var format))
-            {
-                image.Mutate(x => x.AutoOrient());
-
-                if (w > 0 || h > 0)
-                {
-                    var isCropUpsize = options.Mode == ResizeMode.CropUpsize;
-
-                    if (!Enum.TryParse<ISResizeMode>(options.Mode.ToString(), true, out var resizeMode))
-                    {
-                        resizeMode = ISResizeMode.Max;
-                    }
-
-                    if (isCropUpsize)
-                    {
-                        resizeMode = ISResizeMode.Crop;
-                    }
-
-                    if (w >= image.Width && h >= image.Height && resizeMode == ISResizeMode.Crop && !isCropUpsize)
-                    {
-                        resizeMode = ISResizeMode.BoxPad;
-                    }
-
-                    var resizeOptions = new ISResizeOptions { Size = new Size(w, h), Mode = resizeMode, PremultiplyAlpha = true };
-
-                    if (options.FocusX.HasValue && options.FocusY.HasValue)
-                    {
-                        resizeOptions.CenterCoordinates = new PointF(
-                            +(options.FocusX.Value / 2f) + 0.5f,
-                            -(options.FocusY.Value / 2f) + 0.5f
-                        );
-                    }
-
-                    image.Mutate(operation =>
-                    {
-                        operation.Resize(resizeOptions);
-
-                        if (Color.TryParse(options.Background, out var color))
-                        {
-                             operation.BackgroundColor(color);
-                        }
-                        else
-                        {
-                            operation.BackgroundColor(Color.Transparent);
-                        }
-                    });
-                }
-
-                var encoder = options.GetEncoder(format);
-
-                await image.SaveAsync(destination, encoder, ct);
-            }
+            return null;
         }
+    }
 
-        protected override async Task<ImageInfo?> GetImageInfoCoreAsync(Stream source, string mimeType,
-            CancellationToken ct = default)
+    protected override async Task FixOrientationCoreAsync(Stream source, string mimeType, Stream destination,
+        CancellationToken ct = default)
+    {
+        using (var image = Image.Load(source, out var format))
         {
-            try
-            {
-                var (image, format) = await Image.IdentifyWithFormatAsync(source, ct);
+            var encoder = Configuration.Default.ImageFormatsManager.FindEncoder(format);
 
-                if (image == null || format == null)
-                {
-                    return null;
-                }
-
-                return GetImageInfo(image, format);
-            }
-            catch
+            if (encoder == null)
             {
-                return null;
+                throw new NotSupportedException();
             }
+
+            image.Mutate(x => x.AutoOrient());
+
+            await image.SaveAsync(destination, encoder, ct);
         }
+    }
 
-        protected override async Task FixOrientationCoreAsync(Stream source, string mimeType, Stream destination,
-            CancellationToken ct = default)
+    private static ImageInfo GetImageInfo(IImageInfo image, IImageFormat? detectedFormat)
+    {
+        var orientation = (ImageOrientation)(image.Metadata.ExifProfile?.GetValue(ExifTag.Orientation)?.Value ?? 0);
+
+        var format = ImageFormat.PNG;
+
+        switch (detectedFormat)
         {
-            using (var image = Image.Load(source, out var format))
-            {
-                var encoder = Configuration.Default.ImageFormatsManager.FindEncoder(format);
-
-                if (encoder == null)
-                {
-                    throw new NotSupportedException();
-                }
-
-                image.Mutate(x => x.AutoOrient());
-
-                await image.SaveAsync(destination, encoder, ct);
-            }
+            case BmpFormat:
+                format = ImageFormat.BMP;
+                break;
+            case JpegFormat:
+                format = ImageFormat.JPEG;
+                break;
+            case TgaFormat:
+                format = ImageFormat.TGA;
+                break;
+            case TiffFormat:
+                format = ImageFormat.TIFF;
+                break;
+            case GifFormat:
+                format = ImageFormat.GIF;
+                break;
+            case WebpFormat:
+                format = ImageFormat.WEBP;
+                break;
         }
 
-        private static ImageInfo GetImageInfo(IImageInfo image, IImageFormat? detectedFormat)
+        return new ImageInfo(image.Width, image.Height, orientation, format)
         {
-            var orientation = (ImageOrientation)(image.Metadata.ExifProfile?.GetValue(ExifTag.Orientation)?.Value ?? 0);
-
-            var format = ImageFormat.PNG;
-
-            switch (detectedFormat)
-            {
-                case BmpFormat:
-                    format = ImageFormat.BMP;
-                    break;
-                case JpegFormat:
-                    format = ImageFormat.JPEG;
-                    break;
-                case TgaFormat:
-                    format = ImageFormat.TGA;
-                    break;
-                case TiffFormat:
-                    format = ImageFormat.TIFF;
-                    break;
-                case GifFormat:
-                    format = ImageFormat.GIF;
-                    break;
-                case WebpFormat:
-                    format = ImageFormat.WEBP;
-                    break;
-            }
-
-            return new ImageInfo(image.Width, image.Height, orientation, format)
-            {
-                Format = format
-            };
-        }
+            Format = format
+        };
     }
 }

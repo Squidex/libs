@@ -7,40 +7,39 @@
 
 using System.Text.Json;
 
-namespace Squidex.Messaging.Implementation
+namespace Squidex.Messaging.Implementation;
+
+public sealed class SystemTextJsonMessagingSerializer : MessagingSerializerBase
 {
-    public sealed class SystemTextJsonMessagingSerializer : MessagingSerializerBase
+    private readonly JsonSerializerOptions? options;
+
+    protected override string Format => "text/json";
+
+    public SystemTextJsonMessagingSerializer(JsonSerializerOptions? options = null)
     {
-        private readonly JsonSerializerOptions? options;
+        this.options = options;
+    }
 
-        protected override string Format => "text/json";
+    public SystemTextJsonMessagingSerializer(Action<JsonSerializerOptions> configure)
+    {
+        options = new JsonSerializerOptions();
 
-        public SystemTextJsonMessagingSerializer(JsonSerializerOptions? options = null)
-        {
-            this.options = options;
-        }
+        configure?.Invoke(options);
+    }
 
-        public SystemTextJsonMessagingSerializer(Action<JsonSerializerOptions> configure)
-        {
-            options = new JsonSerializerOptions();
+    protected override object? DeserializeCore(byte[] data, Type type)
+    {
+        using var streamBuffer = new MemoryStream(data);
 
-            configure?.Invoke(options);
-        }
+        return JsonSerializer.Deserialize(streamBuffer, type, options);
+    }
 
-        protected override object? DeserializeCore(byte[] data, Type type)
-        {
-            using var streamBuffer = new MemoryStream(data);
+    protected override byte[] SerializeCore(object message)
+    {
+        using var streamBuffer = new MemoryStream();
 
-            return JsonSerializer.Deserialize(streamBuffer, type, options);
-        }
+        JsonSerializer.Serialize(streamBuffer, message, options);
 
-        protected override byte[] SerializeCore(object message)
-        {
-            using var streamBuffer = new MemoryStream();
-
-            JsonSerializer.Serialize(streamBuffer, message, options);
-
-            return streamBuffer.ToArray();
-        }
+        return streamBuffer.ToArray();
     }
 }

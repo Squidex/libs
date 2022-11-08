@@ -5,10 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+public interface IOptions
 {
-    public interface IOptions
-    {
-        IEnumerable<(string, string)> ToParameters();
-    }
+    IEnumerable<(string, string)> ToParameters();
 }

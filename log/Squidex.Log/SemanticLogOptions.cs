@@ -5,10 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Log
+namespace Squidex.Log;
+
+public sealed class SemanticLogOptions
 {
-    public sealed class SemanticLogOptions
-    {
-        public SemanticLogLevel Level { get; set; } = SemanticLogLevel.Information;
-    }
+    public SemanticLogLevel Level { get; set; } = SemanticLogLevel.Information;
 }

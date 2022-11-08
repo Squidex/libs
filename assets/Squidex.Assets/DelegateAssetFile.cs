@@ -5,21 +5,20 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+public sealed class DelegateAssetFile : AssetFile
 {
-    public sealed class DelegateAssetFile : AssetFile
+    private readonly Func<Stream> openStream;
+
+    public DelegateAssetFile(string fileName, string mimeType, long fileSize, Func<Stream> openStream)
+        : base(fileName, mimeType, fileSize)
     {
-        private readonly Func<Stream> openStream;
+        this.openStream = openStream;
+    }
 
-        public DelegateAssetFile(string fileName, string mimeType, long fileSize, Func<Stream> openStream)
-            : base(fileName, mimeType, fileSize)
-        {
-            this.openStream = openStream;
-        }
-
-        public override Stream OpenRead()
-        {
-            return openStream();
-        }
+    public override Stream OpenRead()
+    {
+        return openStream();
     }
 }

@@ -8,14 +8,13 @@
 #pragma warning disable MA0048 // File name must match type name
 #pragma warning disable SA1313 // Parameter names should begin with lower-case letter
 
-namespace Squidex.Messaging
+namespace Squidex.Messaging;
+
+public record struct SerializedObject(byte[] Data, string TypeString, string? Format);
+
+public interface IMessagingSerializer
 {
-    public record struct SerializedObject(byte[] Data, string TypeString, string? Format);
+    (object Message, Type Type) Deserialize(SerializedObject source);
 
-    public interface IMessagingSerializer
-    {
-        (object Message, Type Type) Deserialize(SerializedObject source);
-
-        SerializedObject Serialize(object message);
-    }
+    SerializedObject Serialize(object message);
 }

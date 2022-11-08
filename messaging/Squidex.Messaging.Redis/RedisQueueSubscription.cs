@@ -10,48 +10,47 @@ using Microsoft.Extensions.Logging;
 using Squidex.Messaging.Internal;
 using StackExchange.Redis;
 
-namespace Squidex.Messaging.Redis
+namespace Squidex.Messaging.Redis;
+
+internal sealed class RedisQueueSubscription : IAsyncDisposable, IMessageAck
 {
-    internal sealed class RedisQueueSubscription : IAsyncDisposable, IMessageAck
+    private readonly SimpleTimer timer;
+
+    public RedisQueueSubscription(string topicName, IDatabase database, MessageTransportCallback callback,
+        TimeSpan pollingInterval, ILogger log)
     {
-        private readonly SimpleTimer timer;
-
-        public RedisQueueSubscription(string topicName, IDatabase database, MessageTransportCallback callback,
-            TimeSpan pollingInterval, ILogger log)
+        timer = new SimpleTimer(async ct =>
         {
-            timer = new SimpleTimer(async ct =>
+            while (true)
             {
-                while (true)
+                var popped = await database.ListRightPopAsync(topicName);
+
+                if (!popped.HasValue)
                 {
-                    var popped = await database.ListRightPopAsync(topicName);
-
-                    if (!popped.HasValue)
-                    {
-                        break;
-                    }
-
-                    var deserialized = JsonSerializer.Deserialize<TransportMessage>(popped.ToString())!;
-
-                    await callback(new TransportResult(deserialized, null), this, ct);
+                    break;
                 }
-            }, pollingInterval, log);
-        }
 
-        public ValueTask DisposeAsync()
-        {
-            return timer.DisposeAsync();
-        }
+                var deserialized = JsonSerializer.Deserialize<TransportMessage>(popped.ToString())!;
 
-        Task IMessageAck.OnErrorAsync(TransportResult result,
-            CancellationToken ct)
-        {
-            return Task.CompletedTask;
-        }
+                await callback(new TransportResult(deserialized, null), this, ct);
+            }
+        }, pollingInterval, log);
+    }
 
-        Task IMessageAck.OnSuccessAsync(TransportResult result,
-            CancellationToken ct)
-        {
-            return Task.CompletedTask;
-        }
+    public ValueTask DisposeAsync()
+    {
+        return timer.DisposeAsync();
+    }
+
+    Task IMessageAck.OnErrorAsync(TransportResult result,
+        CancellationToken ct)
+    {
+        return Task.CompletedTask;
+    }
+
+    Task IMessageAck.OnSuccessAsync(TransportResult result,
+        CancellationToken ct)
+    {
+        return Task.CompletedTask;
     }
 }

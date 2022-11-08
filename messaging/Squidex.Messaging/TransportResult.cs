@@ -7,7 +7,6 @@
 
 #pragma warning disable SA1313 // Parameter names should begin with lower-case letter
 
-namespace Squidex.Messaging
-{
-    public sealed record TransportResult(TransportMessage Message, object? Data);
-}
+namespace Squidex.Messaging;
+
+public sealed record TransportResult(TransportMessage Message, object? Data);

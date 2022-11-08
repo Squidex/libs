@@ -45,17 +45,17 @@ builder.Services.AddSingleton<IAssetStore>(c => c.GetRequiredService<MongoGridFs
 
 builder.Services.AddSingleton<AmazonS3AssetStore>(
     c => ActivatorUtilities.CreateInstance<AmazonS3AssetStore>(c,
-        builder.Configuration.GetSection("amazonS3").Get<AmazonS3AssetOptions>()));
+        builder.Configuration.GetSection("amazonS3").Get<AmazonS3AssetOptions>()!));
 builder.Services.AddSingleton<IAssetStore>(c => c.GetRequiredService<AmazonS3AssetStore>());
 
 builder.Services.AddSingleton<AzureBlobAssetStore>(
     c => ActivatorUtilities.CreateInstance<AzureBlobAssetStore>(c,
-        builder.Configuration.GetSection("azureBlob").Get<AzureBlobAssetOptions>()));
+        builder.Configuration.GetSection("azureBlob").Get<AzureBlobAssetOptions>()!));
 builder.Services.AddSingleton<IAssetStore>(c => c.GetRequiredService<AzureBlobAssetStore>());
 
 builder.Services.AddSingleton<GoogleCloudAssetStore>(
     c => ActivatorUtilities.CreateInstance<GoogleCloudAssetStore>(c,
-        builder.Configuration.GetSection("googleCloud").Get<GoogleCloudAssetOptions>()));
+        builder.Configuration.GetSection("googleCloud").Get<GoogleCloudAssetOptions>()!));
 builder.Services.AddSingleton<IAssetStore>(c => c.GetRequiredService<GoogleCloudAssetStore>());
 
 builder.Services.AddSingleton<FolderAssetStore>(
@@ -85,9 +85,6 @@ app.UseMyTus<GoogleCloudAssetStore>(
 app.UseStaticFiles();
 
 app.UseRouting();
-app.UseEndpoints(builder =>
-{
-    builder.MapControllers();
-});
+app.MapControllers();
 
 app.Run();

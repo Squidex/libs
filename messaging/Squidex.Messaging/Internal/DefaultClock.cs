@@ -5,10 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Messaging.Internal
+namespace Squidex.Messaging.Internal;
+
+public sealed class DefaultClock : IClock
 {
-    public sealed class DefaultClock : IClock
-    {
-        public DateTime UtcNow => DateTime.UtcNow;
-    }
+    public DateTime UtcNow => DateTime.UtcNow;
 }

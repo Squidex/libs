@@ -8,103 +8,102 @@
 using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
 
-namespace Squidex.Messaging.Kafka
+namespace Squidex.Messaging.Kafka;
+
+internal static class KafkaLogFactory<TKey, TValue>
 {
-    internal static class KafkaLogFactory<TKey, TValue>
+    public static Action<IConsumer<TKey, TValue>, string> ConsumerStats(ILogger log)
     {
-        public static Action<IConsumer<TKey, TValue>, string> ConsumerStats(ILogger log)
+        return (producer, message) =>
         {
-            return (producer, message) =>
-            {
-                Log(log, message);
-            };
+            Log(log, message);
+        };
+    }
+
+    public static Action<IConsumer<TKey, TValue>, Error> ConsumerError(ILogger log)
+    {
+        return (producer, message) =>
+        {
+            Log(log, message);
+        };
+    }
+
+    public static Action<IConsumer<TKey, TValue>, LogMessage> ConsumerLog(ILogger log)
+    {
+        return (producer, message) =>
+        {
+            Log(log, message);
+        };
+    }
+
+    public static Action<IProducer<TKey, TValue>, string> ProducerStats(ILogger log)
+    {
+        return (producer, message) =>
+        {
+            Log(log, message);
+        };
+    }
+
+    public static Action<IProducer<TKey, TValue>, Error> ProducerError(ILogger log)
+    {
+        return (producer, message) =>
+        {
+            Log(log, message);
+        };
+    }
+
+    public static Action<IProducer<TKey, TValue>, LogMessage> ProducerLog(ILogger log)
+    {
+        return (producer, message) =>
+        {
+            Log(log, message);
+        };
+    }
+
+    private static void Log(ILogger log, string stats)
+    {
+        log.LogInformation("Kafka stastics received: {stats}.", stats);
+    }
+
+    private static void Log(ILogger log, Error error)
+    {
+        log.LogInformation("Kafka error with code {code} happened: {details}.", error.Code, error.Reason);
+    }
+
+    private static void Log(ILogger log, LogMessage message)
+    {
+        var level = GetLogLevel(message.Level);
+
+        if (log.IsEnabled(level))
+        {
+            return;
         }
 
-        public static Action<IConsumer<TKey, TValue>, Error> ConsumerError(ILogger log)
+        log.Log(level, "Kafka log recieved from system {system}: {message}.", message.Name, message.Message);
+    }
+
+    private static LogLevel GetLogLevel(SyslogLevel level)
+    {
+        switch (level)
         {
-            return (producer, message) =>
-            {
-                Log(log, message);
-            };
-        }
-
-        public static Action<IConsumer<TKey, TValue>, LogMessage> ConsumerLog(ILogger log)
-        {
-            return (producer, message) =>
-            {
-                Log(log, message);
-            };
-        }
-
-        public static Action<IProducer<TKey, TValue>, string> ProducerStats(ILogger log)
-        {
-            return (producer, message) =>
-            {
-                Log(log, message);
-            };
-        }
-
-        public static Action<IProducer<TKey, TValue>, Error> ProducerError(ILogger log)
-        {
-            return (producer, message) =>
-            {
-                Log(log, message);
-            };
-        }
-
-        public static Action<IProducer<TKey, TValue>, LogMessage> ProducerLog(ILogger log)
-        {
-            return (producer, message) =>
-            {
-                Log(log, message);
-            };
-        }
-
-        private static void Log(ILogger log, string stats)
-        {
-            log.LogInformation("Kafka stastics received: {stats}.", stats);
-        }
-
-        private static void Log(ILogger log, Error error)
-        {
-            log.LogInformation("Kafka error with code {code} happened: {details}.", error.Code, error.Reason);
-        }
-
-        private static void Log(ILogger log, LogMessage message)
-        {
-            var level = GetLogLevel(message.Level);
-
-            if (log.IsEnabled(level))
-            {
-                return;
-            }
-
-            log.Log(level, "Kafka log recieved from system {system}: {message}.", message.Name, message.Message);
-        }
-
-        private static LogLevel GetLogLevel(SyslogLevel level)
-        {
-            switch (level)
-            {
-                case SyslogLevel.Emergency:
-                    return LogLevel.Critical;
-                case SyslogLevel.Alert:
-                    return LogLevel.Critical;
-                case SyslogLevel.Critical:
-                    return LogLevel.Critical;
-                case SyslogLevel.Error:
-                    return LogLevel.Error;
-                case SyslogLevel.Warning:
-                    return LogLevel.Warning;
-                case SyslogLevel.Notice:
-                    return LogLevel.Information;
-                case SyslogLevel.Info:
-                    return LogLevel.Information;
-                case SyslogLevel.Debug:
-                    return LogLevel.Debug;
-                default:
-                    return LogLevel.Debug;
-            }
+            case SyslogLevel.Emergency:
+                return LogLevel.Critical;
+            case SyslogLevel.Alert:
+                return LogLevel.Critical;
+            case SyslogLevel.Critical:
+                return LogLevel.Critical;
+            case SyslogLevel.Error:
+                return LogLevel.Error;
+            case SyslogLevel.Warning:
+                return LogLevel.Warning;
+            case SyslogLevel.Notice:
+                return LogLevel.Information;
+            case SyslogLevel.Info:
+                return LogLevel.Information;
+            case SyslogLevel.Debug:
+                return LogLevel.Debug;
+            default:
+                return LogLevel.Debug;
         }
     }
 }

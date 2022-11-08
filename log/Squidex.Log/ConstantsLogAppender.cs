@@ -5,22 +5,21 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Log
+namespace Squidex.Log;
+
+public sealed class ConstantsLogAppender : ILogAppender
 {
-    public sealed class ConstantsLogAppender : ILogAppender
+    private readonly Action<IObjectWriter> objectWriter;
+
+    public ConstantsLogAppender(Action<IObjectWriter> objectWriter)
     {
-        private readonly Action<IObjectWriter> objectWriter;
+        Guard.NotNull(objectWriter, nameof(objectWriter));
 
-        public ConstantsLogAppender(Action<IObjectWriter> objectWriter)
-        {
-            Guard.NotNull(objectWriter, nameof(objectWriter));
+        this.objectWriter = objectWriter;
+    }
 
-            this.objectWriter = objectWriter;
-        }
-
-        public void Append(IObjectWriter writer, SemanticLogLevel logLevel, Exception? exception)
-        {
-            objectWriter(writer);
-        }
+    public void Append(IObjectWriter writer, SemanticLogLevel logLevel, Exception? exception)
+    {
+        objectWriter(writer);
     }
 }

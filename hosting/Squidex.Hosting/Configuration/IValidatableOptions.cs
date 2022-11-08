@@ -5,10 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Hosting.Configuration
+namespace Squidex.Hosting.Configuration;
+
+public interface IValidatableOptions
 {
-    public interface IValidatableOptions
-    {
-        IEnumerable<ConfigurationError> Validate();
-    }
+    IEnumerable<ConfigurationError> Validate();
 }

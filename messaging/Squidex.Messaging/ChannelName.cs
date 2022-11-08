@@ -7,9 +7,8 @@
 
 #pragma warning disable SA1313 // Parameter names should begin with lower-case letter
 
-namespace Squidex.Messaging
+namespace Squidex.Messaging;
+
+public record struct ChannelName(string Name, ChannelType Type = ChannelType.Queue)
 {
-    public record struct ChannelName(string Name, ChannelType Type = ChannelType.Queue)
-    {
-    }
 }

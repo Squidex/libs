@@ -8,56 +8,55 @@
 using System.Text;
 using Microsoft.Extensions.Options;
 
-namespace Squidex.Hosting.Configuration
+namespace Squidex.Hosting.Configuration;
+
+public sealed class OptionsErrorProvider<T> : IErrorProvider, IValidateOptions<T> where T : class, IValidatableOptions
 {
-    public sealed class OptionsErrorProvider<T> : IErrorProvider, IValidateOptions<T> where T : class, IValidatableOptions
+    private readonly IOptions<T> options;
+    private readonly string prefix;
+
+    public OptionsErrorProvider(IOptions<T> options, string prefix)
     {
-        private readonly IOptions<T> options;
-        private readonly string prefix;
+        this.options = options;
 
-        public OptionsErrorProvider(IOptions<T> options, string prefix)
+        this.prefix = prefix;
+    }
+
+    public IEnumerable<ConfigurationError> GetErrors()
+    {
+        return GetErrors(options.Value);
+    }
+
+    public ValidateOptionsResult Validate(string? name, T options)
+    {
+        var errors = GetErrors(options).ToList();
+
+        if (errors.Count > 0)
         {
-            this.options = options;
+            var sb = new StringBuilder();
 
-            this.prefix = prefix;
-        }
-
-        public IEnumerable<ConfigurationError> GetErrors()
-        {
-            return GetErrors(options.Value);
-        }
-
-        public ValidateOptionsResult Validate(string name, T options)
-        {
-            var errors = GetErrors(options).ToList();
-
-            if (errors.Count > 0)
+            foreach (var error in errors)
             {
-                var sb = new StringBuilder();
-
-                foreach (var error in errors)
-                {
-                    sb.AppendLine(error.ToString());
-                }
-
-                return ValidateOptionsResult.Fail(sb.ToString());
+                sb.AppendLine(error.ToString());
             }
 
-            return ValidateOptionsResult.Success;
+            return ValidateOptionsResult.Fail(sb.ToString());
         }
 
-        private IEnumerable<ConfigurationError> GetErrors(T value)
+        return ValidateOptionsResult.Success;
+    }
+
+    private IEnumerable<ConfigurationError> GetErrors(T value)
+    {
+        foreach (var error in value.Validate())
         {
-            foreach (var error in value.Validate())
+            if (!string.IsNullOrWhiteSpace(error.Path))
             {
-                if (!string.IsNullOrWhiteSpace(error.Path))
-                {
-                    yield return new ConfigurationError(error.Message, $"{prefix}:{error.Path}");
-                }
-                else
-                {
-                    yield return new ConfigurationError(error.Message, prefix);
-                }
+                yield return new ConfigurationError(error.Message, $"{prefix}:{error.Path}");
+            }
+            else
+            {
+                yield return new ConfigurationError(error.Message, prefix);
             }
         }
     }

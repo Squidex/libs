@@ -7,83 +7,82 @@
 
 using Xunit;
 
-namespace Squidex.Text.Translations
+namespace Squidex.Text.Translations;
+
+public abstract class TranslationServiceTestsBase<T> where T : ITranslationService
 {
-    public abstract class TranslationServiceTestsBase<T> where T : ITranslationService
+    protected abstract T CreateService();
+
+    [Fact]
+    public async Task Should_handle_empty_request()
     {
-        protected abstract T CreateService();
+        var service = CreateService();
 
-        [Fact]
-        public async Task Should_handle_empty_request()
+        var results = await service.TranslateAsync(Enumerable.Empty<string>(), "en");
+
+        Assert.Empty(results);
+    }
+
+    [Fact]
+    [Trait("Category", "Dependencies")]
+    public async Task Should_translate_autodetected_text()
+    {
+        var service = CreateService();
+
+        var results = await service.TranslateAsync(new[]
         {
-            var service = CreateService();
+            "Hello my friend"
+        }, "de");
 
-            var results = await service.TranslateAsync(Enumerable.Empty<string>(), "en");
+        AssertTranslation(TranslationResultCode.Translated, "Hallo mein Freund", "en", results[0]);
+    }
 
-            Assert.Empty(results);
-        }
+    [Fact]
+    [Trait("Category", "Dependencies")]
+    public async Task Should_translate_text()
+    {
+        var service = CreateService();
 
-        [Fact]
-        [Trait("Category", "Dependencies")]
-        public async Task Should_translate_autodetected_text()
+        var results = await service.TranslateAsync(new[]
         {
-            var service = CreateService();
+            "Hello World"
+        }, "de", "en");
 
-            var results = await service.TranslateAsync(new[]
-            {
-                "Hello my friend"
-            }, "de");
+        AssertTranslation(TranslationResultCode.Translated, "Hallo Welt", "en", results[0]);
+    }
 
-            AssertTranslation(TranslationResultCode.Translated, "Hallo mein Freund", "en", results[0]);
-        }
+    [Fact]
+    [Trait("Category", "Dependencies")]
+    public async Task Should_translate_text2()
+    {
+        var service = CreateService();
 
-        [Fact]
-        [Trait("Category", "Dependencies")]
-        public async Task Should_translate_text()
+        var results = await service.TranslateAsync(new[]
         {
-            var service = CreateService();
+            "Hello World"
+        }, "de-DE", "en");
 
-            var results = await service.TranslateAsync(new[]
-            {
-                "Hello World"
-            }, "de", "en");
+        AssertTranslation(TranslationResultCode.Translated, "Hallo Welt", "en", results[0]);
+    }
 
-            AssertTranslation(TranslationResultCode.Translated, "Hallo Welt", "en", results[0]);
-        }
+    [Fact]
+    [Trait("Category", "Dependencies")]
+    public async Task Should_translate_multiple_texts()
+    {
+        var service = CreateService();
 
-        [Fact]
-        [Trait("Category", "Dependencies")]
-        public async Task Should_translate_text2()
+        var results = await service.TranslateAsync(new[]
         {
-            var service = CreateService();
+            "Hello World",
+            "Hello Earth"
+        }, "de", "en");
 
-            var results = await service.TranslateAsync(new[]
-            {
-                "Hello World"
-            }, "de-DE", "en");
+        AssertTranslation(TranslationResultCode.Translated, "Hallo Welt", "en", results[0]);
+        AssertTranslation(TranslationResultCode.Translated, "Hallo Erde", "en", results[1]);
+    }
 
-            AssertTranslation(TranslationResultCode.Translated, "Hallo Welt", "en", results[0]);
-        }
-
-        [Fact]
-        [Trait("Category", "Dependencies")]
-        public async Task Should_translate_multiple_texts()
-        {
-            var service = CreateService();
-
-            var results = await service.TranslateAsync(new[]
-            {
-                "Hello World",
-                "Hello Earth"
-            }, "de", "en");
-
-            AssertTranslation(TranslationResultCode.Translated, "Hallo Welt", "en", results[0]);
-            AssertTranslation(TranslationResultCode.Translated, "Hallo Erde", "en", results[1]);
-        }
-
-        protected static void AssertTranslation(TranslationResultCode code, string text, string language, TranslationResult result)
-        {
-            Assert.Equal((code, text, language), (result.Code, result.Text.Replace(",", string.Empty, StringComparison.Ordinal), result.SourceLanguage));
-        }
+    protected static void AssertTranslation(TranslationResultCode code, string text, string language, TranslationResult result)
+    {
+        Assert.Equal((code, text, language), (result.Code, result.Text.Replace(",", string.Empty, StringComparison.Ordinal), result.SourceLanguage));
     }
 }

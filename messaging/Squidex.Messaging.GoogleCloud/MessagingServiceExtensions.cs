@@ -9,23 +9,22 @@ using Microsoft.Extensions.Configuration;
 using Squidex.Messaging;
 using Squidex.Messaging.GoogleCloud;
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace Microsoft.Extensions.DependencyInjection;
+
+public static class MessagingServiceExtensions
 {
-    public static class MessagingServiceExtensions
+    public static IServiceCollection AddGooglePubSubTransport(this IServiceCollection services, IConfiguration config, Action<GooglePubSubTransportOptions>? configure = null)
     {
-        public static IServiceCollection AddGooglePubSubTransport(this IServiceCollection services, IConfiguration config, Action<GooglePubSubTransportOptions>? configure = null)
+        services.ConfigureAndValidate<GooglePubSubTransportOptions>(config, "messaging:googlePubSub");
+
+        if (configure != null)
         {
-            services.ConfigureAndValidate<GooglePubSubTransportOptions>(config, "messaging:googlePubSub");
-
-            if (configure != null)
-            {
-                services.Configure(configure);
-            }
-
-            services.AddSingletonAs<GooglePubSubTransport>()
-                .As<IMessagingTransport>();
-
-            return services;
+            services.Configure(configure);
         }
+
+        services.AddSingletonAs<GooglePubSubTransport>()
+            .As<IMessagingTransport>();
+
+        return services;
     }
 }

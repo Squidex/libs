@@ -7,13 +7,12 @@
 
 using Markdig;
 
-namespace Squidex.Text
+namespace Squidex.Text;
+
+public static class MarkdownExtensions
 {
-    public static class MarkdownExtensions
+    public static string Markdown2Text(this string markdown)
     {
-        public static string Markdown2Text(this string markdown)
-        {
-            return Markdown.ToPlainText(markdown).Trim(' ', '\n', '\r');
-        }
+        return Markdown.ToPlainText(markdown).Trim(' ', '\n', '\r');
     }
 }

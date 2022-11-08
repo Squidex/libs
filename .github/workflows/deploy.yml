@@ -10,9 +10,9 @@ jobs:
     - uses: actions/checkout@v1
  
     - name: setup dotnet
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v2
       with:
-        dotnet-version: 6.0.400
+        dotnet-version: 7.0.x
 
     - name: test
       run: |

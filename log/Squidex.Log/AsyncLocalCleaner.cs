@@ -5,22 +5,21 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Log
+namespace Squidex.Log;
+
+internal sealed class AsyncLocalCleaner<T> : IDisposable
 {
-    internal sealed class AsyncLocalCleaner<T> : IDisposable
+    private readonly AsyncLocal<T> asyncLocal;
+
+    public AsyncLocalCleaner(AsyncLocal<T> asyncLocal)
     {
-        private readonly AsyncLocal<T> asyncLocal;
+        Guard.NotNull(asyncLocal, nameof(asyncLocal));
 
-        public AsyncLocalCleaner(AsyncLocal<T> asyncLocal)
-        {
-            Guard.NotNull(asyncLocal, nameof(asyncLocal));
+        this.asyncLocal = asyncLocal;
+    }
 
-            this.asyncLocal = asyncLocal;
-        }
-
-        public void Dispose()
-        {
-            asyncLocal.Value = default!;
-        }
+    public void Dispose()
+    {
+        asyncLocal.Value = default!;
     }
 }

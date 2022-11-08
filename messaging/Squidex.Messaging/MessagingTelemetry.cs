@@ -7,10 +7,9 @@
 
 using System.Diagnostics;
 
-namespace Squidex.Messaging
+namespace Squidex.Messaging;
+
+public static class MessagingTelemetry
 {
-    public static class MessagingTelemetry
-    {
-        public static readonly ActivitySource Activities = new ActivitySource("Squidex.Messaging");
-    }
+    public static readonly ActivitySource Activities = new ActivitySource("Squidex.Messaging");
 }

@@ -5,11 +5,10 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Messaging.Implementation
+namespace Squidex.Messaging.Implementation;
+
+public interface IInternalMessageProducer
 {
-    public interface IInternalMessageProducer
-    {
-        Task ProduceAsync(ChannelName channel, object message, string? key = null,
-            CancellationToken ct = default);
-    }
+    Task ProduceAsync(ChannelName channel, object message, string? key = null,
+        CancellationToken ct = default);
 }

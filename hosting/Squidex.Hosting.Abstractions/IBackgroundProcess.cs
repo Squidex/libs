@@ -5,17 +5,16 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Hosting
-{
-    public interface IBackgroundProcess : ISystem
-    {
-        Task StartAsync(
-            CancellationToken ct);
+namespace Squidex.Hosting;
 
-        Task StopAsync(
-            CancellationToken ct)
-        {
-            return Task.CompletedTask;
-        }
+public interface IBackgroundProcess : ISystem
+{
+    Task StartAsync(
+        CancellationToken ct);
+
+    Task StopAsync(
+        CancellationToken ct)
+    {
+        return Task.CompletedTask;
     }
 }

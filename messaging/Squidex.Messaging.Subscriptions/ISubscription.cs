@@ -5,10 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Messaging.Subscriptions
+namespace Squidex.Messaging.Subscriptions;
+
+public interface ISubscription
 {
-    public interface ISubscription
-    {
-        ValueTask<bool> ShouldHandle(object message);
-    }
+    ValueTask<bool> ShouldHandle(object message);
 }

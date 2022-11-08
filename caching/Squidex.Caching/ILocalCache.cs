@@ -5,16 +5,15 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Caching
+namespace Squidex.Caching;
+
+public interface ILocalCache
 {
-    public interface ILocalCache
-    {
-        IDisposable StartContext();
+    IDisposable StartContext();
 
-        void Add(object key, object? value);
+    void Add(object key, object? value);
 
-        void Remove(object key);
+    void Remove(object key);
 
-        bool TryGetValue(object key, out object? value);
-    }
+    bool TryGetValue(object key, out object? value);
 }

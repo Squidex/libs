@@ -5,13 +5,12 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Messaging.Subscriptions.Messages
-{
-    public abstract record PayloadMessageBase : SubscriptionsMessageBase
-    {
-        public List<Guid> SubscriptionIds { get; init; } = default!;
+namespace Squidex.Messaging.Subscriptions.Messages;
 
-        // This is a method, so it does not get serialized.
-        public abstract object? GetUntypedPayload();
-    }
+public abstract record PayloadMessageBase : SubscriptionsMessageBase
+{
+    public List<Guid> SubscriptionIds { get; init; } = default!;
+
+    // This is a method, so it does not get serialized.
+    public abstract object? GetUntypedPayload();
 }

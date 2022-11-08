@@ -7,13 +7,12 @@
 
 using Squidex.Messaging.Implementation.InMemory;
 
-namespace Squidex.Messaging
+namespace Squidex.Messaging;
+
+public class InMemorySubscriptionStoreTests : SubscriptionStoreTestsBase
 {
-    public class InMemorySubscriptionStoreTests : SubscriptionStoreTestsBase
+    public override Task<IMessagingSubscriptionStore> CreateSubscriptionStoreAsync()
     {
-        public override Task<IMessagingSubscriptionStore> CreateSubscriptionStoreAsync()
-        {
-            return Task.FromResult<IMessagingSubscriptionStore>(new InMemorySubscriptionStore());
-        }
+        return Task.FromResult<IMessagingSubscriptionStore>(new InMemorySubscriptionStore());
     }
 }

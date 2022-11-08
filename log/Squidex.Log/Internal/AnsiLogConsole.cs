@@ -7,32 +7,31 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-namespace Squidex.Log.Internal
+namespace Squidex.Log.Internal;
+
+[ExcludeFromCodeCoverage]
+public sealed class AnsiLogConsole : IConsole
 {
-    [ExcludeFromCodeCoverage]
-    public sealed class AnsiLogConsole : IConsole
+    private readonly bool logToStdError;
+
+    public AnsiLogConsole(bool logToStdError)
     {
-        private readonly bool logToStdError;
+        this.logToStdError = logToStdError;
+    }
 
-        public AnsiLogConsole(bool logToStdError)
+    public void Reset()
+    {
+    }
+
+    public void WriteLine(int color, string message)
+    {
+        if (color != 0 && logToStdError)
         {
-            this.logToStdError = logToStdError;
+            Console.Error.WriteLine(message);
         }
-
-        public void Reset()
+        else
         {
-        }
-
-        public void WriteLine(int color, string message)
-        {
-            if (color != 0 && logToStdError)
-            {
-                Console.Error.WriteLine(message);
-            }
-            else
-            {
-                Console.WriteLine(message);
-            }
+            Console.WriteLine(message);
         }
     }
 }

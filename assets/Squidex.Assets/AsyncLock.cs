@@ -7,62 +7,61 @@
 
 #pragma warning disable RECS0022 // A catch clause that catches System.Exception and has an empty body
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+internal sealed class AsyncLock
 {
-    internal sealed class AsyncLock
+    private readonly SemaphoreSlim semaphore;
+
+    public AsyncLock()
     {
-        private readonly SemaphoreSlim semaphore;
+        semaphore = new SemaphoreSlim(1);
+    }
 
-        public AsyncLock()
+    public Task<IDisposable> LockAsync()
+    {
+        var wait = semaphore.WaitAsync();
+
+        if (wait.IsCompleted)
         {
-            semaphore = new SemaphoreSlim(1);
+            return Task.FromResult((IDisposable)new LockReleaser(this));
+        }
+        else
+        {
+            return wait.ContinueWith(x => (IDisposable)new LockReleaser(this),
+                CancellationToken.None,
+                TaskContinuationOptions.ExecuteSynchronously,
+                TaskScheduler.Default);
+        }
+    }
+
+    private sealed class LockReleaser : IDisposable
+    {
+        private AsyncLock? target;
+
+        internal LockReleaser(AsyncLock target)
+        {
+            this.target = target;
         }
 
-        public Task<IDisposable> LockAsync()
+        public void Dispose()
         {
-            var wait = semaphore.WaitAsync();
+            var current = target;
 
-            if (wait.IsCompleted)
+            if (current == null)
             {
-                return Task.FromResult((IDisposable)new LockReleaser(this));
-            }
-            else
-            {
-                return wait.ContinueWith(x => (IDisposable)new LockReleaser(this),
-                    CancellationToken.None,
-                    TaskContinuationOptions.ExecuteSynchronously,
-                    TaskScheduler.Default);
-            }
-        }
-
-        private sealed class LockReleaser : IDisposable
-        {
-            private AsyncLock? target;
-
-            internal LockReleaser(AsyncLock target)
-            {
-                this.target = target;
+                return;
             }
 
-            public void Dispose()
+            target = null;
+
+            try
             {
-                var current = target;
-
-                if (current == null)
-                {
-                    return;
-                }
-
-                target = null;
-
-                try
-                {
-                    current.semaphore.Release();
-                }
-                catch
-                {
-                    // just ignore the Exception
-                }
+                current.semaphore.Release();
+            }
+            catch
+            {
+                // just ignore the Exception
             }
         }
     }

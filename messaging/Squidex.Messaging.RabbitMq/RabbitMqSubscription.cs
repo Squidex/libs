@@ -10,112 +10,111 @@ using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
-namespace Squidex.Messaging.RabbitMq
+namespace Squidex.Messaging.RabbitMq;
+
+internal sealed class RabbitMqSubscription : IMessageAck, IAsyncDisposable
 {
-    internal sealed class RabbitMqSubscription : IMessageAck, IAsyncDisposable
+    private readonly CancellationTokenSource stopToken = new CancellationTokenSource();
+    private readonly IModel model;
+    private readonly string queueName;
+    private readonly string consumerTag;
+    private readonly ILogger log;
+
+    public RabbitMqSubscription(string queueName, RabbitMqOwner factory,
+        MessageTransportCallback callback, ILogger log)
     {
-        private readonly CancellationTokenSource stopToken = new CancellationTokenSource();
-        private readonly IModel model;
-        private readonly string queueName;
-        private readonly string consumerTag;
-        private readonly ILogger log;
+        this.queueName = queueName;
 
-        public RabbitMqSubscription(string queueName, RabbitMqOwner factory,
-            MessageTransportCallback callback, ILogger log)
+        model = factory.Connection.CreateModel();
+
+        var eventConsumer = new AsyncEventingBasicConsumer(model);
+
+        eventConsumer.Received += async (_, @event) =>
         {
-            this.queueName = queueName;
+            var headers = new TransportHeaders();
 
-            model = factory.Connection.CreateModel();
-
-            var eventConsumer = new AsyncEventingBasicConsumer(model);
-
-            eventConsumer.Received += async (_, @event) =>
+            foreach (var (key, value) in @event.BasicProperties.Headers)
             {
-                var headers = new TransportHeaders();
-
-                foreach (var (key, value) in @event.BasicProperties.Headers)
+                if (value is byte[] bytes)
                 {
-                    if (value is byte[] bytes)
-                    {
-                        headers[key] = Encoding.UTF8.GetString(bytes);
-                    }
-                    else if (value is string text)
-                    {
-                        headers[key] = text;
-                    }
+                    headers[key] = Encoding.UTF8.GetString(bytes);
                 }
+                else if (value is string text)
+                {
+                    headers[key] = text;
+                }
+            }
 
-                var transportMessage = new TransportMessage(@event.Body.ToArray(), @event.RoutingKey, headers);
-                var transportResult = new TransportResult(transportMessage, @event.DeliveryTag);
+            var transportMessage = new TransportMessage(@event.Body.ToArray(), @event.RoutingKey, headers);
+            var transportResult = new TransportResult(transportMessage, @event.DeliveryTag);
 
-                await callback(transportResult, this, stopToken.Token);
-            };
+            await callback(transportResult, this, stopToken.Token);
+        };
 
-            consumerTag = model.BasicConsume(queueName, false, eventConsumer);
+        consumerTag = model.BasicConsume(queueName, false, eventConsumer);
 
-            this.log = log;
-        }
+        this.log = log;
+    }
 
-        public ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
+    {
+        stopToken.Cancel();
+
+        model.BasicCancel(consumerTag);
+        model.Dispose();
+
+        return default;
+    }
+
+    public Task OnErrorAsync(TransportResult result,
+        CancellationToken ct)
+    {
+        if (stopToken.IsCancellationRequested)
         {
-            stopToken.Cancel();
-
-            model.BasicCancel(consumerTag);
-            model.Dispose();
-
-            return default;
-        }
-
-        public Task OnErrorAsync(TransportResult result,
-            CancellationToken ct)
-        {
-            if (stopToken.IsCancellationRequested)
-            {
-                return Task.CompletedTask;
-            }
-
-            if (result.Data is not ulong deliverTag)
-            {
-                log.LogWarning("Transport message has no RabbitMq delivery tag.");
-                return Task.CompletedTask;
-            }
-
-            try
-            {
-                model.BasicReject(deliverTag, false);
-            }
-            catch (Exception ex)
-            {
-                log.LogError(ex, "Failed to acknowledge message from queue {queue}.", queueName);
-            }
-
             return Task.CompletedTask;
         }
 
-        public Task OnSuccessAsync(TransportResult result,
-            CancellationToken ct)
+        if (result.Data is not ulong deliverTag)
         {
-            if (stopToken.IsCancellationRequested)
-            {
-                return Task.CompletedTask;
-            }
-
-            if (result.Data is not ulong deliverTag)
-            {
-                log.LogWarning("Transport message has no RabbitMq delivery tag.");
-                return Task.CompletedTask;
-            }
-
-            try
-            {
-                model.BasicAck(deliverTag, false);
-            }
-            catch (Exception ex)
-            {
-                log.LogError(ex, "Failed to reject message from queue {queue}.", queueName);
-            }
-
+            log.LogWarning("Transport message has no RabbitMq delivery tag.");
             return Task.CompletedTask;
         }
+
+        try
+        {
+            model.BasicReject(deliverTag, false);
+        }
+        catch (Exception ex)
+        {
+            log.LogError(ex, "Failed to acknowledge message from queue {queue}.", queueName);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task OnSuccessAsync(TransportResult result,
+        CancellationToken ct)
+    {
+        if (stopToken.IsCancellationRequested)
+        {
+            return Task.CompletedTask;
+        }
+
+        if (result.Data is not ulong deliverTag)
+        {
+            log.LogWarning("Transport message has no RabbitMq delivery tag.");
+            return Task.CompletedTask;
+        }
+
+        try
+        {
+            model.BasicAck(deliverTag, false);
+        }
+        catch (Exception ex)
+        {
+            log.LogError(ex, "Failed to reject message from queue {queue}.", queueName);
+        }
+
+        return Task.CompletedTask;
     }
 }

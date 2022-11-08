@@ -10,170 +10,169 @@ using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
 using Squidex.Assets.Internal;
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+public sealed class MongoGridFsAssetStore : IAssetStore
 {
-    public sealed class MongoGridFsAssetStore : IAssetStore
+    private static readonly FilterDefinitionBuilder<GridFSFileInfo<string>> Filters = Builders<GridFSFileInfo<string>>.Filter;
+    private static readonly GridFSDownloadOptions DownloadDefault = new GridFSDownloadOptions();
+    private static readonly GridFSDownloadOptions DownloadSeekable = new GridFSDownloadOptions { Seekable = true };
+    private readonly IGridFSBucket<string> bucket;
+
+    public MongoGridFsAssetStore(IGridFSBucket<string> bucket)
     {
-        private static readonly FilterDefinitionBuilder<GridFSFileInfo<string>> Filters = Builders<GridFSFileInfo<string>>.Filter;
-        private static readonly GridFSDownloadOptions DownloadDefault = new GridFSDownloadOptions();
-        private static readonly GridFSDownloadOptions DownloadSeekable = new GridFSDownloadOptions { Seekable = true };
-        private readonly IGridFSBucket<string> bucket;
+        Guard.NotNull(bucket, nameof(bucket));
 
-        public MongoGridFsAssetStore(IGridFSBucket<string> bucket)
+        this.bucket = bucket;
+    }
+
+    public async Task InitializeAsync(
+        CancellationToken ct)
+    {
+        try
         {
-            Guard.NotNull(bucket, nameof(bucket));
+            await bucket.Database.ListCollectionsAsync(cancellationToken: ct);
+        }
+        catch (MongoException ex)
+        {
+            throw new AssetStoreException($"Cannot connect to Mongo GridFS bucket '{bucket.Options.BucketName}'.", ex);
+        }
+    }
 
-            this.bucket = bucket;
+    public async Task<long> GetSizeAsync(string fileName,
+        CancellationToken ct = default)
+    {
+        var name = GetFileName(fileName, nameof(fileName));
+
+        var fileQuery = await bucket.FindAsync(Filters.Eq(x => x.Id, name), cancellationToken: ct);
+        var fileObject = await fileQuery.FirstOrDefaultAsync(ct);
+
+        if (fileObject == null)
+        {
+            throw new AssetNotFoundException(fileName);
         }
 
-        public async Task InitializeAsync(
-            CancellationToken ct)
+        return fileObject.Length;
+    }
+
+    public async Task CopyAsync(string sourceFileName, string targetFileName,
+        CancellationToken ct = default)
+    {
+        Guard.NotNullOrEmpty(targetFileName, nameof(targetFileName));
+
+        var sourceName = GetFileName(sourceFileName, nameof(sourceFileName));
+
+        try
         {
-            try
+            await using (var readStream = await bucket.OpenDownloadStreamAsync(sourceName, cancellationToken: ct))
             {
-                await bucket.Database.ListCollectionsAsync(cancellationToken: ct);
-            }
-            catch (MongoException ex)
-            {
-                throw new AssetStoreException($"Cannot connect to Mongo GridFS bucket '{bucket.Options.BucketName}'.", ex);
+                await UploadAsync(targetFileName, readStream, false, ct);
             }
         }
-
-        public async Task<long> GetSizeAsync(string fileName,
-            CancellationToken ct = default)
+        catch (GridFSFileNotFoundException ex)
         {
-            var name = GetFileName(fileName, nameof(fileName));
+            throw new AssetNotFoundException(sourceFileName, ex);
+        }
+    }
 
-            var fileQuery = await bucket.FindAsync(Filters.Eq(x => x.Id, name), cancellationToken: ct);
-            var fileObject = await fileQuery.FirstOrDefaultAsync(ct);
+    public async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default,
+        CancellationToken ct = default)
+    {
+        Guard.NotNull(stream, nameof(stream));
 
-            if (fileObject == null)
+        var name = GetFileName(fileName, nameof(fileName));
+
+        try
+        {
+            var options = range.IsDefined ? DownloadSeekable : DownloadDefault;
+
+            await using (var readStream = await bucket.OpenDownloadStreamAsync(name, options, ct))
             {
-                throw new AssetNotFoundException(fileName);
+                await readStream.CopyToAsync(stream, range, ct);
+            }
+        }
+        catch (GridFSFileNotFoundException ex)
+        {
+            throw new AssetNotFoundException(fileName, ex);
+        }
+    }
+
+    public async Task<long> UploadAsync(string fileName, Stream stream, bool overwrite = false,
+        CancellationToken ct = default)
+    {
+        Guard.NotNull(stream, nameof(stream));
+
+        var name = GetFileName(fileName, nameof(fileName));
+
+        try
+        {
+            if (overwrite)
+            {
+                await DeleteAsync(fileName, ct);
             }
 
-            return fileObject.Length;
+            await bucket.UploadFromStreamAsync(name, name, stream, cancellationToken: ct);
+
+            return -1;
         }
-
-        public async Task CopyAsync(string sourceFileName, string targetFileName,
-            CancellationToken ct = default)
+        catch (MongoWriteException ex) when (ex.WriteError?.Category == ServerErrorCategory.DuplicateKey)
         {
-            Guard.NotNullOrEmpty(targetFileName, nameof(targetFileName));
+            throw new AssetAlreadyExistsException(fileName);
+        }
+        catch (MongoBulkWriteException<BsonDocument> ex) when (ex.WriteErrors.Any(x => x.Category == ServerErrorCategory.DuplicateKey))
+        {
+            throw new AssetAlreadyExistsException(fileName);
+        }
+    }
 
-            var sourceName = GetFileName(sourceFileName, nameof(sourceFileName));
+    public async Task DeleteByPrefixAsync(string prefix,
+        CancellationToken ct = default)
+    {
+        var name = GetFileName(prefix, nameof(prefix));
 
-            try
+        try
+        {
+            var match = new BsonRegularExpression($"^{name}");
+
+            var fileQuery = await bucket.FindAsync(Filters.Regex(x => x.Id, match), cancellationToken: ct);
+
+            await fileQuery.ForEachAsync(async file =>
             {
-                await using (var readStream = await bucket.OpenDownloadStreamAsync(sourceName, cancellationToken: ct))
+                try
                 {
-                    await UploadAsync(targetFileName, readStream, false, ct);
+                    await bucket.DeleteAsync(file.Id, ct);
                 }
-            }
-            catch (GridFSFileNotFoundException ex)
-            {
-                throw new AssetNotFoundException(sourceFileName, ex);
-            }
-        }
-
-        public async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default,
-            CancellationToken ct = default)
-        {
-            Guard.NotNull(stream, nameof(stream));
-
-            var name = GetFileName(fileName, nameof(fileName));
-
-            try
-            {
-                var options = range.IsDefined ? DownloadSeekable : DownloadDefault;
-
-                await using (var readStream = await bucket.OpenDownloadStreamAsync(name, options, ct))
+                catch (GridFSFileNotFoundException)
                 {
-                    await readStream.CopyToAsync(stream, range, ct);
+                    return;
                 }
-            }
-            catch (GridFSFileNotFoundException ex)
-            {
-                throw new AssetNotFoundException(fileName, ex);
-            }
+            }, ct);
         }
-
-        public async Task<long> UploadAsync(string fileName, Stream stream, bool overwrite = false,
-            CancellationToken ct = default)
+        catch (GridFSFileNotFoundException)
         {
-            Guard.NotNull(stream, nameof(stream));
-
-            var name = GetFileName(fileName, nameof(fileName));
-
-            try
-            {
-                if (overwrite)
-                {
-                    await DeleteAsync(fileName, ct);
-                }
-
-                await bucket.UploadFromStreamAsync(name, name, stream, cancellationToken: ct);
-
-                return -1;
-            }
-            catch (MongoWriteException ex) when (ex.WriteError?.Category == ServerErrorCategory.DuplicateKey)
-            {
-                throw new AssetAlreadyExistsException(fileName);
-            }
-            catch (MongoBulkWriteException<BsonDocument> ex) when (ex.WriteErrors.Any(x => x.Category == ServerErrorCategory.DuplicateKey))
-            {
-                throw new AssetAlreadyExistsException(fileName);
-            }
+            return;
         }
+    }
 
-        public async Task DeleteByPrefixAsync(string prefix,
-            CancellationToken ct = default)
+    public async Task DeleteAsync(string fileName,
+        CancellationToken ct = default)
+    {
+        var name = GetFileName(fileName, nameof(fileName));
+
+        try
         {
-            var name = GetFileName(prefix, nameof(prefix));
-
-            try
-            {
-                var match = new BsonRegularExpression($"^{name}");
-
-                var fileQuery = await bucket.FindAsync(Filters.Regex(x => x.Id, match), cancellationToken: ct);
-
-                await fileQuery.ForEachAsync(async file =>
-                {
-                    try
-                    {
-                        await bucket.DeleteAsync(file.Id, ct);
-                    }
-                    catch (GridFSFileNotFoundException)
-                    {
-                        return;
-                    }
-                }, ct);
-            }
-            catch (GridFSFileNotFoundException)
-            {
-                return;
-            }
+            await bucket.DeleteAsync(name, ct);
         }
-
-        public async Task DeleteAsync(string fileName,
-            CancellationToken ct = default)
+        catch (GridFSFileNotFoundException)
         {
-            var name = GetFileName(fileName, nameof(fileName));
-
-            try
-            {
-                await bucket.DeleteAsync(name, ct);
-            }
-            catch (GridFSFileNotFoundException)
-            {
-                return;
-            }
+            return;
         }
+    }
 
-        private static string GetFileName(string fileName, string parameterName)
-        {
-            Guard.NotNullOrEmpty(fileName, parameterName);
+    private static string GetFileName(string fileName, string parameterName)
+    {
+        Guard.NotNullOrEmpty(fileName, parameterName);
 
-            return fileName.Replace("\\", "/", StringComparison.Ordinal);
-        }
+        return fileName.Replace("\\", "/", StringComparison.Ordinal);
     }
 }

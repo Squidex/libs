@@ -5,10 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Messaging.Implementation
+namespace Squidex.Messaging.Implementation;
+
+public interface IInstanceNameProvider
 {
-    public interface IInstanceNameProvider
-    {
-        string Name { get; }
-    }
+    string Name { get; }
 }

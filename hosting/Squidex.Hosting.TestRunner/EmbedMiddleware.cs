@@ -5,30 +5,29 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Hosting
+namespace Squidex.Hosting;
+
+public sealed class EmbedMiddleware
 {
-    public sealed class EmbedMiddleware
+    private readonly RequestDelegate next;
+
+    public EmbedMiddleware(RequestDelegate next)
     {
-        private readonly RequestDelegate next;
+        this.next = next;
+    }
 
-        public EmbedMiddleware(RequestDelegate next)
+    public Task InvokeAsync(HttpContext context)
+    {
+        var request = context.Request;
+
+        if (request.Path.StartsWithSegments("/embed", StringComparison.Ordinal, out var remaining))
         {
-            this.next = next;
+            request.Path = remaining;
+            request.PathBase += "/embed";
+
+            context.Items["embed"] = true;
         }
 
-        public Task InvokeAsync(HttpContext context)
-        {
-            var request = context.Request;
-
-            if (request.Path.StartsWithSegments("/embed", StringComparison.Ordinal, out var remaining))
-            {
-                request.Path = remaining;
-                request.PathBase += "/embed";
-
-                context.Items["embed"] = true;
-            }
-
-            return next(context);
-        }
+        return next(context);
     }
 }

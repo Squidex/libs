@@ -5,12 +5,11 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Log
-{
-    public interface IRootWriter : IObjectWriter
-    {
-        void Start();
+namespace Squidex.Log;
 
-        string End();
-    }
+public interface IRootWriter : IObjectWriter
+{
+    void Start();
+
+    string End();
 }

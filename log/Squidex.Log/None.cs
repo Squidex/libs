@@ -5,16 +5,15 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Log
+namespace Squidex.Log;
+
+internal sealed class None
 {
-    internal sealed class None
+    public static readonly Type Type = typeof(None);
+
+    public static readonly None Value = new None();
+
+    private None()
     {
-        public static readonly Type Type = typeof(None);
-
-        public static readonly None Value = new None();
-
-        private None()
-        {
-        }
     }
 }

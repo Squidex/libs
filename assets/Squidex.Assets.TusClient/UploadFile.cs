@@ -7,36 +7,35 @@
 
 using HeyRed.Mime;
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+public sealed class UploadFile
 {
-    public sealed class UploadFile
+    public Stream Stream { get; }
+
+    public string FileName { get; }
+
+    public string ContentType { get; }
+
+    public UploadFile(Stream stream, string fileName, string contentType)
     {
-        public Stream Stream { get; }
+        Stream = stream;
+        FileName = fileName;
+        ContentType = contentType;
+    }
 
-        public string FileName { get; }
-
-        public string ContentType { get; }
-
-        public UploadFile(Stream stream, string fileName, string contentType)
+    public static UploadFile FromFile(FileInfo fileInfo, string? mimeType = null)
+    {
+        if (string.IsNullOrEmpty(mimeType))
         {
-            Stream = stream;
-            FileName = fileName;
-            ContentType = contentType;
+            mimeType = MimeTypesMap.GetMimeType(fileInfo.Name);
         }
 
-        public static UploadFile FromFile(FileInfo fileInfo, string? mimeType = null)
-        {
-            if (string.IsNullOrEmpty(mimeType))
-            {
-                mimeType = MimeTypesMap.GetMimeType(fileInfo.Name);
-            }
+        return new UploadFile(fileInfo.OpenRead(), fileInfo.Name, mimeType!);
+    }
 
-            return new UploadFile(fileInfo.OpenRead(), fileInfo.Name, mimeType!);
-        }
-
-        public static UploadFile FromPath(string path, string? mimeType = null)
-        {
-            return FromFile(new FileInfo(path), mimeType);
-        }
+    public static UploadFile FromPath(string path, string? mimeType = null)
+    {
+        return FromFile(new FileInfo(path), mimeType);
     }
 }

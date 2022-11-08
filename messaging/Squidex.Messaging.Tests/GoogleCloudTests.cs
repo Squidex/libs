@@ -5,22 +5,21 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Messaging
+namespace Squidex.Messaging;
+
+public class GoogleCloudTests : MessagingTestsBase
 {
-    public class GoogleCloudTests : MessagingTestsBase
+    protected override string TopicOrQueueName => "messaging-tests";
+
+    protected override bool CanHandleAndSimulateTimeout => false;
+
+    protected override void ConfigureServices(IServiceCollection services, ChannelName channel, bool consume)
     {
-        protected override string TopicOrQueueName => "messaging-tests";
-
-        protected override bool CanHandleAndSimulateTimeout => false;
-
-        protected override void ConfigureServices(IServiceCollection services, ChannelName channel, bool consume)
-        {
-            services
-                .AddGooglePubSubTransport(TestHelpers.Configuration)
-                .AddMessaging(channel, consume, options =>
-                {
-                    options.Expires = TimeSpan.FromDays(1);
-                });
-        }
+        services
+            .AddGooglePubSubTransport(TestHelpers.Configuration)
+            .AddMessaging(channel, consume, options =>
+            {
+                options.Expires = TimeSpan.FromDays(1);
+            });
     }
 }

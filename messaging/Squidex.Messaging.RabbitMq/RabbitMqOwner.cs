@@ -8,27 +8,26 @@
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 
-namespace Squidex.Messaging.RabbitMq
+namespace Squidex.Messaging.RabbitMq;
+
+public sealed class RabbitMqOwner
 {
-    public sealed class RabbitMqOwner
+    public IConnection Connection { get; }
+
+    public RabbitMqTransportOptions Options { get; }
+
+    public RabbitMqOwner(IOptions<RabbitMqTransportOptions> options)
     {
-        public IConnection Connection { get; }
+        Options = options.Value;
 
-        public RabbitMqTransportOptions Options { get; }
-
-        public RabbitMqOwner(IOptions<RabbitMqTransportOptions> options)
+        var connectionFactory = new ConnectionFactory
         {
-            Options = options.Value;
+            Uri = options.Value.Uri,
 
-            var connectionFactory = new ConnectionFactory
-            {
-                Uri = options.Value.Uri,
+            // Of course we want an asynchronous behavior.
+            DispatchConsumersAsync = true
+        };
 
-                // Of course we want an asynchronous behavior.
-                DispatchConsumersAsync = true
-            };
-
-            Connection = connectionFactory.CreateConnection();
-        }
+        Connection = connectionFactory.CreateConnection();
     }
 }

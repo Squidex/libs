@@ -9,153 +9,152 @@ using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using Squidex.Messaging.Internal;
 
-namespace Squidex.Messaging.RabbitMq
+namespace Squidex.Messaging.RabbitMq;
+
+public sealed class RabbitMqTransport : IMessagingTransport
 {
-    public sealed class RabbitMqTransport : IMessagingTransport
+    private readonly RabbitMqOwner owner;
+    private readonly ILogger<RabbitMqTransport> log;
+    private readonly HashSet<string> createdQueues = new HashSet<string>();
+    private IModel? model;
+
+    public RabbitMqTransport(RabbitMqOwner owner,
+        ILogger<RabbitMqTransport> log)
     {
-        private readonly RabbitMqOwner owner;
-        private readonly ILogger<RabbitMqTransport> log;
-        private readonly HashSet<string> createdQueues = new HashSet<string>();
-        private IModel? model;
+        this.owner = owner;
 
-        public RabbitMqTransport(RabbitMqOwner owner,
-            ILogger<RabbitMqTransport> log)
+        this.log = log;
+    }
+
+    public Task InitializeAsync(
+        CancellationToken ct)
+    {
+        if (model != null)
         {
-            this.owner = owner;
-
-            this.log = log;
-        }
-
-        public Task InitializeAsync(
-            CancellationToken ct)
-        {
-            if (model != null)
-            {
-                return Task.CompletedTask;
-            }
-
-            model = owner.Connection.CreateModel();
-
             return Task.CompletedTask;
         }
 
-        public Task ReleaseAsync(
-            CancellationToken ct)
+        model = owner.Connection.CreateModel();
+
+        return Task.CompletedTask;
+    }
+
+    public Task ReleaseAsync(
+        CancellationToken ct)
+    {
+        if (model == null)
         {
-            if (model == null)
-            {
-                return Task.CompletedTask;
-            }
-
-            model.Dispose();
-            model = null;
-
             return Task.CompletedTask;
         }
 
-        public Task<IAsyncDisposable?> CreateChannelAsync(ChannelName channel, string instanceName, bool consume, ProducerOptions producerOptions,
-            CancellationToken ct)
+        model.Dispose();
+        model = null;
+
+        return Task.CompletedTask;
+    }
+
+    public Task<IAsyncDisposable?> CreateChannelAsync(ChannelName channel, string instanceName, bool consume, ProducerOptions producerOptions,
+        CancellationToken ct)
+    {
+        if (model == null)
         {
-            if (model == null)
-            {
-                ThrowHelper.InvalidOperationException("Transport not initialized yet.");
-                return Task.FromResult<IAsyncDisposable?>(null);
-            }
-
-            lock (model)
-            {
-                if (channel.Type == ChannelType.Queue)
-                {
-                    model.QueueDeclare(channel.Name, true, false, false, null);
-                }
-                else
-                {
-                    model.ExchangeDeclare(channel.Name, "fanout", true, false, null);
-                }
-            }
-
+            ThrowHelper.InvalidOperationException("Transport not initialized yet.");
             return Task.FromResult<IAsyncDisposable?>(null);
         }
 
-        public Task ProduceAsync(ChannelName channel, string instanceName, TransportMessage transportMessage,
-            CancellationToken ct)
+        lock (model)
         {
-            if (model == null)
+            if (channel.Type == ChannelType.Queue)
             {
-                ThrowHelper.InvalidOperationException("Transport not initialized yet.");
-                return Task.CompletedTask;
+                model.QueueDeclare(channel.Name, true, false, false, null);
             }
-
-            lock (model)
+            else
             {
-                var properties = model.CreateBasicProperties();
-
-                if (transportMessage.Headers.Count > 0)
-                {
-                    properties.Headers = new Dictionary<string, object>();
-
-                    foreach (var (key, value) in transportMessage.Headers)
-                    {
-                        properties.Headers[key] = value;
-                    }
-                }
-
-                if (channel.Type == ChannelType.Queue)
-                {
-                    model.BasicPublish(string.Empty, channel.Name, properties, transportMessage.Data);
-                }
-                else
-                {
-                    model.BasicPublish(channel.Name, "*", properties, transportMessage.Data);
-                }
+                model.ExchangeDeclare(channel.Name, "fanout", true, false, null);
             }
+        }
 
+        return Task.FromResult<IAsyncDisposable?>(null);
+    }
+
+    public Task ProduceAsync(ChannelName channel, string instanceName, TransportMessage transportMessage,
+        CancellationToken ct)
+    {
+        if (model == null)
+        {
+            ThrowHelper.InvalidOperationException("Transport not initialized yet.");
             return Task.CompletedTask;
         }
 
-        public Task<IAsyncDisposable> SubscribeAsync(ChannelName channel, string instanceName, MessageTransportCallback callback,
-            CancellationToken ct)
+        lock (model)
         {
-            return Task.FromResult(SubscribeCore(channel, instanceName, callback));
+            var properties = model.CreateBasicProperties();
+
+            if (transportMessage.Headers.Count > 0)
+            {
+                properties.Headers = new Dictionary<string, object>();
+
+                foreach (var (key, value) in transportMessage.Headers)
+                {
+                    properties.Headers[key] = value;
+                }
+            }
+
+            if (channel.Type == ChannelType.Queue)
+            {
+                model.BasicPublish(string.Empty, channel.Name, properties, transportMessage.Data);
+            }
+            else
+            {
+                model.BasicPublish(channel.Name, "*", properties, transportMessage.Data);
+            }
         }
 
-        private IAsyncDisposable SubscribeCore(ChannelName channel, string instanceName, MessageTransportCallback callback)
+        return Task.CompletedTask;
+    }
+
+    public Task<IAsyncDisposable> SubscribeAsync(ChannelName channel, string instanceName, MessageTransportCallback callback,
+        CancellationToken ct)
+    {
+        return Task.FromResult(SubscribeCore(channel, instanceName, callback));
+    }
+
+    private IAsyncDisposable SubscribeCore(ChannelName channel, string instanceName, MessageTransportCallback callback)
+    {
+        if (model == null)
         {
-            if (model == null)
-            {
-                ThrowHelper.InvalidOperationException("Transport not initialized yet.");
-                return null!;
-            }
-
-            var queueName = channel.Name;
-
-            if (channel.Type == ChannelType.Topic)
-            {
-                queueName = CreateTemporaryQueue(channel, instanceName);
-            }
-
-            return new RabbitMqSubscription(queueName, owner, callback, log);
+            ThrowHelper.InvalidOperationException("Transport not initialized yet.");
+            return null!;
         }
 
-        private string CreateTemporaryQueue(ChannelName channel, string instanceName)
+        var queueName = channel.Name;
+
+        if (channel.Type == ChannelType.Topic)
         {
-            var queueName = $"{channel.Name}_{instanceName}";
+            queueName = CreateTemporaryQueue(channel, instanceName);
+        }
 
-            if (!createdQueues.Add(queueName))
-            {
-                return queueName;
-            }
+        return new RabbitMqSubscription(queueName, owner, callback, log);
+    }
 
-            lock (model!)
-            {
-                // Create a queue that only lives as long as the client is connected.
-                model.QueueDeclare(queueName);
+    private string CreateTemporaryQueue(ChannelName channel, string instanceName)
+    {
+        var queueName = $"{channel.Name}_{instanceName}";
 
-                // Bind the queue to the exchange.
-                model.QueueBind(queueName, channel.Name, "*");
-            }
-
+        if (!createdQueues.Add(queueName))
+        {
             return queueName;
         }
+
+        lock (model!)
+        {
+            // Create a queue that only lives as long as the client is connected.
+            model.QueueDeclare(queueName);
+
+            // Bind the queue to the exchange.
+            model.QueueBind(queueName, channel.Name, "*");
+        }
+
+        return queueName;
     }
 }

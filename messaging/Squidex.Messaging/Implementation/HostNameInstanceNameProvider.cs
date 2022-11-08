@@ -7,10 +7,9 @@
 
 using System.Net;
 
-namespace Squidex.Messaging.Implementation
+namespace Squidex.Messaging.Implementation;
+
+public sealed class HostNameInstanceNameProvider : IInstanceNameProvider
 {
-    public sealed class HostNameInstanceNameProvider : IInstanceNameProvider
-    {
-        public string Name { get; } = Dns.GetHostName();
-    }
+    public string Name { get; } = Dns.GetHostName();
 }

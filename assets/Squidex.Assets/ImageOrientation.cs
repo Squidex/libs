@@ -5,18 +5,17 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+public enum ImageOrientation : uint
 {
-    public enum ImageOrientation : uint
-    {
-        None,
-        TopLeft,
-        TopRight,
-        BottomRight,
-        BottomLeft,
-        LeftTop,
-        RightTop,
-        RightBottom,
-        LeftBottom
-    }
+    None,
+    TopLeft,
+    TopRight,
+    BottomRight,
+    BottomLeft,
+    LeftTop,
+    RightTop,
+    RightBottom,
+    LeftBottom
 }

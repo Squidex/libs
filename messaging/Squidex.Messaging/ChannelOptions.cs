@@ -10,35 +10,34 @@ using Squidex.Messaging.Internal;
 
 #pragma warning disable MA0048 // File name must match type name
 
-namespace Squidex.Messaging
+namespace Squidex.Messaging;
+
+public delegate IMessagingTransport TransportSelector(IEnumerable<IMessagingTransport> transports, ChannelName name);
+
+public sealed class ChannelOptions : ProducerOptions
 {
-    public delegate IMessagingTransport TransportSelector(IEnumerable<IMessagingTransport> transports, ChannelName name);
+    public int NumSubscriptions { get; set; } = 1;
 
-    public sealed class ChannelOptions : ProducerOptions
+    public Func<object, bool>? LogMessage { get; set; }
+
+    public TransportSelector? TransportSelector { get; set; }
+
+    public IScheduler Scheduler { get; set; } = InlineScheduler.Instance;
+
+    public IMessagingTransport SelectTransport(IEnumerable<IMessagingTransport> transports, ChannelName name)
     {
-        public int NumSubscriptions { get; set; } = 1;
+        var result = TransportSelector?.Invoke(transports, name);
 
-        public Func<object, bool>? LogMessage { get; set; }
-
-        public TransportSelector? TransportSelector { get; set; }
-
-        public IScheduler Scheduler { get; set; } = InlineScheduler.Instance;
-
-        public IMessagingTransport SelectTransport(IEnumerable<IMessagingTransport> transports, ChannelName name)
+        if (result == null)
         {
-            var result = TransportSelector?.Invoke(transports, name);
-
-            if (result == null)
-            {
-                result = transports.LastOrDefault();
-            }
-
-            if (result == null)
-            {
-                ThrowHelper.InvalidOperationException("No transport configured.");
-            }
-
-            return result!;
+            result = transports.LastOrDefault();
         }
+
+        if (result == null)
+        {
+            ThrowHelper.InvalidOperationException("No transport configured.");
+        }
+
+        return result!;
     }
 }

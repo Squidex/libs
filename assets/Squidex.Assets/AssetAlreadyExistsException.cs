@@ -8,26 +8,25 @@
 using System.Runtime.Serialization;
 using Squidex.Assets.Internal;
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+[Serializable]
+public class AssetAlreadyExistsException : Exception
 {
-    [Serializable]
-    public class AssetAlreadyExistsException : Exception
+    public AssetAlreadyExistsException(string fileName, Exception? inner = null)
+        : base(FormatMessage(fileName), inner)
     {
-        public AssetAlreadyExistsException(string fileName, Exception? inner = null)
-            : base(FormatMessage(fileName), inner)
-        {
-        }
+    }
 
-        protected AssetAlreadyExistsException(SerializationInfo info, StreamingContext context)
-            : base(info, context)
-        {
-        }
+    protected AssetAlreadyExistsException(SerializationInfo info, StreamingContext context)
+        : base(info, context)
+    {
+    }
 
-        private static string FormatMessage(string fileName)
-        {
-            Guard.NotNullOrEmpty(fileName, nameof(fileName));
+    private static string FormatMessage(string fileName)
+    {
+        Guard.NotNullOrEmpty(fileName, nameof(fileName));
 
-            return $"An asset with name '{fileName}' already exists.";
-        }
+        return $"An asset with name '{fileName}' already exists.";
     }
 }

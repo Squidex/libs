@@ -8,31 +8,30 @@
 using System.Text;
 using Microsoft.Extensions.Logging;
 
-namespace Squidex.Messaging.Redis
+namespace Squidex.Messaging.Redis;
+
+internal sealed class LoggerTextWriter : TextWriter
 {
-    internal sealed class LoggerTextWriter : TextWriter
+    private readonly ILogger log;
+
+    public LoggerTextWriter(ILogger log)
     {
-        private readonly ILogger log;
+        this.log = log;
+    }
 
-        public LoggerTextWriter(ILogger log)
+    public override Encoding Encoding => Encoding.UTF8;
+
+    public override void Write(char value)
+    {
+    }
+
+    public override void WriteLine(string? value)
+    {
+        if (log.IsEnabled(LogLevel.Debug))
         {
-            this.log = log;
-        }
-
-        public override Encoding Encoding => Encoding.UTF8;
-
-        public override void Write(char value)
-        {
-        }
-
-        public override void WriteLine(string? value)
-        {
-            if (log.IsEnabled(LogLevel.Debug))
-            {
 #pragma warning disable CA2254 // Template should be a static expression
-                log.LogDebug(new EventId(100, "RedisConnectionLog"), value);
+            log.LogDebug(new EventId(100, "RedisConnectionLog"), value);
 #pragma warning restore CA2254 // Template should be a static expression
-            }
         }
     }
 }

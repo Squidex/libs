@@ -8,216 +8,215 @@
 using Microsoft.Extensions.Logging;
 using Squidex.Assets.Internal;
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+public sealed class FolderAssetStore : IAssetStore
 {
-    public sealed class FolderAssetStore : IAssetStore
+    private const int BufferSize = 81920;
+    private readonly ILogger<FolderAssetStore> log;
+    private readonly DirectoryInfo directory;
+
+    public FolderAssetStore(string path, ILogger<FolderAssetStore> log)
     {
-        private const int BufferSize = 81920;
-        private readonly ILogger<FolderAssetStore> log;
-        private readonly DirectoryInfo directory;
+        Guard.NotNullOrEmpty(path, nameof(path));
+        Guard.NotNull(log, nameof(log));
 
-        public FolderAssetStore(string path, ILogger<FolderAssetStore> log)
+        this.log = log;
+
+        directory = new DirectoryInfo(path);
+    }
+
+    public Task InitializeAsync(
+        CancellationToken ct)
+    {
+        try
         {
-            Guard.NotNullOrEmpty(path, nameof(path));
-            Guard.NotNull(log, nameof(log));
+            if (!directory.Exists)
+            {
+                directory.Create();
+            }
 
-            this.log = log;
+            log.LogInformation("Initialized with {folder}", directory.FullName);
 
-            directory = new DirectoryInfo(path);
+            return Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            throw new AssetStoreException($"Cannot access directory {directory.FullName}", ex);
+        }
+    }
+
+    public Task<long> GetSizeAsync(string fileName,
+        CancellationToken ct = default)
+    {
+        var file = GetFile(fileName, nameof(fileName));
+
+        try
+        {
+            return Task.FromResult(file.Length);
+        }
+        catch (FileNotFoundException ex)
+        {
+            throw new AssetNotFoundException(fileName, ex);
+        }
+    }
+
+    public Task CopyAsync(string sourceFileName, string targetFileName,
+        CancellationToken ct = default)
+    {
+        var targetFile = GetFile(targetFileName, nameof(targetFileName));
+        var sourceFile = GetFile(sourceFileName, nameof(sourceFileName));
+
+        try
+        {
+            Directory.CreateDirectory(targetFile.Directory!.FullName);
+
+            sourceFile.CopyTo(targetFile.FullName);
+
+            return Task.CompletedTask;
+        }
+        catch (IOException) when (targetFile.Exists)
+        {
+            throw new AssetAlreadyExistsException(targetFileName);
+        }
+        catch (FileNotFoundException ex)
+        {
+            throw new AssetNotFoundException(sourceFileName, ex);
+        }
+        catch (DirectoryNotFoundException ex)
+        {
+            throw new AssetNotFoundException(sourceFileName, ex);
+        }
+    }
+
+    public async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default,
+        CancellationToken ct = default)
+    {
+        Guard.NotNull(stream, nameof(stream));
+
+        var file = GetFile(fileName, nameof(fileName));
+
+        try
+        {
+            await using (var fileStream = file.OpenRead())
+            {
+                await fileStream.CopyToAsync(stream, range, ct);
+            }
+        }
+        catch (FileNotFoundException ex)
+        {
+            throw new AssetNotFoundException(fileName, ex);
+        }
+        catch (DirectoryNotFoundException ex)
+        {
+            throw new AssetNotFoundException(fileName, ex);
+        }
+    }
+
+    public async Task<long> UploadAsync(string fileName, Stream stream, bool overwrite = false,
+        CancellationToken ct = default)
+    {
+        Guard.NotNull(stream, nameof(stream));
+
+        var file = GetFile(fileName, nameof(fileName));
+
+        Directory.CreateDirectory(file.Directory!.FullName);
+
+        try
+        {
+            await using (var fileStream = file.Open(overwrite ? FileMode.Create : FileMode.CreateNew, FileAccess.Write))
+            {
+                await stream.CopyToAsync(fileStream, BufferSize, ct);
+            }
+        }
+        catch (IOException) when (file.Exists)
+        {
+            throw new AssetAlreadyExistsException(file.Name);
         }
 
-        public Task InitializeAsync(
-            CancellationToken ct)
+        return file.Length;
+    }
+
+    public Task DeleteByPrefixAsync(string prefix,
+        CancellationToken ct = default)
+    {
+        var cleanedPrefix = GetFileName(prefix, nameof(prefix));
+
+        if (Delete(GetPath(prefix)))
         {
-            try
+            return Task.CompletedTask;
+        }
+
+        foreach (var file in directory.GetFiles("*.*", SearchOption.AllDirectories))
+        {
+            var relativeName = GetFileName(Path.GetRelativePath(directory.FullName, file.FullName), string.Empty);
+
+            if (relativeName.StartsWith(cleanedPrefix, StringComparison.Ordinal))
             {
-                if (!directory.Exists)
+                try
                 {
-                    directory.Create();
+                    file.Delete();
                 }
-
-                log.LogInformation("Initialized with {folder}", directory.FullName);
-
-                return Task.CompletedTask;
-            }
-            catch (Exception ex)
-            {
-                throw new AssetStoreException($"Cannot access directory {directory.FullName}", ex);
+                catch (DirectoryNotFoundException)
+                {
+                    continue;
+                }
             }
         }
 
-        public Task<long> GetSizeAsync(string fileName,
-            CancellationToken ct = default)
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteAsync(string fileName,
+        CancellationToken ct = default)
+    {
+        try
         {
             var file = GetFile(fileName, nameof(fileName));
 
-            try
+            if (file.Exists)
             {
-                return Task.FromResult(file.Length);
-            }
-            catch (FileNotFoundException ex)
-            {
-                throw new AssetNotFoundException(fileName, ex);
-            }
-        }
-
-        public Task CopyAsync(string sourceFileName, string targetFileName,
-            CancellationToken ct = default)
-        {
-            var targetFile = GetFile(targetFileName, nameof(targetFileName));
-            var sourceFile = GetFile(sourceFileName, nameof(sourceFileName));
-
-            try
-            {
-                Directory.CreateDirectory(targetFile.Directory!.FullName);
-
-                sourceFile.CopyTo(targetFile.FullName);
-
-                return Task.CompletedTask;
-            }
-            catch (IOException) when (targetFile.Exists)
-            {
-                throw new AssetAlreadyExistsException(targetFileName);
-            }
-            catch (FileNotFoundException ex)
-            {
-                throw new AssetNotFoundException(sourceFileName, ex);
-            }
-            catch (DirectoryNotFoundException ex)
-            {
-                throw new AssetNotFoundException(sourceFileName, ex);
-            }
-        }
-
-        public async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default,
-            CancellationToken ct = default)
-        {
-            Guard.NotNull(stream, nameof(stream));
-
-            var file = GetFile(fileName, nameof(fileName));
-
-            try
-            {
-                await using (var fileStream = file.OpenRead())
-                {
-                    await fileStream.CopyToAsync(stream, range, ct);
-                }
-            }
-            catch (FileNotFoundException ex)
-            {
-                throw new AssetNotFoundException(fileName, ex);
-            }
-            catch (DirectoryNotFoundException ex)
-            {
-                throw new AssetNotFoundException(fileName, ex);
-            }
-        }
-
-        public async Task<long> UploadAsync(string fileName, Stream stream, bool overwrite = false,
-            CancellationToken ct = default)
-        {
-            Guard.NotNull(stream, nameof(stream));
-
-            var file = GetFile(fileName, nameof(fileName));
-
-            Directory.CreateDirectory(file.Directory!.FullName);
-
-            try
-            {
-                await using (var fileStream = file.Open(overwrite ? FileMode.Create : FileMode.CreateNew, FileAccess.Write))
-                {
-                    await stream.CopyToAsync(fileStream, BufferSize, ct);
-                }
-            }
-            catch (IOException) when (file.Exists)
-            {
-                throw new AssetAlreadyExistsException(file.Name);
-            }
-
-            return file.Length;
-        }
-
-        public Task DeleteByPrefixAsync(string prefix,
-            CancellationToken ct = default)
-        {
-            var cleanedPrefix = GetFileName(prefix, nameof(prefix));
-
-            if (Delete(GetPath(prefix)))
-            {
-                return Task.CompletedTask;
-            }
-
-            foreach (var file in directory.GetFiles("*.*", SearchOption.AllDirectories))
-            {
-                var relativeName = GetFileName(Path.GetRelativePath(directory.FullName, file.FullName), string.Empty);
-
-                if (relativeName.StartsWith(cleanedPrefix, StringComparison.Ordinal))
-                {
-                    try
-                    {
-                        file.Delete();
-                    }
-                    catch (DirectoryNotFoundException)
-                    {
-                        continue;
-                    }
-                }
+                file.Delete();
             }
 
             return Task.CompletedTask;
         }
-
-        public Task DeleteAsync(string fileName,
-            CancellationToken ct = default)
+        catch (DirectoryNotFoundException)
         {
-            try
-            {
-                var file = GetFile(fileName, nameof(fileName));
-
-                if (file.Exists)
-                {
-                    file.Delete();
-                }
-
-                return Task.CompletedTask;
-            }
-            catch (DirectoryNotFoundException)
-            {
-                return Task.CompletedTask;
-            }
+            return Task.CompletedTask;
         }
+    }
 
-        private static bool Delete(string path)
+    private static bool Delete(string path)
+    {
+        try
         {
-            try
-            {
-                Directory.Delete(path, true);
+            Directory.Delete(path, true);
 
-                return true;
-            }
-            catch (IOException)
-            {
-                return false;
-            }
+            return true;
         }
-
-        private FileInfo GetFile(string fileName, string parameterName)
+        catch (IOException)
         {
-            var cleaned = GetFileName(fileName, parameterName);
-
-            return new FileInfo(GetPath(cleaned));
+            return false;
         }
+    }
 
-        private string GetPath(string name)
-        {
-            return Path.Combine(directory.FullName, name);
-        }
+    private FileInfo GetFile(string fileName, string parameterName)
+    {
+        var cleaned = GetFileName(fileName, parameterName);
 
-        private static string GetFileName(string fileName, string parameterName)
-        {
-            Guard.NotNullOrEmpty(fileName, parameterName);
+        return new FileInfo(GetPath(cleaned));
+    }
 
-            return fileName.Replace("\\", "/", StringComparison.Ordinal);
-        }
+    private string GetPath(string name)
+    {
+        return Path.Combine(directory.FullName, name);
+    }
+
+    private static string GetFileName(string fileName, string parameterName)
+    {
+        Guard.NotNullOrEmpty(fileName, parameterName);
+
+        return fileName.Replace("\\", "/", StringComparison.Ordinal);
     }
 }

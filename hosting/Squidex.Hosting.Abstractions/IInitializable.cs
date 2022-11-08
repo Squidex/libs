@@ -5,17 +5,16 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Hosting
-{
-    public interface IInitializable : ISystem
-    {
-        Task InitializeAsync(
-            CancellationToken ct);
+namespace Squidex.Hosting;
 
-        Task ReleaseAsync(
-            CancellationToken ct)
-        {
-            return Task.CompletedTask;
-        }
+public interface IInitializable : ISystem
+{
+    Task InitializeAsync(
+        CancellationToken ct);
+
+    Task ReleaseAsync(
+        CancellationToken ct)
+    {
+        return Task.CompletedTask;
     }
 }

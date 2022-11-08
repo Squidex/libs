@@ -14,215 +14,214 @@ using Xunit;
 
 #pragma warning disable CA2253 // Named placeholders should not be numeric values
 
-namespace Squidex.Log
+namespace Squidex.Log;
+
+public class SemanticLogAdapterTests
 {
-    public class SemanticLogAdapterTests
+    private readonly IOptions<SemanticLogOptions> options = Options.Create(new SemanticLogOptions());
+    private readonly List<ILogChannel> channels = new List<ILogChannel>();
+    private readonly Lazy<SemanticLog> log;
+    private readonly ILogChannel channel = A.Fake<ILogChannel>();
+    private readonly SemanticLogLoggerProvider sut;
+    private string output;
+
+    public SemanticLog Log
     {
-        private readonly IOptions<SemanticLogOptions> options = Options.Create(new SemanticLogOptions());
-        private readonly List<ILogChannel> channels = new List<ILogChannel>();
-        private readonly Lazy<SemanticLog> log;
-        private readonly ILogChannel channel = A.Fake<ILogChannel>();
-        private readonly SemanticLogLoggerProvider sut;
-        private string output;
+        get { return log.Value; }
+    }
 
-        public SemanticLog Log
-        {
-            get { return log.Value; }
-        }
+    public SemanticLogAdapterTests()
+    {
+        options.Value.Level = SemanticLogLevel.Trace;
 
-        public SemanticLogAdapterTests()
-        {
-            options.Value.Level = SemanticLogLevel.Trace;
+        channels.Add(channel);
 
-            channels.Add(channel);
+        A.CallTo(() => channel.Log(A<SemanticLogLevel>._, A<string>._))
+            .Invokes((SemanticLogLevel level, string message) =>
+            {
+                output = message;
+            });
 
-            A.CallTo(() => channel.Log(A<SemanticLogLevel>._, A<string>._))
-                .Invokes((SemanticLogLevel level, string message) =>
-                {
-                    output = message;
-                });
+        log = new Lazy<SemanticLog>(() => new SemanticLog(options, channels, new List<ILogAppender>(), JsonLogWriterFactory.Default()));
 
-            log = new Lazy<SemanticLog>(() => new SemanticLog(options, channels, new List<ILogAppender>(), JsonLogWriterFactory.Default()));
+        sut = SemanticLogLoggerProvider.ForTesting(log.Value);
+    }
 
-            sut = SemanticLogLoggerProvider.ForTesting(log.Value);
-        }
+    [Fact]
+    public void Should_do_nothing_when_disposing()
+    {
+        sut.Dispose();
+    }
 
-        [Fact]
-        public void Should_do_nothing_when_disposing()
-        {
-            sut.Dispose();
-        }
+    [Fact]
+    public void Should_provide_null_logger_when_no_log_provided()
+    {
+        var provider = SemanticLogLoggerProvider.ForTesting(null);
 
-        [Fact]
-        public void Should_provide_null_logger_when_no_log_provided()
-        {
-            var provider = SemanticLogLoggerProvider.ForTesting(null);
+        Assert.Same(provider.CreateLogger("test"), NullLogger.Instance);
+    }
 
-            Assert.Same(provider.CreateLogger("test"), NullLogger.Instance);
-        }
+    [Fact]
+    public void Should_provide_a_scope()
+    {
+        var logger = sut.CreateLogger("test-category");
 
-        [Fact]
-        public void Should_provide_a_scope()
-        {
-            var logger = sut.CreateLogger("test-category");
+        Assert.NotNull(logger.BeginScope(1));
+    }
 
-            Assert.NotNull(logger.BeginScope(1));
-        }
+    [Fact]
+    public void Should_log_always()
+    {
+        var logger = sut.CreateLogger("test-category");
 
-        [Fact]
-        public void Should_log_always()
-        {
-            var logger = sut.CreateLogger("test-category");
+        Assert.True(logger.IsEnabled(LogLevel.Critical));
+        Assert.True(logger.IsEnabled((LogLevel)123));
+    }
 
-            Assert.True(logger.IsEnabled(LogLevel.Critical));
-            Assert.True(logger.IsEnabled((LogLevel)123));
-        }
+    [Fact]
+    public void Should_log_message_with_event_id()
+    {
+        var eventId = new EventId(1000);
 
-        [Fact]
-        public void Should_log_message_with_event_id()
-        {
-            var eventId = new EventId(1000);
+        var logger = sut.CreateLogger("my-category");
 
-            var logger = sut.CreateLogger("my-category");
+        logger.Log(LogLevel.Debug, eventId, 1, null, (x, e) => "my-message");
 
-            logger.Log(LogLevel.Debug, eventId, 1, null, (x, e) => "my-message");
+        var expected =
+            MakeTestCall(w => w
+                .WriteProperty("logLevel", "Debug")
+                .WriteProperty("message", "my-message")
+                .WriteObject("eventId", e => e
+                    .WriteProperty("id", 1000))
+                .WriteProperty("category", "my-category"));
 
-            var expected =
-                MakeTestCall(w => w
-                    .WriteProperty("logLevel", "Debug")
-                    .WriteProperty("message", "my-message")
-                    .WriteObject("eventId", e => e
-                        .WriteProperty("id", 1000))
-                    .WriteProperty("category", "my-category"));
+        Assert.Equal(expected, output);
+    }
 
-            Assert.Equal(expected, output);
-        }
+    [Fact]
+    public void Should_log_message_with_event_id_and_name()
+    {
+        var eventId = new EventId(1000, "my-event");
 
-        [Fact]
-        public void Should_log_message_with_event_id_and_name()
-        {
-            var eventId = new EventId(1000, "my-event");
+        var logger = sut.CreateLogger("my-category");
 
-            var logger = sut.CreateLogger("my-category");
+        logger.Log(LogLevel.Debug, eventId, 1, null, (x, e) => "my-message");
 
-            logger.Log(LogLevel.Debug, eventId, 1, null, (x, e) => "my-message");
+        var expected =
+            MakeTestCall(w => w
+                .WriteProperty("logLevel", "Debug")
+                .WriteProperty("message", "my-message")
+                .WriteObject("eventId", e => e
+                    .WriteProperty("id", 1000)
+                    .WriteProperty("name", "my-event"))
+                .WriteProperty("category", "my-category"));
 
-            var expected =
-                MakeTestCall(w => w
-                    .WriteProperty("logLevel", "Debug")
-                    .WriteProperty("message", "my-message")
-                    .WriteObject("eventId", e => e
-                        .WriteProperty("id", 1000)
-                        .WriteProperty("name", "my-event"))
-                    .WriteProperty("category", "my-category"));
+        Assert.Equal(expected, output);
+    }
 
-            Assert.Equal(expected, output);
-        }
+    [Fact]
+    public void Should_log_message_with_exception()
+    {
+        var exception = new InvalidOperationException();
 
-        [Fact]
-        public void Should_log_message_with_exception()
-        {
-            var exception = new InvalidOperationException();
+        var logger = sut.CreateLogger("my-category");
 
-            var logger = sut.CreateLogger("my-category");
+        logger.Log(LogLevel.Debug, new EventId(0), exception, "my-message");
 
-            logger.Log(LogLevel.Debug, new EventId(0), exception, "my-message");
+        var expected =
+            MakeTestCall(w => w
+                .WriteProperty("logLevel", "Debug")
+                .WriteProperty("message", "my-message")
+                .WriteProperty("category", "my-category")
+                .WriteException(exception));
 
-            var expected =
-                MakeTestCall(w => w
-                    .WriteProperty("logLevel", "Debug")
-                    .WriteProperty("message", "my-message")
-                    .WriteProperty("category", "my-category")
-                    .WriteException(exception));
+        Assert.Equal(expected, output);
+    }
 
-            Assert.Equal(expected, output);
-        }
+    [Fact]
+    public void Should_log_message_with_integrated_exception()
+    {
+        var exception = new InvalidOperationException();
 
-        [Fact]
-        public void Should_log_message_with_integrated_exception()
-        {
-            var exception = new InvalidOperationException();
+        var logger = sut.CreateLogger("my-category");
 
-            var logger = sut.CreateLogger("my-category");
+        logger.Log(LogLevel.Debug, new EventId(0), "exception: {exception}", exception);
 
-            logger.Log(LogLevel.Debug, new EventId(0), "exception: {exception}", exception);
+        var expected =
+            MakeTestCall(w => w
+                .WriteProperty("logLevel", "Debug")
+                .WriteProperty("message", $"exception: {exception}")
+                .WriteProperty("category", "my-category")
+                .WriteException(exception));
 
-            var expected =
-                MakeTestCall(w => w
-                    .WriteProperty("logLevel", "Debug")
-                    .WriteProperty("message", $"exception: {exception}")
-                    .WriteProperty("category", "my-category")
-                    .WriteException(exception));
+        Assert.Equal(expected, output);
+    }
 
-            Assert.Equal(expected, output);
-        }
+    [Fact]
+    public void Should_log_additional_values()
+    {
+        var logger = sut.CreateLogger("my-category");
 
-        [Fact]
-        public void Should_log_additional_values()
-        {
-            var logger = sut.CreateLogger("my-category");
+        logger.LogDebug("My numbers are {number1} and {Number2}", 123, 456);
 
-            logger.LogDebug("My numbers are {number1} and {Number2}", 123, 456);
+        var expected =
+            MakeTestCall(w => w
+                .WriteProperty("logLevel", "Debug")
+                .WriteProperty("message", "My numbers are 123 and 456")
+                .WriteProperty("number1", "123")
+                .WriteProperty("number2", "456")
+                .WriteProperty("category", "my-category"));
 
-            var expected =
-                MakeTestCall(w => w
-                    .WriteProperty("logLevel", "Debug")
-                    .WriteProperty("message", "My numbers are 123 and 456")
-                    .WriteProperty("number1", "123")
-                    .WriteProperty("number2", "456")
-                    .WriteProperty("category", "my-category"));
+        Assert.Equal(expected, output);
+    }
 
-            Assert.Equal(expected, output);
-        }
+    [Fact]
+    public void Should_not_log_numbers()
+    {
+        var logger = sut.CreateLogger("my-category");
 
-        [Fact]
-        public void Should_not_log_numbers()
-        {
-            var logger = sut.CreateLogger("my-category");
+        logger.LogDebug("My numbers are {0} and {1}", 123, 456);
 
-            logger.LogDebug("My numbers are {0} and {1}", 123, 456);
+        var expected =
+            MakeTestCall(w => w
+                .WriteProperty("logLevel", "Debug")
+                .WriteProperty("message", "My numbers are 123 and 456")
+                .WriteProperty("category", "my-category"));
 
-            var expected =
-                MakeTestCall(w => w
-                    .WriteProperty("logLevel", "Debug")
-                    .WriteProperty("message", "My numbers are 123 and 456")
-                    .WriteProperty("category", "my-category"));
+        Assert.Equal(expected, output);
+    }
 
-            Assert.Equal(expected, output);
-        }
+    [Theory]
+    [InlineData(LogLevel.None, "Debug")]
+    [InlineData(LogLevel.Debug, "Debug")]
+    [InlineData(LogLevel.Error, "Error")]
+    [InlineData(LogLevel.Trace, "Trace")]
+    [InlineData(LogLevel.Warning, "Warning")]
+    [InlineData(LogLevel.Critical, "Fatal")]
+    [InlineData(LogLevel.Information, "Information")]
+    public void Should_log_message(LogLevel level, string semanticLogLevel)
+    {
+        var logger = sut.CreateLogger("my-category");
 
-        [Theory]
-        [InlineData(LogLevel.None, "Debug")]
-        [InlineData(LogLevel.Debug, "Debug")]
-        [InlineData(LogLevel.Error, "Error")]
-        [InlineData(LogLevel.Trace, "Trace")]
-        [InlineData(LogLevel.Warning, "Warning")]
-        [InlineData(LogLevel.Critical, "Fatal")]
-        [InlineData(LogLevel.Information, "Information")]
-        public void Should_log_message(LogLevel level, string semanticLogLevel)
-        {
-            var logger = sut.CreateLogger("my-category");
+        logger.Log(level, new EventId(0), 1, null, (x, e) => "my-message");
 
-            logger.Log(level, new EventId(0), 1, null, (x, e) => "my-message");
+        var expected =
+            MakeTestCall(w => w
+                .WriteProperty("logLevel", semanticLogLevel)
+                .WriteProperty("message", "my-message")
+                .WriteProperty("category", "my-category"));
 
-            var expected =
-                MakeTestCall(w => w
-                    .WriteProperty("logLevel", semanticLogLevel)
-                    .WriteProperty("message", "my-message")
-                    .WriteProperty("category", "my-category"));
+        Assert.Equal(expected, output);
+    }
 
-            Assert.Equal(expected, output);
-        }
+    private static string MakeTestCall(Action<IObjectWriter> writer)
+    {
+        var localSut = JsonLogWriterFactory.Default().Create();
 
-        private static string MakeTestCall(Action<IObjectWriter> writer)
-        {
-            var localSut = JsonLogWriterFactory.Default().Create();
+        localSut.Start();
 
-            localSut.Start();
+        writer(localSut);
 
-            writer(localSut);
-
-            return localSut.End();
-        }
+        return localSut.End();
     }
 }

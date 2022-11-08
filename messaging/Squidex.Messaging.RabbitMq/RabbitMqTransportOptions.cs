@@ -7,18 +7,17 @@
 
 using Squidex.Hosting.Configuration;
 
-namespace Squidex.Messaging.RabbitMq
-{
-    public sealed class RabbitMqTransportOptions : IValidatableOptions
-    {
-        public Uri Uri { get; set; } = new Uri("amqp://localhost");
+namespace Squidex.Messaging.RabbitMq;
 
-        public IEnumerable<ConfigurationError> Validate()
+public sealed class RabbitMqTransportOptions : IValidatableOptions
+{
+    public Uri Uri { get; set; } = new Uri("amqp://localhost");
+
+    public IEnumerable<ConfigurationError> Validate()
+    {
+        if (Uri == null)
         {
-            if (Uri == null)
-            {
-                yield return new ConfigurationError("Value is required.", nameof(Uri));
-            }
+            yield return new ConfigurationError("Value is required.", nameof(Uri));
         }
     }
 }

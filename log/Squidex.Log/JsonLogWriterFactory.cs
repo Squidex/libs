@@ -8,66 +8,65 @@
 using System.Text.Json;
 using Microsoft.Extensions.ObjectPool;
 
-namespace Squidex.Log
+namespace Squidex.Log;
+
+public sealed class JsonLogWriterFactory : IRootWriterFactory
 {
-    public sealed class JsonLogWriterFactory : IRootWriterFactory
+    private readonly ObjectPool<JsonLogWriter> writerPool;
+
+    internal sealed class JsonLogWriterPolicy : PooledObjectPolicy<JsonLogWriter>
     {
-        private readonly ObjectPool<JsonLogWriter> writerPool;
+        private const int MaxCapacity = 5000;
+        private readonly JsonWriterOptions formatting;
+        private readonly bool formatLine;
 
-        internal sealed class JsonLogWriterPolicy : PooledObjectPolicy<JsonLogWriter>
+        public JsonLogWriterPolicy(bool indended = false, bool formatLine = false)
         {
-            private const int MaxCapacity = 5000;
-            private readonly JsonWriterOptions formatting;
-            private readonly bool formatLine;
+            formatting.Indented = indended;
 
-            public JsonLogWriterPolicy(bool indended = false, bool formatLine = false)
+            this.formatLine = formatLine;
+        }
+
+        public override JsonLogWriter Create()
+        {
+            return new JsonLogWriter(formatting, formatLine);
+        }
+
+        public override bool Return(JsonLogWriter obj)
+        {
+            if (obj.BufferSize > MaxCapacity)
             {
-                formatting.Indented = indended;
-
-                this.formatLine = formatLine;
+                return false;
             }
 
-            public override JsonLogWriter Create()
-            {
-                return new JsonLogWriter(formatting, formatLine);
-            }
+            obj.Reset();
 
-            public override bool Return(JsonLogWriter obj)
-            {
-                if (obj.BufferSize > MaxCapacity)
-                {
-                    return false;
-                }
-
-                obj.Reset();
-
-                return true;
-            }
+            return true;
         }
+    }
 
-        public JsonLogWriterFactory(bool indended = false, bool formatLine = false)
-        {
-            writerPool = new DefaultObjectPoolProvider().Create(new JsonLogWriterPolicy(indended, formatLine));
-        }
+    public JsonLogWriterFactory(bool indended = false, bool formatLine = false)
+    {
+        writerPool = new DefaultObjectPoolProvider().Create(new JsonLogWriterPolicy(indended, formatLine));
+    }
 
-        public static JsonLogWriterFactory Default()
-        {
-            return new JsonLogWriterFactory();
-        }
+    public static JsonLogWriterFactory Default()
+    {
+        return new JsonLogWriterFactory();
+    }
 
-        public static JsonLogWriterFactory Readable()
-        {
-            return new JsonLogWriterFactory(true, true);
-        }
+    public static JsonLogWriterFactory Readable()
+    {
+        return new JsonLogWriterFactory(true, true);
+    }
 
-        public IRootWriter Create()
-        {
-            return writerPool.Get();
-        }
+    public IRootWriter Create()
+    {
+        return writerPool.Get();
+    }
 
-        public void Release(IRootWriter writer)
-        {
-            writerPool.Return((JsonLogWriter)writer);
-        }
+    public void Release(IRootWriter writer)
+    {
+        writerPool.Return((JsonLogWriter)writer);
     }
 }

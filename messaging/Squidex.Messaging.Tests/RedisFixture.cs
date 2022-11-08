@@ -7,15 +7,14 @@
 
 using StackExchange.Redis;
 
-namespace Squidex.Messaging
-{
-    public class RedisFixture
-    {
-        public ConnectionMultiplexer Connection { get; }
+namespace Squidex.Messaging;
 
-        public RedisFixture()
-        {
-            Connection = ConnectionMultiplexer.Connect("localhost");
-        }
+public class RedisFixture
+{
+    public ConnectionMultiplexer Connection { get; }
+
+    public RedisFixture()
+    {
+        Connection = ConnectionMultiplexer.Connect("localhost");
     }
 }

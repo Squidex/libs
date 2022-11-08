@@ -5,12 +5,11 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Assets
-{
-    public sealed class AzureBlobAssetOptions
-    {
-        public string ConnectionString { get; set; }
+namespace Squidex.Assets;
 
-        public string ContainerName { get; set; }
-    }
+public sealed class AzureBlobAssetOptions
+{
+    public string ConnectionString { get; set; }
+
+    public string ContainerName { get; set; }
 }

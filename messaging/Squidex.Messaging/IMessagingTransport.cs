@@ -9,26 +9,25 @@
 
 using Squidex.Hosting;
 
-namespace Squidex.Messaging
+namespace Squidex.Messaging;
+
+public delegate Task MessageTransportCallback(TransportResult transportResult, IMessageAck ack,
+        CancellationToken ct);
+
+public interface IMessagingTransport : IInitializable
 {
-    public delegate Task MessageTransportCallback(TransportResult transportResult, IMessageAck ack,
-            CancellationToken ct);
+    Task<IAsyncDisposable?> CreateChannelAsync(ChannelName channel, string instanceName, bool consume, ProducerOptions options,
+        CancellationToken ct);
 
-    public interface IMessagingTransport : IInitializable
+    Task ProduceAsync(ChannelName channel, string instanceName, TransportMessage transportMessage,
+        CancellationToken ct);
+
+    Task<IAsyncDisposable> SubscribeAsync(ChannelName channel, string instanceName, MessageTransportCallback callback,
+        CancellationToken ct);
+
+    Task<IAsyncDisposable?> CreateCleanerAsync(ChannelName channel, string instanceName, TimeSpan timeout, TimeSpan expires,
+        CancellationToken ct)
     {
-        Task<IAsyncDisposable?> CreateChannelAsync(ChannelName channel, string instanceName, bool consume, ProducerOptions options,
-            CancellationToken ct);
-
-        Task ProduceAsync(ChannelName channel, string instanceName, TransportMessage transportMessage,
-            CancellationToken ct);
-
-        Task<IAsyncDisposable> SubscribeAsync(ChannelName channel, string instanceName, MessageTransportCallback callback,
-            CancellationToken ct);
-
-        Task<IAsyncDisposable?> CreateCleanerAsync(ChannelName channel, string instanceName, TimeSpan timeout, TimeSpan expires,
-            CancellationToken ct)
-        {
-            return Task.FromResult<IAsyncDisposable?>(null);
-        }
+        return Task.FromResult<IAsyncDisposable?>(null);
     }
 }

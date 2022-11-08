@@ -5,12 +5,11 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Messaging.Subscriptions
-{
-    public interface IPayloadWrapper
-    {
-        object Message { get; }
+namespace Squidex.Messaging.Subscriptions;
 
-        ValueTask<object> CreatePayloadAsync();
-    }
+public interface IPayloadWrapper
+{
+    object Message { get; }
+
+    ValueTask<object> CreatePayloadAsync();
 }

@@ -9,23 +9,22 @@ using Microsoft.Extensions.Configuration;
 using Squidex.Messaging;
 using Squidex.Messaging.Redis;
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace Microsoft.Extensions.DependencyInjection;
+
+public static class MessagingServiceExtensions
 {
-    public static class MessagingServiceExtensions
+    public static IServiceCollection AddRedisTransport(this IServiceCollection services, IConfiguration config, Action<RedisTransportOptions>? configure = null)
     {
-        public static IServiceCollection AddRedisTransport(this IServiceCollection services, IConfiguration config, Action<RedisTransportOptions>? configure = null)
+        services.ConfigureAndValidate<RedisTransportOptions>(config, "messaging:redis");
+
+        if (configure != null)
         {
-            services.ConfigureAndValidate<RedisTransportOptions>(config, "messaging:redis");
-
-            if (configure != null)
-            {
-                services.Configure(configure);
-            }
-
-            services.AddSingletonAs<RedisTransport>()
-                .As<IMessagingTransport>();
-
-            return services;
+            services.Configure(configure);
         }
+
+        services.AddSingletonAs<RedisTransport>()
+            .As<IMessagingTransport>();
+
+        return services;
     }
 }

@@ -5,16 +5,15 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Messaging.Subscriptions
+namespace Squidex.Messaging.Subscriptions;
+
+public interface ISubscriptionService
 {
-    public interface ISubscriptionService
-    {
-        bool HasSubscriptions { get; }
+    bool HasSubscriptions { get; }
 
-        Task PublishAsync(object message);
+    Task PublishAsync(object message);
 
-        IObservable<T> Subscribe<T>(ISubscription subscription);
+    IObservable<T> Subscribe<T>(ISubscription subscription);
 
-        IObservable<T> Subscribe<T>();
-    }
+    IObservable<T> Subscribe<T>();
 }

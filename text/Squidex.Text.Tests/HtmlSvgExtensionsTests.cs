@@ -8,40 +8,39 @@
 using Squidex.Text.Properties;
 using Xunit;
 
-namespace Squidex.Text
+namespace Squidex.Text;
+
+public class HtmlSvgExtensionsTests
 {
-    public class HtmlSvgExtensionsTests
+    [Fact]
+    public void Should_return_true_for_valid_svg()
     {
-        [Fact]
-        public void Should_return_true_for_valid_svg()
-        {
-            var isValid = Resources.SvgValid.IsValidSvg();
+        var isValid = Resources.SvgValid.IsValidSvg();
 
-            Assert.True(isValid);
-        }
+        Assert.True(isValid);
+    }
 
-        [Fact]
-        public void Should_return_empty_errors_for_valid_svg()
-        {
-            var errors = Resources.SvgValid.GetSvgErrors();
+    [Fact]
+    public void Should_return_empty_errors_for_valid_svg()
+    {
+        var errors = Resources.SvgValid.GetSvgErrors();
 
-            Assert.Empty(errors);
-        }
+        Assert.Empty(errors);
+    }
 
-        [Fact]
-        public void Should_return_false_for_invalid_svg()
-        {
-            var isValid = Resources.SvgInvalid.IsValidSvg();
+    [Fact]
+    public void Should_return_false_for_invalid_svg()
+    {
+        var isValid = Resources.SvgInvalid.IsValidSvg();
 
-            Assert.False(isValid);
-        }
+        Assert.False(isValid);
+    }
 
-        [Fact]
-        public void Should_return_nonempty_errors_for_invalid_svg()
-        {
-            var errors = Resources.SvgInvalid.GetSvgErrors();
+    [Fact]
+    public void Should_return_nonempty_errors_for_invalid_svg()
+    {
+        var errors = Resources.SvgInvalid.GetSvgErrors();
 
-            Assert.NotEmpty(errors);
-        }
+        Assert.NotEmpty(errors);
     }
 }

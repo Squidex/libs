@@ -7,49 +7,48 @@
 
 using Microsoft.Extensions.Logging;
 
-namespace Squidex.Messaging.Internal
+namespace Squidex.Messaging.Internal;
+
+public sealed class SimpleTimer : IAsyncDisposable
 {
-    public sealed class SimpleTimer : IAsyncDisposable
+    private readonly CancellationTokenSource stopToken = new CancellationTokenSource();
+
+    public bool IsDisposed => stopToken.IsCancellationRequested;
+
+    public SimpleTimer(Func<CancellationToken, Task> action, TimeSpan interval, ILogger log)
     {
-        private readonly CancellationTokenSource stopToken = new CancellationTokenSource();
-
-        public bool IsDisposed => stopToken.IsCancellationRequested;
-
-        public SimpleTimer(Func<CancellationToken, Task> action, TimeSpan interval, ILogger log)
+        Task.Run(async () =>
         {
-            Task.Run(async () =>
+            try
             {
-                try
+                while (!stopToken.IsCancellationRequested)
                 {
-                    while (!stopToken.IsCancellationRequested)
+                    try
                     {
-                        try
-                        {
-                            await action(stopToken.Token);
+                        await action(stopToken.Token);
 
-                            await Task.Delay(interval, stopToken.Token);
-                        }
-                        catch (OperationCanceledException)
-                        {
-                        }
-                        catch (Exception ex)
-                        {
-                            log.LogWarning(ex, "Failed to execute timer.");
-                        }
+                        await Task.Delay(interval, stopToken.Token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                    }
+                    catch (Exception ex)
+                    {
+                        log.LogWarning(ex, "Failed to execute timer.");
                     }
                 }
-                catch
-                {
-                    return;
-                }
-            }, stopToken.Token);
-        }
+            }
+            catch
+            {
+                return;
+            }
+        }, stopToken.Token);
+    }
 
-        public ValueTask DisposeAsync()
-        {
-            stopToken.Cancel();
+    public ValueTask DisposeAsync()
+    {
+        stopToken.Cancel();
 
-            return default;
-        }
+        return default;
     }
 }

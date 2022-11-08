@@ -5,14 +5,13 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+public struct UploadOptions
 {
-    public struct UploadOptions
-    {
-        public string? FileId { get; set; }
+    public string? FileId { get; set; }
 
-        public Dictionary<string, string>? Metadata { get; set; }
+    public Dictionary<string, string>? Metadata { get; set; }
 
-        public IProgressHandler? ProgressHandler { get; set; }
-    }
+    public IProgressHandler? ProgressHandler { get; set; }
 }

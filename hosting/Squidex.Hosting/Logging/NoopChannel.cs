@@ -7,12 +7,11 @@
 
 using Squidex.Log;
 
-namespace Squidex.Hosting.Logging
+namespace Squidex.Hosting.Logging;
+
+public sealed class NoopChannel : ILogChannel
 {
-    public sealed class NoopChannel : ILogChannel
+    public void Log(SemanticLogLevel logLevel, string message)
     {
-        public void Log(SemanticLogLevel logLevel, string message)
-        {
-        }
     }
 }

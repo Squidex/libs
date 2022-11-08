@@ -10,58 +10,57 @@ using System.Collections.Concurrent;
 #pragma warning disable RECS0082 // Parameter has the same name as a member and hides it
 #pragma warning disable SA1313 // Parameter names should begin with lower-case letter
 
-namespace Squidex.Messaging.Implementation.InMemory
+namespace Squidex.Messaging.Implementation.InMemory;
+
+public class InMemorySubscriptionStore : IMessagingSubscriptionStore
 {
-    public class InMemorySubscriptionStore : IMessagingSubscriptionStore
+    private readonly ConcurrentDictionary<(string Group, string Key), Subscription> subscriptions = new ();
+
+    private sealed record Subscription(SerializedObject Value, DateTime Expiration);
+
+    public Task<IReadOnlyList<(string Key, SerializedObject Value, DateTime Expiration)>> GetSubscriptionsAsync(string group,
+        CancellationToken ct)
     {
-        private readonly ConcurrentDictionary<(string Group, string Key), Subscription> subscriptions = new ();
+        var result = new List<(string Key, SerializedObject Value, DateTime Expiration)>();
 
-        private sealed record Subscription(SerializedObject Value, DateTime Expiration);
-
-        public Task<IReadOnlyList<(string Key, SerializedObject Value, DateTime Expiration)>> GetSubscriptionsAsync(string group,
-            CancellationToken ct)
+        foreach (var (key, subscription) in subscriptions.Where(x => x.Key.Group == group))
         {
-            var result = new List<(string Key, SerializedObject Value, DateTime Expiration)>();
+             result.Add((key.Key, subscription.Value, subscription.Expiration));
+        }
 
-            foreach (var (key, subscription) in subscriptions.Where(x => x.Key.Group == group))
+        return Task.FromResult<IReadOnlyList<(string Key, SerializedObject Value, DateTime Expiration)>>(result);
+    }
+
+    public Task SubscribeManyAsync(SubscribeRequest[] requests,
+        CancellationToken ct)
+    {
+        foreach (var (group, key, value, expiration) in requests)
+        {
+            subscriptions[(group, key)] = new Subscription(value, expiration);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task UnsubscribeAsync(string group, string key,
+        CancellationToken ct)
+    {
+        subscriptions.TryRemove((group, key), out _);
+
+        return Task.CompletedTask;
+    }
+
+    public Task CleanupAsync(DateTime now,
+        CancellationToken ct)
+    {
+        foreach (var (key, subscription) in subscriptions.ToList())
+        {
+            if (subscription.Expiration < now)
             {
-                 result.Add((key.Key, subscription.Value, subscription.Expiration));
+                subscriptions.TryRemove(key, out _);
             }
-
-            return Task.FromResult<IReadOnlyList<(string Key, SerializedObject Value, DateTime Expiration)>>(result);
         }
 
-        public Task SubscribeManyAsync(SubscribeRequest[] requests,
-            CancellationToken ct)
-        {
-            foreach (var (group, key, value, expiration) in requests)
-            {
-                subscriptions[(group, key)] = new Subscription(value, expiration);
-            }
-
-            return Task.CompletedTask;
-        }
-
-        public Task UnsubscribeAsync(string group, string key,
-            CancellationToken ct)
-        {
-            subscriptions.TryRemove((group, key), out _);
-
-            return Task.CompletedTask;
-        }
-
-        public Task CleanupAsync(DateTime now,
-            CancellationToken ct)
-        {
-            foreach (var (key, subscription) in subscriptions.ToList())
-            {
-                if (subscription.Expiration < now)
-                {
-                    subscriptions.TryRemove(key, out _);
-                }
-            }
-
-            return Task.CompletedTask;
-        }
+        return Task.CompletedTask;
     }
 }

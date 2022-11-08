@@ -9,54 +9,53 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 
-namespace Squidex.Messaging.Redis
+namespace Squidex.Messaging.Redis;
+
+internal sealed class RedisTopicSubscription : IAsyncDisposable, IMessageAck
 {
-    internal sealed class RedisTopicSubscription : IAsyncDisposable, IMessageAck
+    private readonly Action unsubscribe;
+
+    public RedisTopicSubscription(string topicName, ISubscriber subscriber, MessageTransportCallback callback,
+        ILogger log)
     {
-        private readonly Action unsubscribe;
-
-        public RedisTopicSubscription(string topicName, ISubscriber subscriber, MessageTransportCallback callback,
-            ILogger log)
+        var handler = new Action<RedisChannel, RedisValue>((_, message) =>
         {
-            var handler = new Action<RedisChannel, RedisValue>((_, message) =>
+            try
             {
-                try
-                {
-                    var deserialized = JsonSerializer.Deserialize<TransportMessage>(message.ToString())!;
+                var deserialized = JsonSerializer.Deserialize<TransportMessage>(message.ToString())!;
 
-                    callback(new TransportResult(deserialized, null), this, default).Wait();
-                }
-                catch (Exception ex)
-                {
-                    log.LogError(ex, "Failed to deserialize message.");
-                }
-            });
-
-            subscriber.Subscribe(topicName, handler);
-
-            unsubscribe = () =>
+                callback(new TransportResult(deserialized, null), this, default).Wait();
+            }
+            catch (Exception ex)
             {
-                subscriber.Unsubscribe(topicName, handler);
-            };
-        }
+                log.LogError(ex, "Failed to deserialize message.");
+            }
+        });
 
-        public ValueTask DisposeAsync()
+        subscriber.Subscribe(topicName, handler);
+
+        unsubscribe = () =>
         {
-            unsubscribe();
+            subscriber.Unsubscribe(topicName, handler);
+        };
+    }
 
-            return default;
-        }
+    public ValueTask DisposeAsync()
+    {
+        unsubscribe();
 
-        Task IMessageAck.OnErrorAsync(TransportResult result,
-            CancellationToken ct)
-        {
-            return Task.CompletedTask;
-        }
+        return default;
+    }
 
-        Task IMessageAck.OnSuccessAsync(TransportResult result,
-            CancellationToken ct)
-        {
-            return Task.CompletedTask;
-        }
+    Task IMessageAck.OnErrorAsync(TransportResult result,
+        CancellationToken ct)
+    {
+        return Task.CompletedTask;
+    }
+
+    Task IMessageAck.OnSuccessAsync(TransportResult result,
+        CancellationToken ct)
+    {
+        return Task.CompletedTask;
     }
 }
