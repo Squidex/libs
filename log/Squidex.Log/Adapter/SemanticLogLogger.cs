@@ -125,7 +125,7 @@ internal sealed class SemanticLogLogger : ILogger
         return true;
     }
 
-    public IDisposable BeginScope<TState>(TState state)
+    public IDisposable BeginScope<TState>(TState state) where TState : notnull
     {
         return NoopDisposable.Instance;
     }

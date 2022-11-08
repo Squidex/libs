@@ -33,7 +33,7 @@ public sealed class CachingSubscriptionStore : IMessagingSubscriptionStore
                 entry.AbsoluteExpirationRelativeToNow = cacheDuration;
 
                 return inner.GetSubscriptionsAsync(group, ct);
-            });
+            })!;
         }
         catch
         {

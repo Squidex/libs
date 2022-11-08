@@ -13,8 +13,13 @@ public sealed class TransportHeaders : Dictionary<string, string>
 {
     private const string ISO8601Format = "yyyy-MM-ddTHH\\:mm\\:ss.fffffffzzz";
 
-    public TransportHeaders Set(string key, string value)
+    public TransportHeaders Set(string key, string? value)
     {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return this;
+        }
+
         this[key] = value;
         return this;
     }

@@ -27,7 +27,7 @@ public sealed class OptionsErrorProvider<T> : IErrorProvider, IValidateOptions<T
         return GetErrors(options.Value);
     }
 
-    public ValidateOptionsResult Validate(string name, T options)
+    public ValidateOptionsResult Validate(string? name, T options)
     {
         var errors = GetErrors(options).ToList();
 
