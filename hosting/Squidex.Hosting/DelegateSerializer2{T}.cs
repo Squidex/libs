@@ -7,27 +7,26 @@
 
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Squidex.Hosting
+namespace Squidex.Hosting;
+
+public sealed class DelegateSerializer2<T> : SystemBase, IInitializable where T : class
 {
-    public sealed class DelegateSerializer2<T> : SystemBase, IInitializable where T : class
+    private readonly IServiceProvider serviceProvider;
+    private readonly Func<T, CancellationToken, Task> action;
+
+    public DelegateSerializer2(IServiceProvider serviceProvider, string name, int order, Func<T, CancellationToken, Task> action)
+        : base(name, order)
     {
-        private readonly IServiceProvider serviceProvider;
-        private readonly Func<T, CancellationToken, Task> action;
+        this.serviceProvider = serviceProvider;
 
-        public DelegateSerializer2(IServiceProvider serviceProvider, string name, int order, Func<T, CancellationToken, Task> action)
-            : base(name, order)
-        {
-            this.serviceProvider = serviceProvider;
+        this.action = action;
+    }
 
-            this.action = action;
-        }
+    public Task InitializeAsync(
+        CancellationToken ct)
+    {
+        var service = serviceProvider.GetRequiredService<T>();
 
-        public Task InitializeAsync(
-            CancellationToken ct)
-        {
-            var service = serviceProvider.GetRequiredService<T>();
-
-            return action(service, ct);
-        }
+        return action(service, ct);
     }
 }

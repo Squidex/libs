@@ -7,28 +7,27 @@
 
 using System.Runtime.Serialization;
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+[Serializable]
+public class AssetStoreException : Exception
 {
-    [Serializable]
-    public class AssetStoreException : Exception
+    public AssetStoreException()
     {
-        public AssetStoreException()
-        {
-        }
+    }
 
-        public AssetStoreException(string message)
-            : base(message)
-        {
-        }
+    public AssetStoreException(string message)
+        : base(message)
+    {
+    }
 
-        public AssetStoreException(string message, Exception inner)
-            : base(message, inner)
-        {
-        }
+    public AssetStoreException(string message, Exception inner)
+        : base(message, inner)
+    {
+    }
 
-        protected AssetStoreException(SerializationInfo info, StreamingContext context)
-            : base(info, context)
-        {
-        }
+    protected AssetStoreException(SerializationInfo info, StreamingContext context)
+        : base(info, context)
+    {
     }
 }

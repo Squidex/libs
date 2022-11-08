@@ -8,55 +8,54 @@
 using Microsoft.Extensions.Hosting;
 using Squidex.Log;
 
-namespace Squidex.Hosting
+namespace Squidex.Hosting;
+
+public sealed class BackgroundHost : SystemHost<IBackgroundProcess>, IHostedService
 {
-    public sealed class BackgroundHost : SystemHost<IBackgroundProcess>, IHostedService
+    public BackgroundHost(ISemanticLog log, IEnumerable<IBackgroundProcess> systems)
+        : base(log, systems)
     {
-        public BackgroundHost(ISemanticLog log, IEnumerable<IBackgroundProcess> systems)
-            : base(log, systems)
+    }
+
+    public async Task StartAsync(
+        CancellationToken cancellationToken)
+    {
+        if (!Systems.Any())
         {
+            return;
         }
 
-        public async Task StartAsync(
-            CancellationToken cancellationToken)
-        {
-            if (!Systems.Any())
+        Log.LogInformation(w => w
+            .WriteArray("start", array =>
             {
-                return;
-            }
-
-            Log.LogInformation(w => w
-                .WriteArray("start", array =>
+                foreach (var (_, name) in Systems)
                 {
-                    foreach (var (_, name) in Systems)
-                    {
-                        array.WriteValue(name);
-                    }
-                }));
+                    array.WriteValue(name);
+                }
+            }));
 
-            foreach (var (system, name) in Systems)
-            {
-                await system.StartAsync(cancellationToken);
+        foreach (var (system, name) in Systems)
+        {
+            await system.StartAsync(cancellationToken);
 
-                Log.LogInformation(w => w.WriteProperty("startedSystem", name));
-            }
+            Log.LogInformation(w => w.WriteProperty("startedSystem", name));
         }
+    }
 
-        public async Task StopAsync(
-            CancellationToken cancellationToken)
+    public async Task StopAsync(
+        CancellationToken cancellationToken)
+    {
+        foreach (var (system, name) in Systems.Reverse())
         {
-            foreach (var (system, name) in Systems.Reverse())
+            try
             {
-                try
-                {
-                    await system.StopAsync(cancellationToken);
+                await system.StopAsync(cancellationToken);
 
-                    Log.LogInformation(w => w.WriteProperty("stoppedSystem", name));
-                }
-                catch (Exception ex)
-                {
-                    Log.LogError(ex, w => w.WriteProperty("stoppedSystemFailed", name));
-                }
+                Log.LogInformation(w => w.WriteProperty("stoppedSystem", name));
+            }
+            catch (Exception ex)
+            {
+                Log.LogError(ex, w => w.WriteProperty("stoppedSystemFailed", name));
             }
         }
     }

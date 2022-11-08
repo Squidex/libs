@@ -5,10 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Caching
+namespace Squidex.Caching;
+
+public sealed class ReplicatedCacheOptions
 {
-    public sealed class ReplicatedCacheOptions
-    {
-        public bool Enable { get; set; }
-    }
+    public bool Enable { get; set; }
 }

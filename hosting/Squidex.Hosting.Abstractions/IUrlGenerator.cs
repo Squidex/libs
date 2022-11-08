@@ -5,24 +5,23 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Hosting
+namespace Squidex.Hosting;
+
+public interface IUrlGenerator
 {
-    public interface IUrlGenerator
-    {
-        (string, int? Port) BuildHost();
+    (string, int? Port) BuildHost();
 
-        string BuildCallbackUrl();
+    string BuildCallbackUrl();
 
-        string BuildCallbackUrl(string path, bool trailingSlash = true);
+    string BuildCallbackUrl(string path, bool trailingSlash = true);
 
-        string BuildUrl();
+    string BuildUrl();
 
-        string BuildUrl(string path, bool trailingSlash = true);
+    string BuildUrl(string path, bool trailingSlash = true);
 
-        string BuildBasePath();
+    string BuildBasePath();
 
-        bool IsAllowedHost(string? url);
+    bool IsAllowedHost(string? url);
 
-        bool IsAllowedHost(Uri uri);
-    }
+    bool IsAllowedHost(Uri uri);
 }

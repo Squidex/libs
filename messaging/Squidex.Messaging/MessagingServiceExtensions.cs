@@ -13,74 +13,73 @@ using Squidex.Messaging.Implementation.InMemory;
 using Squidex.Messaging.Implementation.Null;
 using Squidex.Messaging.Internal;
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace Microsoft.Extensions.DependencyInjection;
+
+public static class MessagingServiceExtensions
 {
-    public static class MessagingServiceExtensions
+    public static IServiceCollection AddMessaging(this IServiceCollection services, Action<MessagingOptions>? configure = null)
     {
-        public static IServiceCollection AddMessaging(this IServiceCollection services, Action<MessagingOptions>? configure = null)
+        services.Configure<MessagingOptions>(options =>
         {
-            services.Configure<MessagingOptions>(options =>
-            {
-                configure?.Invoke(options);
-            });
+            configure?.Invoke(options);
+        });
 
-            services.TryAddSingleton<IMessagingSerializer,
-                NewtonsoftJsonMessagingSerializer>();
+        services.TryAddSingleton<IMessagingSerializer,
+            NewtonsoftJsonMessagingSerializer>();
 
-            services.TryAddSingleton<IMessageBus,
-                DefaultMessageBus>();
+        services.TryAddSingleton<IMessageBus,
+            DefaultMessageBus>();
 
-            services.TryAddSingleton<IMessagingSubscriptionStore,
-                InMemorySubscriptionStore>();
+        services.TryAddSingleton<IMessagingSubscriptionStore,
+            InMemorySubscriptionStore>();
 
-            services.TryAddSingleton<IMessagingTransport,
-                NullTransport>();
+        services.TryAddSingleton<IMessagingTransport,
+            NullTransport>();
 
-            services.TryAddSingleton<IInstanceNameProvider,
-                HostNameInstanceNameProvider>();
+        services.TryAddSingleton<IInstanceNameProvider,
+            HostNameInstanceNameProvider>();
 
-            services.TryAddSingleton<IClock,
-                DefaultClock>();
+        services.TryAddSingleton<IClock,
+            DefaultClock>();
 
-            services.TryAddSingleton<
-                HandlerPipeline>();
+        services.TryAddSingleton<
+            HandlerPipeline>();
 
-            services.AddSingleton<IInternalMessageProducer,
-                DelegatingProducer>();
+        services.AddSingleton<IInternalMessageProducer,
+            DelegatingProducer>();
 
-            services.AddSingletonAs<DefaultMessagingSubscriptions>()
-                .As<IMessagingSubscriptions>();
+        services.AddSingletonAs<DefaultMessagingSubscriptions>()
+            .As<IMessagingSubscriptions>();
 
-            return services;
+        return services;
+    }
+
+    public static IServiceCollection AddMessaging(this IServiceCollection services, ChannelName channel, bool consume, Action<ChannelOptions>? configure = null)
+    {
+        services.Configure<ChannelOptions>(channel.ToString(), options =>
+        {
+            configure?.Invoke(options);
+        });
+
+        DelegatingConsumer FindConsumer(IServiceProvider sp)
+        {
+            return sp.GetRequiredService<IEnumerable<DelegatingConsumer>>().Single(x => x.Channel == channel);
         }
 
-        public static IServiceCollection AddMessaging(this IServiceCollection services, ChannelName channel, bool consume, Action<ChannelOptions>? configure = null)
+        AddMessaging(services);
+
+        services.AddSingleton(
+            sp => ActivatorUtilities.CreateInstance<DelegatingProducer>(sp, channel));
+
+        if (consume)
         {
-            services.Configure<ChannelOptions>(channel.ToString(), options =>
-            {
-                configure?.Invoke(options);
-            });
-
-            DelegatingConsumer FindConsumer(IServiceProvider sp)
-            {
-                return sp.GetRequiredService<IEnumerable<DelegatingConsumer>>().Single(x => x.Channel == channel);
-            }
-
-            AddMessaging(services);
-
             services.AddSingleton(
-                sp => ActivatorUtilities.CreateInstance<DelegatingProducer>(sp, channel));
+                sp => ActivatorUtilities.CreateInstance<DelegatingConsumer>(sp, channel));
 
-            if (consume)
-            {
-                services.AddSingleton(
-                    sp => ActivatorUtilities.CreateInstance<DelegatingConsumer>(sp, channel));
-
-                services.AddSingleton<IBackgroundProcess>(
-                    FindConsumer);
-            }
-
-            return services;
+            services.AddSingleton<IBackgroundProcess>(
+                FindConsumer);
         }
+
+        return services;
     }
 }

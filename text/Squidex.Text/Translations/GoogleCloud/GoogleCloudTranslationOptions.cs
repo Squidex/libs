@@ -5,12 +5,11 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Text.Translations.GoogleCloud
-{
-    public sealed class GoogleCloudTranslationOptions
-    {
-        public string ProjectId { get; set; }
+namespace Squidex.Text.Translations.GoogleCloud;
 
-        public Dictionary<string, string> Mapping { get; set; }
-    }
+public sealed class GoogleCloudTranslationOptions
+{
+    public string ProjectId { get; set; }
+
+    public Dictionary<string, string> Mapping { get; set; }
 }

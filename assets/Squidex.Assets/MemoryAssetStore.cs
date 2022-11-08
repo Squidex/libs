@@ -8,143 +8,142 @@
 using System.Collections.Concurrent;
 using Squidex.Assets.Internal;
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+public class MemoryAssetStore : IAssetStore
 {
-    public class MemoryAssetStore : IAssetStore
+    private readonly ConcurrentDictionary<string, MemoryStream> streams = new ConcurrentDictionary<string, MemoryStream>();
+    private readonly AsyncLock readerLock = new AsyncLock();
+    private readonly AsyncLock writerLock = new AsyncLock();
+
+    public async Task<long> GetSizeAsync(string fileName,
+        CancellationToken ct = default)
     {
-        private readonly ConcurrentDictionary<string, MemoryStream> streams = new ConcurrentDictionary<string, MemoryStream>();
-        private readonly AsyncLock readerLock = new AsyncLock();
-        private readonly AsyncLock writerLock = new AsyncLock();
+        var name = GetFileName(fileName, nameof(fileName));
 
-        public async Task<long> GetSizeAsync(string fileName,
-            CancellationToken ct = default)
+        if (!streams.TryGetValue(name, out var sourceStream))
         {
-            var name = GetFileName(fileName, nameof(fileName));
-
-            if (!streams.TryGetValue(name, out var sourceStream))
-            {
-                throw new AssetNotFoundException(fileName);
-            }
-
-            using (await readerLock.LockAsync())
-            {
-                return sourceStream.Length;
-            }
+            throw new AssetNotFoundException(fileName);
         }
 
-        public virtual async Task CopyAsync(string sourceFileName, string targetFileName,
-            CancellationToken ct = default)
+        using (await readerLock.LockAsync())
         {
-            Guard.NotNullOrEmpty(targetFileName, nameof(targetFileName));
+            return sourceStream.Length;
+        }
+    }
 
-            var sourceName = GetFileName(sourceFileName, nameof(sourceFileName));
+    public virtual async Task CopyAsync(string sourceFileName, string targetFileName,
+        CancellationToken ct = default)
+    {
+        Guard.NotNullOrEmpty(targetFileName, nameof(targetFileName));
 
-            if (!streams.TryGetValue(sourceName, out var sourceStream))
-            {
-                throw new AssetNotFoundException(sourceName);
-            }
+        var sourceName = GetFileName(sourceFileName, nameof(sourceFileName));
 
-            using (await readerLock.LockAsync())
-            {
-                await UploadAsync(targetFileName, sourceStream, false, ct);
-            }
+        if (!streams.TryGetValue(sourceName, out var sourceStream))
+        {
+            throw new AssetNotFoundException(sourceName);
         }
 
-        public virtual async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default,
-            CancellationToken ct = default)
+        using (await readerLock.LockAsync())
         {
-            Guard.NotNull(stream, nameof(stream));
+            await UploadAsync(targetFileName, sourceStream, false, ct);
+        }
+    }
 
-            var name = GetFileName(fileName, nameof(fileName));
+    public virtual async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default,
+        CancellationToken ct = default)
+    {
+        Guard.NotNull(stream, nameof(stream));
 
-            if (!streams.TryGetValue(name, out var sourceStream))
+        var name = GetFileName(fileName, nameof(fileName));
+
+        if (!streams.TryGetValue(name, out var sourceStream))
+        {
+            throw new AssetNotFoundException(fileName);
+        }
+
+        using (await readerLock.LockAsync())
+        {
+            try
             {
-                throw new AssetNotFoundException(fileName);
+                await sourceStream.CopyToAsync(stream, range, ct);
             }
+            finally
+            {
+                sourceStream.Position = 0;
+            }
+        }
+    }
 
-            using (await readerLock.LockAsync())
+    public virtual async Task<long> UploadAsync(string fileName, Stream stream, bool overwrite = false,
+        CancellationToken ct = default)
+    {
+        Guard.NotNull(stream, nameof(stream));
+
+        var name = GetFileName(fileName, nameof(fileName));
+
+        var memoryStream = new MemoryStream();
+
+        async Task CopyAsync()
+        {
+            using (await writerLock.LockAsync())
             {
                 try
                 {
-                    await sourceStream.CopyToAsync(stream, range, ct);
+                    await stream.CopyToAsync(memoryStream, 81920, ct);
                 }
                 finally
                 {
-                    sourceStream.Position = 0;
+                    memoryStream.Position = 0;
                 }
             }
         }
 
-        public virtual async Task<long> UploadAsync(string fileName, Stream stream, bool overwrite = false,
-            CancellationToken ct = default)
+        if (overwrite)
         {
-            Guard.NotNull(stream, nameof(stream));
+            await CopyAsync();
 
-            var name = GetFileName(fileName, nameof(fileName));
-
-            var memoryStream = new MemoryStream();
-
-            async Task CopyAsync()
-            {
-                using (await writerLock.LockAsync())
-                {
-                    try
-                    {
-                        await stream.CopyToAsync(memoryStream, 81920, ct);
-                    }
-                    finally
-                    {
-                        memoryStream.Position = 0;
-                    }
-                }
-            }
-
-            if (overwrite)
-            {
-                await CopyAsync();
-
-                streams[name] = memoryStream;
-            }
-            else if (streams.TryAdd(name, memoryStream))
-            {
-                await CopyAsync();
-            }
-            else
-            {
-                throw new AssetAlreadyExistsException(name);
-            }
-
-            return memoryStream.Length;
+            streams[name] = memoryStream;
+        }
+        else if (streams.TryAdd(name, memoryStream))
+        {
+            await CopyAsync();
+        }
+        else
+        {
+            throw new AssetAlreadyExistsException(name);
         }
 
-        public virtual Task DeleteByPrefixAsync(string prefix,
-            CancellationToken ct = default)
+        return memoryStream.Length;
+    }
+
+    public virtual Task DeleteByPrefixAsync(string prefix,
+        CancellationToken ct = default)
+    {
+        Guard.NotNullOrEmpty(prefix, nameof(prefix));
+
+        foreach (var key in streams.Keys.Where(x => x.StartsWith(prefix, StringComparison.Ordinal)).ToList())
         {
-            Guard.NotNullOrEmpty(prefix, nameof(prefix));
-
-            foreach (var key in streams.Keys.Where(x => x.StartsWith(prefix, StringComparison.Ordinal)).ToList())
-            {
-                streams.TryRemove(key, out _);
-            }
-
-            return Task.CompletedTask;
+            streams.TryRemove(key, out _);
         }
 
-        public virtual Task DeleteAsync(string fileName,
-            CancellationToken ct = default)
-        {
-            var name = GetFileName(fileName, nameof(fileName));
+        return Task.CompletedTask;
+    }
 
-            streams.TryRemove(name, out _);
+    public virtual Task DeleteAsync(string fileName,
+        CancellationToken ct = default)
+    {
+        var name = GetFileName(fileName, nameof(fileName));
 
-            return Task.CompletedTask;
-        }
+        streams.TryRemove(name, out _);
 
-        private static string GetFileName(string fileName, string parameterName)
-        {
-            Guard.NotNullOrEmpty(fileName, parameterName);
+        return Task.CompletedTask;
+    }
 
-            return fileName.Replace("\\", "/", StringComparison.Ordinal);
-        }
+    private static string GetFileName(string fileName, string parameterName)
+    {
+        Guard.NotNullOrEmpty(fileName, parameterName);
+
+        return fileName.Replace("\\", "/", StringComparison.Ordinal);
     }
 }

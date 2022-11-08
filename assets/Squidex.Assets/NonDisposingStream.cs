@@ -5,29 +5,28 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+public sealed class NonDisposingStream : DelegateStream
 {
-    public sealed class NonDisposingStream : DelegateStream
+    public NonDisposingStream(Stream inner)
+        : base(inner)
     {
-        public NonDisposingStream(Stream inner)
-            : base(inner)
-        {
-            inner.Position = 0;
-        }
+        inner.Position = 0;
+    }
 
-        public override void Close()
-        {
-            Flush();
-        }
+    public override void Close()
+    {
+        Flush();
+    }
 
-        protected override void Dispose(bool disposing)
-        {
-            Flush();
-        }
+    protected override void Dispose(bool disposing)
+    {
+        Flush();
+    }
 
-        public override async ValueTask DisposeAsync()
-        {
-            await FlushAsync();
-        }
+    public override async ValueTask DisposeAsync()
+    {
+        await FlushAsync();
     }
 }

@@ -9,137 +9,136 @@ using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
 using System.Text;
 
-namespace Squidex.Assets.Remote
+namespace Squidex.Assets.Remote;
+
+public sealed class RemoteThumbnailGenerator : AssetThumbnailGeneratorBase
 {
-    public sealed class RemoteThumbnailGenerator : AssetThumbnailGeneratorBase
+    private readonly IHttpClientFactory httpClientFactory;
+    private readonly IAssetThumbnailGenerator inner;
+
+    public RemoteThumbnailGenerator(IHttpClientFactory httpClientFactory, IAssetThumbnailGenerator inner)
     {
-        private readonly IHttpClientFactory httpClientFactory;
-        private readonly IAssetThumbnailGenerator inner;
+        this.httpClientFactory = httpClientFactory;
 
-        public RemoteThumbnailGenerator(IHttpClientFactory httpClientFactory, IAssetThumbnailGenerator inner)
+        this.inner = inner;
+    }
+
+    public override bool CanReadAndWrite(string mimeType)
+    {
+        return inner.CanReadAndWrite(mimeType);
+    }
+
+    public override bool CanComputeBlurHash()
+    {
+        return inner.CanComputeBlurHash();
+    }
+
+    public override bool IsResizable(string mimeType, ResizeOptions options, [MaybeNullWhen(false)] out string? destinationMimeType)
+    {
+        return inner.IsResizable(mimeType, options, out destinationMimeType);
+    }
+
+    protected override async Task<string?> ComputeBlurHashCoreAsync(Stream source, string mimeType, BlurOptions options,
+        CancellationToken ct = default)
+    {
+        using (var httpClient = httpClientFactory.CreateClient("Resize"))
         {
-            this.httpClientFactory = httpClientFactory;
-
-            this.inner = inner;
-        }
-
-        public override bool CanReadAndWrite(string mimeType)
-        {
-            return inner.CanReadAndWrite(mimeType);
-        }
-
-        public override bool CanComputeBlurHash()
-        {
-            return inner.CanComputeBlurHash();
-        }
-
-        public override bool IsResizable(string mimeType, ResizeOptions options, [MaybeNullWhen(false)] out string? destinationMimeType)
-        {
-            return inner.IsResizable(mimeType, options, out destinationMimeType);
-        }
-
-        protected override async Task<string?> ComputeBlurHashCoreAsync(Stream source, string mimeType, BlurOptions options,
-            CancellationToken ct = default)
-        {
-            using (var httpClient = httpClientFactory.CreateClient("Resize"))
+            var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"/blur?{BuildQueryString(options)}")
             {
-                var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"/blur?{BuildQueryString(options)}")
-                {
-                    Content = new StreamContent(source)
-                };
+                Content = new StreamContent(source)
+            };
 
-                requestMessage.Content.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
+            requestMessage.Content.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
 
-                var response = await httpClient.SendAsync(requestMessage, ct);
+            var response = await httpClient.SendAsync(requestMessage, ct);
 
-                response.EnsureSuccessStatusCode();
+            response.EnsureSuccessStatusCode();
 #if NET6_0
-                var result = await response.Content.ReadAsStringAsync(ct);
+            var result = await response.Content.ReadAsStringAsync(ct);
 #else
-                var result = await response.Content.ReadAsStringAsync();
+            var result = await response.Content.ReadAsStringAsync();
 #endif
-                if (string.IsNullOrWhiteSpace(result))
-                {
-                    result = null;
-                }
-
-                return null;
-            }
-        }
-
-        protected override async Task CreateThumbnailCoreAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,
-            CancellationToken ct = default)
-        {
-            using (var httpClient = httpClientFactory.CreateClient("Resize"))
+            if (string.IsNullOrWhiteSpace(result))
             {
-                var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"/resize{BuildQueryString(options)}")
-                {
-                    Content = new StreamContent(source)
-                };
+                result = null;
+            }
 
-                requestMessage.Content.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
+            return null;
+        }
+    }
 
-                var response = await httpClient.SendAsync(requestMessage, ct);
+    protected override async Task CreateThumbnailCoreAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,
+        CancellationToken ct = default)
+    {
+        using (var httpClient = httpClientFactory.CreateClient("Resize"))
+        {
+            var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"/resize{BuildQueryString(options)}")
+            {
+                Content = new StreamContent(source)
+            };
 
-                response.EnsureSuccessStatusCode();
+            requestMessage.Content.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
+
+            var response = await httpClient.SendAsync(requestMessage, ct);
+
+            response.EnsureSuccessStatusCode();
 #if NET6_0
-                await response.Content.CopyToAsync(destination, ct);
+            await response.Content.CopyToAsync(destination, ct);
 #else
-                await response.Content.CopyToAsync(destination);
+            await response.Content.CopyToAsync(destination);
 #endif
-            }
         }
+    }
 
-        protected override async Task FixOrientationCoreAsync(Stream source, string mimeType, Stream destination,
-            CancellationToken ct = default)
+    protected override async Task FixOrientationCoreAsync(Stream source, string mimeType, Stream destination,
+        CancellationToken ct = default)
+    {
+        using (var httpClient = httpClientFactory.CreateClient("Resize"))
         {
-            using (var httpClient = httpClientFactory.CreateClient("Resize"))
+            var requestMessage = new HttpRequestMessage(HttpMethod.Post, "/orient")
             {
-                var requestMessage = new HttpRequestMessage(HttpMethod.Post, "/orient")
-                {
-                    Content = new StreamContent(source)
-                };
+                Content = new StreamContent(source)
+            };
 
-                requestMessage.Content.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
+            requestMessage.Content.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
 
-                var response = await httpClient.SendAsync(requestMessage, ct);
+            var response = await httpClient.SendAsync(requestMessage, ct);
 
-                response.EnsureSuccessStatusCode();
+            response.EnsureSuccessStatusCode();
 #if NET6_0
-                await response.Content.CopyToAsync(destination, ct);
+            await response.Content.CopyToAsync(destination, ct);
 #else
-                await response.Content.CopyToAsync(destination);
+            await response.Content.CopyToAsync(destination);
 #endif
-            }
         }
+    }
 
-        protected override Task<ImageInfo?> GetImageInfoCoreAsync(Stream source, string mimeType,
-            CancellationToken ct = default)
+    protected override Task<ImageInfo?> GetImageInfoCoreAsync(Stream source, string mimeType,
+        CancellationToken ct = default)
+    {
+        return inner.GetImageInfoAsync(source, mimeType, ct);
+    }
+
+    private static string BuildQueryString(IOptions options)
+    {
+        var sb = new StringBuilder();
+
+        foreach (var (key, value) in options.ToParameters())
         {
-            return inner.GetImageInfoAsync(source, mimeType, ct);
-        }
-
-        private static string BuildQueryString(IOptions options)
-        {
-            var sb = new StringBuilder();
-
-            foreach (var (key, value) in options.ToParameters())
+            if (sb.Length > 0)
             {
-                if (sb.Length > 0)
-                {
-                    sb.Append('&');
-                }
-                else
-                {
-                    sb.Append('?');
-                }
-
-                sb.Append(key);
-                sb.Append('=');
-                sb.Append(Uri.EscapeDataString(value));
+                sb.Append('&');
+            }
+            else
+            {
+                sb.Append('?');
             }
 
-            return sb.ToString();
+            sb.Append(key);
+            sb.Append('=');
+            sb.Append(Uri.EscapeDataString(value));
         }
+
+        return sb.ToString();
     }
 }

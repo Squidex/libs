@@ -7,37 +7,36 @@
 
 using MongoDB.Driver;
 
-namespace Squidex.Messaging
+namespace Squidex.Messaging;
+
+public sealed class MongoFixture : IDisposable
 {
-    public sealed class MongoFixture : IDisposable
+    private readonly List<Predicate<string>> collectionsToClean = new List<Predicate<string>>();
+
+    public IMongoDatabase Database { get; }
+
+    public MongoFixture()
     {
-        private readonly List<Predicate<string>> collectionsToClean = new List<Predicate<string>>();
+        var mongoClient = new MongoClient("mongodb://localhost:27017");
+        var mongoDatabase = mongoClient.GetDatabase("Messaging_Tests");
 
-        public IMongoDatabase Database { get; }
+        Database = mongoDatabase;
 
-        public MongoFixture()
+        Dispose();
+    }
+
+    public void CleanCollections(Predicate<string> predicate)
+    {
+        collectionsToClean.Add(predicate);
+    }
+
+    public void Dispose()
+    {
+        var collections = Database.ListCollectionNames().ToList();
+
+        foreach (var collectionName in collections.Where(x => collectionsToClean.Any(p => p(x))))
         {
-            var mongoClient = new MongoClient("mongodb://localhost:27017");
-            var mongoDatabase = mongoClient.GetDatabase("Messaging_Tests");
-
-            Database = mongoDatabase;
-
-            Dispose();
-        }
-
-        public void CleanCollections(Predicate<string> predicate)
-        {
-            collectionsToClean.Add(predicate);
-        }
-
-        public void Dispose()
-        {
-            var collections = Database.ListCollectionNames().ToList();
-
-            foreach (var collectionName in collections.Where(x => collectionsToClean.Any(p => p(x))))
-            {
-                Database.DropCollection(collectionName);
-            }
+            Database.DropCollection(collectionName);
         }
     }
 }

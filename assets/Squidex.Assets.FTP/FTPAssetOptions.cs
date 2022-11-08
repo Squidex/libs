@@ -5,10 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+public sealed class FTPAssetOptions
 {
-    public sealed class FTPAssetOptions
-    {
-        public string Path { get; set; }
-    }
+    public string Path { get; set; }
 }

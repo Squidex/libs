@@ -5,30 +5,29 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Hosting.Configuration
+namespace Squidex.Hosting.Configuration;
+
+public sealed class ValidationInitializer : IInitializable
 {
-    public sealed class ValidationInitializer : IInitializable
+    private readonly IEnumerable<IErrorProvider> errorProviders;
+
+    public int Order => int.MinValue;
+
+    public ValidationInitializer(IEnumerable<IErrorProvider> errorProviders)
     {
-        private readonly IEnumerable<IErrorProvider> errorProviders;
+        this.errorProviders = errorProviders;
+    }
 
-        public int Order => int.MinValue;
+    public Task InitializeAsync(
+        CancellationToken ct)
+    {
+        var errors = errorProviders.SelectMany(x => x.GetErrors()).ToList();
 
-        public ValidationInitializer(IEnumerable<IErrorProvider> errorProviders)
+        if (errors.Count > 0)
         {
-            this.errorProviders = errorProviders;
+            throw new ConfigurationException(errors);
         }
 
-        public Task InitializeAsync(
-            CancellationToken ct)
-        {
-            var errors = errorProviders.SelectMany(x => x.GetErrors()).ToList();
-
-            if (errors.Count > 0)
-            {
-                throw new ConfigurationException(errors);
-            }
-
-            return Task.CompletedTask;
-        }
+        return Task.CompletedTask;
     }
 }

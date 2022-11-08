@@ -8,84 +8,83 @@
 using System.Text;
 using HtmlAgilityPack;
 
-namespace Squidex.Text
+namespace Squidex.Text;
+
+public static class HtmlExtensions
 {
-    public static class HtmlExtensions
+    public static string Html2Text(this string html)
     {
-        public static string Html2Text(this string html)
+        var document = LoadHtml(html);
+
+        var sb = new StringBuilder();
+
+        WriteTextTo(document.DocumentNode, sb);
+
+        return sb.ToString().Trim(' ', '\n', '\r');
+    }
+
+    private static HtmlDocument LoadHtml(string text)
+    {
+        var document = new HtmlDocument();
+
+        document.LoadHtml(text);
+
+        return document;
+    }
+
+    private static void WriteTextTo(HtmlNode node, StringBuilder sb)
+    {
+        switch (node.NodeType)
         {
-            var document = LoadHtml(html);
+            case HtmlNodeType.Comment:
+                break;
+            case HtmlNodeType.Document:
+                WriteChildrenTextTo(node, sb);
+                break;
+            case HtmlNodeType.Text:
+                var html = ((HtmlTextNode)node).Text;
 
-            var sb = new StringBuilder();
-
-            WriteTextTo(document.DocumentNode, sb);
-
-            return sb.ToString().Trim(' ', '\n', '\r');
-        }
-
-        private static HtmlDocument LoadHtml(string text)
-        {
-            var document = new HtmlDocument();
-
-            document.LoadHtml(text);
-
-            return document;
-        }
-
-        private static void WriteTextTo(HtmlNode node, StringBuilder sb)
-        {
-            switch (node.NodeType)
-            {
-                case HtmlNodeType.Comment:
+                if (HtmlNode.IsOverlappedClosingElement(html))
+                {
                     break;
-                case HtmlNodeType.Document:
-                    WriteChildrenTextTo(node, sb);
-                    break;
-                case HtmlNodeType.Text:
-                    var html = ((HtmlTextNode)node).Text;
+                }
 
-                    if (HtmlNode.IsOverlappedClosingElement(html))
-                    {
+                if (!string.IsNullOrWhiteSpace(html))
+                {
+                    sb.Append(HtmlEntity.DeEntitize(html));
+                }
+
+                break;
+
+            case HtmlNodeType.Element:
+                switch (node.Name)
+                {
+                    case "p":
+                        sb.AppendLine();
                         break;
-                    }
+                    case "br":
+                        sb.AppendLine();
+                        break;
+                    case "style":
+                        return;
+                    case "script":
+                        return;
+                }
 
-                    if (!string.IsNullOrWhiteSpace(html))
-                    {
-                        sb.Append(HtmlEntity.DeEntitize(html));
-                    }
+                if (node.HasChildNodes)
+                {
+                    WriteChildrenTextTo(node, sb);
+                }
 
-                    break;
-
-                case HtmlNodeType.Element:
-                    switch (node.Name)
-                    {
-                        case "p":
-                            sb.AppendLine();
-                            break;
-                        case "br":
-                            sb.AppendLine();
-                            break;
-                        case "style":
-                            return;
-                        case "script":
-                            return;
-                    }
-
-                    if (node.HasChildNodes)
-                    {
-                        WriteChildrenTextTo(node, sb);
-                    }
-
-                    break;
-            }
+                break;
         }
+    }
 
-        private static void WriteChildrenTextTo(HtmlNode node, StringBuilder sb)
+    private static void WriteChildrenTextTo(HtmlNode node, StringBuilder sb)
+    {
+        foreach (var child in node.ChildNodes)
         {
-            foreach (var child in node.ChildNodes)
-            {
-                WriteTextTo(child, sb);
-            }
+            WriteTextTo(child, sb);
         }
     }
 }

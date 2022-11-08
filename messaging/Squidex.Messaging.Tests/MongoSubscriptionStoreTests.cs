@@ -11,29 +11,28 @@ using Xunit;
 
 #pragma warning disable SA1300 // Element should begin with upper-case letter
 
-namespace Squidex.Messaging
+namespace Squidex.Messaging;
+
+[Trait("Category", "Dependencies")]
+public class MongoSubscriptionStoreTests : SubscriptionStoreTestsBase, IClassFixture<MongoFixture>
 {
-    [Trait("Category", "Dependencies")]
-    public class MongoSubscriptionStoreTests : SubscriptionStoreTestsBase, IClassFixture<MongoFixture>
+    public MongoFixture _ { get; }
+
+    public MongoSubscriptionStoreTests(MongoFixture fixture)
     {
-        public MongoFixture _ { get; }
+        _ = fixture;
+    }
 
-        public MongoSubscriptionStoreTests(MongoFixture fixture)
-        {
-            _ = fixture;
-        }
+    public async override Task<IMessagingSubscriptionStore> CreateSubscriptionStoreAsync()
+    {
+        var options = Options.Create(new MongoSubscriptionStoreOptions());
 
-        public async override Task<IMessagingSubscriptionStore> CreateSubscriptionStoreAsync()
-        {
-            var options = Options.Create(new MongoSubscriptionStoreOptions());
+        _.CleanCollections(x => x == options.Value.CollectionName);
 
-            _.CleanCollections(x => x == options.Value.CollectionName);
+        var sut = new MongoSubscriptionStore(_.Database, options);
 
-            var sut = new MongoSubscriptionStore(_.Database, options);
+        await sut.InitializeAsync(default);
 
-            await sut.InitializeAsync(default);
-
-            return sut;
-        }
+        return sut;
     }
 }

@@ -7,13 +7,12 @@
 
 using System.Diagnostics;
 
-namespace Squidex.Log
+namespace Squidex.Log;
+
+public sealed class DebugLogChannel : ILogChannel
 {
-    public sealed class DebugLogChannel : ILogChannel
+    public void Log(SemanticLogLevel logLevel, string message)
     {
-        public void Log(SemanticLogLevel logLevel, string message)
-        {
-            Debug.WriteLine(message);
-        }
+        Debug.WriteLine(message);
     }
 }

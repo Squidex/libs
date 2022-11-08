@@ -5,13 +5,12 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Microsoft.Extensions.Configuration
+namespace Microsoft.Extensions.Configuration;
+
+public sealed class Alternatives : Dictionary<string, Action>
 {
-    public sealed class Alternatives : Dictionary<string, Action>
+    public Alternatives()
+        : base(StringComparer.OrdinalIgnoreCase)
     {
-        public Alternatives()
-            : base(StringComparer.OrdinalIgnoreCase)
-        {
-        }
     }
 }

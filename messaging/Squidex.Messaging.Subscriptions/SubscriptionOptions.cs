@@ -5,16 +5,15 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Messaging.Subscriptions
+namespace Squidex.Messaging.Subscriptions;
+
+public sealed class SubscriptionOptions
 {
-    public sealed class SubscriptionOptions
-    {
-        public TimeSpan SubscriptionExpirationTime { get; set; } = TimeSpan.FromMinutes(30);
+    public TimeSpan SubscriptionExpirationTime { get; set; } = TimeSpan.FromMinutes(30);
 
-        public TimeSpan SubscriptionUpdateTime { get; set; } = TimeSpan.FromMinutes(5);
+    public TimeSpan SubscriptionUpdateTime { get; set; } = TimeSpan.FromMinutes(5);
 
-        public string GroupName { get; set; } = "__subscriptions";
+    public string GroupName { get; set; } = "__subscriptions";
 
-        public bool SendMessagesToSelf { get; set; }
-    }
+    public bool SendMessagesToSelf { get; set; }
 }

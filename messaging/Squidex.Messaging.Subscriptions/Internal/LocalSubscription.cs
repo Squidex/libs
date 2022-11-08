@@ -5,67 +5,66 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Messaging.Subscriptions.Internal
+namespace Squidex.Messaging.Subscriptions.Internal;
+
+internal sealed class LocalSubscription<T> : IObservable<T>, IUntypedLocalSubscription, IDisposable
 {
-    internal sealed class LocalSubscription<T> : IObservable<T>, IUntypedLocalSubscription, IDisposable
+    private readonly SubscriptionService subscriptions;
+    private readonly ISubscription subscription;
+    private IObserver<T>? currentObserver;
+
+    public Guid Id { get; } = Guid.NewGuid();
+
+    public LocalSubscription(SubscriptionService subscriptions, ISubscription subscription)
     {
-        private readonly SubscriptionService subscriptions;
-        private readonly ISubscription subscription;
-        private IObserver<T>? currentObserver;
+        this.subscriptions = subscriptions;
+        this.subscription = subscription;
+    }
 
-        public Guid Id { get; } = Guid.NewGuid();
-
-        public LocalSubscription(SubscriptionService subscriptions, ISubscription subscription)
+    private void SubscribeCore(IObserver<T> observer)
+    {
+        if (currentObserver != null)
         {
-            this.subscriptions = subscriptions;
-            this.subscription = subscription;
+            throw new InvalidOperationException("Can only have one observer.");
         }
 
-        private void SubscribeCore(IObserver<T> observer)
+        subscriptions.SubscribeCore(Id, this, subscription);
+
+        currentObserver = observer;
+    }
+
+    void IDisposable.Dispose()
+    {
+        if (currentObserver == null)
         {
-            if (currentObserver != null)
-            {
-                throw new InvalidOperationException("Can only have one observer.");
-            }
-
-            subscriptions.SubscribeCore(Id, this, subscription);
-
-            currentObserver = observer;
+            return;
         }
 
-        void IDisposable.Dispose()
+        subscriptions.UnsubscribeCore(Id);
+
+        currentObserver = null;
+    }
+
+    public IDisposable Subscribe(IObserver<T> observer)
+    {
+        SubscribeCore(observer);
+
+        return this;
+    }
+
+    public void OnError(Exception error)
+    {
+        if (error != null)
         {
-            if (currentObserver == null)
-            {
-                return;
-            }
-
-            subscriptions.UnsubscribeCore(Id);
-
-            currentObserver = null;
+            currentObserver?.OnError(error);
         }
+    }
 
-        public IDisposable Subscribe(IObserver<T> observer)
+    public void OnNext(object? value)
+    {
+        if (value is T typed)
         {
-            SubscribeCore(observer);
-
-            return this;
-        }
-
-        public void OnError(Exception error)
-        {
-            if (error != null)
-            {
-                currentObserver?.OnError(error);
-            }
-        }
-
-        public void OnNext(object? value)
-        {
-            if (value is T typed)
-            {
-                currentObserver?.OnNext(typed);
-            }
+            currentObserver?.OnNext(typed);
         }
     }
 }

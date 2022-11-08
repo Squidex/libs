@@ -5,14 +5,13 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Messaging
-{
-    public interface IMessageBus
-    {
-        Task PublishAsync(object message, string? key = null,
-            CancellationToken ct = default);
+namespace Squidex.Messaging;
 
-        Task PublishToChannelAsync(object message, ChannelName name, string? key = null,
-            CancellationToken ct = default);
-    }
+public interface IMessageBus
+{
+    Task PublishAsync(object message, string? key = null,
+        CancellationToken ct = default);
+
+    Task PublishToChannelAsync(object message, ChannelName name, string? key = null,
+        CancellationToken ct = default);
 }

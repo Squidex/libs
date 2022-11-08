@@ -5,12 +5,11 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Messaging.Subscriptions.Internal
-{
-    public interface IUntypedLocalSubscription
-    {
-        void OnError(Exception exception);
+namespace Squidex.Messaging.Subscriptions.Internal;
 
-        void OnNext(object? value);
-    }
+public interface IUntypedLocalSubscription
+{
+    void OnError(Exception exception);
+
+    void OnNext(object? value);
 }

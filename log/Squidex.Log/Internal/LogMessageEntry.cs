@@ -5,12 +5,11 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Log.Internal
-{
-    public struct LogMessageEntry
-    {
-        public int Color;
+namespace Squidex.Log.Internal;
 
-        public string Message;
-    }
+public struct LogMessageEntry
+{
+    public int Color;
+
+    public string Message;
 }

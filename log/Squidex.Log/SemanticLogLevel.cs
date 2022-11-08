@@ -5,15 +5,14 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Log
+namespace Squidex.Log;
+
+public enum SemanticLogLevel
 {
-    public enum SemanticLogLevel
-    {
-        Trace,
-        Debug,
-        Information,
-        Warning,
-        Error,
-        Fatal
-    }
+    Trace,
+    Debug,
+    Information,
+    Warning,
+    Error,
+    Fatal
 }

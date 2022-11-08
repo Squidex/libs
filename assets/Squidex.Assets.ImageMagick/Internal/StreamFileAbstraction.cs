@@ -9,27 +9,26 @@ using System;
 using System.IO;
 using static TagLib.File;
 
-namespace Squidex.Assets.Internal
+namespace Squidex.Assets.Internal;
+
+internal sealed class StreamFileAbstraction : IFileAbstraction
 {
-    internal sealed class StreamFileAbstraction : IFileAbstraction
+    private readonly Stream stream;
+    private readonly string extension;
+
+    public string Name => $"image.{extension}";
+
+    public Stream ReadStream => stream;
+
+    public Stream WriteStream => throw new NotSupportedException();
+
+    public StreamFileAbstraction(Stream stream, string extension)
     {
-        private readonly Stream stream;
-        private readonly string extension;
+        this.stream = stream;
+        this.extension = extension;
+    }
 
-        public string Name => $"image.{extension}";
-
-        public Stream ReadStream => stream;
-
-        public Stream WriteStream => throw new NotSupportedException();
-
-        public StreamFileAbstraction(Stream stream, string extension)
-        {
-            this.stream = stream;
-            this.extension = extension;
-        }
-
-        public void CloseStream(Stream stream)
-        {
-        }
+    public void CloseStream(Stream stream)
+    {
     }
 }

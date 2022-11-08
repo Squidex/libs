@@ -5,10 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Messaging.Subscriptions.Messages
+namespace Squidex.Messaging.Subscriptions.Messages;
+
+public sealed record SubscriptionsAliveMessage : SubscriptionsMessageBase
 {
-    public sealed record SubscriptionsAliveMessage : SubscriptionsMessageBase
-    {
-        public List<Guid> SubscriptionIds { get; init; } = null!;
-    }
+    public List<Guid> SubscriptionIds { get; init; } = null!;
 }

@@ -5,60 +5,59 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Hosting
+namespace Squidex.Hosting;
+
+public abstract class Initializable : IInitializable
 {
-    public abstract class Initializable : IInitializable
+    private bool isInitialized;
+    private bool isReleased;
+
+    public virtual string Name => GetType().Name;
+
+    public virtual int Order => 0;
+
+    public async Task InitializeAsync(
+        CancellationToken ct)
     {
-        private bool isInitialized;
-        private bool isReleased;
-
-        public virtual string Name => GetType().Name;
-
-        public virtual int Order => 0;
-
-        public async Task InitializeAsync(
-            CancellationToken ct)
+        if (isInitialized)
         {
-            if (isInitialized)
-            {
-                isInitialized = true;
-            }
-
-            try
-            {
-                await InitializeCoreAsync(ct);
-            }
-            finally
-            {
-                isInitialized = false;
-            }
+            isInitialized = true;
         }
 
-        public async Task ReleaseAsync(
-            CancellationToken ct)
+        try
         {
-            if (isReleased)
-            {
-                isReleased = true;
-            }
+            await InitializeCoreAsync(ct);
+        }
+        finally
+        {
+            isInitialized = false;
+        }
+    }
 
-            try
-            {
-                await ReleaseCoreAsync(ct);
-            }
-            finally
-            {
-                isReleased = false;
-            }
+    public async Task ReleaseAsync(
+        CancellationToken ct)
+    {
+        if (isReleased)
+        {
+            isReleased = true;
         }
 
-        protected abstract Task InitializeCoreAsync(
-            CancellationToken ct);
-
-        protected virtual Task ReleaseCoreAsync(
-            CancellationToken ct)
+        try
         {
-            return Task.CompletedTask;
+            await ReleaseCoreAsync(ct);
         }
+        finally
+        {
+            isReleased = false;
+        }
+    }
+
+    protected abstract Task InitializeCoreAsync(
+        CancellationToken ct);
+
+    protected virtual Task ReleaseCoreAsync(
+        CancellationToken ct)
+    {
+        return Task.CompletedTask;
     }
 }

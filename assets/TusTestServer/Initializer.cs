@@ -7,34 +7,33 @@
 
 using Squidex.Assets;
 
-namespace TutTestServer
+namespace TutTestServer;
+
+public sealed class Initializer : IHostedService
 {
-    public sealed class Initializer : IHostedService
+    private readonly IEnumerable<IAssetStore> assetStores;
+    private readonly IAssetKeyValueStore<TusMetadata> assetKeyValueStore;
+
+    public Initializer(IEnumerable<IAssetStore> assetStores, IAssetKeyValueStore<TusMetadata> assetKeyValueStore)
     {
-        private readonly IEnumerable<IAssetStore> assetStores;
-        private readonly IAssetKeyValueStore<TusMetadata> assetKeyValueStore;
+        this.assetStores = assetStores;
+        this.assetKeyValueStore = assetKeyValueStore;
+    }
 
-        public Initializer(IEnumerable<IAssetStore> assetStores, IAssetKeyValueStore<TusMetadata> assetKeyValueStore)
+    public async Task StartAsync(
+        CancellationToken cancellationToken)
+    {
+        foreach (var assetStore in assetStores)
         {
-            this.assetStores = assetStores;
-            this.assetKeyValueStore = assetKeyValueStore;
+            await assetStore.InitializeAsync(cancellationToken);
         }
 
-        public async Task StartAsync(
-            CancellationToken cancellationToken)
-        {
-            foreach (var assetStore in assetStores)
-            {
-                await assetStore.InitializeAsync(cancellationToken);
-            }
+        await assetKeyValueStore.InitializeAsync(cancellationToken);
+    }
 
-            await assetKeyValueStore.InitializeAsync(cancellationToken);
-        }
-
-        public Task StopAsync(
-            CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
-        }
+    public Task StopAsync(
+        CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
     }
 }

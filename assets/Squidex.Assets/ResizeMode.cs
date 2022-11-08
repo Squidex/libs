@@ -5,16 +5,15 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+public enum ResizeMode
 {
-    public enum ResizeMode
-    {
-        Crop,
-        CropUpsize,
-        Pad,
-        BoxPad,
-        Max,
-        Min,
-        Stretch
-    }
+    Crop,
+    CropUpsize,
+    Pad,
+    BoxPad,
+    Max,
+    Min,
+    Stretch
 }

@@ -8,70 +8,69 @@
 using System.Text;
 using Microsoft.AspNetCore.Http;
 
-namespace Squidex.Hosting.Web
-{
-    public sealed class HtmlTransformMiddleware
-    {
-        private readonly HtmlTransformOptions options;
-        private readonly RequestDelegate next;
+namespace Squidex.Hosting.Web;
 
-        public HtmlTransformMiddleware(HtmlTransformOptions options, RequestDelegate next)
+public sealed class HtmlTransformMiddleware
+{
+    private readonly HtmlTransformOptions options;
+    private readonly RequestDelegate next;
+
+    public HtmlTransformMiddleware(HtmlTransformOptions options, RequestDelegate next)
+    {
+        this.options = options;
+        this.next = next;
+    }
+
+    public async Task InvokeAsync(HttpContext context)
+    {
+        var response = context.Response;
+
+        var responseBuffer = new MemoryStream();
+        var responseBody = response.Body;
+
+        response.Body = responseBuffer;
+        try
         {
-            this.options = options;
-            this.next = next;
+            await next(context);
+        }
+        finally
+        {
+            response.Body = responseBody;
         }
 
-        public async Task InvokeAsync(HttpContext context)
+        // Nothing needs to be written here.
+        if (responseBuffer.Length == 0 || response.StatusCode == StatusCodes.Status304NotModified)
         {
-            var response = context.Response;
+            return;
+        }
 
-            var responseBuffer = new MemoryStream();
-            var responseBody = response.Body;
+        // We need to change the content length header.
+        if (!response.HasStarted && response.ContentType.StartsWith("text/html", StringComparison.OrdinalIgnoreCase))
+        {
+            var html = Encoding.UTF8.GetString(responseBuffer.ToArray());
 
-            response.Body = responseBuffer;
-            try
+            if (options.AdjustBase)
             {
-                await next(context);
-            }
-            finally
-            {
-                response.Body = responseBody;
+                html = html.AdjustBase(context);
             }
 
-            // Nothing needs to be written here.
-            if (responseBuffer.Length == 0 || response.StatusCode == StatusCodes.Status304NotModified)
+            if (options.Transform != null)
             {
-                return;
+                html = await options.Transform(html, context);
             }
 
-            // We need to change the content length header.
-            if (!response.HasStarted && response.ContentType.StartsWith("text/html", StringComparison.OrdinalIgnoreCase))
-            {
-                var html = Encoding.UTF8.GetString(responseBuffer.ToArray());
+            var bytes = Encoding.UTF8.GetBytes(html);
 
-                if (options.AdjustBase)
-                {
-                    html = html.AdjustBase(context);
-                }
+            // Change the content length in case the transformation has added chars.
+            response.ContentLength = bytes.Length;
 
-                if (options.Transform != null)
-                {
-                    html = await options.Transform(html, context);
-                }
+            await response.BodyWriter.WriteAsync(bytes, context.RequestAborted);
+        }
+        else
+        {
+            responseBuffer.Position = 0;
 
-                var bytes = Encoding.UTF8.GetBytes(html);
-
-                // Change the content length in case the transformation has added chars.
-                response.ContentLength = bytes.Length;
-
-                await response.BodyWriter.WriteAsync(bytes, context.RequestAborted);
-            }
-            else
-            {
-                responseBuffer.Position = 0;
-
-                await responseBuffer.CopyToAsync(responseBody, context.RequestAborted);
-            }
+            await responseBuffer.CopyToAsync(responseBody, context.RequestAborted);
         }
     }
 }

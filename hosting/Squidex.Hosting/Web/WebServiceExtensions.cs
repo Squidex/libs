@@ -10,28 +10,27 @@ using Microsoft.Extensions.Configuration;
 using Squidex.Hosting;
 using Squidex.Hosting.Web;
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace Microsoft.Extensions.DependencyInjection;
+
+public static class WebServiceExtensions
 {
-    public static class WebServiceExtensions
+    public static IServiceCollection AddDefaultWebServices(this IServiceCollection services, IConfiguration configuration)
     {
-        public static IServiceCollection AddDefaultWebServices(this IServiceCollection services, IConfiguration configuration)
-        {
-            services.Configure<UrlOptions>(configuration, "urls");
+        services.Configure<UrlOptions>(configuration, "urls");
 
-            services.AddSingleton<IUrlGenerator, UrlGenerator>();
+        services.AddSingleton<IUrlGenerator, UrlGenerator>();
 
-            return services;
-        }
+        return services;
+    }
 
-        public static IServiceCollection AddDefaultForwardRules(this IServiceCollection services)
-        {
-            services.AddHostFiltering(options => { })
-                .ConfigureOptions<ConfigureForwardedHeaders>();
+    public static IServiceCollection AddDefaultForwardRules(this IServiceCollection services)
+    {
+        services.AddHostFiltering(options => { })
+            .ConfigureOptions<ConfigureForwardedHeaders>();
 
-            services.AddHttpsRedirection(options => { })
-                .ConfigureOptions<ConfigureHttpsRedirection>();
+        services.AddHttpsRedirection(options => { })
+            .ConfigureOptions<ConfigureHttpsRedirection>();
 
-            return services;
-        }
+        return services;
     }
 }

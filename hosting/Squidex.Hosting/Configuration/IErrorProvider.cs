@@ -5,10 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Hosting.Configuration
+namespace Squidex.Hosting.Configuration;
+
+public interface IErrorProvider
 {
-    public interface IErrorProvider
-    {
-        IEnumerable<ConfigurationError> GetErrors();
-    }
+    IEnumerable<ConfigurationError> GetErrors();
 }

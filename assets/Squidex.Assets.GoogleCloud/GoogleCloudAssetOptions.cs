@@ -5,10 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+public sealed class GoogleCloudAssetOptions
 {
-    public sealed class GoogleCloudAssetOptions
-    {
-        public string BucketName { get; set; }
-    }
+    public string BucketName { get; set; }
 }

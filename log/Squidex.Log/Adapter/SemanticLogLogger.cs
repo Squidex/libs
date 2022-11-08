@@ -8,206 +8,205 @@
 using System.Text;
 using Microsoft.Extensions.Logging;
 
-namespace Squidex.Log.Adapter
+namespace Squidex.Log.Adapter;
+
+internal sealed class SemanticLogLogger : ILogger
 {
-    internal sealed class SemanticLogLogger : ILogger
+    private readonly ISemanticLog semanticLog;
+
+    public SemanticLogLogger(ISemanticLog semanticLog)
     {
-        private readonly ISemanticLog semanticLog;
+        this.semanticLog = semanticLog;
+    }
 
-        public SemanticLogLogger(ISemanticLog semanticLog)
+    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+    {
+        SemanticLogLevel semanticLogLevel;
+
+        switch (logLevel)
         {
-            this.semanticLog = semanticLog;
+            case LogLevel.Trace:
+                semanticLogLevel = SemanticLogLevel.Trace;
+                break;
+            case LogLevel.Debug:
+                semanticLogLevel = SemanticLogLevel.Debug;
+                break;
+            case LogLevel.Information:
+                semanticLogLevel = SemanticLogLevel.Information;
+                break;
+            case LogLevel.Warning:
+                semanticLogLevel = SemanticLogLevel.Warning;
+                break;
+            case LogLevel.Error:
+                semanticLogLevel = SemanticLogLevel.Error;
+                break;
+            case LogLevel.Critical:
+                semanticLogLevel = SemanticLogLevel.Fatal;
+                break;
+            default:
+                semanticLogLevel = SemanticLogLevel.Debug;
+                break;
         }
 
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+        if (state is IReadOnlyList<KeyValuePair<string, object>> parameters)
         {
-            SemanticLogLevel semanticLogLevel;
-
-            switch (logLevel)
+            foreach (var (_, value) in parameters)
             {
-                case LogLevel.Trace:
-                    semanticLogLevel = SemanticLogLevel.Trace;
-                    break;
-                case LogLevel.Debug:
-                    semanticLogLevel = SemanticLogLevel.Debug;
-                    break;
-                case LogLevel.Information:
-                    semanticLogLevel = SemanticLogLevel.Information;
-                    break;
-                case LogLevel.Warning:
-                    semanticLogLevel = SemanticLogLevel.Warning;
-                    break;
-                case LogLevel.Error:
-                    semanticLogLevel = SemanticLogLevel.Error;
-                    break;
-                case LogLevel.Critical:
-                    semanticLogLevel = SemanticLogLevel.Fatal;
-                    break;
-                default:
-                    semanticLogLevel = SemanticLogLevel.Debug;
-                    break;
+                if (value is Exception ex && exception == null)
+                {
+                    exception = ex;
+                }
+            }
+        }
+
+        var context = (eventId, state, exception, formatter);
+
+        semanticLog.Log(semanticLogLevel, context, exception, (ctx, writer) =>
+        {
+            var message = ctx.formatter(ctx.state, ctx.exception);
+
+            if (!string.IsNullOrWhiteSpace(message))
+            {
+                writer.WriteProperty(nameof(message), message);
             }
 
-            if (state is IReadOnlyList<KeyValuePair<string, object>> parameters)
+            if (ctx.eventId.Id > 0)
             {
-                foreach (var (_, value) in parameters)
+                writer.WriteObject("eventId", ctx.eventId, (innerEventId, eventIdWriter) =>
                 {
-                    if (value is Exception ex && exception == null)
+                    eventIdWriter.WriteProperty("id", innerEventId.Id);
+
+                    if (!string.IsNullOrWhiteSpace(innerEventId.Name))
                     {
-                        exception = ex;
+                        eventIdWriter.WriteProperty("name", innerEventId.Name);
                     }
-                }
+                });
             }
 
-            var context = (eventId, state, exception, formatter);
-
-            semanticLog.Log(semanticLogLevel, context, exception, (ctx, writer) =>
+            if (ctx.state is IReadOnlyList<KeyValuePair<string, object>> parameters2)
             {
-                var message = ctx.formatter(ctx.state, ctx.exception);
-
-                if (!string.IsNullOrWhiteSpace(message))
+                foreach (var (key, value) in parameters2)
                 {
-                    writer.WriteProperty(nameof(message), message);
-                }
-
-                if (ctx.eventId.Id > 0)
-                {
-                    writer.WriteObject("eventId", ctx.eventId, (innerEventId, eventIdWriter) =>
+                    if (value == null)
                     {
-                        eventIdWriter.WriteProperty("id", innerEventId.Id);
-
-                        if (!string.IsNullOrWhiteSpace(innerEventId.Name))
-                        {
-                            eventIdWriter.WriteProperty("name", innerEventId.Name);
-                        }
-                    });
-                }
-
-                if (ctx.state is IReadOnlyList<KeyValuePair<string, object>> parameters2)
-                {
-                    foreach (var (key, value) in parameters2)
-                    {
-                        if (value == null)
-                        {
-                            continue;
-                        }
-
-                        var trimmedName = key.Trim('{', '}', ' ');
-
-                        if (ShouldIgnoreKey(trimmedName))
-                        {
-                            continue;
-                        }
-
-                        writer.WriteProperty(ToCamelCase(trimmedName), value.ToString());
+                        continue;
                     }
+
+                    var trimmedName = key.Trim('{', '}', ' ');
+
+                    if (ShouldIgnoreKey(trimmedName))
+                    {
+                        continue;
+                    }
+
+                    writer.WriteProperty(ToCamelCase(trimmedName), value.ToString());
                 }
-            });
-        }
-
-        private static bool ShouldIgnoreKey(string name)
-        {
-            if (name.Length < 2)
-            {
-                return true;
             }
+        });
+    }
 
-            if (string.Equals(name, "exception", StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-
-            return string.Equals(name, "originalFormat", StringComparison.OrdinalIgnoreCase);
-        }
-
-        public bool IsEnabled(LogLevel logLevel)
+    private static bool ShouldIgnoreKey(string name)
+    {
+        if (name.Length < 2)
         {
             return true;
         }
 
-        public IDisposable BeginScope<TState>(TState state)
+        if (string.Equals(name, "exception", StringComparison.OrdinalIgnoreCase))
         {
-            return NoopDisposable.Instance;
+            return true;
         }
 
-        private static string ToCamelCase(ReadOnlySpan<char> value)
+        return string.Equals(name, "originalFormat", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public bool IsEnabled(LogLevel logLevel)
+    {
+        return true;
+    }
+
+    public IDisposable BeginScope<TState>(TState state)
+    {
+        return NoopDisposable.Instance;
+    }
+
+    private static string ToCamelCase(ReadOnlySpan<char> value)
+    {
+        const char NullChar = (char)0;
+
+        if (value.Length == 0)
         {
-            const char NullChar = (char)0;
+            return string.Empty;
+        }
 
-            if (value.Length == 0)
+        var sb = new StringBuilder(value.Length);
+
+        var last = NullChar;
+        var length = 0;
+
+        for (var i = 0; i < value.Length; i++)
+        {
+            var c = value[i];
+
+            if (c == '-' || c == '_' || c == ' ')
             {
-                return string.Empty;
-            }
-
-            var sb = new StringBuilder(value.Length);
-
-            var last = NullChar;
-            var length = 0;
-
-            for (var i = 0; i < value.Length; i++)
-            {
-                var c = value[i];
-
-                if (c == '-' || c == '_' || c == ' ')
+                if (last != NullChar)
                 {
-                    if (last != NullChar)
+                    if (sb.Length > 0)
                     {
-                        if (sb.Length > 0)
-                        {
-                            sb.Append(char.ToUpperInvariant(last));
-                        }
-                        else
-                        {
-                            sb.Append(char.ToLowerInvariant(last));
-                        }
-                    }
-
-                    last = NullChar;
-                    length = 0;
-                }
-                else
-                {
-                    if (length > 1)
-                    {
-                        sb.Append(c);
-                    }
-                    else if (length == 0)
-                    {
-                        last = c;
+                        sb.Append(char.ToUpperInvariant(last));
                     }
                     else
                     {
-                        if (sb.Length > 0)
-                        {
-                            sb.Append(char.ToUpperInvariant(last));
-                        }
-                        else
-                        {
-                            sb.Append(char.ToLowerInvariant(last));
-                        }
-
-                        sb.Append(c);
-
-                        last = NullChar;
+                        sb.Append(char.ToLowerInvariant(last));
                     }
-
-                    length++;
                 }
-            }
 
-            if (last != NullChar)
+                last = NullChar;
+                length = 0;
+            }
+            else
             {
-                if (sb.Length > 0)
+                if (length > 1)
                 {
-                    sb.Append(char.ToUpperInvariant(last));
+                    sb.Append(c);
+                }
+                else if (length == 0)
+                {
+                    last = c;
                 }
                 else
                 {
-                    sb.Append(char.ToLowerInvariant(last));
-                }
-            }
+                    if (sb.Length > 0)
+                    {
+                        sb.Append(char.ToUpperInvariant(last));
+                    }
+                    else
+                    {
+                        sb.Append(char.ToLowerInvariant(last));
+                    }
 
-            return sb.ToString();
+                    sb.Append(c);
+
+                    last = NullChar;
+                }
+
+                length++;
+            }
         }
+
+        if (last != NullChar)
+        {
+            if (sb.Length > 0)
+            {
+                sb.Append(char.ToUpperInvariant(last));
+            }
+            else
+            {
+                sb.Append(char.ToLowerInvariant(last));
+            }
+        }
+
+        return sb.ToString();
     }
 }

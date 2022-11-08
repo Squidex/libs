@@ -7,134 +7,133 @@
 
 using Squidex.Log;
 
-namespace Squidex.Assets.ResizeService
+namespace Squidex.Assets.ResizeService;
+
+public sealed class ImageResizer
 {
-    public sealed class ImageResizer
+    private readonly IAssetThumbnailGenerator assetThumbnailGenerator;
+
+    public ImageResizer(IAssetThumbnailGenerator assetThumbnailGenerator)
     {
-        private readonly IAssetThumbnailGenerator assetThumbnailGenerator;
+        this.assetThumbnailGenerator = assetThumbnailGenerator;
+    }
 
-        public ImageResizer(IAssetThumbnailGenerator assetThumbnailGenerator)
+    public void Map(IEndpointRouteBuilder endpoints)
+    {
+        endpoints.MapPost("/blur", async context =>
         {
-            this.assetThumbnailGenerator = assetThumbnailGenerator;
-        }
+            await BlurAsync(context);
+        });
 
-        public void Map(IEndpointRouteBuilder endpoints)
+        endpoints.MapPost("/orient", async context =>
         {
-            endpoints.MapPost("/blur", async context =>
-            {
-                await BlurAsync(context);
-            });
+            await OrientAsync(context);
+        });
 
-            endpoints.MapPost("/orient", async context =>
-            {
-                await OrientAsync(context);
-            });
-
-            endpoints.MapPost("/resize", async context =>
-            {
-                await ResizeAsync(context);
-            });
-        }
-
-        private async Task BlurAsync(HttpContext context)
+        endpoints.MapPost("/resize", async context =>
         {
-            await using var tempStream = GetTempStream();
+            await ResizeAsync(context);
+        });
+    }
 
-            await ReadToTempStreamAsync(context, tempStream);
+    private async Task BlurAsync(HttpContext context)
+    {
+        await using var tempStream = GetTempStream();
 
-            try
+        await ReadToTempStreamAsync(context, tempStream);
+
+        try
+        {
+            var options = BlurOptions.Parse(context.Request.Query.ToDictionary(x => x.Key, x => x.Value.ToString()));
+
+            var hash = await assetThumbnailGenerator.ComputeBlurHashAsync(
+                tempStream,
+                context.Request.ContentType ?? "image/png",
+                options,
+                context.RequestAborted);
+
+            if (hash != null)
             {
-                var options = BlurOptions.Parse(context.Request.Query.ToDictionary(x => x.Key, x => x.Value.ToString()));
-
-                var hash = await assetThumbnailGenerator.ComputeBlurHashAsync(
-                    tempStream,
-                    context.Request.ContentType ?? "image/png",
-                    options,
-                    context.RequestAborted);
-
-                if (hash != null)
-                {
-                    await context.Response.WriteAsync(hash, context.RequestAborted);
-                }
-            }
-            catch (Exception ex)
-            {
-                var log = context.RequestServices.GetRequiredService<ILogger<ImageResizer>>();
-
-                log.LogError(ex, "Failed to orient image.");
-
-                context.Response.StatusCode = 400;
+                await context.Response.WriteAsync(hash, context.RequestAborted);
             }
         }
-
-        private async Task OrientAsync(HttpContext context)
+        catch (Exception ex)
         {
-            await using var tempStream = GetTempStream();
+            var log = context.RequestServices.GetRequiredService<ILogger<ImageResizer>>();
 
-            await ReadToTempStreamAsync(context, tempStream);
+            log.LogError(ex, "Failed to orient image.");
 
-            try
-            {
-                await assetThumbnailGenerator.FixOrientationAsync(
-                    tempStream,
-                    context.Request.ContentType ?? "image/png",
-                    context.Response.Body,
-                    context.RequestAborted);
-            }
-            catch (Exception ex)
-            {
-                var log = context.RequestServices.GetRequiredService<ILogger<ImageResizer>>();
-
-                log.LogError(ex, "Failed to orient image.");
-
-                context.Response.StatusCode = 400;
-            }
+            context.Response.StatusCode = 400;
         }
+    }
 
-        private async Task ResizeAsync(HttpContext context)
+    private async Task OrientAsync(HttpContext context)
+    {
+        await using var tempStream = GetTempStream();
+
+        await ReadToTempStreamAsync(context, tempStream);
+
+        try
         {
-            await using var tempStream = GetTempStream();
-
-            await ReadToTempStreamAsync(context, tempStream);
-
-            try
-            {
-                var options = ResizeOptions.Parse(context.Request.Query.ToDictionary(x => x.Key, x => x.Value.ToString()));
-
-                await assetThumbnailGenerator.CreateThumbnailAsync(
-                    tempStream,
-                    context.Request.ContentType ?? "image/png",
-                    context.Response.Body, options,
-                    context.RequestAborted);
-            }
-            catch (Exception ex)
-            {
-                var log = context.RequestServices.GetRequiredService<ILogger<ImageResizer>>();
-
-                log.LogError(ex, "Failed to resize image.");
-
-                context.Response.StatusCode = 400;
-            }
+            await assetThumbnailGenerator.FixOrientationAsync(
+                tempStream,
+                context.Request.ContentType ?? "image/png",
+                context.Response.Body,
+                context.RequestAborted);
         }
-
-        private static async Task ReadToTempStreamAsync(HttpContext context, Stream tempStream)
+        catch (Exception ex)
         {
-            await context.Request.Body.CopyToAsync(tempStream, context.RequestAborted);
+            var log = context.RequestServices.GetRequiredService<ILogger<ImageResizer>>();
 
-            tempStream.Position = 0;
+            log.LogError(ex, "Failed to orient image.");
+
+            context.Response.StatusCode = 400;
         }
+    }
 
-        private static Stream GetTempStream()
+    private async Task ResizeAsync(HttpContext context)
+    {
+        await using var tempStream = GetTempStream();
+
+        await ReadToTempStreamAsync(context, tempStream);
+
+        try
         {
-            var tempPath = Path.Combine(Path.GetTempPath(), Path.GetTempFileName());
+            var options = ResizeOptions.Parse(context.Request.Query.ToDictionary(x => x.Key, x => x.Value.ToString()));
 
-            var stream = new FileStream(tempPath,
-                FileMode.Create,
-                FileAccess.ReadWrite,
-                FileShare.None, 4096,
-                FileOptions.DeleteOnClose);
-
-            return stream;
+            await assetThumbnailGenerator.CreateThumbnailAsync(
+                tempStream,
+                context.Request.ContentType ?? "image/png",
+                context.Response.Body, options,
+                context.RequestAborted);
         }
+        catch (Exception ex)
+        {
+            var log = context.RequestServices.GetRequiredService<ILogger<ImageResizer>>();
+
+            log.LogError(ex, "Failed to resize image.");
+
+            context.Response.StatusCode = 400;
+        }
+    }
+
+    private static async Task ReadToTempStreamAsync(HttpContext context, Stream tempStream)
+    {
+        await context.Request.Body.CopyToAsync(tempStream, context.RequestAborted);
+
+        tempStream.Position = 0;
+    }
+
+    private static Stream GetTempStream()
+    {
+        var tempPath = Path.Combine(Path.GetTempPath(), Path.GetTempFileName());
+
+        var stream = new FileStream(tempPath,
+            FileMode.Create,
+            FileAccess.ReadWrite,
+            FileShare.None, 4096,
+            FileOptions.DeleteOnClose);
+
+        return stream;
     }
 }

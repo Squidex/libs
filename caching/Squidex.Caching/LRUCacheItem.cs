@@ -7,12 +7,11 @@
 
 #pragma warning disable SA1401 // Fields must be private
 
-namespace Squidex.Caching
-{
-    internal sealed class LRUCacheItem<TKey, TValue>
-    {
-        public TKey Key;
+namespace Squidex.Caching;
 
-        public TValue Value;
-    }
+internal sealed class LRUCacheItem<TKey, TValue>
+{
+    public TKey Key;
+
+    public TValue Value;
 }

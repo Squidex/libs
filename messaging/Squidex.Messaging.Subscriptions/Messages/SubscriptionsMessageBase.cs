@@ -5,10 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Messaging.Subscriptions.Messages
+namespace Squidex.Messaging.Subscriptions.Messages;
+
+public abstract record SubscriptionsMessageBase
 {
-    public abstract record SubscriptionsMessageBase
-    {
-        public string? SourceId { get; set; }
-    }
+    public string? SourceId { get; set; }
 }

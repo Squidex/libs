@@ -5,10 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Messaging.Implementation
+namespace Squidex.Messaging.Implementation;
+
+public sealed class RandomInstanceNameProvider : IInstanceNameProvider
 {
-    public sealed class RandomInstanceNameProvider : IInstanceNameProvider
-    {
-        public string Name { get; } = Guid.NewGuid().ToString();
-    }
+    public string Name { get; } = Guid.NewGuid().ToString();
 }

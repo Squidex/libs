@@ -5,50 +5,49 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Caching
+namespace Squidex.Caching;
+
+public static class LocalCacheExtensions
 {
-    public static class LocalCacheExtensions
+    public static async Task<T> GetOrCreateAsync<T>(this ILocalCache cache, object key, Func<Task<T>> creator)
     {
-        public static async Task<T> GetOrCreateAsync<T>(this ILocalCache cache, object key, Func<Task<T>> creator)
+        if (cache.TryGetValue(key, out var value))
         {
-            if (cache.TryGetValue(key, out var value))
+            if (value is T typed)
             {
-                if (value is T typed)
-                {
-                    return typed;
-                }
-                else
-                {
-                    return default!;
-                }
+                return typed;
             }
-
-            var result = await creator();
-
-            cache.Add(key, result);
-
-            return result;
+            else
+            {
+                return default!;
+            }
         }
 
-        public static T GetOrCreate<T>(this ILocalCache cache, object key, Func<T> creator)
+        var result = await creator();
+
+        cache.Add(key, result);
+
+        return result;
+    }
+
+    public static T GetOrCreate<T>(this ILocalCache cache, object key, Func<T> creator)
+    {
+        if (cache.TryGetValue(key, out var value))
         {
-            if (cache.TryGetValue(key, out var value))
+            if (value is T typed)
             {
-                if (value is T typed)
-                {
-                    return typed;
-                }
-                else
-                {
-                    return default!;
-                }
+                return typed;
             }
-
-            var result = creator();
-
-            cache.Add(key, result);
-
-            return result;
+            else
+            {
+                return default!;
+            }
         }
+
+        var result = creator();
+
+        cache.Add(key, result);
+
+        return result;
     }
 }

@@ -5,12 +5,11 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Text.Translations
-{
-    public sealed class DeepLOptions
-    {
-        public string AuthKey { get; set; }
+namespace Squidex.Text.Translations;
 
-        public Dictionary<string, string> Mapping { get; set; }
-    }
+public sealed class DeepLOptions
+{
+    public string AuthKey { get; set; }
+
+    public Dictionary<string, string> Mapping { get; set; }
 }

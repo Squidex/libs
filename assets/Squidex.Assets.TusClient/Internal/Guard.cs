@@ -8,30 +8,29 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-namespace Squidex.Assets.Internal
+namespace Squidex.Assets.Internal;
+
+public static class Guard
 {
-    public static class Guard
+    [DebuggerStepThrough]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void NotNull(object? target, string parameterName)
     {
-        [DebuggerStepThrough]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void NotNull(object? target, string parameterName)
+        if (target == null)
         {
-            if (target == null)
-            {
-                throw new ArgumentNullException(parameterName);
-            }
+            throw new ArgumentNullException(parameterName);
         }
+    }
 
-        [DebuggerStepThrough]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void NotNullOrEmpty(string? target, string parameterName)
+    [DebuggerStepThrough]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void NotNullOrEmpty(string? target, string parameterName)
+    {
+        NotNull(target, parameterName);
+
+        if (string.IsNullOrWhiteSpace(target))
         {
-            NotNull(target, parameterName);
-
-            if (string.IsNullOrWhiteSpace(target))
-            {
-                throw new ArgumentException("String parameter cannot be null or empty and cannot contain only blanks.", parameterName);
-            }
+            throw new ArgumentException("String parameter cannot be null or empty and cannot contain only blanks.", parameterName);
         }
     }
 }

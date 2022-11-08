@@ -5,25 +5,24 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Hosting
+namespace Squidex.Hosting;
+
+public sealed class DelegateInitializer : SystemBase, IInitializable
 {
-    public sealed class DelegateInitializer : SystemBase, IInitializable
+    private readonly Func<CancellationToken, Task> action;
+
+    public DelegateInitializer(string name, Func<CancellationToken, Task> action)
+        : base(name, 0)
     {
-        private readonly Func<CancellationToken, Task> action;
+        this.action = action;
+    }
 
-        public DelegateInitializer(string name, Func<CancellationToken, Task> action)
-            : base(name, 0)
+    public async Task InitializeAsync(
+        CancellationToken ct)
+    {
+        if (action != null)
         {
-            this.action = action;
-        }
-
-        public async Task InitializeAsync(
-            CancellationToken ct)
-        {
-            if (action != null)
-            {
-                await action(ct);
-            }
+            await action(ct);
         }
     }
 }

@@ -7,20 +7,19 @@
 
 using Squidex.Hosting.Configuration;
 
-namespace Squidex.Messaging.GoogleCloud
+namespace Squidex.Messaging.GoogleCloud;
+
+public sealed class GooglePubSubTransportOptions : IValidatableOptions
 {
-    public sealed class GooglePubSubTransportOptions : IValidatableOptions
+    public string Prefix { get; set; }
+
+    public string ProjectId { get; set; }
+
+    public IEnumerable<ConfigurationError> Validate()
     {
-        public string Prefix { get; set; }
-
-        public string ProjectId { get; set; }
-
-        public IEnumerable<ConfigurationError> Validate()
+        if (string.IsNullOrWhiteSpace(ProjectId))
         {
-            if (string.IsNullOrWhiteSpace(ProjectId))
-            {
-                yield return new ConfigurationError("Value is required.", nameof(ProjectId));
-            }
+            yield return new ConfigurationError("Value is required.", nameof(ProjectId));
         }
     }
 }

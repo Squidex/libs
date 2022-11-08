@@ -10,41 +10,40 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 
-namespace Squidex.Hosting.Web
+namespace Squidex.Hosting.Web;
+
+public sealed class ConfigureForwardedHeaders : IConfigureOptions<ForwardedHeadersOptions>
 {
-    public sealed class ConfigureForwardedHeaders : IConfigureOptions<ForwardedHeadersOptions>
+    private readonly UrlOptions urlOptions;
+    private readonly IUrlGenerator urlGenerator;
+
+    public ConfigureForwardedHeaders(IOptions<UrlOptions> urlOptions, IUrlGenerator urlGenerator)
     {
-        private readonly UrlOptions urlOptions;
-        private readonly IUrlGenerator urlGenerator;
+        this.urlOptions = urlOptions.Value;
+        this.urlGenerator = urlGenerator;
+    }
 
-        public ConfigureForwardedHeaders(IOptions<UrlOptions> urlOptions, IUrlGenerator urlGenerator)
+    public void Configure(ForwardedHeadersOptions options)
+    {
+        options.AllowedHosts = new List<string>
         {
-            this.urlOptions = urlOptions.Value;
-            this.urlGenerator = urlGenerator;
-        }
+            urlGenerator.BuildHost().ToString()
+        };
 
-        public void Configure(ForwardedHeadersOptions options)
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
+        options.ForwardLimit = null;
+        options.RequireHeaderSymmetry = false;
+
+        options.KnownNetworks.Clear();
+        options.KnownProxies.Clear();
+
+        if (urlOptions.KnownProxies != null)
         {
-            options.AllowedHosts = new List<string>
+            foreach (var proxy in urlOptions.KnownProxies)
             {
-                urlGenerator.BuildHost().ToString()
-            };
-
-            options.ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
-            options.ForwardLimit = null;
-            options.RequireHeaderSymmetry = false;
-
-            options.KnownNetworks.Clear();
-            options.KnownProxies.Clear();
-
-            if (urlOptions.KnownProxies != null)
-            {
-                foreach (var proxy in urlOptions.KnownProxies)
+                if (IPAddress.TryParse(proxy, out var address))
                 {
-                    if (IPAddress.TryParse(proxy, out var address))
-                    {
-                        options.KnownProxies.Add(address);
-                    }
+                    options.KnownProxies.Add(address);
                 }
             }
         }

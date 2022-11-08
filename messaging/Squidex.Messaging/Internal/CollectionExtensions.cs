@@ -5,30 +5,29 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Messaging.Internal
+namespace Squidex.Messaging.Internal;
+
+internal static class CollectionExtensions
 {
-    internal static class CollectionExtensions
+    public static TValue GetOrAddNew<TKey, TValue>(this IDictionary<TKey, TValue> source, TKey key) where TValue : class, new()
     {
-        public static TValue GetOrAddNew<TKey, TValue>(this IDictionary<TKey, TValue> source, TKey key) where TValue : class, new()
+        if (!source.TryGetValue(key, out var value))
         {
-            if (!source.TryGetValue(key, out var value))
-            {
-                source[key] = value = new TValue();
-            }
-
-            return value;
+            source[key] = value = new TValue();
         }
 
-        public static bool TryAdd<TKey, TValue>(this IDictionary<TKey, TValue> source, TKey key, TValue value)
+        return value;
+    }
+
+    public static bool TryAdd<TKey, TValue>(this IDictionary<TKey, TValue> source, TKey key, TValue value)
+    {
+        if (source.ContainsKey(key))
         {
-            if (source.ContainsKey(key))
-            {
-                return false;
-            }
-
-            source[key] = value;
-
-            return true;
+            return false;
         }
+
+        source[key] = value;
+
+        return true;
     }
 }

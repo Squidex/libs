@@ -5,19 +5,18 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Hosting
+namespace Squidex.Hosting;
+
+public abstract class SystemBase : ISystem
 {
-    public abstract class SystemBase : ISystem
+    public string Name { get; }
+
+    public int Order { get; }
+
+    protected SystemBase(string name, int order)
     {
-        public string Name { get; }
+        Name = name;
 
-        public int Order { get; }
-
-        protected SystemBase(string name, int order)
-        {
-            Name = name;
-
-            Order = order;
-        }
+        Order = order;
     }
 }

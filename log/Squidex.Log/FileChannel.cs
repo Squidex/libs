@@ -7,42 +7,41 @@
 
 using Squidex.Log.Internal;
 
-namespace Squidex.Log
+namespace Squidex.Log;
+
+public sealed class FileChannel : IDisposable, ILogChannel
 {
-    public sealed class FileChannel : IDisposable, ILogChannel
+    private readonly FileLogProcessor processor;
+    private readonly object lockObject = new object();
+    private volatile bool isInitialized;
+
+    public FileChannel(string path)
     {
-        private readonly FileLogProcessor processor;
-        private readonly object lockObject = new object();
-        private volatile bool isInitialized;
+        Guard.NotNullOrEmpty(path, nameof(path));
 
-        public FileChannel(string path)
+        processor = new FileLogProcessor(path);
+    }
+
+    public void Dispose()
+    {
+        processor.Dispose();
+    }
+
+    public void Log(SemanticLogLevel logLevel, string message)
+    {
+        if (!isInitialized)
         {
-            Guard.NotNullOrEmpty(path, nameof(path));
-
-            processor = new FileLogProcessor(path);
-        }
-
-        public void Dispose()
-        {
-            processor.Dispose();
-        }
-
-        public void Log(SemanticLogLevel logLevel, string message)
-        {
-            if (!isInitialized)
+            lock (lockObject)
             {
-                lock (lockObject)
+                if (!isInitialized)
                 {
-                    if (!isInitialized)
-                    {
-                        processor.Initialize();
+                    processor.Initialize();
 
-                        isInitialized = true;
-                    }
+                    isInitialized = true;
                 }
             }
-
-            processor.EnqueueMessage(new LogMessageEntry { Message = message });
         }
+
+        processor.EnqueueMessage(new LogMessageEntry { Message = message });
     }
 }

@@ -5,12 +5,11 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Log
-{
-    public interface IRootWriterFactory
-    {
-        IRootWriter Create();
+namespace Squidex.Log;
 
-        void Release(IRootWriter writer);
-    }
+public interface IRootWriterFactory
+{
+    IRootWriter Create();
+
+    void Release(IRootWriter writer);
 }

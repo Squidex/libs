@@ -1,7 +1,7 @@
 #
 # Stage 1, Build Backend
 #
-FROM mcr.microsoft.com/dotnet/sdk:6.0 as backend
+FROM mcr.microsoft.com/dotnet/sdk:7.0 as backend
 
 WORKDIR /src
 
@@ -23,7 +23,7 @@ RUN dotnet publish --no-restore Squidex.Assets.ResizeService/Squidex.Assets.Resi
 #
 # Stage 3, Build runtime
 #
-FROM mcr.microsoft.com/dotnet/aspnet:6.0.0-bullseye-slim
+FROM mcr.microsoft.com/dotnet/aspnet:7.0-bullseye-slim
 
 # Default AspNetCore directory
 WORKDIR /app

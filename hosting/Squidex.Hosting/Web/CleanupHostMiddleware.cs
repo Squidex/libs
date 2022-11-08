@@ -7,37 +7,36 @@
 
 using Microsoft.AspNetCore.Http;
 
-namespace Squidex.Hosting.Web
+namespace Squidex.Hosting.Web;
+
+public sealed class CleanupHostMiddleware
 {
-    public sealed class CleanupHostMiddleware
+    private readonly RequestDelegate next;
+
+    public CleanupHostMiddleware(RequestDelegate next)
     {
-        private readonly RequestDelegate next;
+        this.next = next;
+    }
 
-        public CleanupHostMiddleware(RequestDelegate next)
+    public Task InvokeAsync(HttpContext context)
+    {
+        var request = context.Request;
+
+        if (request.Host.HasValue && (HasHttpsPort(request) || HasHttpPort(request)))
         {
-            this.next = next;
+            request.Host = new HostString(request.Host.Host);
         }
 
-        public Task InvokeAsync(HttpContext context)
-        {
-            var request = context.Request;
+        return next(context);
+    }
 
-            if (request.Host.HasValue && (HasHttpsPort(request) || HasHttpPort(request)))
-            {
-                request.Host = new HostString(request.Host.Host);
-            }
+    private static bool HasHttpPort(HttpRequest request)
+    {
+        return request.Scheme == "http" && request.Host.Port == 80;
+    }
 
-            return next(context);
-        }
-
-        private static bool HasHttpPort(HttpRequest request)
-        {
-            return request.Scheme == "http" && request.Host.Port == 80;
-        }
-
-        private static bool HasHttpsPort(HttpRequest request)
-        {
-            return request.Scheme == "https" && request.Host.Port == 443;
-        }
+    private static bool HasHttpsPort(HttpRequest request)
+    {
+        return request.Scheme == "https" && request.Host.Port == 443;
     }
 }

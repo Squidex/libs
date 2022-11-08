@@ -5,10 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Log
+namespace Squidex.Log;
+
+public interface ILogChannel
 {
-    public interface ILogChannel
-    {
-        void Log(SemanticLogLevel logLevel, string message);
-    }
+    void Log(SemanticLogLevel logLevel, string message);
 }

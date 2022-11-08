@@ -5,23 +5,22 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Messaging.Internal
+namespace Squidex.Messaging.Internal;
+
+public sealed class AggregateAsyncDisposable : IAsyncDisposable
 {
-    public sealed class AggregateAsyncDisposable : IAsyncDisposable
+    private readonly IAsyncDisposable[] inners;
+
+    public AggregateAsyncDisposable(params IAsyncDisposable[] inners)
     {
-        private readonly IAsyncDisposable[] inners;
+        this.inners = inners;
+    }
 
-        public AggregateAsyncDisposable(params IAsyncDisposable[] inners)
+    public async ValueTask DisposeAsync()
+    {
+        foreach (var inner in inners)
         {
-            this.inners = inners;
-        }
-
-        public async ValueTask DisposeAsync()
-        {
-            foreach (var inner in inners)
-            {
-                await inner.DisposeAsync();
-            }
+            await inner.DisposeAsync();
         }
     }
 }

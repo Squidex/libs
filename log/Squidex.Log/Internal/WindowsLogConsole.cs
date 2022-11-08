@@ -7,56 +7,55 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-namespace Squidex.Log.Internal
+namespace Squidex.Log.Internal;
+
+[ExcludeFromCodeCoverage]
+public sealed class WindowsLogConsole : IConsole
 {
-    [ExcludeFromCodeCoverage]
-    public sealed class WindowsLogConsole : IConsole
+    private readonly bool logToStdError;
+
+    public WindowsLogConsole(bool logToStdError)
     {
-        private readonly bool logToStdError;
+        this.logToStdError = logToStdError;
+    }
 
-        public WindowsLogConsole(bool logToStdError)
-        {
-            this.logToStdError = logToStdError;
-        }
+    public void Reset()
+    {
+        Console.ResetColor();
+    }
 
-        public void Reset()
+    public void WriteLine(int color, string message)
+    {
+        if (color != 0)
         {
-            Console.ResetColor();
-        }
-
-        public void WriteLine(int color, string message)
-        {
-            if (color != 0)
+            try
             {
-                try
+                if (color == 0xffff00)
                 {
-                    if (color == 0xffff00)
-                    {
-                        Console.ForegroundColor = ConsoleColor.Yellow;
-                    }
-                    else
-                    {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                    }
-
-                    if (logToStdError)
-                    {
-                        Console.Error.WriteLine(message);
-                    }
-                    else
-                    {
-                        Console.Out.WriteLine(message);
-                    }
+                    Console.ForegroundColor = ConsoleColor.Yellow;
                 }
-                finally
+                else
                 {
-                    Console.ResetColor();
+                    Console.ForegroundColor = ConsoleColor.Red;
+                }
+
+                if (logToStdError)
+                {
+                    Console.Error.WriteLine(message);
+                }
+                else
+                {
+                    Console.Out.WriteLine(message);
                 }
             }
-            else
+            finally
             {
-                Console.WriteLine(message);
+                Console.ResetColor();
             }
+        }
+        else
+        {
+            Console.WriteLine(message);
         }
     }
 }

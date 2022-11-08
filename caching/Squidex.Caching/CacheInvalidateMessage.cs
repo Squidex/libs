@@ -5,12 +5,11 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Caching
-{
-    public sealed class CacheInvalidateMessage
-    {
-        public Guid Source { get; init; }
+namespace Squidex.Caching;
 
-        public string[] Keys { get; init; }
-    }
+public sealed class CacheInvalidateMessage
+{
+    public Guid Source { get; init; }
+
+    public string[] Keys { get; init; }
 }

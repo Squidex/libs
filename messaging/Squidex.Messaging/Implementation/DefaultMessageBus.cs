@@ -8,46 +8,45 @@
 using Microsoft.Extensions.Options;
 using Squidex.Messaging.Internal;
 
-namespace Squidex.Messaging.Implementation
+namespace Squidex.Messaging.Implementation;
+
+internal sealed class DefaultMessageBus : IMessageBus
 {
-    internal sealed class DefaultMessageBus : IMessageBus
+    private readonly IInternalMessageProducer internalProducer;
+    private readonly RoutingCollection routing;
+
+    public DefaultMessageBus(IInternalMessageProducer internalProducer, IOptions<MessagingOptions> options)
     {
-        private readonly IInternalMessageProducer internalProducer;
-        private readonly RoutingCollection routing;
+        this.internalProducer = internalProducer;
 
-        public DefaultMessageBus(IInternalMessageProducer internalProducer, IOptions<MessagingOptions> options)
+        routing = new RoutingCollection(options.Value.Routing);
+    }
+
+    public async Task PublishAsync(object message, string? key = null,
+        CancellationToken ct = default)
+    {
+        Guard.NotNull(message, nameof(message));
+
+        if (routing != null)
         {
-            this.internalProducer = internalProducer;
-
-            routing = new RoutingCollection(options.Value.Routing);
-        }
-
-        public async Task PublishAsync(object message, string? key = null,
-            CancellationToken ct = default)
-        {
-            Guard.NotNull(message, nameof(message));
-
-            if (routing != null)
+            foreach (var (predicate, channel) in routing)
             {
-                foreach (var (predicate, channel) in routing)
+                if (predicate(message))
                 {
-                    if (predicate(message))
-                    {
-                        await PublishToChannelAsync(message, channel, key, ct);
-                        return;
-                    }
+                    await PublishToChannelAsync(message, channel, key, ct);
+                    return;
                 }
             }
-
-            throw new InvalidOperationException("Cannot find a matching channel name.");
         }
 
-        public Task PublishToChannelAsync(object message, ChannelName channel, string? key = null,
-            CancellationToken ct = default)
-        {
-            Guard.NotNull(message, nameof(message));
+        throw new InvalidOperationException("Cannot find a matching channel name.");
+    }
 
-            return internalProducer.ProduceAsync(channel,  message, key, ct);
-        }
+    public Task PublishToChannelAsync(object message, ChannelName channel, string? key = null,
+        CancellationToken ct = default)
+    {
+        Guard.NotNull(message, nameof(message));
+
+        return internalProducer.ProduceAsync(channel,  message, key, ct);
     }
 }

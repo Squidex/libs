@@ -5,14 +5,13 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Messaging.Subscriptions
+namespace Squidex.Messaging.Subscriptions;
+
+public interface IMessageEvaluator
 {
-    public interface IMessageEvaluator
-    {
-        ValueTask<IEnumerable<Guid>> GetSubscriptionsAsync(object message);
+    ValueTask<IEnumerable<Guid>> GetSubscriptionsAsync(object message);
 
-        void SubscriptionAdded(Guid id, ISubscription subscription);
+    void SubscriptionAdded(Guid id, ISubscription subscription);
 
-        void SubscriptionRemoved(Guid id, ISubscription subscription);
-    }
+    void SubscriptionRemoved(Guid id, ISubscription subscription);
 }

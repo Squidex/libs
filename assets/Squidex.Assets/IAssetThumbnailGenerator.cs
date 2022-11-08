@@ -7,26 +7,25 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+public interface IAssetThumbnailGenerator
 {
-    public interface IAssetThumbnailGenerator
-    {
-        bool CanReadAndWrite(string mimeType);
+    bool CanReadAndWrite(string mimeType);
 
-        bool CanComputeBlurHash();
+    bool CanComputeBlurHash();
 
-        bool IsResizable(string mimeType, ResizeOptions options, [MaybeNullWhen(false)] out string? destinationMimeType);
+    bool IsResizable(string mimeType, ResizeOptions options, [MaybeNullWhen(false)] out string? destinationMimeType);
 
-        Task<ImageInfo?> GetImageInfoAsync(Stream source, string mimeType,
-            CancellationToken ct = default);
+    Task<ImageInfo?> GetImageInfoAsync(Stream source, string mimeType,
+        CancellationToken ct = default);
 
-        Task<string?> ComputeBlurHashAsync(Stream source, string mimeType, BlurOptions options,
-            CancellationToken ct = default);
+    Task<string?> ComputeBlurHashAsync(Stream source, string mimeType, BlurOptions options,
+        CancellationToken ct = default);
 
-        Task FixOrientationAsync(Stream source, string mimeType, Stream destination,
-            CancellationToken ct = default);
+    Task FixOrientationAsync(Stream source, string mimeType, Stream destination,
+        CancellationToken ct = default);
 
-        Task CreateThumbnailAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,
-            CancellationToken ct = default);
-    }
+    Task CreateThumbnailAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,
+        CancellationToken ct = default);
 }

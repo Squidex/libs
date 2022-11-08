@@ -9,22 +9,21 @@ using Microsoft.Extensions.Logging;
 using Squidex.Log;
 using Squidex.Log.Adapter;
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace Microsoft.Extensions.DependencyInjection;
+
+public static class SemanticLogLoggerFactoryExtensions
 {
-    public static class SemanticLogLoggerFactoryExtensions
+    public static ILoggingBuilder AddSemanticLog(this ILoggingBuilder builder)
     {
-        public static ILoggingBuilder AddSemanticLog(this ILoggingBuilder builder)
-        {
-            builder.Services.AddSingleton<ILoggerProvider, SemanticLogLoggerProvider>();
+        builder.Services.AddSingleton<ILoggerProvider, SemanticLogLoggerProvider>();
 
-            return builder;
-        }
+        return builder;
+    }
 
-        public static ILoggerFactory AddSemanticLog(this ILoggerFactory factory, ISemanticLog log)
-        {
-            factory.AddProvider(new SemanticLogLoggerProvider(log));
+    public static ILoggerFactory AddSemanticLog(this ILoggerFactory factory, ISemanticLog log)
+    {
+        factory.AddProvider(new SemanticLogLoggerProvider(log));
 
-            return factory;
-        }
+        return factory;
     }
 }

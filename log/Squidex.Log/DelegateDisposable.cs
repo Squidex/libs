@@ -5,22 +5,21 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Log
+namespace Squidex.Log;
+
+internal sealed class DelegateDisposable : IDisposable
 {
-    internal sealed class DelegateDisposable : IDisposable
+    private readonly Action action;
+
+    public DelegateDisposable(Action action)
     {
-        private readonly Action action;
+        Guard.NotNull(action, nameof(action));
 
-        public DelegateDisposable(Action action)
-        {
-            Guard.NotNull(action, nameof(action));
+        this.action = action;
+    }
 
-            this.action = action;
-        }
-
-        public void Dispose()
-        {
-            action();
-        }
+    public void Dispose()
+    {
+        action();
     }
 }

@@ -8,20 +8,19 @@
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.Options;
 
-namespace Squidex.Hosting.Web
+namespace Squidex.Hosting.Web;
+
+public sealed class ConfigureHttpsRedirection : IConfigureOptions<HttpsRedirectionOptions>
 {
-    public sealed class ConfigureHttpsRedirection : IConfigureOptions<HttpsRedirectionOptions>
+    private readonly UrlOptions urlOptions;
+
+    public ConfigureHttpsRedirection(IOptions<UrlOptions> urlOptions)
     {
-        private readonly UrlOptions urlOptions;
+        this.urlOptions = urlOptions.Value;
+    }
 
-        public ConfigureHttpsRedirection(IOptions<UrlOptions> urlOptions)
-        {
-            this.urlOptions = urlOptions.Value;
-        }
-
-        public void Configure(HttpsRedirectionOptions options)
-        {
-            options.HttpsPort = urlOptions.HttpsPort;
-        }
+    public void Configure(HttpsRedirectionOptions options)
+    {
+        options.HttpsPort = urlOptions.HttpsPort;
     }
 }

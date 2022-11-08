@@ -5,12 +5,11 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Log.Internal
-{
-    public interface IConsole
-    {
-        void WriteLine(int color, string message);
+namespace Squidex.Log.Internal;
 
-        void Reset();
-    }
+public interface IConsole
+{
+    void WriteLine(int color, string message);
+
+    void Reset();
 }

@@ -7,29 +7,28 @@
 
 using Squidex.Assets.Internal;
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+public sealed class ImageInfo
 {
-    public sealed class ImageInfo
+    public ImageFormat Format { get; set; }
+
+    public int PixelWidth { get; }
+
+    public int PixelHeight { get; }
+
+    public ImageOrientation Orientation { get; }
+
+    public ImageInfo(int pixelWidth, int pixelHeight, ImageOrientation orientation, ImageFormat format)
     {
-        public ImageFormat Format { get; set; }
+        Guard.GreaterThan(pixelWidth, 0, nameof(pixelWidth));
+        Guard.GreaterThan(pixelHeight, 0, nameof(pixelHeight));
 
-        public int PixelWidth { get; }
+        Format = format;
 
-        public int PixelHeight { get; }
+        PixelWidth = pixelWidth;
+        PixelHeight = pixelHeight;
 
-        public ImageOrientation Orientation { get; }
-
-        public ImageInfo(int pixelWidth, int pixelHeight, ImageOrientation orientation, ImageFormat format)
-        {
-            Guard.GreaterThan(pixelWidth, 0, nameof(pixelWidth));
-            Guard.GreaterThan(pixelHeight, 0, nameof(pixelHeight));
-
-            Format = format;
-
-            PixelWidth = pixelWidth;
-            PixelHeight = pixelHeight;
-
-            Orientation = orientation;
-        }
+        Orientation = orientation;
     }
 }

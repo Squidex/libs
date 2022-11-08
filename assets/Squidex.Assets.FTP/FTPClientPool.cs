@@ -8,90 +8,89 @@
 using FluentFTP;
 using Squidex.Assets.Internal;
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+internal sealed class FTPClientPool
 {
-    internal sealed class FTPClientPool
+    private readonly Queue<TaskCompletionSource<(IAsyncFtpClient, bool)>> queue = new Queue<TaskCompletionSource<(IAsyncFtpClient, bool)>>();
+    private readonly Queue<IAsyncFtpClient> pool = new Queue<IAsyncFtpClient>();
+    private readonly Func<IAsyncFtpClient> clientFactory;
+    private readonly int clientsLimit;
+    private int created;
+
+    public FTPClientPool(Func<IAsyncFtpClient> clientFactory, int clientsLimit)
     {
-        private readonly Queue<TaskCompletionSource<(IFtpClient, bool)>> queue = new Queue<TaskCompletionSource<(IFtpClient, bool)>>();
-        private readonly Queue<IFtpClient> pool = new Queue<IFtpClient>();
-        private readonly Func<IFtpClient> clientFactory;
-        private readonly int clientsLimit;
-        private int created;
+        Guard.NotNull(clientFactory, nameof(clientFactory));
 
-        public FTPClientPool(Func<IFtpClient> clientFactory, int clientsLimit)
+        this.clientFactory = clientFactory;
+        this.clientsLimit = clientsLimit;
+    }
+
+    public async Task<(IAsyncFtpClient, bool IsNew)> GetClientAsync(
+        CancellationToken ct)
+    {
+        var clientTask = GetClientCoreAsync();
+
+        try
         {
-            Guard.NotNull(clientFactory, nameof(clientFactory));
-
-            this.clientFactory = clientFactory;
-            this.clientsLimit = clientsLimit;
+            return await clientTask.WaitAsync(ct);
         }
-
-        public async Task<(IFtpClient, bool IsNew)> GetClientAsync(
-            CancellationToken ct)
+        catch
         {
-            var clientTask = GetClientCoreAsync();
-
-            try
+            if (clientTask.Status == TaskStatus.RanToCompletion)
             {
-                return await clientTask.WaitAsync(ct);
-            }
-            catch
-            {
-                if (clientTask.Status == TaskStatus.RanToCompletion)
-                {
 #pragma warning disable MA0042 // Do not use blocking calls in an async method
-                    Return(clientTask.Result.Client);
+                Return(clientTask.Result.Client);
 #pragma warning restore MA0042 // Do not use blocking calls in an async method
-                }
+            }
 
-                throw;
+            throw;
+        }
+    }
+
+    private Task<(IAsyncFtpClient Client, bool IsNew)> GetClientCoreAsync()
+    {
+        lock (queue)
+        {
+            if (pool.TryDequeue(out var client))
+            {
+                return Task.FromResult((client, false));
+            }
+
+            if (created < clientsLimit)
+            {
+                var newClient = clientFactory();
+
+                created++;
+
+                return Task.FromResult((newClient, true));
+            }
+            else
+            {
+                var waiting = new TaskCompletionSource<(IAsyncFtpClient, bool)>();
+
+                queue.Enqueue(waiting);
+
+                return waiting.Task;
             }
         }
+    }
 
-        private Task<(IFtpClient Client, bool IsNew)> GetClientCoreAsync()
+    public void Return(IAsyncFtpClient client)
+    {
+        lock (queue)
         {
-            lock (queue)
+            if (client.IsDisposed)
             {
-                if (pool.TryDequeue(out var client))
-                {
-                    return Task.FromResult((client, false));
-                }
-
-                if (created < clientsLimit)
-                {
-                    var newClient = clientFactory();
-
-                    created++;
-
-                    return Task.FromResult((newClient, true));
-                }
-                else
-                {
-                    var waiting = new TaskCompletionSource<(IFtpClient, bool)>();
-
-                    queue.Enqueue(waiting);
-
-                    return waiting.Task;
-                }
+                created--;
             }
-        }
-
-        public void Return(IFtpClient client)
-        {
-            lock (queue)
+            else if (queue.TryDequeue(out var waiting))
             {
-                if (client.IsDisposed)
-                {
-                    created--;
-                }
-                else if (queue.TryDequeue(out var waiting))
-                {
-                    waiting.TrySetResult((client, false));
-                }
-                else
-                {
-                    pool.Enqueue(client);
-                }
+                waiting.TrySetResult((client, false));
+            }
+            else
+            {
+                pool.Enqueue(client);
             }
         }
     }

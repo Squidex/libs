@@ -5,18 +5,17 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Log
+namespace Squidex.Log;
+
+public sealed class NoopDisposable : IDisposable
 {
-    public sealed class NoopDisposable : IDisposable
+    public static readonly NoopDisposable Instance = new NoopDisposable();
+
+    private NoopDisposable()
     {
-        public static readonly NoopDisposable Instance = new NoopDisposable();
+    }
 
-        private NoopDisposable()
-        {
-        }
-
-        public void Dispose()
-        {
-        }
+    public void Dispose()
+    {
     }
 }

@@ -5,9 +5,8 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Messaging
+namespace Squidex.Messaging;
+
+public sealed class TopicOptions : ProducerOptions
 {
-    public sealed class TopicOptions : ProducerOptions
-    {
-    }
 }

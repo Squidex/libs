@@ -10,42 +10,41 @@ using tusdotnet;
 using tusdotnet.Models;
 using tusdotnet.Models.Configuration;
 
-namespace TusTestServer
+namespace TusTestServer;
+
+public static class Utils
 {
-    public static class Utils
+    public static void UseMyTus<T>(this WebApplication app, string path) where T : IAssetStore
     {
-        public static void UseMyTus<T>(this WebApplication app, string path) where T : IAssetStore
+        app.UseTus(httpContext => new DefaultTusConfiguration
         {
-            app.UseTus(httpContext => new DefaultTusConfiguration
+            Store = new AssetTusStore(
+                httpContext.RequestServices.GetRequiredService<T>(),
+                httpContext.RequestServices.GetRequiredService<IAssetKeyValueStore<TusMetadata>>()),
+            UrlPath = path,
+            Events = new Events
             {
-                Store = new AssetTusStore(
-                    httpContext.RequestServices.GetRequiredService<T>(),
-                    httpContext.RequestServices.GetRequiredService<IAssetKeyValueStore<TusMetadata>>()),
-                UrlPath = path,
-                Events = new Events
+                OnFileCompleteAsync = async eventContext =>
                 {
-                    OnFileCompleteAsync = async eventContext =>
+                    var file = (AssetFile)(await eventContext.GetFileAsync());
+
+                    await using var fileStream = file.OpenRead();
+
+                    var name = file.FileName;
+
+                    if (string.IsNullOrWhiteSpace(name))
                     {
-                        var file = (AssetFile)(await eventContext.GetFileAsync());
+                        name = Guid.NewGuid().ToString();
+                    }
 
-                        await using var fileStream = file.OpenRead();
+                    Directory.CreateDirectory("uploads");
 
-                        var name = file.FileName;
-
-                        if (string.IsNullOrWhiteSpace(name))
-                        {
-                            name = Guid.NewGuid().ToString();
-                        }
-
-                        Directory.CreateDirectory("uploads");
-
-                        await using (var stream = new FileStream($"uploads/{name}", FileMode.Create))
-                        {
-                            await fileStream.CopyToAsync(stream, eventContext.CancellationToken);
-                        }
+                    await using (var stream = new FileStream($"uploads/{name}", FileMode.Create))
+                    {
+                        await fileStream.CopyToAsync(stream, eventContext.CancellationToken);
                     }
                 }
-            });
-        }
+            }
+        });
     }
 }

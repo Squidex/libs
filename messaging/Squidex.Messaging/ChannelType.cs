@@ -5,11 +5,10 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Messaging
+namespace Squidex.Messaging;
+
+public enum ChannelType
 {
-    public enum ChannelType
-    {
-        Queue,
-        Topic
-    }
+    Queue,
+    Topic
 }

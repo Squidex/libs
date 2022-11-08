@@ -11,177 +11,176 @@ using MongoDB.Driver;
 using Squidex.Messaging.Implementation;
 using Squidex.Messaging.Internal;
 
-namespace Squidex.Messaging.Mongo
+namespace Squidex.Messaging.Mongo;
+
+public sealed class MongoTransport : IMessagingTransport
 {
-    public sealed class MongoTransport : IMessagingTransport
+    private readonly Dictionary<string, Task<IMongoCollection<MongoMessage>>> collections = new Dictionary<string, Task<IMongoCollection<MongoMessage>>>();
+    private readonly MongoTransportOptions options;
+    private readonly IMongoDatabase database;
+    private readonly IMessagingSubscriptions subscriptions;
+    private readonly IClock clock;
+    private readonly ILogger<MongoTransport> log;
+
+    public MongoTransport(IMongoDatabase database, IMessagingSubscriptions subscriptions,
+        IOptions<MongoTransportOptions> options, IClock clock, ILogger<MongoTransport> log)
     {
-        private readonly Dictionary<string, Task<IMongoCollection<MongoMessage>>> collections = new Dictionary<string, Task<IMongoCollection<MongoMessage>>>();
-        private readonly MongoTransportOptions options;
-        private readonly IMongoDatabase database;
-        private readonly IMessagingSubscriptions subscriptions;
-        private readonly IClock clock;
-        private readonly ILogger<MongoTransport> log;
+        this.options = options.Value;
+        this.database = database;
+        this.subscriptions = subscriptions;
+        this.clock = clock;
+        this.log = log;
+    }
 
-        public MongoTransport(IMongoDatabase database, IMessagingSubscriptions subscriptions,
-            IOptions<MongoTransportOptions> options, IClock clock, ILogger<MongoTransport> log)
+    public Task InitializeAsync(
+        CancellationToken ct)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task ReleaseAsync(
+       CancellationToken ct)
+    {
+        collections.Clear();
+
+        return Task.CompletedTask;
+    }
+
+    public async Task<IAsyncDisposable?> CreateChannelAsync(ChannelName channel, string instanceName, bool consume, ProducerOptions options,
+        CancellationToken ct)
+    {
+        if (!consume)
         {
-            this.options = options.Value;
-            this.database = database;
-            this.subscriptions = subscriptions;
-            this.clock = clock;
-            this.log = log;
+            return null;
         }
 
-        public Task InitializeAsync(
-            CancellationToken ct)
+        var collectionName = channel.Name;
+        var collectionInstance = await GetCollectionAsync(collectionName);
+
+        IAsyncDisposable? subscription = null;
+
+        if (channel.Type == ChannelType.Topic)
         {
-            return Task.CompletedTask;
+            var value = new MongoSubscriptionValue
+            {
+                InstanceName = instanceName
+            };
+
+            subscription = await subscriptions.SubscribeAsync(channel.Name, instanceName, value, this.options.SubscriptionExpiration, ct);
         }
 
-        public Task ReleaseAsync(
-           CancellationToken ct)
-        {
-            collections.Clear();
+        IAsyncDisposable result = new MongoTransportCleaner(collectionInstance, collectionName,
+            options.Timeout,
+            options.Expires,
+            this.options.UpdateInterval, log, clock);
 
-            return Task.CompletedTask;
+        if (subscription != null)
+        {
+            result = new AggregateAsyncDisposable(result, subscription);
         }
 
-        public async Task<IAsyncDisposable?> CreateChannelAsync(ChannelName channel, string instanceName, bool consume, ProducerOptions options,
-            CancellationToken ct)
+        return result;
+    }
+
+    public async Task ProduceAsync(ChannelName channel, string instanceName, TransportMessage transportMessage,
+        CancellationToken ct)
+    {
+        IReadOnlyList<string> queues;
+
+        if (channel.Type == ChannelType.Queue)
         {
-            if (!consume)
-            {
-                return null;
-            }
+            queues = new List<string> { channel.Name };
+        }
+        else
+        {
+            var subscribed = await subscriptions.GetSubscriptionsAsync<MongoSubscriptionValue>(channel.Name, ct);
 
-            var collectionName = channel.Name;
-            var collectionInstance = await GetCollectionAsync(collectionName);
-
-            IAsyncDisposable? subscription = null;
-
-            if (channel.Type == ChannelType.Topic)
-            {
-                var value = new MongoSubscriptionValue
-                {
-                    InstanceName = instanceName
-                };
-
-                subscription = await subscriptions.SubscribeAsync(channel.Name, instanceName, value, this.options.SubscriptionExpiration, ct);
-            }
-
-            IAsyncDisposable result = new MongoTransportCleaner(collectionInstance, collectionName,
-                options.Timeout,
-                options.Expires,
-                this.options.UpdateInterval, log, clock);
-
-            if (subscription != null)
-            {
-                result = new AggregateAsyncDisposable(result, subscription);
-            }
-
-            return result;
+            queues = subscribed.Select(x => x.Value.InstanceName).ToList();
         }
 
-        public async Task ProduceAsync(ChannelName channel, string instanceName, TransportMessage transportMessage,
-            CancellationToken ct)
+        if (queues.Count == 0)
         {
-            IReadOnlyList<string> queues;
+            return;
+        }
 
-            if (channel.Type == ChannelType.Queue)
+        // Only use one collection per topic for all queues, because it is easier to deal with outdated subscriptions.
+        var collection = await GetCollectionAsync(channel.Name);
+
+        foreach (var queueName in queues)
+        {
+            var request = new MongoMessage
             {
-                queues = new List<string> { channel.Name };
+                Id = $"{transportMessage.Headers[HeaderNames.Id]}_{queueName}",
+                QueueName = queueName,
+                MessageData = transportMessage.Data,
+                MessageHeaders = transportMessage.Headers,
+                TimeToLive = GetTimeToLive(transportMessage.Headers),
+            };
+
+            await collection.InsertOneAsync(request, null, ct);
+        }
+    }
+
+    public async Task<IAsyncDisposable> SubscribeAsync(ChannelName channel, string instanceName, MessageTransportCallback callback,
+        CancellationToken ct)
+    {
+        var collectionName = channel.Name;
+        var collectionInstance = await GetCollectionAsync(collectionName);
+
+        var queueFilter = channel.Type == ChannelType.Topic ? instanceName : null;
+
+        return new MongoSubscription(callback, collectionInstance, collectionName, queueFilter, options, clock, log);
+    }
+
+    private async Task<IMongoCollection<MongoMessage>> GetCollectionAsync(string name)
+    {
+        Task<IMongoCollection<MongoMessage>> collectionTask;
+
+        lock (collections)
+        {
+            async Task<IMongoCollection<MongoMessage>> CreateCollectionAsync()
+            {
+                var collection = database.GetCollection<MongoMessage>($"{options.CollectionName}_{name}");
+
+                await collection.Indexes.CreateManyAsync(
+                    new[]
+                    {
+                        new CreateIndexModel<MongoMessage>(
+                            Builders<MongoMessage>.IndexKeys
+                                .Ascending(x => x.TimeHandled)
+                                .Ascending(x => x.QueueName)),
+                        new CreateIndexModel<MongoMessage>(
+                            Builders<MongoMessage>.IndexKeys
+                                .Ascending(x => x.TimeToLive),
+                            new CreateIndexOptions
+                            {
+                                ExpireAfter = TimeSpan.Zero,
+                            })
+                    },
+                    default);
+
+                return collection;
             }
-            else
+
+            if (!collections.TryGetValue(name, out collectionTask!))
             {
-                var subscribed = await subscriptions.GetSubscriptionsAsync<MongoSubscriptionValue>(channel.Name, ct);
-
-                queues = subscribed.Select(x => x.Value.InstanceName).ToList();
-            }
-
-            if (queues.Count == 0)
-            {
-                return;
-            }
-
-            // Only use one collection per topic for all queues, because it is easier to deal with outdated subscriptions.
-            var collection = await GetCollectionAsync(channel.Name);
-
-            foreach (var queueName in queues)
-            {
-                var request = new MongoMessage
-                {
-                    Id = $"{transportMessage.Headers[HeaderNames.Id]}_{queueName}",
-                    QueueName = queueName,
-                    MessageData = transportMessage.Data,
-                    MessageHeaders = transportMessage.Headers,
-                    TimeToLive = GetTimeToLive(transportMessage.Headers),
-                };
-
-                await collection.InsertOneAsync(request, null, ct);
+                collectionTask = CreateCollectionAsync();
+                collections[name] = collectionTask;
             }
         }
 
-        public async Task<IAsyncDisposable> SubscribeAsync(ChannelName channel, string instanceName, MessageTransportCallback callback,
-            CancellationToken ct)
+        return await collectionTask;
+    }
+
+    private DateTime GetTimeToLive(TransportHeaders headers)
+    {
+        var time = TimeSpan.FromDays(30);
+
+        if (headers.TryGetTimestamp(HeaderNames.TimeExpires, out var expires))
         {
-            var collectionName = channel.Name;
-            var collectionInstance = await GetCollectionAsync(collectionName);
-
-            var queueFilter = channel.Type == ChannelType.Topic ? instanceName : null;
-
-            return new MongoSubscription(callback, collectionInstance, collectionName, queueFilter, options, clock, log);
+            time = expires;
         }
 
-        private async Task<IMongoCollection<MongoMessage>> GetCollectionAsync(string name)
-        {
-            Task<IMongoCollection<MongoMessage>> collectionTask;
-
-            lock (collections)
-            {
-                async Task<IMongoCollection<MongoMessage>> CreateCollectionAsync()
-                {
-                    var collection = database.GetCollection<MongoMessage>($"{options.CollectionName}_{name}");
-
-                    await collection.Indexes.CreateManyAsync(
-                        new[]
-                        {
-                            new CreateIndexModel<MongoMessage>(
-                                Builders<MongoMessage>.IndexKeys
-                                    .Ascending(x => x.TimeHandled)
-                                    .Ascending(x => x.QueueName)),
-                            new CreateIndexModel<MongoMessage>(
-                                Builders<MongoMessage>.IndexKeys
-                                    .Ascending(x => x.TimeToLive),
-                                new CreateIndexOptions
-                                {
-                                    ExpireAfter = TimeSpan.Zero,
-                                })
-                        },
-                        default);
-
-                    return collection;
-                }
-
-                if (!collections.TryGetValue(name, out collectionTask!))
-                {
-                    collectionTask = CreateCollectionAsync();
-                    collections[name] = collectionTask;
-                }
-            }
-
-            return await collectionTask;
-        }
-
-        private DateTime GetTimeToLive(TransportHeaders headers)
-        {
-            var time = TimeSpan.FromDays(30);
-
-            if (headers.TryGetTimestamp(HeaderNames.TimeExpires, out var expires))
-            {
-                time = expires;
-            }
-
-            return clock.UtcNow + time;
-        }
+        return clock.UtcNow + time;
     }
 }

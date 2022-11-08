@@ -5,22 +5,21 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+public sealed class TusMetadata
 {
-    public sealed class TusMetadata
-    {
-        public DateTimeOffset? Expires { get; set; }
+    public DateTimeOffset? Expires { get; set; }
 
-        public string Id { get; set; }
+    public string Id { get; set; }
 
-        public string UploadMetadata { get; set; }
+    public string UploadMetadata { get; set; }
 
-        public long? UploadLength { get; set; }
+    public long? UploadLength { get; set; }
 
-        public long WrittenBytes { get; set; }
+    public long WrittenBytes { get; set; }
 
-        public int WrittenParts { get; set; }
+    public int WrittenParts { get; set; }
 
-        public bool Created { get; set; }
-    }
+    public bool Created { get; set; }
 }

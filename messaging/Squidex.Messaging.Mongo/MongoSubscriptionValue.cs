@@ -5,10 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Messaging.Mongo
+namespace Squidex.Messaging.Mongo;
+
+internal sealed class MongoSubscriptionValue
 {
-    internal sealed class MongoSubscriptionValue
-    {
-        public string InstanceName { get; init; }
-    }
+    public string InstanceName { get; init; }
 }

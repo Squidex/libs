@@ -10,139 +10,138 @@ using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
 using Squidex.Messaging.Internal;
 
-namespace Squidex.Messaging.Kafka
+namespace Squidex.Messaging.Kafka;
+
+public sealed class KafkaTransport : IMessagingTransport
 {
-    public sealed class KafkaTransport : IMessagingTransport
+    private readonly KafkaOwner owner;
+    private readonly ILogger<KafkaTransport> log;
+    private IProducer<string, byte[]>? producer;
+
+    public KafkaTransport(KafkaOwner owner,
+        ILogger<KafkaTransport> log)
     {
-        private readonly KafkaOwner owner;
-        private readonly ILogger<KafkaTransport> log;
-        private IProducer<string, byte[]>? producer;
+        this.owner = owner;
 
-        public KafkaTransport(KafkaOwner owner,
-            ILogger<KafkaTransport> log)
+        this.log = log;
+    }
+
+    public Task InitializeAsync(
+        CancellationToken ct)
+    {
+        producer =
+            new DependentProducerBuilder<string, byte[]>(owner.Handle)
+                .Build();
+
+        return Task.CompletedTask;
+    }
+
+    public Task ReleaseAsync(
+        CancellationToken ct)
+    {
+        if (producer != null)
         {
-            this.owner = owner;
-
-            this.log = log;
+            producer.Flush(ct);
+            producer.Dispose();
         }
 
-        public Task InitializeAsync(
-            CancellationToken ct)
-        {
-            producer =
-                new DependentProducerBuilder<string, byte[]>(owner.Handle)
-                    .Build();
+        return Task.CompletedTask;
+    }
 
-            return Task.CompletedTask;
+    public Task<IAsyncDisposable?> CreateChannelAsync(ChannelName channel, string instanceName, bool consume, ProducerOptions producerOptions,
+        CancellationToken ct)
+    {
+        if (channel.Type == ChannelType.Topic)
+        {
+            ThrowHelper.InvalidOperationException("Topics are not supported.");
         }
 
-        public Task ReleaseAsync(
-            CancellationToken ct)
-        {
-            if (producer != null)
-            {
-                producer.Flush(ct);
-                producer.Dispose();
-            }
+        return Task.FromResult<IAsyncDisposable?>(null);
+    }
 
-            return Task.CompletedTask;
+    public async Task ProduceAsync(ChannelName channel, string instanceName, TransportMessage transportMessage,
+        CancellationToken ct)
+    {
+        if (producer == null)
+        {
+            ThrowHelper.InvalidOperationException("Transport has not been initialized yet.");
+            return;
         }
 
-        public Task<IAsyncDisposable?> CreateChannelAsync(ChannelName channel, string instanceName, bool consume, ProducerOptions producerOptions,
-            CancellationToken ct)
+        if (channel.Type == ChannelType.Topic)
         {
-            if (channel.Type == ChannelType.Topic)
-            {
-                ThrowHelper.InvalidOperationException("Topics are not supported.");
-            }
-
-            return Task.FromResult<IAsyncDisposable?>(null);
+            ThrowHelper.InvalidOperationException("Topics are not supported.");
+            return;
         }
 
-        public async Task ProduceAsync(ChannelName channel, string instanceName, TransportMessage transportMessage,
-            CancellationToken ct)
+        var message = new Message<string, byte[]>
         {
-            if (producer == null)
+            Value = transportMessage.Data
+        };
+
+        if (transportMessage.Headers.Count > 0)
+        {
+            message.Headers = new Headers();
+
+            foreach (var (key, value) in transportMessage.Headers)
             {
-                ThrowHelper.InvalidOperationException("Transport has not been initialized yet.");
-                return;
+                message.Headers.Add(key, Encoding.UTF8.GetBytes(value));
             }
+        }
 
-            if (channel.Type == ChannelType.Topic)
+        if (string.IsNullOrWhiteSpace(transportMessage.Key))
+        {
+            message.Key = Guid.NewGuid().ToString();
+        }
+        else
+        {
+            message.Key = transportMessage.Key;
+        }
+
+        try
+        {
+            await producer.ProduceAsync(channel.Name, message, ct);
+        }
+        catch (ProduceException<string, byte[]> ex) when (ex.Error.Code == ErrorCode.Local_QueueFull)
+        {
+            while (true)
             {
-                ThrowHelper.InvalidOperationException("Topics are not supported.");
-                return;
-            }
-
-            var message = new Message<string, byte[]>
-            {
-                Value = transportMessage.Data
-            };
-
-            if (transportMessage.Headers.Count > 0)
-            {
-                message.Headers = new Headers();
-
-                foreach (var (key, value) in transportMessage.Headers)
+                try
                 {
-                    message.Headers.Add(key, Encoding.UTF8.GetBytes(value));
+                    producer.Poll(Timeout.InfiniteTimeSpan);
+
+                    await producer.ProduceAsync(channel.Name, message, ct);
+
+                    return;
                 }
-            }
-
-            if (string.IsNullOrWhiteSpace(transportMessage.Key))
-            {
-                message.Key = Guid.NewGuid().ToString();
-            }
-            else
-            {
-                message.Key = transportMessage.Key;
-            }
-
-            try
-            {
-                await producer.ProduceAsync(channel.Name, message, ct);
-            }
-            catch (ProduceException<string, byte[]> ex) when (ex.Error.Code == ErrorCode.Local_QueueFull)
-            {
-                while (true)
+                catch (ProduceException<string, byte[]> ex2) when (ex2.Error.Code == ErrorCode.Local_QueueFull)
                 {
-                    try
-                    {
-                        producer.Poll(Timeout.InfiniteTimeSpan);
-
-                        await producer.ProduceAsync(channel.Name, message, ct);
-
-                        return;
-                    }
-                    catch (ProduceException<string, byte[]> ex2) when (ex2.Error.Code == ErrorCode.Local_QueueFull)
-                    {
-                        await Task.Delay(100, ct);
-                    }
+                    await Task.Delay(100, ct);
                 }
             }
         }
+    }
 
-        public Task<IAsyncDisposable> SubscribeAsync(ChannelName channel, string instanceName, MessageTransportCallback callback,
-            CancellationToken ct)
+    public Task<IAsyncDisposable> SubscribeAsync(ChannelName channel, string instanceName, MessageTransportCallback callback,
+        CancellationToken ct)
+    {
+        return Task.FromResult(SubscribeCore(channel, callback));
+    }
+
+    private IAsyncDisposable SubscribeCore(ChannelName channel, MessageTransportCallback callback)
+    {
+        if (producer == null)
         {
-            return Task.FromResult(SubscribeCore(channel, callback));
+            ThrowHelper.InvalidOperationException("Transport has not been initialized yet.");
+            return default!;
         }
 
-        private IAsyncDisposable SubscribeCore(ChannelName channel, MessageTransportCallback callback)
+        if (channel.Type == ChannelType.Topic)
         {
-            if (producer == null)
-            {
-                ThrowHelper.InvalidOperationException("Transport has not been initialized yet.");
-                return default!;
-            }
-
-            if (channel.Type == ChannelType.Topic)
-            {
-                ThrowHelper.InvalidOperationException("Topics are not supported.");
-                return default!;
-            }
-
-            return new KafkaSubscription(channel.Name, callback, owner, log);
+            ThrowHelper.InvalidOperationException("Topics are not supported.");
+            return default!;
         }
+
+        return new KafkaSubscription(channel.Name, callback, owner, log);
     }
 }

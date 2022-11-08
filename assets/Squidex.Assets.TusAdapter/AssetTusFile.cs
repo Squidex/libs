@@ -10,115 +10,114 @@ using tusdotnet.Interfaces;
 using tusdotnet.Models;
 using tusdotnet.Parsers;
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+public sealed class AssetTusFile : AssetFile, ITusFile, IDisposable, IAsyncDisposable
 {
-    public sealed class AssetTusFile : AssetFile, ITusFile, IDisposable, IAsyncDisposable
+    private readonly Stream stream;
+    private readonly Action<AssetTusFile> disposed;
+
+    public string Id { get; }
+
+    public Dictionary<string, string> Metadata { get; }
+
+    public Dictionary<string, Metadata> MetadataRaw { get; }
+
+    internal TusMetadata TusMetadata { get; }
+
+    public static AssetTusFile Create(string id, TusMetadata tusMetadata, Stream stream, Action<AssetTusFile> disposed)
     {
-        private readonly Stream stream;
-        private readonly Action<AssetTusFile> disposed;
+        var metadataRaw = MetadataParser.ParseAndValidate(MetadataParsingStrategy.AllowEmptyValues, tusMetadata.UploadMetadata).Metadata;
 
-        public string Id { get; }
+        var metadata = new Dictionary<string, string>();
 
-        public Dictionary<string, string> Metadata { get; }
-
-        public Dictionary<string, Metadata> MetadataRaw { get; }
-
-        internal TusMetadata TusMetadata { get; }
-
-        public static AssetTusFile Create(string id, TusMetadata tusMetadata, Stream stream, Action<AssetTusFile> disposed)
+        foreach (var (key, value) in metadataRaw)
         {
-            var metadataRaw = MetadataParser.ParseAndValidate(MetadataParsingStrategy.AllowEmptyValues, tusMetadata.UploadMetadata).Metadata;
-
-            var metadata = new Dictionary<string, string>();
-
-            foreach (var (key, value) in metadataRaw)
-            {
-                metadata[key] = value.GetString(Encoding.UTF8).Trim();
-            }
-
-            return new AssetTusFile(id, tusMetadata, metadata, metadataRaw, stream, disposed);
+            metadata[key] = value.GetString(Encoding.UTF8).Trim();
         }
 
-        public AssetTusFile(
-            string id,
-            TusMetadata tusMetadata,
-            Dictionary<string, string> metadata,
-            Dictionary<string, Metadata> metadataRaw,
-            Stream stream,
-            Action<AssetTusFile> disposed)
-            : base(GetFileName(metadata), GetMimeType(metadata), stream.Length)
+        return new AssetTusFile(id, tusMetadata, metadata, metadataRaw, stream, disposed);
+    }
+
+    public AssetTusFile(
+        string id,
+        TusMetadata tusMetadata,
+        Dictionary<string, string> metadata,
+        Dictionary<string, Metadata> metadataRaw,
+        Stream stream,
+        Action<AssetTusFile> disposed)
+        : base(GetFileName(metadata), GetMimeType(metadata), stream.Length)
+    {
+        Id = id;
+
+        this.stream = stream;
+
+        Metadata = metadata;
+        MetadataRaw = metadataRaw;
+        TusMetadata = tusMetadata;
+
+        this.disposed = disposed;
+    }
+
+    private static string GetFileName(Dictionary<string, string> metadata)
+    {
+        var result = metadata.FirstOrDefault(x => string.Equals(x.Key, "fileName", StringComparison.OrdinalIgnoreCase)).Value;
+
+        if (!string.IsNullOrWhiteSpace(result))
         {
-            Id = id;
-
-            this.stream = stream;
-
-            Metadata = metadata;
-            MetadataRaw = metadataRaw;
-            TusMetadata = tusMetadata;
-
-            this.disposed = disposed;
+            return result;
         }
 
-        private static string GetFileName(Dictionary<string, string> metadata)
+        return "Unknown.blob";
+    }
+
+    private static string GetMimeType(Dictionary<string, string> metadata)
+    {
+        var result = metadata.FirstOrDefault(x => string.Equals(x.Key, "fileType", StringComparison.OrdinalIgnoreCase)).Value;
+
+        if (!string.IsNullOrWhiteSpace(result))
         {
-            var result = metadata.FirstOrDefault(x => string.Equals(x.Key, "fileName", StringComparison.OrdinalIgnoreCase)).Value;
-
-            if (!string.IsNullOrWhiteSpace(result))
-            {
-                return result;
-            }
-
-            return "Unknown.blob";
+            return result;
         }
 
-        private static string GetMimeType(Dictionary<string, string> metadata)
+        result = metadata.FirstOrDefault(x => string.Equals(x.Key, "mimeType", StringComparison.OrdinalIgnoreCase)).Value;
+
+        if (!string.IsNullOrWhiteSpace(result))
         {
-            var result = metadata.FirstOrDefault(x => string.Equals(x.Key, "fileType", StringComparison.OrdinalIgnoreCase)).Value;
-
-            if (!string.IsNullOrWhiteSpace(result))
-            {
-                return result;
-            }
-
-            result = metadata.FirstOrDefault(x => string.Equals(x.Key, "mimeType", StringComparison.OrdinalIgnoreCase)).Value;
-
-            if (!string.IsNullOrWhiteSpace(result))
-            {
-                return result;
-            }
-
-            return "application/octet-stream";
+            return result;
         }
 
-        public override void Dispose()
-        {
-            disposed(this);
+        return "application/octet-stream";
+    }
 
-            stream.Dispose();
-        }
+    public override void Dispose()
+    {
+        disposed(this);
 
-        public override ValueTask DisposeAsync()
-        {
-            disposed(this);
+        stream.Dispose();
+    }
 
-            return stream.DisposeAsync();
-        }
+    public override ValueTask DisposeAsync()
+    {
+        disposed(this);
 
-        public override Stream OpenRead()
-        {
-            return new NonDisposingStream(stream);
-        }
+        return stream.DisposeAsync();
+    }
 
-        public Task<Stream> GetContentAsync(
-            CancellationToken cancellationToken)
-        {
-            return Task.FromResult<Stream>(new NonDisposingStream(stream));
-        }
+    public override Stream OpenRead()
+    {
+        return new NonDisposingStream(stream);
+    }
 
-        public Task<Dictionary<string, Metadata>> GetMetadataAsync(
-            CancellationToken cancellationToken)
-        {
-            return Task.FromResult(MetadataRaw);
-        }
+    public Task<Stream> GetContentAsync(
+        CancellationToken cancellationToken)
+    {
+        return Task.FromResult<Stream>(new NonDisposingStream(stream));
+    }
+
+    public Task<Dictionary<string, Metadata>> GetMetadataAsync(
+        CancellationToken cancellationToken)
+    {
+        return Task.FromResult(MetadataRaw);
     }
 }
