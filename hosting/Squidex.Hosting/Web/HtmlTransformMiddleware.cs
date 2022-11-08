@@ -45,7 +45,7 @@ public sealed class HtmlTransformMiddleware
         }
 
         // We need to change the content length header.
-        if (!response.HasStarted && response.ContentType.StartsWith("text/html", StringComparison.OrdinalIgnoreCase))
+        if (!response.HasStarted && response.ContentType?.StartsWith("text/html", StringComparison.OrdinalIgnoreCase) == true)
         {
             var html = Encoding.UTF8.GetString(responseBuffer.ToArray());
 

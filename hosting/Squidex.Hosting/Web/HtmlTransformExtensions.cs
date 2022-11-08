@@ -10,9 +10,12 @@ using Microsoft.AspNetCore.Http;
 
 namespace Squidex.Hosting.Web;
 
-public static class HtmlTransformExtensions
+public static partial class HtmlTransformExtensions
 {
-    private static readonly Regex BaseRegex = new Regex("<base[\\s]+href=\"\\/\"[\\s]*[/]{0,1}[\\s]*>", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    private static readonly Regex BaseRegex = BaseRegexFactory();
+
+    [GeneratedRegex("<base[\\s]+href=\"\\/\"[\\s]*[/]{0,1}[\\s]*>", RegexOptions.Compiled | RegexOptions.IgnoreCase)]
+    private static partial Regex BaseRegexFactory();
 
     public static string AdjustBase(this string html, HttpContext httpContext)
     {
