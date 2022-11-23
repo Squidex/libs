@@ -53,15 +53,17 @@ public static class UploadHttpClientExtension
             var isFound = false;
             var totalProgress = 0;
             var totalBytes = file.ContentLength;
+            var bytesOffset = 0L;
             var bytesWritten = 0L;
 
             if (!string.IsNullOrWhiteSpace(fileId))
             {
-                (bytesWritten, isFound) = await httpClient.GetUploadProgressCoreAsync(uri, fileId!, ct);
+                (bytesOffset, isFound) = await httpClient.GetUploadProgressCoreAsync(uri, fileId!, ct);
 
-                if (bytesWritten > 0)
+                if (bytesOffset > 0)
                 {
-                    file.Stream.Seek(bytesWritten, SeekOrigin.Begin);
+                    file.Stream.Seek(bytesOffset, SeekOrigin.Begin);
+                    bytesWritten = bytesOffset;
                 }
             }
 
@@ -76,11 +78,11 @@ public static class UploadHttpClientExtension
             {
                 try
                 {
-                    bytesWritten = bytes;
+                    bytesWritten = bytesOffset + bytes;
 
                     if (bytesWritten == totalBytes)
                     {
-                        await handler.OnProgressAsync(new UploadProgressEvent(fileId!, 100, totalBytes, totalBytes), ct);
+                        await handler.OnProgressAsync(new UploadProgressEvent(fileId!, 100, bytesWritten, totalBytes), ct);
                         return;
                     }
 
@@ -90,7 +92,7 @@ public static class UploadHttpClientExtension
                     {
                         totalProgress = newProgress;
 
-                        await handler.OnProgressAsync(new UploadProgressEvent(fileId!, totalProgress, bytes, totalBytes), ct);
+                        await handler.OnProgressAsync(new UploadProgressEvent(fileId!, totalProgress, bytesWritten, totalBytes), ct);
                     }
                 }
                 catch
@@ -104,7 +106,7 @@ public static class UploadHttpClientExtension
             var request =
                 new HttpRequestMessage(Patch, GetFileIdUrl(uri, fileId!)) { Content = content }
                     .WithDefaultHeaders()
-                    .WithHeader(TusHeaders.UploadOffset, bytesWritten);
+                    .WithHeader(TusHeaders.UploadOffset, bytesOffset);
 
             response = await httpClient.SendAsync(request, ct);
             response.EnsureSuccessStatusCode();

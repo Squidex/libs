@@ -14,7 +14,6 @@ public class TusController : ControllerBase
 {
     private readonly AssetTusRunner runner;
     private readonly Uri uploadUri = new Uri("http://localhost:4000/files/controller");
-    private string? fileId;
 
     public TusController(AssetTusRunner runner)
     {
@@ -28,10 +27,9 @@ public class TusController : ControllerBase
         {
             var file = UploadFile.FromPath("wwwroot/LargeImage.jpg");
 
-            var numWrites = 0;
             var pausingStream = new PauseStream(file.Stream, 0.25);
             var pausingFile = new UploadFile(pausingStream, file.FileName, file.ContentType, file.ContentLength);
-            var completed = false;
+            var progressHandler = new ProgressHandler();
 
             await using (pausingFile.Stream)
             {
@@ -39,39 +37,18 @@ public class TusController : ControllerBase
 
                 cts.CancelAfter(10_000_000);
 
-                while (!completed)
+                while (!progressHandler.IsCompleted && progressHandler.Exception == null)
                 {
                     cts.Token.ThrowIfCancellationRequested();
 
+                    progressHandler.Reset();
+
+                    await httpClient.UploadWithProgressAsync(uploadUri, pausingFile, progressHandler.AsOptions(), cts.Token);
                     pausingStream.Reset();
-
-                    await httpClient.UploadWithProgressAsync(uploadUri, pausingFile, new UploadOptions
-                    {
-                        ProgressHandler = new DelegatingProgressHandler
-                        {
-                            OnCreatedAsync = (@event, _) =>
-                            {
-                                fileId = @event.FileId;
-                                return Task.CompletedTask;
-                            },
-                            OnCompletedAsync = (@event, _) =>
-                            {
-                                completed = true;
-                                return Task.CompletedTask;
-                            },
-                            OnFailedAsync = (@event, _) =>
-                            {
-                                return Task.CompletedTask;
-                            }
-                        },
-                        FileId = fileId
-                    }, cts.Token);
-
-                    numWrites++;
                 }
             }
 
-            return Ok(new { numWrites });
+            return Ok(progressHandler);
         }
     }
 
@@ -104,11 +81,65 @@ public class TusController : ControllerBase
         return Ok(new { json = "Test" });
     }
 
+    public class ProgressHandler : IProgressHandler
+    {
+        public string FileId { get; private set; }
+
+        public List<int> Progress { get; } = new List<int>();
+
+        public List<int> Uploads { get; } = new List<int>();
+
+        public Exception? Exception { get; private set; }
+
+        public bool IsCompleted { get; set; }
+
+        public UploadOptions AsOptions()
+        {
+            return new UploadOptions { ProgressHandler = this, FileId = FileId };
+        }
+
+        public void Reset()
+        {
+            Uploads.Add(Progress.LastOrDefault());
+
+            Exception = null;
+        }
+
+        public Task OnCompletedAsync(UploadCompletedEvent @event,
+            CancellationToken ct)
+        {
+            IsCompleted = true;
+            return Task.CompletedTask;
+        }
+
+        public Task OnCreatedAsync(UploadCreatedEvent @event,
+            CancellationToken ct)
+        {
+            FileId = @event.FileId;
+            return Task.CompletedTask;
+        }
+
+        public Task OnProgressAsync(UploadProgressEvent @event,
+            CancellationToken ct)
+        {
+            Progress.Add(@event.Progress);
+            return Task.CompletedTask;
+        }
+
+        public Task OnFailedAsync(UploadExceptionEvent @event,
+            CancellationToken ct)
+        {
+            Exception = @event.Exception;
+            return Task.CompletedTask;
+        }
+    }
+
     public class PauseStream : DelegateStream
     {
         private readonly int maxLength;
         private long totalRead;
         private long totalRemaining;
+        private long seekStart;
 
         public override long Length
         {
@@ -117,7 +148,7 @@ public class TusController : ControllerBase
 
         public override long Position
         {
-            get => 0;
+            get => base.Position - seekStart;
             set => throw new NotSupportedException();
         }
 
@@ -131,7 +162,7 @@ public class TusController : ControllerBase
 
         public override long Seek(long offset, SeekOrigin origin)
         {
-            var position = base.Seek(offset, origin);
+            var position = seekStart = base.Seek(offset, origin);
 
             totalRemaining = base.Length - position;
 
