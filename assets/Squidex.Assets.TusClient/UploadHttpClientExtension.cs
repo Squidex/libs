@@ -52,7 +52,7 @@ public static class UploadHttpClientExtension
             var fileId = options.FileId;
             var isFound = false;
             var totalProgress = 0;
-            var totalBytes = file.Stream.Length;
+            var totalBytes = file.ContentLength;
             var bytesWritten = 0L;
 
             if (!string.IsNullOrWhiteSpace(fileId))
@@ -248,7 +248,7 @@ public static class UploadHttpClientExtension
             new HttpRequestMessage(HttpMethod.Post, uri)
                 .WithDefaultHeaders()
                 .WithHeader(TusHeaders.UploadMetadata, metadata.ToString())
-                .WithHeader(TusHeaders.UploadLength, file.Stream.Length);
+                .WithHeader(TusHeaders.UploadLength, file.ContentLength);
 
         var response = await httpClient.SendAsync(request, ct);
 

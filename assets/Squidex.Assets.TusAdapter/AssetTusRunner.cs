@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using tusdotnet;
+using tusdotnet.Interfaces;
 using tusdotnet.Models;
 using tusdotnet.Models.Configuration;
 
@@ -19,9 +20,12 @@ public sealed class AssetTusRunner
 {
     private const string TusFile = "TUS_FILE";
     private const string TusUrl = "TUS_FILE";
+    private static readonly RequestDelegate Next = _ => Task.CompletedTask;
     private readonly TusCoreMiddleware middleware;
 
-    public AssetTusRunner(AssetTusStore tusStore)
+    public AssetTusRunner(
+        ITusStore tusStore,
+        ITusFileLockProvider tusFileLockProvider)
     {
         var events = new Events
         {
@@ -36,16 +40,24 @@ public sealed class AssetTusRunner
             }
         };
 
-        middleware = new TusCoreMiddleware(_ => Task.CompletedTask, ctx => Task.FromResult(new DefaultTusConfiguration
+        middleware = new TusCoreMiddleware(Next, ctx =>
         {
-            Store = tusStore,
+            var configuration = new DefaultTusConfiguration
+            {
+                Store = tusStore,
 
-            // Reuse the events to avoid allocations.
-            Events = events,
+                // Use a custom lock provider that supports multiple servers.
+                FileLockProvider = tusFileLockProvider,
 
-            // Get the url from the controller that is temporarily stored in the items.
-            UrlPath = ctx.Items[TusUrl]!.ToString()
-        }));
+                // Reuse the events to avoid allocations.
+                Events = events,
+
+                // Get the url from the controller that is temporarily stored in the items.
+                UrlPath = ctx.Items[TusUrl]!.ToString()
+            };
+
+            return Task.FromResult(configuration);
+        });
     }
 
     public async Task<(IActionResult Result, AssetTusFile? File)> InvokeAsync(HttpContext httpContext, string baseUrl)

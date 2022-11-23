@@ -8,6 +8,8 @@
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
 using Squidex.Assets;
+using Squidex.Assets.Internal;
+using tusdotnet.Interfaces;
 using TusTestServer;
 using TutTestServer;
 
@@ -28,7 +30,7 @@ var gridFSBucket = new GridFSBucket<string>(mongoDatabase, new GridFSBucketOptio
 
 builder.Services.AddMvc();
 
-builder.Services.AddSingleton<IMongoDatabase>(
+builder.Services.AddSingleton(
     mongoDatabase);
 
 builder.Services.AddSingleton<IHostedService,
@@ -36,29 +38,32 @@ builder.Services.AddSingleton<IHostedService,
 
 builder.Services.AddSingleton<AssetTusRunner,
     AssetTusRunner>();
-builder.Services.AddSingleton<AssetTusStore,
-    AssetTusStore>();
 
-builder.Services.AddSingleton<MongoGridFsAssetStore>(
+builder.Services.AddSingleton<ITusStore,
+    AssetTusStore>();
+builder.Services.AddSingleton<ITusFileLockProvider,
+    AssetFileLockProvider>();
+
+builder.Services.AddSingleton(
     new MongoGridFsAssetStore(gridFSBucket));
 builder.Services.AddSingleton<IAssetStore>(c => c.GetRequiredService<MongoGridFsAssetStore>());
 
-builder.Services.AddSingleton<AmazonS3AssetStore>(
+builder.Services.AddSingleton(
     c => ActivatorUtilities.CreateInstance<AmazonS3AssetStore>(c,
         builder.Configuration.GetSection("amazonS3").Get<AmazonS3AssetOptions>()!));
 builder.Services.AddSingleton<IAssetStore>(c => c.GetRequiredService<AmazonS3AssetStore>());
 
-builder.Services.AddSingleton<AzureBlobAssetStore>(
+builder.Services.AddSingleton(
     c => ActivatorUtilities.CreateInstance<AzureBlobAssetStore>(c,
         builder.Configuration.GetSection("azureBlob").Get<AzureBlobAssetOptions>()!));
 builder.Services.AddSingleton<IAssetStore>(c => c.GetRequiredService<AzureBlobAssetStore>());
 
-builder.Services.AddSingleton<GoogleCloudAssetStore>(
+builder.Services.AddSingleton(
     c => ActivatorUtilities.CreateInstance<GoogleCloudAssetStore>(c,
         builder.Configuration.GetSection("googleCloud").Get<GoogleCloudAssetOptions>()!));
 builder.Services.AddSingleton<IAssetStore>(c => c.GetRequiredService<GoogleCloudAssetStore>());
 
-builder.Services.AddSingleton<FolderAssetStore>(
+builder.Services.AddSingleton(
     c => ActivatorUtilities.CreateInstance<FolderAssetStore>(c, "uploads"));
 builder.Services.AddSingleton<IAssetStore>(c => c.GetRequiredService<FolderAssetStore>());
 

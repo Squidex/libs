@@ -13,7 +13,7 @@ namespace TusTestServer.Controller;
 public class TusController : ControllerBase
 {
     private readonly AssetTusRunner runner;
-    private readonly Uri uploadUri = new Uri("http://localhost:5010/files/controller");
+    private readonly Uri uploadUri = new Uri("http://localhost:4000/files/controller");
     private string? fileId;
 
     public TusController(AssetTusRunner runner)
@@ -30,14 +30,14 @@ public class TusController : ControllerBase
 
             var numWrites = 0;
             var pausingStream = new PauseStream(file.Stream, 0.25);
-            var pausingFile = new UploadFile(pausingStream, file.FileName, file.ContentType);
+            var pausingFile = new UploadFile(pausingStream, file.FileName, file.ContentType, file.ContentLength);
             var completed = false;
 
             await using (pausingFile.Stream)
             {
                 using var cts = CancellationTokenSource.CreateLinkedTokenSource(HttpContext.RequestAborted);
 
-                cts.CancelAfter(10_000);
+                cts.CancelAfter(10_000_000);
 
                 while (!completed)
                 {
@@ -57,6 +57,10 @@ public class TusController : ControllerBase
                             OnCompletedAsync = (@event, _) =>
                             {
                                 completed = true;
+                                return Task.CompletedTask;
+                            },
+                            OnFailedAsync = (@event, _) =>
+                            {
                                 return Task.CompletedTask;
                             }
                         },
@@ -102,13 +106,36 @@ public class TusController : ControllerBase
 
     public class PauseStream : DelegateStream
     {
-        private readonly double pauseAfter = 1;
-        private int totalRead;
+        private readonly int maxLength;
+        private long totalRead;
+        private long totalRemaining;
+
+        public override long Length
+        {
+            get => Math.Min(maxLength, totalRemaining);
+        }
+
+        public override long Position
+        {
+            get => 0;
+            set => throw new NotSupportedException();
+        }
 
         public PauseStream(Stream innerStream, double pauseAfter)
             : base(innerStream)
         {
-            this.pauseAfter = pauseAfter;
+            maxLength = (int)Math.Floor(innerStream.Length * pauseAfter) + 1;
+
+            totalRemaining = innerStream.Length;
+        }
+
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            var position = base.Seek(offset, origin);
+
+            totalRemaining = base.Length - position;
+
+            return position;
         }
 
         public void Reset()
@@ -119,14 +146,16 @@ public class TusController : ControllerBase
         public override async ValueTask<int> ReadAsync(Memory<byte> buffer,
             CancellationToken cancellationToken = default)
         {
-            if (Position >= Length)
+            var remaining = Length - totalRead;
+
+            if (remaining <= 0)
             {
                 return 0;
             }
 
-            if (totalRead >= Length * pauseAfter)
+            if (remaining < buffer.Length)
             {
-                throw new InvalidOperationException();
+                buffer = buffer[.. (int)remaining];
             }
 
             var bytesRead = await base.ReadAsync(buffer, cancellationToken);

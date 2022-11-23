@@ -17,11 +17,14 @@ public sealed class UploadFile
 
     public string ContentType { get; }
 
-    public UploadFile(Stream stream, string fileName, string contentType)
+    public long ContentLength { get; }
+
+    public UploadFile(Stream stream, string fileName, string contentType, long contentLength)
     {
         Stream = stream;
         FileName = fileName;
         ContentType = contentType;
+        ContentLength = contentLength;
     }
 
     public static UploadFile FromFile(FileInfo fileInfo, string? mimeType = null)
@@ -31,7 +34,7 @@ public sealed class UploadFile
             mimeType = MimeTypesMap.GetMimeType(fileInfo.Name);
         }
 
-        return new UploadFile(fileInfo.OpenRead(), fileInfo.Name, mimeType!);
+        return new UploadFile(fileInfo.OpenRead(), fileInfo.Name, mimeType!, fileInfo.Length);
     }
 
     public static UploadFile FromPath(string path, string? mimeType = null)

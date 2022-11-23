@@ -6,7 +6,9 @@
 // ==========================================================================
 
 using Squidex.Assets;
+using Squidex.Assets.Internal;
 using tusdotnet;
+using tusdotnet.Interfaces;
 using tusdotnet.Models;
 using tusdotnet.Models.Configuration;
 
@@ -16,35 +18,41 @@ public static class Utils
 {
     public static void UseMyTus<T>(this WebApplication app, string path) where T : IAssetStore
     {
-        app.UseTus(httpContext => new DefaultTusConfiguration
+        app.UseTus(httpContext =>
         {
-            Store = new AssetTusStore(
-                httpContext.RequestServices.GetRequiredService<T>(),
-                httpContext.RequestServices.GetRequiredService<IAssetKeyValueStore<TusMetadata>>()),
-            UrlPath = path,
-            Events = new Events
+            var store = httpContext.RequestServices.GetRequiredService<T>();
+
+            return new DefaultTusConfiguration
             {
-                OnFileCompleteAsync = async eventContext =>
+                Store = new AssetTusStore(
+                    store,
+                    httpContext.RequestServices.GetRequiredService<IAssetKeyValueStore<TusMetadata>>()),
+                UrlPath = path,
+                Events = new Events
                 {
-                    var file = (AssetFile)(await eventContext.GetFileAsync());
-
-                    await using var fileStream = file.OpenRead();
-
-                    var name = file.FileName;
-
-                    if (string.IsNullOrWhiteSpace(name))
+                    OnFileCompleteAsync = async eventContext =>
                     {
-                        name = Guid.NewGuid().ToString();
-                    }
+                        var file = (AssetFile)(await eventContext.GetFileAsync());
 
-                    Directory.CreateDirectory("uploads");
+                        await using var fileStream = file.OpenRead();
 
-                    await using (var stream = new FileStream($"uploads/{name}", FileMode.Create))
-                    {
-                        await fileStream.CopyToAsync(stream, eventContext.CancellationToken);
+                        var name = file.FileName;
+
+                        if (string.IsNullOrWhiteSpace(name))
+                        {
+                            name = Guid.NewGuid().ToString();
+                        }
+
+                        Directory.CreateDirectory("uploads");
+
+                        await using (var stream = new FileStream($"uploads/{name}", FileMode.Create))
+                        {
+                            await fileStream.CopyToAsync(stream, eventContext.CancellationToken);
+                        }
                     }
-                }
-            }
+                },
+                FileLockProvider = new AssetFileLockProvider(store)
+            };
         });
     }
 }

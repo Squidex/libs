@@ -15,11 +15,17 @@ internal static class MessageFactories
     private static readonly ConcurrentDictionary<Type, Func<Guid, ISubscription, SubscribeMessageBase>> SubscribeFactories = new ();
     private static readonly ConcurrentDictionary<Type, Func<List<Guid>, object, PayloadMessageBase>> PayloadFactories = new ();
 
+    private static readonly MethodInfo BuildSubscribeFactoryMethod =
+        typeof(MessageFactories).GetMethod(nameof(BuildSubscribeFactory), BindingFlags.NonPublic | BindingFlags.Static)!;
+
+    private static readonly MethodInfo BuildPayloadFactoryMethod =
+        typeof(MessageFactories).GetMethod(nameof(BuildPayloadFactory), BindingFlags.NonPublic | BindingFlags.Static)!;
+
     public static SubscriptionsMessageBase Subscribe(Guid id, ISubscription subscription, string? sourceId)
     {
         var factory = SubscribeFactories.GetOrAdd(subscription.GetType(), type =>
         {
-            var method = typeof(MessageFactories).GetMethod(nameof(BuildSubscribeFactory), BindingFlags.NonPublic | BindingFlags.Static)!.MakeGenericMethod(type);
+            var method = BuildSubscribeFactoryMethod.MakeGenericMethod(type);
 
             return (Func<Guid, ISubscription, SubscribeMessageBase>)method.Invoke(null, Array.Empty<object?>())!;
         });
@@ -33,7 +39,7 @@ internal static class MessageFactories
     {
         var factory = PayloadFactories.GetOrAdd(message.GetType(), type =>
         {
-            var method = typeof(MessageFactories).GetMethod(nameof(BuildPayloadFactory), BindingFlags.NonPublic | BindingFlags.Static)!.MakeGenericMethod(type);
+            var method = BuildPayloadFactoryMethod.MakeGenericMethod(type);
 
             return (Func<List<Guid>, object, PayloadMessageBase>)method.Invoke(null, Array.Empty<object?>())!;
         });
