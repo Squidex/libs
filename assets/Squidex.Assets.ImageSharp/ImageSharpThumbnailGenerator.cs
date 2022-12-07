@@ -31,7 +31,6 @@ namespace Squidex.Assets;
 
 public sealed class ImageSharpThumbnailGenerator : AssetThumbnailGeneratorBase
 {
-    private readonly Encoder blurHashEncoder = new Encoder();
     private readonly HashSet<string> mimeTypes;
 
     public ImageSharpThumbnailGenerator()
@@ -56,7 +55,7 @@ public sealed class ImageSharpThumbnailGenerator : AssetThumbnailGeneratorBase
         {
             using (var image = await Image.LoadAsync<Rgb24>(source, ct))
             {
-                return blurHashEncoder.Encode(image, options.ComponentX, options.ComponentY);
+                return Blurhasher.Encode(image, options.ComponentX, options.ComponentY);
             }
         }
         catch
