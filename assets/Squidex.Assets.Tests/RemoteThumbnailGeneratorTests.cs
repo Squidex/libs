@@ -9,6 +9,7 @@ using Squidex.Assets.Remote;
 
 namespace Squidex.Assets;
 
+[Trait("Category", "Dependencies")]
 public class RemoteThumbnailGeneratorTests : AssetThumbnailGeneratorTests
 {
     protected override HashSet<ImageFormat> SupportedFormats => new HashSet<ImageFormat>
