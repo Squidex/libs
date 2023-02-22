@@ -6,6 +6,7 @@
 // ==========================================================================
 
 using Squidex.Assets.Remote;
+using Xunit;
 
 namespace Squidex.Assets;
 
