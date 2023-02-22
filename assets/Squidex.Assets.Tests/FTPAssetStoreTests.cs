@@ -11,6 +11,7 @@ using Xunit;
 
 namespace Squidex.Assets;
 
+[Trait("Category", "Dependencies")]
 public class FTPAssetStoreTests : AssetStoreTests<FTPAssetStore>, IClassFixture<FTPAssetStoreFixture>
 {
     public FTPAssetStoreFixture _ { get; }

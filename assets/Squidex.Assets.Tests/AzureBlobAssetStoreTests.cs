@@ -11,6 +11,7 @@ using Xunit;
 
 namespace Squidex.Assets;
 
+[Trait("Category", "Dependencies")]
 public class AzureBlobAssetStoreTests : AssetStoreTests<AzureBlobAssetStore>, IClassFixture<AzureBlobAssetStoreFixture>
 {
     public AzureBlobAssetStoreFixture _ { get; }

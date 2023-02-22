@@ -11,6 +11,7 @@ using Xunit;
 
 namespace Squidex.Assets;
 
+[Trait("Category", "Dependencies")]
 public class CloudflareR2Tests : AssetStoreTests<AmazonS3AssetStore>, IClassFixture<CloudflareR2Fixture>
 {
     public CloudflareR2Fixture _ { get; }

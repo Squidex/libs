@@ -11,6 +11,7 @@ using Xunit;
 
 namespace Squidex.Assets;
 
+[Trait("Category", "Dependencies")]
 public class AmazonS3AssetStoreTests : AssetStoreTests<AmazonS3AssetStore>, IClassFixture<AmazonS3AssetStoreFixture>
 {
     public AmazonS3AssetStoreFixture _ { get; }
