@@ -8,30 +8,29 @@
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+public sealed class MongoGridFSAssetStoreFixture : IDisposable
 {
-    public sealed class MongoGridFSAssetStoreFixture : IDisposable
+    private readonly IMongoClient mongoClient = new MongoClient(TestHelpers.Configuration["mongoDB:connectionString"]);
+
+    public MongoGridFsAssetStore AssetStore { get; }
+
+    public MongoGridFSAssetStoreFixture()
     {
-        private readonly IMongoClient mongoClient = new MongoClient(TestHelpers.Configuration["mongoDB:connectionString"]);
+        var mongoDatabase = mongoClient.GetDatabase(TestHelpers.Configuration["mongoDB:database"]);
 
-        public MongoGridFsAssetStore AssetStore { get; }
-
-        public MongoGridFSAssetStoreFixture()
+        var gridFSBucket = new GridFSBucket<string>(mongoDatabase, new GridFSBucketOptions
         {
-            var mongoDatabase = mongoClient.GetDatabase(TestHelpers.Configuration["mongoDB:database"]);
+            BucketName = TestHelpers.Configuration["mongoDB:bucketName"]
+        });
 
-            var gridFSBucket = new GridFSBucket<string>(mongoDatabase, new GridFSBucketOptions
-            {
-                BucketName = TestHelpers.Configuration["mongoDB:bucketName"]
-            });
+        AssetStore = new MongoGridFsAssetStore(gridFSBucket);
+        AssetStore.InitializeAsync(default).Wait();
+    }
 
-            AssetStore = new MongoGridFsAssetStore(gridFSBucket);
-            AssetStore.InitializeAsync(default).Wait();
-        }
-
-        public void Dispose()
-        {
-            mongoClient.DropDatabase(TestHelpers.Configuration["mongoDB:database"]);
-        }
+    public void Dispose()
+    {
+        mongoClient.DropDatabase(TestHelpers.Configuration["mongoDB:database"]);
     }
 }

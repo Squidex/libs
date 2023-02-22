@@ -9,28 +9,27 @@ using Xunit;
 
 #pragma warning disable SA1300 // Element should begin with upper-case letter
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+public class GoogleCloudAssetStoreTests : AssetStoreTests<GoogleCloudAssetStore>, IClassFixture<GoogleCloudAssetStoreFixture>
 {
-    public class GoogleCloudAssetStoreTests : AssetStoreTests<GoogleCloudAssetStore>, IClassFixture<GoogleCloudAssetStoreFixture>
+    public GoogleCloudAssetStoreFixture _ { get; }
+
+    public GoogleCloudAssetStoreTests(GoogleCloudAssetStoreFixture fixture)
     {
-        public GoogleCloudAssetStoreFixture _ { get; }
+        _ = fixture;
+    }
 
-        public GoogleCloudAssetStoreTests(GoogleCloudAssetStoreFixture fixture)
-        {
-            _ = fixture;
-        }
+    public override GoogleCloudAssetStore CreateStore()
+    {
+        return _.AssetStore;
+    }
 
-        public override GoogleCloudAssetStore CreateStore()
-        {
-            return _.AssetStore;
-        }
+    [Fact]
+    public void Should_calculate_source_url()
+    {
+        var url = ((IAssetStore)Sut).GeneratePublicUrl(FileName);
 
-        [Fact]
-        public void Should_calculate_source_url()
-        {
-            var url = ((IAssetStore)Sut).GeneratePublicUrl(FileName);
-
-            Assert.Null(url);
-        }
+        Assert.Null(url);
     }
 }

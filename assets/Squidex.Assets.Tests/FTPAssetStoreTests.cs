@@ -9,32 +9,31 @@ using Xunit;
 
 #pragma warning disable SA1300 // Element should begin with upper-case letter
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+public class FTPAssetStoreTests : AssetStoreTests<FTPAssetStore>, IClassFixture<FTPAssetStoreFixture>
 {
-    public class FTPAssetStoreTests : AssetStoreTests<FTPAssetStore>, IClassFixture<FTPAssetStoreFixture>
+    public FTPAssetStoreFixture _ { get; }
+
+    protected override bool CanUploadStreamsWithoutLength => false;
+
+    protected override bool CanDeleteAssetsWithPrefix => false;
+
+    public FTPAssetStoreTests(FTPAssetStoreFixture fixture)
     {
-        public FTPAssetStoreFixture _ { get; }
+        _ = fixture;
+    }
 
-        protected override bool CanUploadStreamsWithoutLength => false;
+    public override FTPAssetStore CreateStore()
+    {
+        return _.AssetStore;
+    }
 
-        protected override bool CanDeleteAssetsWithPrefix => false;
+    [Fact]
+    public void Should_calculate_source_url()
+    {
+        var url = ((IAssetStore)Sut).GeneratePublicUrl(FileName);
 
-        public FTPAssetStoreTests(FTPAssetStoreFixture fixture)
-        {
-            _ = fixture;
-        }
-
-        public override FTPAssetStore CreateStore()
-        {
-            return _.AssetStore;
-        }
-
-        [Fact]
-        public void Should_calculate_source_url()
-        {
-            var url = ((IAssetStore)Sut).GeneratePublicUrl(FileName);
-
-            Assert.Null(url);
-        }
+        Assert.Null(url);
     }
 }

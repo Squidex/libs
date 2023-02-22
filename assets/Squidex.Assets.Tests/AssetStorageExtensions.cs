@@ -5,20 +5,19 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+internal static class AssetStorageExtensions
 {
-    internal static class AssetStorageExtensions
+    public static async Task UploadAndResetAsync(this IAssetStore assetStore, string name, Stream stream)
     {
-        public static async Task UploadAndResetAsync(this IAssetStore assetStore, string name, Stream stream)
+        try
         {
-            try
-            {
-                await assetStore.UploadAsync(name, stream);
-            }
-            finally
-            {
-                stream.Position = 0;
-            }
+            await assetStore.UploadAsync(name, stream);
+        }
+        finally
+        {
+            stream.Position = 0;
         }
     }
 }

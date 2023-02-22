@@ -7,21 +7,20 @@
 
 using Xunit;
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+public class MemoryAssetStoreTests : AssetStoreTests<MemoryAssetStore>
 {
-    public class MemoryAssetStoreTests : AssetStoreTests<MemoryAssetStore>
+    public override MemoryAssetStore CreateStore()
     {
-        public override MemoryAssetStore CreateStore()
-        {
-            return new MemoryAssetStore();
-        }
+        return new MemoryAssetStore();
+    }
 
-        [Fact]
-        public void Should_not_calculate_source_url()
-        {
-            var url = ((IAssetStore)Sut).GeneratePublicUrl(FileName);
+    [Fact]
+    public void Should_not_calculate_source_url()
+    {
+        var url = ((IAssetStore)Sut).GeneratePublicUrl(FileName);
 
-            Assert.Null(url);
-        }
+        Assert.Null(url);
     }
 }

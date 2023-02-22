@@ -84,14 +84,7 @@ public sealed class AssetTusStore :
         async Task<AssetTusFile> CreateFileAsync(string fileId, TusMetadata metadata,
             CancellationToken ct)
         {
-            var tempPath = Path.Combine(Path.GetTempPath(), Key(fileId));
-
-            var tempStream = new FileStream(tempPath,
-                FileMode.Create,
-                FileAccess.ReadWrite,
-                FileShare.None,
-                4096,
-                FileOptions.DeleteOnClose);
+            var tempStream = TempHelper.GetTempStream();
 
             for (var i = 0; i < metadata.WrittenParts; i++)
             {

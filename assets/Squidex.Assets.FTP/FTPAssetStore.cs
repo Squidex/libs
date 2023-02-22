@@ -87,13 +87,11 @@ public sealed class FTPAssetStore : IAssetStore
         var client = await GetClientAsync(ct);
         try
         {
-            var tempPath = Path.Combine(Path.GetTempPath(), Path.GetTempFileName());
-
-            await using (var stream = new FileStream(tempPath, FileMode.Create, FileAccess.ReadWrite, FileShare.None, 4096, FileOptions.DeleteOnClose))
+            await using (var tempStream = TempHelper.GetTempStream())
             {
                 try
                 {
-                    var found = await client.DownloadStream(stream, sourceName, token: ct);
+                    var found = await client.DownloadStream(tempStream, sourceName, token: ct);
 
                     if (!found)
                     {
@@ -105,7 +103,7 @@ public sealed class FTPAssetStore : IAssetStore
                     throw new AssetNotFoundException(sourceFileName, ex);
                 }
 
-                await UploadAsync(client, targetName, stream, false, ct);
+                await UploadAsync(client, targetName, tempStream, false, ct);
             }
         }
         finally

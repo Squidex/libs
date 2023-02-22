@@ -7,19 +7,16 @@
 
 namespace Squidex.Assets;
 
-public class CompositeThumbnailGeneratorTests : AssetThumbnailGeneratorTests
+public sealed class CloudflareR2Fixture
 {
-    protected override string Name()
-    {
-        return "composite";
-    }
+    public AmazonS3AssetStore AssetStore { get; }
 
-    protected override IAssetThumbnailGenerator CreateSut()
+    public CloudflareR2Fixture()
     {
-        return new CompositeThumbnailGenerator(new IAssetThumbnailGenerator[]
-        {
-            new ImageSharpThumbnailGenerator(),
-            new ImageMagickThumbnailGenerator()
-        });
+        // https://dash.cloudflare.com/{PROJECT_ID}/r2/overview/api-tokens
+        var options = TestHelpers.Configuration.GetSection("r2").Get<AmazonS3AssetOptions>()!;
+
+        AssetStore = new AmazonS3AssetStore(options);
+        AssetStore.InitializeAsync(default).Wait();
     }
 }

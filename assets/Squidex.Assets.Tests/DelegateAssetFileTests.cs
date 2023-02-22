@@ -8,18 +8,17 @@
 using Newtonsoft.Json;
 using Xunit;
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+public class DelegateAssetFileTests
 {
-    public class DelegateAssetFileTests
+    [Fact]
+    public void Should_be_serializable_to_json()
     {
-        [Fact]
-        public void Should_be_serializable_to_json()
-        {
-            var source = new DelegateAssetFile("fileName", "file/type", 1024, () => new MemoryStream());
+        var source = new DelegateAssetFile("fileName", "file/type", 1024, () => new MemoryStream());
 
-            var deserialized = JsonConvert.DeserializeObject<DelegateAssetFile>(JsonConvert.SerializeObject(source));
+        var deserialized = JsonConvert.DeserializeObject<DelegateAssetFile>(JsonConvert.SerializeObject(source));
 
-            Assert.Equal(source.FileName, deserialized?.FileName);
-        }
+        Assert.Equal(source.FileName, deserialized?.FileName);
     }
 }

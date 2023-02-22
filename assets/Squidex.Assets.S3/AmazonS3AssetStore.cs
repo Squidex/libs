@@ -20,6 +20,7 @@ public sealed class AmazonS3AssetStore : DisposableObjectBase, IAssetStore
     private readonly AmazonS3AssetOptions options;
     private TransferUtility transferUtility;
     private IAmazonS3 s3Client;
+    private bool canCopy = true;
 
     public AmazonS3AssetStore(AmazonS3AssetOptions options)
     {
@@ -72,6 +73,28 @@ public sealed class AmazonS3AssetStore : DisposableObjectBase, IAssetStore
         {
             throw new AssetStoreException($"Cannot connect to Amazon S3 bucket '{options.Bucket}'.", ex);
         }
+
+        try
+        {
+            var tempName1 = Guid.NewGuid().ToString();
+            var tempName2 = Guid.NewGuid().ToString();
+            var tempStream = new MemoryStream();
+
+            await UploadAsync(tempName1, tempStream, false, ct);
+            try
+            {
+                await CopyViaApiAsync(tempName1, tempName2, ct);
+            }
+            finally
+            {
+                await DeleteAsync(tempName1, ct);
+                await DeleteAsync(tempName2, ct);
+            }
+        }
+        catch
+        {
+            canCopy = false;
+        }
     }
 
     public async Task<long> GetSizeAsync(string fileName,
@@ -97,8 +120,68 @@ public sealed class AmazonS3AssetStore : DisposableObjectBase, IAssetStore
         }
     }
 
-    public async Task CopyAsync(string sourceFileName, string targetFileName,
+    public Task CopyAsync(string sourceFileName, string targetFileName,
         CancellationToken ct = default)
+    {
+        if (canCopy)
+        {
+            return CopyViaApiAsync(sourceFileName, targetFileName, ct);
+        }
+        else
+        {
+            return CopyViaDownloadAsync(sourceFileName, targetFileName, ct);
+        }
+    }
+
+    private async Task CopyViaDownloadAsync(string sourceFileName, string targetFileName,
+        CancellationToken ct)
+    {
+        var keySource = GetKey(sourceFileName, nameof(sourceFileName));
+        var keyTarget = GetKey(targetFileName, nameof(targetFileName));
+
+        try
+        {
+            await EnsureNotExistsAsync(keyTarget, targetFileName, ct);
+
+            await using (var teamStream = TempHelper.GetTempStream())
+            {
+                var request = new GetObjectRequest
+                {
+                    BucketName = options.Bucket,
+                    Key = keySource
+                };
+
+                using (var downloadRequest = await s3Client.GetObjectAsync(request, ct))
+                {
+                    await downloadRequest.ResponseStream.CopyToAsync(teamStream, BufferSize, ct);
+                }
+
+                teamStream.Position = 0;
+
+                var uploadRequest = new TransferUtilityUploadRequest
+                {
+                    BucketName = options.Bucket,
+                    Key = keyTarget,
+                    DisablePayloadSigning = options.DisablePayloadSigning,
+                    DisableMD5Stream = false,
+                    InputStream = teamStream,
+                };
+
+                await transferUtility.UploadAsync(uploadRequest, ct);
+            }
+        }
+        catch (AmazonS3Exception ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            throw new AssetNotFoundException(sourceFileName, ex);
+        }
+        catch (AmazonS3Exception ex) when (ex.StatusCode == HttpStatusCode.PreconditionFailed)
+        {
+            throw new AssetAlreadyExistsException(targetFileName);
+        }
+    }
+
+    private async Task CopyViaApiAsync(string sourceFileName, string targetFileName,
+        CancellationToken ct)
     {
         var keySource = GetKey(sourceFileName, nameof(sourceFileName));
         var keyTarget = GetKey(targetFileName, nameof(targetFileName));
@@ -175,23 +258,14 @@ public sealed class AmazonS3AssetStore : DisposableObjectBase, IAssetStore
             var request = new TransferUtilityUploadRequest
             {
                 BucketName = options.Bucket,
-                Key = key
+                Key = key,
+                DisablePayloadSigning = options.DisablePayloadSigning,
+                DisableMD5Stream = false
             };
 
             if (stream.GetLengthOrZero() <= 0)
             {
-                var tempFileName = Path.GetTempFileName();
-
-                var tempStream = new FileStream(tempFileName,
-                    FileMode.Create,
-                    FileAccess.ReadWrite,
-                    FileShare.Delete,
-                    1024 * 16,
-                    FileOptions.Asynchronous |
-                    FileOptions.DeleteOnClose |
-                    FileOptions.SequentialScan);
-
-                await using (tempStream)
+                await using (var tempStream = TempHelper.GetTempStream())
                 {
                     await stream.CopyToAsync(tempStream, ct);
 

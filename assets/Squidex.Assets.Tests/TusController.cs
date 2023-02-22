@@ -7,29 +7,28 @@
 
 using Microsoft.AspNetCore.Mvc;
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+public class TusController : Controller
 {
-    public class TusController : Controller
+    private readonly AssetTusRunner runner;
+
+    public TusController(AssetTusRunner runner)
     {
-        private readonly AssetTusRunner runner;
+        this.runner = runner;
+    }
 
-        public TusController(AssetTusRunner runner)
+    [Route("files/controller/{**catchAll}")]
+    public async Task<IActionResult> Tus()
+    {
+        var (result, file) = await runner.InvokeAsync(HttpContext, Url.Action(null, new { catchAll = (string?)null })!);
+
+        if (file != null)
         {
-            this.runner = runner;
+            TusServerFixture.Files.Add(file);
+            return Ok(new { id = "123" });
         }
 
-        [Route("files/controller/{**catchAll}")]
-        public async Task<IActionResult> Tus()
-        {
-            var (result, file) = await runner.InvokeAsync(HttpContext, Url.Action(null, new { catchAll = (string?)null })!);
-
-            if (file != null)
-            {
-                TusServerFixture.Files.Add(file);
-                return Ok(new { id = "123" });
-            }
-
-            return result;
-        }
+        return result;
     }
 }

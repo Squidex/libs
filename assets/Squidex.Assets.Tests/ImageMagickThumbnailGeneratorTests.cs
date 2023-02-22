@@ -5,20 +5,19 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+public class ImageMagickThumbnailGeneratorTests : AssetThumbnailGeneratorTests
 {
-    public class ImageMagickThumbnailGeneratorTests : AssetThumbnailGeneratorTests
+    protected override bool SupportsBlurHash => false;
+
+    protected override string Name()
     {
-        protected override bool SupportsBlurHash => false;
+        return "magick";
+    }
 
-        protected override string Name()
-        {
-            return "magick";
-        }
-
-        protected override IAssetThumbnailGenerator CreateSut()
-        {
-            return new ImageMagickThumbnailGenerator();
-        }
+    protected override IAssetThumbnailGenerator CreateSut()
+    {
+        return new ImageMagickThumbnailGenerator();
     }
 }

@@ -8,50 +8,49 @@
 using System.Security.Cryptography;
 using Xunit;
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+public class HasherStreamTests
 {
-    public class HasherStreamTests
+    [Fact]
+    public void Should_calculate_hash_while_copying()
     {
-        [Fact]
-        public void Should_calculate_hash_while_copying()
+        var source = GenerateTestData();
+        var sourceHash = Sha256Base64(source);
+
+        var sourceStream = new HasherStream(new MemoryStream(source), HashAlgorithmName.SHA256);
+
+        using (sourceStream)
         {
-            var source = GenerateTestData();
-            var sourceHash = Sha256Base64(source);
+            var target = new MemoryStream();
 
-            var sourceStream = new HasherStream(new MemoryStream(source), HashAlgorithmName.SHA256);
+            sourceStream.CopyTo(target);
 
-            using (sourceStream)
-            {
-                var target = new MemoryStream();
+            var targetHash = sourceStream.GetHashStringAndReset();
 
-                sourceStream.CopyTo(target);
-
-                var targetHash = sourceStream.GetHashStringAndReset();
-
-                Assert.Equal(sourceHash, targetHash);
-            }
+            Assert.Equal(sourceHash, targetHash);
         }
+    }
 
-        private static byte[] GenerateTestData(int length = 1000)
+    private static byte[] GenerateTestData(int length = 1000)
+    {
+        var random = new Random();
+        var result = new byte[length];
+
+        random.NextBytes(result);
+
+        return result;
+    }
+
+    private static string Sha256Base64(byte[] bytes)
+    {
+        using (var sha = SHA256.Create())
         {
-            var random = new Random();
-            var result = new byte[length];
+            var bytesHash = sha.ComputeHash(bytes);
 
-            random.NextBytes(result);
+            var result = Convert.ToBase64String(bytesHash);
 
             return result;
-        }
-
-        private static string Sha256Base64(byte[] bytes)
-        {
-            using (var sha = SHA256.Create())
-            {
-                var bytesHash = sha.ComputeHash(bytes);
-
-                var result = Convert.ToBase64String(bytesHash);
-
-                return result;
-            }
         }
     }
 }

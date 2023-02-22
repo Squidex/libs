@@ -19,13 +19,7 @@ public sealed class TempAssetFile : AssetFile
     public TempAssetFile(string fileName, string mimeType, long fileSize)
         : base(fileName, mimeType, fileSize)
     {
-        var tempPath = Path.Combine(Path.GetTempPath(), Path.GetTempFileName());
-
-        stream = new FileStream(tempPath,
-            FileMode.Create,
-            FileAccess.ReadWrite,
-            FileShare.None, 4096,
-            FileOptions.DeleteOnClose);
+        stream = TempHelper.GetTempStream();
     }
 
     public override void Dispose()

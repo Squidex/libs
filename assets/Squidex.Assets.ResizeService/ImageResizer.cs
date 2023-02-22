@@ -20,25 +20,14 @@ public sealed class ImageResizer
 
     public void Map(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapPost("/blur", async context =>
-        {
-            await BlurAsync(context);
-        });
-
-        endpoints.MapPost("/orient", async context =>
-        {
-            await OrientAsync(context);
-        });
-
-        endpoints.MapPost("/resize", async context =>
-        {
-            await ResizeAsync(context);
-        });
+        endpoints.MapPost("/blur", BlurAsync);
+        endpoints.MapPost("/orient", OrientAsync);
+        endpoints.MapPost("/resize", ResizeAsync);
     }
 
     private async Task BlurAsync(HttpContext context)
     {
-        await using var tempStream = GetTempStream();
+        await using var tempStream = TempHelper.GetTempStream();
 
         await ReadToTempStreamAsync(context, tempStream);
 
@@ -69,7 +58,7 @@ public sealed class ImageResizer
 
     private async Task OrientAsync(HttpContext context)
     {
-        await using var tempStream = GetTempStream();
+        await using var tempStream = TempHelper.GetTempStream();
 
         await ReadToTempStreamAsync(context, tempStream);
 
@@ -93,7 +82,7 @@ public sealed class ImageResizer
 
     private async Task ResizeAsync(HttpContext context)
     {
-        await using var tempStream = GetTempStream();
+        await using var tempStream = TempHelper.GetTempStream();
 
         await ReadToTempStreamAsync(context, tempStream);
 
@@ -122,18 +111,5 @@ public sealed class ImageResizer
         await context.Request.Body.CopyToAsync(tempStream, context.RequestAborted);
 
         tempStream.Position = 0;
-    }
-
-    private static Stream GetTempStream()
-    {
-        var tempPath = Path.Combine(Path.GetTempPath(), Path.GetTempFileName());
-
-        var stream = new FileStream(tempPath,
-            FileMode.Create,
-            FileAccess.ReadWrite,
-            FileShare.None, 4096,
-            FileOptions.DeleteOnClose);
-
-        return stream;
     }
 }

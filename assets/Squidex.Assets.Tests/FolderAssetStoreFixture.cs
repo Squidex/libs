@@ -7,26 +7,25 @@
 
 using FakeItEasy;
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+public sealed class FolderAssetStoreFixture : IDisposable
 {
-    public sealed class FolderAssetStoreFixture : IDisposable
+    public string TestFolder { get; } = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+
+    public FolderAssetStore AssetStore { get; }
+
+    public FolderAssetStoreFixture()
     {
-        public string TestFolder { get; } = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        AssetStore = new FolderAssetStore(TestFolder, A.Dummy<ILogger<FolderAssetStore>>());
+        AssetStore.InitializeAsync(default).Wait();
+    }
 
-        public FolderAssetStore AssetStore { get; }
-
-        public FolderAssetStoreFixture()
+    public void Dispose()
+    {
+        if (Directory.Exists(TestFolder))
         {
-            AssetStore = new FolderAssetStore(TestFolder, A.Dummy<ILogger<FolderAssetStore>>());
-            AssetStore.InitializeAsync(default).Wait();
-        }
-
-        public void Dispose()
-        {
-            if (Directory.Exists(TestFolder))
-            {
-                Directory.Delete(TestFolder, true);
-            }
+            Directory.Delete(TestFolder, true);
         }
     }
 }

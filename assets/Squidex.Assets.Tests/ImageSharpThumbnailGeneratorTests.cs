@@ -7,38 +7,37 @@
 
 using Xunit;
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+public class ImageSharpThumbnailGeneratorTests : AssetThumbnailGeneratorTests
 {
-    public class ImageSharpThumbnailGeneratorTests : AssetThumbnailGeneratorTests
+    protected override HashSet<ImageFormat> SupportedFormats => new HashSet<ImageFormat>
     {
-        protected override HashSet<ImageFormat> SupportedFormats => new HashSet<ImageFormat>
-        {
-            ImageFormat.BMP,
-            ImageFormat.PNG,
-            ImageFormat.GIF,
-            ImageFormat.JPEG,
-            ImageFormat.TGA,
-            ImageFormat.TIFF,
-            ImageFormat.WEBP
-        };
+        ImageFormat.BMP,
+        ImageFormat.PNG,
+        ImageFormat.GIF,
+        ImageFormat.JPEG,
+        ImageFormat.TGA,
+        ImageFormat.TIFF,
+        ImageFormat.WEBP
+    };
 
-        protected override string Name()
-        {
-            return "imagesharp";
-        }
+    protected override string Name()
+    {
+        return "imagesharp";
+    }
 
-        protected override IAssetThumbnailGenerator CreateSut()
-        {
-            return new ImageSharpThumbnailGenerator();
-        }
+    protected override IAssetThumbnailGenerator CreateSut()
+    {
+        return new ImageSharpThumbnailGenerator();
+    }
 
-        [Fact]
-        public void Should_not_be_resizable_if_format_not_supported2()
-        {
-            var result = sut.IsResizable("image/png", new ResizeOptions { Format = ImageFormat.AVIF }, out var destimationMimeType);
+    [Fact]
+    public void Should_not_be_resizable_if_format_not_supported2()
+    {
+        var result = sut.IsResizable("image/png", new ResizeOptions { Format = ImageFormat.AVIF }, out var destimationMimeType);
 
-            Assert.False(result);
-            Assert.Null(destimationMimeType);
-        }
+        Assert.False(result);
+        Assert.Null(destimationMimeType);
     }
 }

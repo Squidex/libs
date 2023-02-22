@@ -11,11 +11,11 @@ using Xunit;
 
 namespace Squidex.Assets;
 
-public class AmazonS3AssetStoreTests : AssetStoreTests<AmazonS3AssetStore>, IClassFixture<AmazonS3AssetStoreFixture>
+public class CloudflareR2Tests : AssetStoreTests<AmazonS3AssetStore>, IClassFixture<CloudflareR2Fixture>
 {
-    public AmazonS3AssetStoreFixture _ { get; }
+    public CloudflareR2Fixture _ { get; }
 
-    public AmazonS3AssetStoreTests(AmazonS3AssetStoreFixture fixture)
+    public CloudflareR2Tests(CloudflareR2Fixture fixture)
     {
         _ = fixture;
     }

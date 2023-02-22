@@ -5,18 +5,17 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Assets
+namespace Squidex.Assets;
+
+public sealed class GoogleCloudAssetStoreFixture
 {
-    public sealed class GoogleCloudAssetStoreFixture
+    public GoogleCloudAssetStore AssetStore { get; }
+
+    public GoogleCloudAssetStoreFixture()
     {
-        public GoogleCloudAssetStore AssetStore { get; }
+        var options = TestHelpers.Configuration.GetSection("googleCloud").Get<GoogleCloudAssetOptions>();
 
-        public GoogleCloudAssetStoreFixture()
-        {
-            var options = TestHelpers.Configuration.GetSection("googleCloud").Get<GoogleCloudAssetOptions>();
-
-            AssetStore = new GoogleCloudAssetStore(options);
-            AssetStore.InitializeAsync(default).Wait();
-        }
+        AssetStore = new GoogleCloudAssetStore(options);
+        AssetStore.InitializeAsync(default).Wait();
     }
 }

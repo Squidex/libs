@@ -22,4 +22,6 @@ public sealed class AmazonS3AssetOptions
     public string SecretKey { get; set; }
 
     public bool ForcePathStyle { get; set; }
+
+    public bool DisablePayloadSigning { get; set; }
 }
