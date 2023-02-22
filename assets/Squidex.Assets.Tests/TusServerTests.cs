@@ -11,6 +11,7 @@ using Xunit;
 
 namespace Squidex.Assets;
 
+[Trait("Category", "Dependencies")]
 public class TusServerTests : IClassFixture<TusServerFixture>
 {
     private string fileId;
@@ -229,42 +230,5 @@ public class TusServerTests : IClassFixture<TusServerFixture>
         }
 
         return mimeType;
-    }
-
-    public class PauseStream : DelegateStream
-    {
-        private double pauseAfter = 1;
-        private int totalRead;
-
-        public PauseStream(Stream innerStream, double pauseAfter)
-            : base(innerStream)
-        {
-            this.pauseAfter = pauseAfter;
-        }
-
-        public void Reset(double? newPauseAfter = null)
-        {
-            totalRead = 0;
-
-            if (newPauseAfter.HasValue)
-            {
-                pauseAfter = newPauseAfter.Value;
-            }
-        }
-
-        public override async ValueTask<int> ReadAsync(Memory<byte> buffer,
-            CancellationToken cancellationToken = default)
-        {
-            if (totalRead >= Length * pauseAfter)
-            {
-                return 0;
-            }
-
-            var bytesRead = await base.ReadAsync(buffer, cancellationToken);
-
-            totalRead += bytesRead;
-
-            return bytesRead;
-        }
     }
 }
