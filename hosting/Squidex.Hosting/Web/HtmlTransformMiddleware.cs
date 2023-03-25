@@ -5,8 +5,15 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Collections;
+using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Text;
+using System.Threading;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Primitives;
+using Microsoft.IO;
+using Microsoft.Net.Http.Headers;
 
 namespace Squidex.Hosting.Web;
 
@@ -21,56 +28,160 @@ public sealed class HtmlTransformMiddleware
         this.next = next;
     }
 
+    private sealed class BufferStream : Stream
+    {
+        private static readonly RecyclableMemoryStreamManager Buffers = new RecyclableMemoryStreamManager();
+        private readonly Stream originalBody;
+        private readonly HttpContext context;
+        private bool writingStarted;
+        private MemoryStream? memoryStream;
+
+        public override bool CanRead => false;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => true;
+
+        public override long Length => ActualStream.Length;
+
+        public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+
+        private Stream ActualStream
+        {
+            get => memoryStream ?? originalBody;
+        }
+
+        public BufferStream(HttpContext context)
+        {
+            this.context = context;
+
+            // Keep an instance of the original body, because the body will be replaced later.
+            this.originalBody = context.Response.Body;
+        }
+
+        public async Task CompleteAsync(HtmlTransformOptions options)
+        {
+            if (memoryStream == null || memoryStream.Length == 0)
+            {
+                return;
+            }
+
+            try
+            {
+                var html = Encoding.UTF8.GetString(memoryStream.ToArray());
+
+                if (options.AdjustBase)
+                {
+                    html = html.AdjustBase(context);
+                }
+
+                if (options.Transform != null)
+                {
+                    html = await options.Transform(html, context);
+                }
+
+                var bytes = Encoding.UTF8.GetBytes(html);
+
+                if (!context.Response.HasStarted)
+                {
+                    context.Response.ContentLength = bytes.Length;
+                }
+
+                await originalBody.WriteAsync(bytes, context.RequestAborted);
+            }
+            finally
+            {
+                this.context.Response.Body = originalBody;
+            }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            // Return the buffer stream back to the pool.
+            memoryStream?.Dispose();
+        }
+
+        private void EnsureBuffer()
+        {
+            var isWritingStarted = writingStarted;
+
+            // Fast exit point from this method.
+            writingStarted = true;
+
+            // This is the only safe way to check when we start to write to the body.
+            if (isWritingStarted)
+            {
+                return;
+            }
+
+            if (context.Response.ContentType?.StartsWith("text/html", StringComparison.OrdinalIgnoreCase) != true)
+            {
+                return;
+            }
+
+            // Use a pool to reduce memory allocations.
+            memoryStream = Buffers.GetStream();
+        }
+
+        public override Task FlushAsync(
+            CancellationToken cancellationToken)
+        {
+            EnsureBuffer();
+
+            return ActualStream.FlushAsync(cancellationToken);
+        }
+
+        public override Task WriteAsync(byte[] buffer, int offset, int count,
+            CancellationToken cancellationToken)
+        {
+            EnsureBuffer();
+
+            return ActualStream.WriteAsync(buffer, offset, count, cancellationToken);
+        }
+
+        public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer,
+            CancellationToken cancellationToken = default)
+        {
+            EnsureBuffer();
+
+            return ActualStream.WriteAsync(buffer, cancellationToken);
+        }
+
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            throw new NotSupportedException();
+        }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            throw new NotSupportedException();
+        }
+
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            throw new NotSupportedException();
+        }
+
+        public override void Flush()
+        {
+            throw new NotSupportedException();
+        }
+
+        public override void SetLength(long value)
+        {
+            throw new NotSupportedException();
+        }
+    }
+
     public async Task InvokeAsync(HttpContext context)
     {
-        var response = context.Response;
-
-        var responseBuffer = new MemoryStream();
-        var responseBody = response.Body;
-
-        response.Body = responseBuffer;
-        try
+        using (var bufferStream = new BufferStream(context))
         {
+            context.Response.Body = bufferStream;
+
             await next(context);
-        }
-        finally
-        {
-            response.Body = responseBody;
-        }
 
-        // Nothing needs to be written here.
-        if (responseBuffer.Length == 0 || response.StatusCode == StatusCodes.Status304NotModified)
-        {
-            return;
-        }
-
-        // We need to change the content length header.
-        if (!response.HasStarted && response.ContentType?.StartsWith("text/html", StringComparison.OrdinalIgnoreCase) == true)
-        {
-            var html = Encoding.UTF8.GetString(responseBuffer.ToArray());
-
-            if (options.AdjustBase)
-            {
-                html = html.AdjustBase(context);
-            }
-
-            if (options.Transform != null)
-            {
-                html = await options.Transform(html, context);
-            }
-
-            var bytes = Encoding.UTF8.GetBytes(html);
-
-            // Change the content length in case the transformation has added chars.
-            response.ContentLength = bytes.Length;
-
-            await response.BodyWriter.WriteAsync(bytes, context.RequestAborted);
-        }
-        else
-        {
-            responseBuffer.Position = 0;
-
-            await responseBuffer.CopyToAsync(responseBody, context.RequestAborted);
+            await bufferStream.CompleteAsync(options);
         }
     }
 }

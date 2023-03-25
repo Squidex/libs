@@ -7,6 +7,8 @@
 
 using Squidex.Hosting.Web;
 using Squidex.Log;
+using Microsoft.AspNetCore.Builder;
+using System.Text;
 
 namespace Squidex.Hosting;
 
@@ -50,24 +52,33 @@ public sealed class Startup
         app.UseDefaultForwardRules();
 
         app.UseMiddleware<EmbedMiddleware>();
-
-        app.UseWhen(c => c.IsIndex(), builder =>
+        app.UseHtmlTransform(new HtmlTransformOptions
         {
-            app.UseHtmlTransform(new HtmlTransformOptions
+            Transform = (html, context) =>
             {
-                Transform = (html, context) =>
-                {
-                    html = html.Replace("<body>", "<body><script>console.log('test')</script>", StringComparison.OrdinalIgnoreCase);
+                html = html.Replace("<body>", "<body><script>console.log('I have been transformed.')</script>", StringComparison.OrdinalIgnoreCase);
 
-                    return new ValueTask<string>(html);
-                }
-            });
+                return new ValueTask<string>(html);
+            }
         });
 
         app.UseRouting();
 
         app.UseEndpoints(endpoints =>
         {
+            endpoints.MapGet("/hello.html", async context =>
+            {
+                context.Response.Headers.ContentType = "text/html";
+
+                await context.Response.WriteAsync("<html><body>Hello World</body></html>");
+            });
+            endpoints.MapGet("/hello.bytes", async context =>
+            {
+                context.Response.Headers.ContentType = "text/html";
+
+                await context.Response.Body.WriteAsync(Encoding.UTF8.GetBytes("<html><body>Hello World</body></html>"));
+            });
+
             endpoints.MapGet("/hello", async context =>
             {
                 await context.Response.WriteAsync("Hello, World!");
