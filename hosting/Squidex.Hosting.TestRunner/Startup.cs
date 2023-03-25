@@ -52,12 +52,11 @@ public sealed class Startup
         app.UseDefaultForwardRules();
 
         app.UseMiddleware<EmbedMiddleware>();
-
         app.UseHtmlTransform(new HtmlTransformOptions
         {
             Transform = (html, context) =>
             {
-                html = html.Replace("<body>", "<body><script>console.log('test')</script>", StringComparison.OrdinalIgnoreCase);
+                html = html.Replace("<body>", "<body><script>console.log('I have been transformed.')</script>", StringComparison.OrdinalIgnoreCase);
 
                 return new ValueTask<string>(html);
             }

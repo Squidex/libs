@@ -7,10 +7,12 @@
 
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Text;
 using System.Threading;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
+using Microsoft.IO;
 using Microsoft.Net.Http.Headers;
 
 namespace Squidex.Hosting.Web;
@@ -28,14 +30,17 @@ public sealed class HtmlTransformMiddleware
 
     private sealed class BufferStream : Stream
     {
-        private readonly Stream inner;
+        private static readonly RecyclableMemoryStreamManager Buffers = new RecyclableMemoryStreamManager();
+        private readonly Stream originalBody;
+        private readonly HttpContext context;
+        private bool writingStarted;
         private MemoryStream? memoryStream;
 
         public override bool CanRead => false;
 
         public override bool CanSeek => false;
 
-        public override bool CanWrite => false;
+        public override bool CanWrite => true;
 
         public override long Length => ActualStream.Length;
 
@@ -43,23 +48,25 @@ public sealed class HtmlTransformMiddleware
 
         private Stream ActualStream
         {
-            get => memoryStream ?? inner;
+            get => memoryStream ?? originalBody;
         }
 
-        public BufferStream(Stream inner)
+        public BufferStream(HttpContext context)
         {
-            this.inner = inner;
+            this.context = context;
+
+            // Keep an instance of the original body, because the body will be replaced later.
+            this.originalBody = context.Response.Body;
         }
 
-        public void Buffer()
+        public async Task CompleteAsync(HtmlTransformOptions options)
         {
-            memoryStream = new MemoryStream();
-        }
+            if (memoryStream == null || memoryStream.Length == 0)
+            {
+                return;
+            }
 
-        public async Task CompleteAsync(HtmlTransformOptions options, HttpContext context,
-            CancellationToken cancellationToken)
-        {
-            if (memoryStream != null)
+            try
             {
                 var html = Encoding.UTF8.GetString(memoryStream.ToArray());
 
@@ -75,31 +82,68 @@ public sealed class HtmlTransformMiddleware
 
                 var bytes = Encoding.UTF8.GetBytes(html);
 
-                await inner.WriteAsync(bytes, cancellationToken);
+                if (!context.Response.HasStarted)
+                {
+                    context.Response.ContentLength = bytes.Length;
+                }
 
-                memoryStream = new MemoryStream();
+                await originalBody.WriteAsync(bytes, context.RequestAborted);
             }
-            else
+            finally
             {
-                await inner.FlushAsync(cancellationToken);
+                this.context.Response.Body = originalBody;
             }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            // Return the buffer stream back to the pool.
+            memoryStream?.Dispose();
+        }
+
+        private void EnsureBuffer()
+        {
+            var isWritingStarted = writingStarted;
+
+            // Fast exit point from this method.
+            writingStarted = true;
+
+            // This is the only safe way to check when we start to write to the body.
+            if (isWritingStarted)
+            {
+                return;
+            }
+
+            if (context.Response.ContentType?.StartsWith("text/html", StringComparison.OrdinalIgnoreCase) != true)
+            {
+                return;
+            }
+
+            // Use a pool to reduce memory allocations.
+            memoryStream = Buffers.GetStream();
         }
 
         public override Task FlushAsync(
             CancellationToken cancellationToken)
         {
+            EnsureBuffer();
+
             return ActualStream.FlushAsync(cancellationToken);
         }
 
         public override Task WriteAsync(byte[] buffer, int offset, int count,
             CancellationToken cancellationToken)
         {
+            EnsureBuffer();
+
             return ActualStream.WriteAsync(buffer, offset, count, cancellationToken);
         }
 
         public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer,
             CancellationToken cancellationToken = default)
         {
+            EnsureBuffer();
+
             return ActualStream.WriteAsync(buffer, cancellationToken);
         }
 
@@ -131,29 +175,13 @@ public sealed class HtmlTransformMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        var response = context.Response;
-
-        var bufferStream = new BufferStream(response.Body);
-
-        response.Body = bufferStream;
-        response.OnStarting(() =>
+        using (var bufferStream = new BufferStream(context))
         {
-            if (response.ContentType?.StartsWith("text/html", StringComparison.OrdinalIgnoreCase) != true)
-            {
-                return Task.CompletedTask;
-            }
+            context.Response.Body = bufferStream;
 
-            bufferStream.Buffer();
-            return Task.CompletedTask;
-        });
+            await next(context);
 
-        await next(context);
-
-        if (bufferStream.Length == 0 || response.StatusCode == StatusCodes.Status304NotModified)
-        {
-            return;
+            await bufferStream.CompleteAsync(options);
         }
-
-        await bufferStream.CompleteAsync(options, context, context.RequestAborted);
     }
 }
