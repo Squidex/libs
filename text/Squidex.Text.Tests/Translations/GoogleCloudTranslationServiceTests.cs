@@ -5,29 +5,35 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Squidex.Text.Translations.GoogleCloud;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Squidex.Text.Translations;
 
-public class GoogleCloudTranslationServiceTests : TranslationServiceTestsBase<GoogleCloudTranslationService>
+public class GoogleCloudTranslationServiceTests : TranslationServiceTestsBase
 {
-    protected override GoogleCloudTranslationService CreateService()
+    protected override ITranslationService CreateService()
     {
-        return new GoogleCloudTranslationService(new GoogleCloudTranslationOptions
-        {
-            ProjectId = "squidex-157415"
-        });
+        var services =
+            new ServiceCollection()
+                .AddGoogleCloudTranslations(TestHelpers.Configuration)
+                .BuildServiceProvider();
+
+        return services.GetRequiredService<ITranslationService>();
     }
 
     [Fact]
     public async Task Should_return_result_if_not_configured()
     {
-        var sut = new GoogleCloudTranslationService(new GoogleCloudTranslationOptions());
+        var sut =
+            new ServiceCollection()
+                .AddGoogleCloudTranslations(TestHelpers.Configuration, c => c.ProjectId = null!)
+                .BuildServiceProvider()
+                .GetRequiredService<ITranslationService>();
 
         var results = await sut.TranslateAsync(new[] { "Hello" }, "en");
 
-        Assert.All(results, x => Assert.Equal(TranslationResultCode.NotConfigured, x.Code));
+        Assert.All(results, x => Assert.Equal(TranslationStatus.NotConfigured, x.Status));
     }
 
     [Fact]
@@ -41,7 +47,10 @@ public class GoogleCloudTranslationServiceTests : TranslationServiceTestsBase<Go
             "World"
         }, "ko", "en");
 
-        AssertTranslation(TranslationResultCode.Translated, "세계", "en", results[0]);
+        Assert.Equal(new[]
+        {
+            TranslationResult.Success("세계", "en")
+        }, results);
     }
 
     [Fact]
@@ -55,6 +64,9 @@ public class GoogleCloudTranslationServiceTests : TranslationServiceTestsBase<Go
             "World"
         }, "he-IL", "en");
 
-        AssertTranslation(TranslationResultCode.Translated, "עוֹלָם", "en", results[0]);
+        Assert.Equal(new[]
+        {
+            TranslationResult.Success("עוֹלָם", "en")
+        }, results);
     }
 }

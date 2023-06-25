@@ -213,10 +213,7 @@ public sealed class SubscriptionService : ISubscriptionService, IInitializable, 
         {
             if (!options.SendMessagesToSelf && localSubscriptions.TryGetValue(id, out var localSubscription))
             {
-                if (message == null)
-                {
-                    message = await wrapper.CreatePayloadAsync();
-                }
+                message ??= await wrapper.CreatePayloadAsync();
 
                 if (message != null)
                 {
@@ -235,10 +232,7 @@ public sealed class SubscriptionService : ISubscriptionService, IInitializable, 
             return;
         }
 
-        if (message == null)
-        {
-            message = await wrapper.CreatePayloadAsync();
-        }
+        message ??= await wrapper.CreatePayloadAsync();
 
         if (message == null)
         {

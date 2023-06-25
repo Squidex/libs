@@ -7,6 +7,7 @@
 
 using Google.Cloud.Translate.V3;
 using Grpc.Core;
+using Microsoft.Extensions.Options;
 
 namespace Squidex.Text.Translations.GoogleCloud;
 
@@ -15,9 +16,9 @@ public sealed class GoogleCloudTranslationService : ITranslationService
     private readonly GoogleCloudTranslationOptions options;
     private TranslationServiceClient service;
 
-    public GoogleCloudTranslationService(GoogleCloudTranslationOptions options)
+    public GoogleCloudTranslationService(IOptions<GoogleCloudTranslationOptions> options)
     {
-        this.options = options;
+        this.options = options.Value;
     }
 
     public async Task<IReadOnlyList<TranslationResult>> TranslateAsync(IEnumerable<string> texts, string targetLanguage, string? sourceLanguage = null,
@@ -69,7 +70,7 @@ public sealed class GoogleCloudTranslationService : ITranslationService
             {
                 var language = GetSourceLanguage(translation.DetectedLanguageCode, sourceLanguage);
 
-                results.Add(new TranslationResult(translation.TranslatedText, language));
+                results.Add(TranslationResult.Success(translation.TranslatedText, language));
             }
         }
         catch (RpcException ex)
@@ -118,7 +119,7 @@ public sealed class GoogleCloudTranslationService : ITranslationService
             case StatusCode.PermissionDenied:
                 return TranslationResult.Unauthorized;
             default:
-                return TranslationResult.Failed;
+                return TranslationResult.Failed();
         }
     }
 }

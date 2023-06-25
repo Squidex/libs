@@ -31,41 +31,30 @@ public sealed class AsyncLocalCache : ILocalCache
     public void Add(object key, object? value)
     {
         var cacheKey = GetCacheKey(key);
+        var cacheLocal = LocalCache.Value;
 
-        var cache = LocalCache.Value;
-
-        if (cache != null)
+        if (cacheLocal != null)
         {
-            cache[cacheKey] = value;
+            cacheLocal[cacheKey] = value;
         }
     }
 
     public void Remove(object key)
     {
         var cacheKey = GetCacheKey(key);
+        var cacheLocal = LocalCache.Value;
 
-        var cache = LocalCache.Value;
-
-        if (cache != null)
-        {
-            cache.TryRemove(cacheKey, out _);
-        }
+        cacheLocal?.TryRemove(cacheKey, out _);
     }
 
     public bool TryGetValue(object key, out object? value)
     {
-        var cacheKey = GetCacheKey(key);
-
-        var cache = LocalCache.Value;
-
-        if (cache != null)
-        {
-            return cache.TryGetValue(cacheKey, out value);
-        }
-
         value = null;
 
-        return false;
+        var cacheKey = GetCacheKey(key);
+        var cacheLocal = LocalCache.Value;
+
+        return cacheLocal?.TryGetValue(cacheKey, out value) ?? false;
     }
 
     private static string GetCacheKey(object key)

@@ -6,6 +6,7 @@
 // ==========================================================================
 
 using FakeItEasy;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 #pragma warning disable SA1300 // Element should begin with upper-case letter
@@ -29,7 +30,12 @@ public class FolderAssetStoreTests : AssetStoreTests<FolderAssetStore>, IClassFi
     [Fact]
     public void Should_throw_when_creating_directory_failed()
     {
-        Assert.Throws<AssetStoreException>(() => new FolderAssetStore(CreateInvalidPath(), A.Dummy<ILogger<FolderAssetStore>>()).InitializeAsync(default).Wait());
+        var options = Options.Create(new FolderAssetOptions
+        {
+            Path = CreateInvalidPath()
+        });
+
+        Assert.Throws<AssetStoreException>(() => new FolderAssetStore(options, A.Dummy<ILogger<FolderAssetStore>>()).InitializeAsync(default).Wait());
     }
 
     [Fact]

@@ -11,35 +11,32 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Transfer;
 using Squidex.Assets.Internal;
+using Squidex.Hosting;
 
 namespace Squidex.Assets;
 
-public sealed class AmazonS3AssetStore : DisposableObjectBase, IAssetStore
+public sealed class AmazonS3AssetStore : IAssetStore, IInitializable
 {
     private const int BufferSize = 81920;
     private readonly AmazonS3AssetOptions options;
-    private TransferUtility transferUtility;
+    private TransferUtility s3Transfer;
     private IAmazonS3 s3Client;
     private bool canCopy = true;
 
     public AmazonS3AssetStore(AmazonS3AssetOptions options)
     {
         Guard.NotNull(options, nameof(options));
-        Guard.NotNullOrEmpty(options.Bucket, nameof(options.Bucket));
-        Guard.NotNullOrEmpty(options.AccessKey, nameof(options.AccessKey));
-        Guard.NotNullOrEmpty(options.SecretKey, nameof(options.SecretKey));
 
         this.options = options;
     }
 
-    protected override void DisposeObject(bool disposing)
+    public Task ReleaseAsync(
+        CancellationToken ct)
     {
-        if (disposing)
-        {
-            s3Client?.Dispose();
+        s3Client?.Dispose();
+        s3Transfer?.Dispose();
 
-            transferUtility?.Dispose();
-        }
+        return Task.CompletedTask;
     }
 
     public async Task InitializeAsync(
@@ -60,7 +57,7 @@ public sealed class AmazonS3AssetStore : DisposableObjectBase, IAssetStore
 
             s3Client = new AmazonS3Client(options.AccessKey, options.SecretKey, amazonS3Config);
 
-            transferUtility = new TransferUtility(s3Client);
+            s3Transfer = new TransferUtility(s3Client);
 
             var exists = await s3Client.DoesS3BucketExistAsync(options.Bucket);
 
@@ -167,7 +164,7 @@ public sealed class AmazonS3AssetStore : DisposableObjectBase, IAssetStore
                     InputStream = teamStream,
                 };
 
-                await transferUtility.UploadAsync(uploadRequest, ct);
+                await s3Transfer.UploadAsync(uploadRequest, ct);
             }
         }
         catch (AmazonS3Exception ex) when (ex.StatusCode == HttpStatusCode.NotFound)
@@ -271,7 +268,7 @@ public sealed class AmazonS3AssetStore : DisposableObjectBase, IAssetStore
 
                     request.InputStream = tempStream;
 
-                    await transferUtility.UploadAsync(request, ct);
+                    await s3Transfer.UploadAsync(request, ct);
                 }
             }
             else
@@ -279,7 +276,7 @@ public sealed class AmazonS3AssetStore : DisposableObjectBase, IAssetStore
                 request.InputStream = new SeekFakerStream(stream);
                 request.AutoCloseStream = false;
 
-                await transferUtility.UploadAsync(request, ct);
+                await s3Transfer.UploadAsync(request, ct);
             }
 
             return -1;

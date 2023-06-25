@@ -6,7 +6,6 @@
 // ==========================================================================
 
 using FakeItEasy;
-using FluentFTP;
 
 namespace Squidex.Assets;
 
@@ -16,16 +15,13 @@ public sealed class FTPAssetStoreFixture : IDisposable
 
     public FTPAssetStoreFixture()
     {
-        AssetStore = new FTPAssetStore(
-            () => new AsyncFtpClient(
-                TestHelpers.Configuration["ftp:serverHost"],
-                TestHelpers.Configuration["ftp:username"],
-                TestHelpers.Configuration["ftp:userPassword"]),
-            new FTPAssetOptions
-            {
-                Path = TestHelpers.Configuration["ftp:path"]
-            },
-            A.Fake<ILogger<FTPAssetStore>>());
+        var services =
+            new ServiceCollection()
+                .AddSingleton(A.Fake<ILogger<FTPAssetStore>>())
+                .AddFTPAssetStore(TestHelpers.Configuration)
+                .BuildServiceProvider();
+
+        AssetStore = services.GetRequiredService<FTPAssetStore>();
         AssetStore.InitializeAsync(default).Wait();
     }
 

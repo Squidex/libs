@@ -9,9 +9,9 @@ using Xunit;
 
 namespace Squidex.Text.Translations;
 
-public abstract class TranslationServiceTestsBase<T> where T : ITranslationService
+public abstract class TranslationServiceTestsBase
 {
-    protected abstract T CreateService();
+    protected abstract ITranslationService CreateService();
 
     [Fact]
     public async Task Should_handle_empty_request()
@@ -31,15 +31,18 @@ public abstract class TranslationServiceTestsBase<T> where T : ITranslationServi
 
         var results = await service.TranslateAsync(new[]
         {
-            "Hello my friend"
+            "Hello, my friend"
         }, "de");
 
-        AssertTranslation(TranslationResultCode.Translated, "Hallo mein Freund", "en", results[0]);
+        Assert.Equal(new[]
+        {
+            TranslationResult.Success("Hallo, mein Freund", "en"),
+        }, results);
     }
 
     [Fact]
     [Trait("Category", "Dependencies")]
-    public async Task Should_translate_text()
+    public async Task Should_translate_text1()
     {
         var service = CreateService();
 
@@ -48,7 +51,10 @@ public abstract class TranslationServiceTestsBase<T> where T : ITranslationServi
             "Hello World"
         }, "de", "en");
 
-        AssertTranslation(TranslationResultCode.Translated, "Hallo Welt", "en", results[0]);
+        Assert.Equal(new[]
+        {
+            TranslationResult.Success("Hallo Welt", "en"),
+        }, results);
     }
 
     [Fact]
@@ -62,7 +68,10 @@ public abstract class TranslationServiceTestsBase<T> where T : ITranslationServi
             "Hello World"
         }, "de-DE", "en");
 
-        AssertTranslation(TranslationResultCode.Translated, "Hallo Welt", "en", results[0]);
+        Assert.Equal(new[]
+        {
+            TranslationResult.Success("Hallo Welt", "en"),
+        }, results);
     }
 
     [Fact]
@@ -77,12 +86,10 @@ public abstract class TranslationServiceTestsBase<T> where T : ITranslationServi
             "Hello Earth"
         }, "de", "en");
 
-        AssertTranslation(TranslationResultCode.Translated, "Hallo Welt", "en", results[0]);
-        AssertTranslation(TranslationResultCode.Translated, "Hallo Erde", "en", results[1]);
-    }
-
-    protected static void AssertTranslation(TranslationResultCode code, string text, string language, TranslationResult result)
-    {
-        Assert.Equal((code, text, language), (result.Code, result.Text.Replace(",", string.Empty, StringComparison.Ordinal), result.SourceLanguage));
+        Assert.Equal(new[]
+        {
+            TranslationResult.Success("Hallo Welt", "en"),
+            TranslationResult.Success("Hallo Erde", "en"),
+        }, results);
     }
 }

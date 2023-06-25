@@ -26,12 +26,7 @@ public sealed class ChannelOptions : ProducerOptions
 
     public IMessagingTransport SelectTransport(IEnumerable<IMessagingTransport> transports, ChannelName name)
     {
-        var result = TransportSelector?.Invoke(transports, name);
-
-        if (result == null)
-        {
-            result = transports.LastOrDefault();
-        }
+        var result = TransportSelector?.Invoke(transports, name) ?? transports.LastOrDefault();
 
         if (result == null)
         {

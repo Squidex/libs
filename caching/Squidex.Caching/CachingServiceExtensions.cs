@@ -29,15 +29,7 @@ public static class CachingServiceExtensions
 
     public static IServiceCollection AddReplicatedCache(this IServiceCollection services, Action<ReplicatedCacheOptions>? configureOptions = null)
     {
-        if (configureOptions != null)
-        {
-            services.Configure(configureOptions);
-        }
-        else
-        {
-            services.AddOptions();
-        }
-
+        services.Configure(configureOptions!);
         services.AddSingleton<ReplicatedCache>();
 
         services.TryAddSingleton<IReplicatedCache>(
@@ -54,7 +46,6 @@ public static class CachingServiceExtensions
         var channel = new ChannelName(channelName, ChannelType.Topic);
 
         services.AddMessaging(channel, consume, configure);
-
         services.Configure<MessagingOptions>(options =>
         {
             options.Routing.Add(x => x is CacheInvalidateMessage, channel);

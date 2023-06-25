@@ -13,9 +13,12 @@ public sealed class GoogleCloudAssetStoreFixture
 
     public GoogleCloudAssetStoreFixture()
     {
-        var options = TestHelpers.Configuration.GetSection("googleCloud").Get<GoogleCloudAssetOptions>();
+        var services =
+            new ServiceCollection()
+                .AddGoogleCloudAssetStore(TestHelpers.Configuration)
+                .BuildServiceProvider();
 
-        AssetStore = new GoogleCloudAssetStore(options);
+        AssetStore = services.GetRequiredService<GoogleCloudAssetStore>();
         AssetStore.InitializeAsync(default).Wait();
     }
 }

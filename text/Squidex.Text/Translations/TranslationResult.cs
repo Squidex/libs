@@ -5,32 +5,27 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+#pragma warning disable SA1313 // Parameter names should begin with lower-case letter
+
 namespace Squidex.Text.Translations;
 
-public sealed class TranslationResult
+public sealed record TranslationResult(TranslationStatus Status, string? Text = null, string? SourceLanguage = null, Exception? Error = null)
 {
-    public static readonly TranslationResult Unauthorized = new TranslationResult(TranslationResultCode.Unauthorized);
-    public static readonly TranslationResult NotConfigured = new TranslationResult(TranslationResultCode.NotConfigured);
-    public static readonly TranslationResult NotTranslated = new TranslationResult(TranslationResultCode.NotTranslated);
-    public static readonly TranslationResult Failed = new TranslationResult(TranslationResultCode.Failed);
-    public static readonly TranslationResult LanguageNotSupported = new TranslationResult(TranslationResultCode.LanguageNotSupported);
+    public static readonly TranslationResult Unauthorized = new TranslationResult(TranslationStatus.Unauthorized);
 
-    public TranslationResultCode Code { get; }
+    public static readonly TranslationResult NotConfigured = new TranslationResult(TranslationStatus.NotConfigured);
 
-    public string Text { get; set; }
+    public static readonly TranslationResult NotTranslated = new TranslationResult(TranslationStatus.NotTranslated);
 
-    public string SourceLanguage { get; set; }
+    public static readonly TranslationResult LanguageNotSupported = new TranslationResult(TranslationStatus.LanguageNotSupported);
 
-    public TranslationResult(string text, string sourceLanguage)
-        : this(TranslationResultCode.Translated)
+    public static TranslationResult Failed(Exception? exception = null)
     {
-        Text = text;
-
-        SourceLanguage = sourceLanguage;
+        return new TranslationResult(TranslationStatus.Failed, Error: exception);
     }
 
-    private TranslationResult(TranslationResultCode code)
+    public static TranslationResult Success(string text, string sourceLanguage)
     {
-        Code = code;
+        return new TranslationResult(TranslationStatus.Translated, text, sourceLanguage);
     }
 }

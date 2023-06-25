@@ -149,15 +149,15 @@ public class TusServerTests : IClassFixture<TusServerFixture>
     [Theory]
     [InlineData("/files/middleware")]
     [InlineData("/files/controller")]
-    public async Task Should_not_use_new_file_id_id_nothing_written_first(string url)
+    public async Task Should_not_use_new_file_id_if_nothing_written_first(string url)
     {
         var image = GetImage("logo.bmp");
 
         var pausingStream = new PauseStream(image.Stream, 0);
         var pausingFile = new UploadFile(pausingStream, image.FileName, image.ContentType, image.ContentLength);
-        var fileIds = new HashSet<string>();
 
-        var numReads = 0;
+        var fileIds = new HashSet<string>();
+        var fileReads = 0;
 
         while (pausingStream.Position < pausingStream.Length)
         {
@@ -178,10 +178,10 @@ public class TusServerTests : IClassFixture<TusServerFixture>
 
             pausingStream.Reset(0.25);
 
-            numReads++;
+            fileReads++;
         }
 
-        Assert.Equal(5, numReads);
+        Assert.Equal(5, fileReads);
         Assert.Single(fileIds);
 
         await HasFileAsync(image);

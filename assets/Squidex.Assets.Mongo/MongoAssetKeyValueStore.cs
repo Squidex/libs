@@ -8,10 +8,11 @@
 using System.Runtime.CompilerServices;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
+using Squidex.Hosting;
 
 namespace Squidex.Assets;
 
-public sealed class MongoAssetKeyValueStore<T> : IAssetKeyValueStore<T>
+public sealed class MongoAssetKeyValueStore<T> : IAssetKeyValueStore<T>, IInitializable
 {
     private readonly UpdateOptions upsert = new UpdateOptions
     {
@@ -27,7 +28,7 @@ public sealed class MongoAssetKeyValueStore<T> : IAssetKeyValueStore<T>
     }
 
     public Task InitializeAsync(
-        CancellationToken ct = default)
+        CancellationToken ct)
     {
         BsonClassMap.RegisterClassMap<T>(options =>
         {

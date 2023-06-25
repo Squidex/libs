@@ -5,15 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System.Collections;
-using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using System.Text;
-using System.Threading;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Primitives;
 using Microsoft.IO;
-using Microsoft.Net.Http.Headers;
 
 namespace Squidex.Hosting.Web;
 

@@ -9,15 +9,16 @@ using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Options;
 
-namespace Squidex.Text.Translations;
+namespace Squidex.Text.Translations.DeepL;
 
 [ExcludeFromCodeCoverage]
 public sealed class DeepLTranslationService : ITranslationService
 {
     private const string Url = "https://api.deepl.com/v2/translate";
-    private readonly DeepLOptions options;
-    private HttpClient httpClient;
+    private readonly DeepLTranslationOptions options;
+    private readonly IHttpClientFactory httpClientFactory;
 
     private sealed class TranslationsDto
     {
@@ -34,9 +35,10 @@ public sealed class DeepLTranslationService : ITranslationService
         public string DetectedSourceLanguage { get; set; }
     }
 
-    public DeepLTranslationService(DeepLOptions deeplOptions)
+    public DeepLTranslationService(IOptions<DeepLTranslationOptions> options, IHttpClientFactory httpClientFactory)
     {
-        this.options = deeplOptions;
+        this.options = options.Value;
+        this.httpClientFactory = httpClientFactory;
     }
 
     public async Task<IReadOnlyList<TranslationResult>> TranslateAsync(IEnumerable<string> texts, string targetLanguage, string? sourceLanguage = null,
@@ -59,8 +61,6 @@ public sealed class DeepLTranslationService : ITranslationService
             return results;
         }
 
-        httpClient ??= new HttpClient();
-
         var parameters = new List<KeyValuePair<string, string>>
         {
             new KeyValuePair<string, string>("auth_key", options.AuthKey),
@@ -79,33 +79,47 @@ public sealed class DeepLTranslationService : ITranslationService
 
         var body = new FormUrlEncodedContent(parameters!);
 
+        var httpClient = httpClientFactory.CreateClient("DeepL");
+
         using (var response = await httpClient.PostAsync(Url, body, ct))
         {
-            var responseString = await response.Content.ReadAsStringAsync();
-
-            if (response.IsSuccessStatusCode)
+            try
             {
-                var result = JsonSerializer.Deserialize<TranslationsDto>(responseString)!;
+                response.EnsureSuccessStatusCode();
 
-                foreach (var translation in result.Translations)
+                var jsonString = await response.Content.ReadAsStringAsync(ct);
+                var jsonResponse = JsonSerializer.Deserialize<TranslationsDto>(jsonString)!;
+
+                foreach (var translation in jsonResponse.Translations)
                 {
                     var language = GetSourceLanguage(translation.DetectedSourceLanguage, sourceLanguage);
 
-                    results.Add(new TranslationResult(translation.Text, language));
+                    results.Add(TranslationResult.Success(translation.Text, language));
                 }
             }
-            else
+            catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.BadRequest)
             {
-                var result = GetResult(response);
-
-                for (var i = 0; i < texts.Count(); i++)
-                {
-                    results.Add(result);
-                }
+                AddError(TranslationResult.LanguageNotSupported);
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+            {
+                AddError(TranslationResult.Unauthorized);
+            }
+            catch (Exception ex)
+            {
+                AddError(TranslationResult.Failed(ex));
             }
         }
 
         return results;
+
+        void AddError(TranslationResult result)
+        {
+            for (var i = 0; i < texts.Count(); i++)
+            {
+                results.Add(result);
+            }
+        }
     }
 
     private static string GetSourceLanguage(string language, string? fallback)
@@ -118,20 +132,6 @@ public sealed class DeepLTranslationService : ITranslationService
         }
 
         return result!;
-    }
-
-    private static TranslationResult GetResult(HttpResponseMessage response)
-    {
-        switch (response.StatusCode)
-        {
-            case HttpStatusCode.BadRequest:
-                return TranslationResult.LanguageNotSupported;
-            case HttpStatusCode.Forbidden:
-            case HttpStatusCode.Unauthorized:
-                return TranslationResult.Unauthorized;
-            default:
-                return TranslationResult.Failed;
-        }
     }
 
     private string GetLanguageCode(string language)

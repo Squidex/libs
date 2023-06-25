@@ -8,7 +8,6 @@
 using Squidex.Assets;
 using Squidex.Assets.Internal;
 using tusdotnet;
-using tusdotnet.Interfaces;
 using tusdotnet.Models;
 using tusdotnet.Models.Configuration;
 

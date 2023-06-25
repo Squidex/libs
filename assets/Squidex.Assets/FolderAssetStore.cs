@@ -6,24 +6,23 @@
 // ==========================================================================
 
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Squidex.Assets.Internal;
+using Squidex.Hosting;
 
 namespace Squidex.Assets;
 
-public sealed class FolderAssetStore : IAssetStore
+public sealed class FolderAssetStore : IAssetStore, IInitializable
 {
     private const int BufferSize = 81920;
     private readonly ILogger<FolderAssetStore> log;
     private readonly DirectoryInfo directory;
 
-    public FolderAssetStore(string path, ILogger<FolderAssetStore> log)
+    public FolderAssetStore(IOptions<FolderAssetOptions> options, ILogger<FolderAssetStore> log)
     {
-        Guard.NotNullOrEmpty(path, nameof(path));
-        Guard.NotNull(log, nameof(log));
-
         this.log = log;
 
-        directory = new DirectoryInfo(path);
+        directory = new DirectoryInfo(options.Value.Path);
     }
 
     public Task InitializeAsync(

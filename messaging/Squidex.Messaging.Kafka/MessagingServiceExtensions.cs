@@ -13,14 +13,10 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class MessagingServiceExtensions
 {
-    public static IServiceCollection AddKafkaTransport(this IServiceCollection services, IConfiguration config, Action<KafkaTransportOptions>? configure = null)
+    public static IServiceCollection AddKafkaTransport(this IServiceCollection services, IConfiguration config, Action<KafkaTransportOptions>? configure = null,
+        string configPath = "messaging:kafka")
     {
-        services.ConfigureAndValidate<KafkaTransportOptions>(config, "messaging:kafka");
-
-        if (configure != null)
-        {
-            services.Configure(configure);
-        }
+        services.ConfigureAndValidate(config, configPath, configure);
 
         services.AddSingletonAs<KafkaOwner>()
             .AsSelf();

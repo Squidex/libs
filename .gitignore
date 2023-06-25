@@ -22,7 +22,7 @@ _test-output/
 # NodeJS 
 node_modules/
 
-appsettings.Development.json
-appsettings.Production.json
+appSettings.Development.json
+appSettings.Production.json
 launchSettings.json
 

@@ -17,7 +17,16 @@ public sealed class FolderAssetStoreFixture : IDisposable
 
     public FolderAssetStoreFixture()
     {
-        AssetStore = new FolderAssetStore(TestFolder, A.Dummy<ILogger<FolderAssetStore>>());
+        var services =
+            new ServiceCollection()
+                .AddFolderAssetStore(TestHelpers.Configuration, config =>
+                {
+                    config.Path = TestFolder;
+                })
+                .AddSingleton(A.Dummy<ILogger<FolderAssetStore>>())
+                .BuildServiceProvider();
+
+        AssetStore = services.GetRequiredService<FolderAssetStore>();
         AssetStore.InitializeAsync(default).Wait();
     }
 
