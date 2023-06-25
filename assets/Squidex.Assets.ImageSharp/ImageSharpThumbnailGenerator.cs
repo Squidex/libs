@@ -13,7 +13,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Blurhash.ImageSharp;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Formats.Bmp;
 using SixLabors.ImageSharp.Formats.Gif;
 using SixLabors.ImageSharp.Formats.Jpeg;
@@ -24,6 +23,7 @@ using SixLabors.ImageSharp.Metadata.Profiles.Exif;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using Squidex.Assets.Internal;
+using ISImageInfo = SixLabors.ImageSharp.ImageInfo;
 using ISResizeMode = SixLabors.ImageSharp.Processing.ResizeMode;
 using ISResizeOptions = SixLabors.ImageSharp.Processing.ResizeOptions;
 
@@ -70,7 +70,7 @@ public sealed class ImageSharpThumbnailGenerator : AssetThumbnailGeneratorBase
         var w = options.TargetWidth ?? 0;
         var h = options.TargetHeight ?? 0;
 
-        using (var image = Image.Load(source, out var format))
+        using (var image = await Image.LoadAsync(source, ct))
         {
             image.Mutate(x => x.AutoOrient());
 
@@ -107,7 +107,7 @@ public sealed class ImageSharpThumbnailGenerator : AssetThumbnailGeneratorBase
                 {
                     operation.Resize(resizeOptions);
 
-                    if (Color.TryParse(options.Background, out var color))
+                    if (options.Background != null && Color.TryParse(options.Background, out var color))
                     {
                          operation.BackgroundColor(color);
                     }
@@ -118,7 +118,7 @@ public sealed class ImageSharpThumbnailGenerator : AssetThumbnailGeneratorBase
                 });
             }
 
-            var encoder = options.GetEncoder(format);
+            var encoder = options.GetEncoder(image.Metadata.DecodedImageFormat);
 
             await image.SaveAsync(destination, encoder, ct);
         }
@@ -129,14 +129,14 @@ public sealed class ImageSharpThumbnailGenerator : AssetThumbnailGeneratorBase
     {
         try
         {
-            var (image, format) = await Image.IdentifyWithFormatAsync(source, ct);
+            var imageInfo = await Image.IdentifyAsync(source, ct);
 
-            if (image == null || format == null)
+            if (imageInfo?.Metadata.DecodedImageFormat == null)
             {
                 return null;
             }
 
-            return GetImageInfo(image, format);
+            return GetImageInfo(imageInfo);
         }
         catch
         {
@@ -147,9 +147,14 @@ public sealed class ImageSharpThumbnailGenerator : AssetThumbnailGeneratorBase
     protected override async Task FixOrientationCoreAsync(Stream source, string mimeType, Stream destination,
         CancellationToken ct = default)
     {
-        using (var image = Image.Load(source, out var format))
+        using (var image = await Image.LoadAsync(source, ct))
         {
-            var encoder = Configuration.Default.ImageFormatsManager.FindEncoder(format);
+            if (image.Metadata.DecodedImageFormat == null)
+            {
+                throw new NotSupportedException();
+            }
+
+            var encoder = Configuration.Default.ImageFormatsManager.GetEncoder(image.Metadata.DecodedImageFormat);
 
             if (encoder == null)
             {
@@ -162,13 +167,18 @@ public sealed class ImageSharpThumbnailGenerator : AssetThumbnailGeneratorBase
         }
     }
 
-    private static ImageInfo GetImageInfo(IImageInfo image, IImageFormat? detectedFormat)
+    private static ImageInfo GetImageInfo(ISImageInfo imageInfo)
     {
-        var orientation = (ImageOrientation)(image.Metadata.ExifProfile?.GetValue(ExifTag.Orientation)?.Value ?? 0);
+        var orientation = ImageOrientation.None;
+
+        if (imageInfo.Metadata.ExifProfile?.TryGetValue(ExifTag.Orientation, out var tag) == true)
+        {
+            orientation = (ImageOrientation)tag.Value;
+        }
 
         var format = ImageFormat.PNG;
 
-        switch (detectedFormat)
+        switch (imageInfo.Metadata.DecodedImageFormat)
         {
             case BmpFormat:
                 format = ImageFormat.BMP;
@@ -190,7 +200,7 @@ public sealed class ImageSharpThumbnailGenerator : AssetThumbnailGeneratorBase
                 break;
         }
 
-        return new ImageInfo(image.Width, image.Height, orientation, format)
+        return new ImageInfo(imageInfo.Width, imageInfo.Height, orientation, format)
         {
             Format = format
         };

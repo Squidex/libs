@@ -7,6 +7,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using FluentFTP;
+using FluentFTP.Exceptions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Squidex.Assets.Internal;

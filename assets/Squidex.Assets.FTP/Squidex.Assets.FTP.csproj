@@ -13,8 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FluentFTP" Version="42.0.1" />
-    <PackageReference Include="Meziantou.Analyzer" Version="1.0.745">
+    <PackageReference Include="FluentFTP" Version="46.0.2" />
+    <PackageReference Include="Meziantou.Analyzer" Version="2.0.61">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
