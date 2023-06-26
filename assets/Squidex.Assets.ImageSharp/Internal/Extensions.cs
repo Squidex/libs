@@ -16,16 +16,24 @@ namespace Squidex.Assets.Internal;
 
 internal static class Extensions
 {
-    public static IImageEncoder GetEncoder(this ResizeOptions options, IImageFormat format)
+    public static IImageEncoder GetEncoder(this ResizeOptions options, IImageFormat? format)
     {
         var imageFormatsManager = Configuration.Default.ImageFormatsManager;
 
         if (options.Format != null)
         {
-            format = imageFormatsManager.FindFormatByMimeType(options.Format.Value.ToMimeType()) ?? format;
+            if (imageFormatsManager.TryFindFormatByMimeType(options.Format.Value.ToMimeType(), out var found) && found != null)
+            {
+                format = found;
+            }
         }
 
-        var encoder = imageFormatsManager.FindEncoder(format);
+        if (format == null)
+        {
+            throw new NotSupportedException();
+        }
+
+        var encoder = imageFormatsManager.GetEncoder(format);
 
         if (encoder == null)
         {

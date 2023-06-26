@@ -9,9 +9,6 @@ namespace Squidex.Assets;
 
 public interface IAssetKeyValueStore<T>
 {
-    Task InitializeAsync(
-        CancellationToken ct = default);
-
     Task<T> GetAsync(string key,
         CancellationToken ct = default);
 

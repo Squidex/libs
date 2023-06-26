@@ -35,18 +35,26 @@ public static class ConfigurationServiceExtensions
         return services;
     }
 
-    public static IServiceCollection Configure<T>(this IServiceCollection services, IConfiguration config, string path) where T : class
+    public static IServiceCollection ConfigureOptional<T>(this IServiceCollection services, Action<T>? configure = null) where T : class
     {
-        services.AddOptions<T>().Bind(config.GetSection(path));
+        services.Configure(configure ?? (_ => { }));
 
         return services;
     }
 
-    public static IServiceCollection ConfigureAndValidate<T>(this IServiceCollection services, IConfiguration config, string path) where T : class, IValidatableOptions
+    public static IServiceCollection Configure<T>(this IServiceCollection services, IConfiguration config, string path, Action<T>? configure = null) where T : class
     {
         services.AddOptions<T>().Bind(config.GetSection(path));
+        services.ConfigureOptional(configure);
 
+        return services;
+    }
+
+    public static IServiceCollection ConfigureAndValidate<T>(this IServiceCollection services, IConfiguration config, string path, Action<T>? configure = null) where T : class, IValidatableOptions
+    {
+        services.AddOptions<T>().Bind(config.GetSection(path));
         services.AddSingleton<IErrorProvider>(c => ActivatorUtilities.CreateInstance<OptionsErrorProvider<T>>(c, path));
+        services.ConfigureOptional(configure);
 
         return services;
     }

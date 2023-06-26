@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net7.0</TargetFrameworks>
+    <TargetFramework>net7.0</TargetFramework>
     <LangVersion>Latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -13,7 +13,7 @@
   
   <ItemGroup>
     <PackageReference Include="Google.Cloud.PubSub.V1" Version="2.10.0" />
-    <PackageReference Include="Meziantou.Analyzer" Version="1.0.745">
+    <PackageReference Include="Meziantou.Analyzer" Version="2.0.61">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.TestHost;
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
 using tusdotnet;
+using tusdotnet.Interfaces;
 using tusdotnet.Models;
 using tusdotnet.Models.Configuration;
 
@@ -22,38 +23,14 @@ public class TusServerFixture
 
     public HttpClient Client { get; private set; }
 
-    public sealed class Initializer : IHostedService
-    {
-        private readonly IEnumerable<IAssetStore> assetStores;
-        private readonly IAssetKeyValueStore<TusMetadata> assetKeyValueStore;
-
-        public Initializer(IEnumerable<IAssetStore> assetStores, IAssetKeyValueStore<TusMetadata> assetKeyValueStore)
-        {
-            this.assetStores = assetStores;
-            this.assetKeyValueStore = assetKeyValueStore;
-        }
-
-        public async Task StartAsync(
-            CancellationToken cancellationToken)
-        {
-            foreach (var assetStore in assetStores)
-            {
-                await assetStore.InitializeAsync(cancellationToken);
-            }
-
-            await assetKeyValueStore.InitializeAsync(cancellationToken);
-        }
-
-        public Task StopAsync(
-            CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
-        }
-    }
-
     public TusServerFixture()
     {
         TestServer = new TestServer(new WebHostBuilder()
+            .ConfigureLogging((context, builder) =>
+            {
+                builder.ClearProviders();
+                builder.ConfigureSemanticLog(context.Configuration);
+            })
             .ConfigureServices(services =>
             {
                 var mongoClient = new MongoClient("mongodb://localhost");
@@ -65,20 +42,10 @@ public class TusServerFixture
                 });
 
                 services.AddSingleton(mongoDatabase);
-
-                services.AddSingleton<IHostedService,
-                    Initializer>();
-
-                services.AddSingleton<AssetTusRunner,
-                    AssetTusRunner>();
-                services.AddSingleton<AssetTusStore,
-                    AssetTusStore>();
-
-                services.AddSingleton<IAssetStore>(
-                    new MongoGridFsAssetStore(gridFSBucket));
-                services.AddSingleton<IAssetKeyValueStore<TusMetadata>,
-                    MongoAssetKeyValueStore<TusMetadata>>();
-
+                services.AddInitializer();
+                services.AddMongoAssetStore(c => gridFSBucket);
+                services.AddMongoAssetKeyValueStore();
+                services.AddAssetTus();
                 services.AddRouting();
                 services.AddMvc();
             })
@@ -86,9 +53,7 @@ public class TusServerFixture
             {
                 app.UseTus(httpContext => new DefaultTusConfiguration
                 {
-                    Store = new AssetTusStore(
-                        httpContext.RequestServices.GetRequiredService<IAssetStore>(),
-                        httpContext.RequestServices.GetRequiredService<IAssetKeyValueStore<TusMetadata>>()),
+                    Store = httpContext.RequestServices.GetRequiredService<ITusStore>(),
                     Events = new Events
                     {
                         OnFileCompleteAsync = async eventContext =>

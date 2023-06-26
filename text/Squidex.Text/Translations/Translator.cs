@@ -44,7 +44,7 @@ public sealed class Translator : ITranslator
 
             for (var i = 0; i < results.Count; i++)
             {
-                if (results[i].Code != TranslationResultCode.Translated)
+                if (results[i].Status != TranslationStatus.Translated)
                 {
                     serviceTexts.Add(textArray[i]);
                 }
@@ -66,7 +66,7 @@ public sealed class Translator : ITranslator
 
             for (var i = 0; i < results.Count; i++)
             {
-                if (results[i].Code != TranslationResultCode.Translated)
+                if (results[i].Status != TranslationStatus.Translated)
                 {
                     results[i] = serviceResults[j];
                     j++;

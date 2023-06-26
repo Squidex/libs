@@ -53,17 +53,15 @@ public sealed class RemoteThumbnailGenerator : AssetThumbnailGeneratorBase
             var response = await httpClient.SendAsync(requestMessage, ct);
 
             response.EnsureSuccessStatusCode();
-#if NET6_0
+
             var result = await response.Content.ReadAsStringAsync(ct);
-#else
-            var result = await response.Content.ReadAsStringAsync();
-#endif
+
             if (string.IsNullOrWhiteSpace(result))
             {
                 result = null;
             }
 
-            return null;
+            return result;
         }
     }
 
@@ -82,11 +80,8 @@ public sealed class RemoteThumbnailGenerator : AssetThumbnailGeneratorBase
             var response = await httpClient.SendAsync(requestMessage, ct);
 
             response.EnsureSuccessStatusCode();
-#if NET6_0
+
             await response.Content.CopyToAsync(destination, ct);
-#else
-            await response.Content.CopyToAsync(destination);
-#endif
         }
     }
 
@@ -105,11 +100,8 @@ public sealed class RemoteThumbnailGenerator : AssetThumbnailGeneratorBase
             var response = await httpClient.SendAsync(requestMessage, ct);
 
             response.EnsureSuccessStatusCode();
-#if NET6_0
+
             await response.Content.CopyToAsync(destination, ct);
-#else
-            await response.Content.CopyToAsync(destination);
-#endif
         }
     }
 

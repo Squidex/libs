@@ -19,7 +19,6 @@ public static class Program
             .ConfigureLogging((context, builder) =>
             {
                 builder.ClearProviders();
-
                 builder.ConfigureSemanticLog(context.Configuration);
             })
             .ConfigureWebHostDefaults(builder =>

@@ -48,7 +48,7 @@ public sealed class ImageMagickThumbnailGenerator : AssetThumbnailGeneratorBase
             collection.Coalesce();
 
             var images =
-                targetFormatInfo?.IsMultiFrame == true ?
+                targetFormatInfo?.SupportsMultipleFrames == true ?
                 collection :
                 collection.Take(1);
 
@@ -112,7 +112,7 @@ public sealed class ImageMagickThumbnailGenerator : AssetThumbnailGeneratorBase
                 }
             }
 
-            if (targetFormatInfo?.IsMultiFrame == true)
+            if (targetFormatInfo?.SupportsMultipleFrames == true)
             {
                 await collection.WriteAsync(destination, targetFormat, ct);
             }

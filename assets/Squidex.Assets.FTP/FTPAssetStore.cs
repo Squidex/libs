@@ -7,29 +7,33 @@
 
 using System.Diagnostics.CodeAnalysis;
 using FluentFTP;
+using FluentFTP.Exceptions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Squidex.Assets.Internal;
+using Squidex.Hosting;
 
 namespace Squidex.Assets;
 
 [ExcludeFromCodeCoverage]
-public sealed class FTPAssetStore : IAssetStore
+public sealed class FTPAssetStore : IAssetStore, IInitializable
 {
     private readonly ILogger<FTPAssetStore> log;
     private readonly FTPClientPool pool;
     private readonly FTPAssetOptions options;
 
-    public FTPAssetStore(Func<IAsyncFtpClient> clientFactory, FTPAssetOptions options, ILogger<FTPAssetStore> log)
+    public FTPAssetStore(IOptions<FTPAssetOptions> options, ILogger<FTPAssetStore> log)
     {
-        Guard.NotNull(log, nameof(log));
-        Guard.NotNull(options, nameof(options));
-        Guard.NotNullOrEmpty(options.Path, nameof(options.Path));
-
-        pool = new FTPClientPool(clientFactory, 1);
-
-        this.options = options;
+        this.options = options.Value;
 
         this.log = log;
+
+        pool = new FTPClientPool(
+            () => new AsyncFtpClient(
+                options.Value.ServerHost,
+                options.Value.Username,
+                options.Value.Password,
+                options.Value.ServerPort), 1);
     }
 
     public async Task InitializeAsync(

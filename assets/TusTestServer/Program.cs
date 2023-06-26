@@ -8,10 +8,7 @@
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
 using Squidex.Assets;
-using Squidex.Assets.Internal;
-using tusdotnet.Interfaces;
 using TusTestServer;
-using TutTestServer;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,46 +26,16 @@ var gridFSBucket = new GridFSBucket<string>(mongoDatabase, new GridFSBucketOptio
 });
 
 builder.Services.AddMvc();
+builder.Services.AddInitializer();
+builder.Services.AddSingleton(mongoDatabase);
 
-builder.Services.AddSingleton(
-    mongoDatabase);
-
-builder.Services.AddSingleton<IHostedService,
-    Initializer>();
-
-builder.Services.AddSingleton<AssetTusRunner,
-    AssetTusRunner>();
-
-builder.Services.AddSingleton<ITusStore,
-    AssetTusStore>();
-builder.Services.AddSingleton<ITusFileLockProvider,
-    AssetFileLockProvider>();
-
-builder.Services.AddSingleton(
-    new MongoGridFsAssetStore(gridFSBucket));
-builder.Services.AddSingleton<IAssetStore>(c => c.GetRequiredService<MongoGridFsAssetStore>());
-
-builder.Services.AddSingleton(
-    c => ActivatorUtilities.CreateInstance<AmazonS3AssetStore>(c,
-        builder.Configuration.GetSection("amazonS3").Get<AmazonS3AssetOptions>()!));
-builder.Services.AddSingleton<IAssetStore>(c => c.GetRequiredService<AmazonS3AssetStore>());
-
-builder.Services.AddSingleton(
-    c => ActivatorUtilities.CreateInstance<AzureBlobAssetStore>(c,
-        builder.Configuration.GetSection("azureBlob").Get<AzureBlobAssetOptions>()!));
-builder.Services.AddSingleton<IAssetStore>(c => c.GetRequiredService<AzureBlobAssetStore>());
-
-builder.Services.AddSingleton(
-    c => ActivatorUtilities.CreateInstance<GoogleCloudAssetStore>(c,
-        builder.Configuration.GetSection("googleCloud").Get<GoogleCloudAssetOptions>()!));
-builder.Services.AddSingleton<IAssetStore>(c => c.GetRequiredService<GoogleCloudAssetStore>());
-
-builder.Services.AddSingleton(
-    c => ActivatorUtilities.CreateInstance<FolderAssetStore>(c, "uploads"));
-builder.Services.AddSingleton<IAssetStore>(c => c.GetRequiredService<FolderAssetStore>());
-
-builder.Services.AddSingleton<IAssetKeyValueStore<TusMetadata>,
-    MongoAssetKeyValueStore<TusMetadata>>();
+builder.Services.AddAmazonS3AssetStore(builder.Configuration);
+builder.Services.AddAssetTus();
+builder.Services.AddAzureBlobAssetStore(builder.Configuration);
+builder.Services.AddFolderAssetStore(builder.Configuration);
+builder.Services.AddGoogleCloudAssetStore(builder.Configuration);
+builder.Services.AddMongoAssetKeyValueStore();
+builder.Services.AddMongoAssetStore(c => gridFSBucket);
 
 var app = builder.Build();
 

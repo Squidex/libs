@@ -13,14 +13,10 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class MessagingServiceExtensions
 {
-    public static IServiceCollection AddRedisTransport(this IServiceCollection services, IConfiguration config, Action<RedisTransportOptions>? configure = null)
+    public static IServiceCollection AddRedisTransport(this IServiceCollection services, IConfiguration config, Action<RedisTransportOptions>? configure = null,
+        string configPath = "messaging:redis")
     {
-        services.ConfigureAndValidate<RedisTransportOptions>(config, "messaging:redis");
-
-        if (configure != null)
-        {
-            services.Configure(configure);
-        }
+        services.ConfigureAndValidate(config, configPath, configure);
 
         services.AddSingletonAs<RedisTransport>()
             .As<IMessagingTransport>();

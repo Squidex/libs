@@ -20,7 +20,7 @@ public sealed class Startup
 
     public void ConfigureServices(IServiceCollection services)
     {
-        var options = configuration.GetSection("images").Get<ImageResizeOptions>();
+        var options = configuration.GetSection("images").Get<ImageResizeOptions>()!;
 
         services.AddHealthChecks();
         services.AddDefaultForwardRules();

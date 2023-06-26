@@ -7,7 +7,6 @@
 
 using Squidex.Hosting.Web;
 using Squidex.Log;
-using Microsoft.AspNetCore.Builder;
 using System.Text;
 
 namespace Squidex.Hosting;

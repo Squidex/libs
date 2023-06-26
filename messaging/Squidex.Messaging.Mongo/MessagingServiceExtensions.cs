@@ -13,18 +13,21 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class MessagingServiceExtensions
 {
-    public static IServiceCollection AddMongoTransport(this IServiceCollection services, IConfiguration config, Action<MongoTransportOptions>? configure = null)
+    public static IServiceCollection AddMongoTransport(this IServiceCollection services, IConfiguration config, Action<MongoTransportOptions>? configure = null,
+        string configPath = "messaging:mongoDb")
     {
-        services.ConfigureAndValidate<MongoTransportOptions>(config, "messaging:mongoDb");
-        services.ConfigureAndValidate<MongoSubscriptionStoreOptions>(config, "messaging:mongoDb:subscriptions");
-
-        if (configure != null)
-        {
-            services.Configure(configure);
-        }
+        services.ConfigureAndValidate(config, configPath, configure);
 
         services.AddSingletonAs<MongoTransport>()
             .As<IMessagingTransport>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddMongoSubscriptions(this IServiceCollection services, IConfiguration config, Action<MongoSubscriptionStoreOptions>? configure = null,
+        string configPath = "messaging:mongoDb:subscriptions")
+    {
+        services.ConfigureAndValidate(config, configPath, configure);
 
         services.AddSingletonAs<MongoSubscriptionStore>()
             .As<IMessagingSubscriptionStore>();

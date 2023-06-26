@@ -5,9 +5,19 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Squidex.Hosting.Configuration;
+
 namespace Squidex.Assets;
 
-public sealed class GoogleCloudAssetOptions
+public sealed class GoogleCloudAssetOptions : IValidatableOptions
 {
-    public string BucketName { get; set; }
+    public string Bucket { get; set; }
+
+    public IEnumerable<ConfigurationError> Validate()
+    {
+        if (string.IsNullOrWhiteSpace(Bucket))
+        {
+            yield return new ConfigurationError("Value is required.", nameof(Bucket));
+        }
+    }
 }

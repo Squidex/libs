@@ -9,23 +9,22 @@ using System.Net;
 using System.Net.Http.Headers;
 using Google;
 using Google.Cloud.Storage.V1;
+using Microsoft.Extensions.Options;
 using Squidex.Assets.Internal;
+using Squidex.Hosting;
 
 namespace Squidex.Assets;
 
-public sealed class GoogleCloudAssetStore : IAssetStore
+public sealed class GoogleCloudAssetStore : IAssetStore, IInitializable
 {
     private static readonly UploadObjectOptions IfNotExists = new UploadObjectOptions { IfGenerationMatch = 0 };
     private static readonly CopyObjectOptions IfNotExistsCopy = new CopyObjectOptions { IfGenerationMatch = 0 };
     private readonly string bucketName;
     private StorageClient storageClient;
 
-    public GoogleCloudAssetStore(GoogleCloudAssetOptions options)
+    public GoogleCloudAssetStore(IOptions<GoogleCloudAssetOptions> options)
     {
-        Guard.NotNull(options, nameof(options));
-        Guard.NotNullOrEmpty(options.BucketName, nameof(options.BucketName));
-
-        bucketName = options.BucketName;
+        bucketName = options.Value.Bucket;
     }
 
     public async Task InitializeAsync(

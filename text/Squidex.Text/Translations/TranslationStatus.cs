@@ -7,9 +7,12 @@
 
 namespace Squidex.Text.Translations;
 
-public sealed class DeepLOptions
+public enum TranslationStatus
 {
-    public string AuthKey { get; set; }
-
-    public Dictionary<string, string> Mapping { get; set; }
+    Translated,
+    LanguageNotSupported,
+    NotTranslated,
+    NotConfigured,
+    Unauthorized,
+    Failed
 }

@@ -12,25 +12,30 @@ namespace Squidex.Assets;
 
 public sealed class MongoGridFSAssetStoreFixture : IDisposable
 {
-    private readonly IMongoClient mongoClient = new MongoClient(TestHelpers.Configuration["mongoDB:connectionString"]);
+    private readonly IMongoClient mongoClient = new MongoClient(TestHelpers.Configuration["assetStore:mongoDB:connectionString"]);
 
     public MongoGridFsAssetStore AssetStore { get; }
 
     public MongoGridFSAssetStoreFixture()
     {
-        var mongoDatabase = mongoClient.GetDatabase(TestHelpers.Configuration["mongoDB:database"]);
+        var mongoDatabase = mongoClient.GetDatabase(TestHelpers.Configuration["assetStore:mongoDB:database"]);
 
         var gridFSBucket = new GridFSBucket<string>(mongoDatabase, new GridFSBucketOptions
         {
-            BucketName = TestHelpers.Configuration["mongoDB:bucketName"]
+            BucketName = TestHelpers.Configuration["assetStore:mongoDB:bucketName"]
         });
 
-        AssetStore = new MongoGridFsAssetStore(gridFSBucket);
+        var services =
+            new ServiceCollection()
+                .AddMongoAssetStore(c => gridFSBucket)
+                .BuildServiceProvider();
+
+        AssetStore = services.GetRequiredService<MongoGridFsAssetStore>();
         AssetStore.InitializeAsync(default).Wait();
     }
 
     public void Dispose()
     {
-        mongoClient.DropDatabase(TestHelpers.Configuration["mongoDB:database"]);
+        mongoClient.DropDatabase(TestHelpers.Configuration["assetStore:mongoDB:database"]);
     }
 }

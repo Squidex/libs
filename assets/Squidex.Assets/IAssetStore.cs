@@ -14,12 +14,6 @@ public interface IAssetStore
         return null;
     }
 
-    Task InitializeAsync(
-        CancellationToken ct)
-    {
-        return Task.CompletedTask;
-    }
-
     Task<long> GetSizeAsync(string fileName,
         CancellationToken ct = default);
 

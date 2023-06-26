@@ -14,9 +14,12 @@ public sealed class AmazonS3AssetStoreFixture
     public AmazonS3AssetStoreFixture()
     {
         // From: https://console.aws.amazon.com/iam/home?region=eu-central-1#/users/s3?section=security_credentials
-        var options = TestHelpers.Configuration.GetSection("amazonS3").Get<AmazonS3AssetOptions>()!;
+        var services =
+            new ServiceCollection()
+                .AddAmazonS3AssetStore(TestHelpers.Configuration)
+                .BuildServiceProvider();
 
-        AssetStore = new AmazonS3AssetStore(options);
+        AssetStore = services.GetRequiredService<AmazonS3AssetStore>();
         AssetStore.InitializeAsync(default).Wait();
     }
 }

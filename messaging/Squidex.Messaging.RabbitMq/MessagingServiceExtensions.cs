@@ -13,14 +13,10 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class MessagingServiceExtensions
 {
-    public static IServiceCollection AddRabbitMqTransport(this IServiceCollection services, IConfiguration config, Action<RabbitMqTransportOptions>? configure = null)
+    public static IServiceCollection AddRabbitMqTransport(this IServiceCollection services, IConfiguration config, Action<RabbitMqTransportOptions>? configure = null,
+        string configPath = "messaging:rabbitMq")
     {
-        services.ConfigureAndValidate<RabbitMqTransportOptions>(config, "messaging:rabbitMq");
-
-        if (configure != null)
-        {
-            services.Configure(configure);
-        }
+        services.ConfigureAndValidate(config, configPath, configure);
 
         services.AddSingletonAs<RabbitMqOwner>()
             .AsSelf();

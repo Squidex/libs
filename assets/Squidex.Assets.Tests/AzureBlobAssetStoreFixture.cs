@@ -13,9 +13,12 @@ public sealed class AzureBlobAssetStoreFixture
 
     public AzureBlobAssetStoreFixture()
     {
-        var options = TestHelpers.Configuration.GetSection("azureBlob").Get<AzureBlobAssetOptions>();
+        var services =
+            new ServiceCollection()
+                .AddAzureBlobAssetStore(TestHelpers.Configuration)
+                .BuildServiceProvider();
 
-        AssetStore = new AzureBlobAssetStore(options);
+        AssetStore = services.GetRequiredService<AzureBlobAssetStore>();
         AssetStore.InitializeAsync(default).Wait();
     }
 }

@@ -5,9 +5,11 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Squidex.Hosting.Configuration;
+
 namespace Squidex.Assets;
 
-public sealed class AmazonS3AssetOptions
+public sealed class AmazonS3AssetOptions : IValidatableOptions
 {
     public string ServiceUrl { get; set; }
 
@@ -24,4 +26,22 @@ public sealed class AmazonS3AssetOptions
     public bool ForcePathStyle { get; set; }
 
     public bool DisablePayloadSigning { get; set; }
+
+    public IEnumerable<ConfigurationError> Validate()
+    {
+        if (string.IsNullOrWhiteSpace(Bucket))
+        {
+            yield return new ConfigurationError("Value is required.", nameof(Bucket));
+        }
+
+        if (string.IsNullOrWhiteSpace(AccessKey))
+        {
+            yield return new ConfigurationError("Value is required.", nameof(AccessKey));
+        }
+
+        if (string.IsNullOrWhiteSpace(SecretKey))
+        {
+            yield return new ConfigurationError("Value is required.", nameof(SecretKey));
+        }
+    }
 }

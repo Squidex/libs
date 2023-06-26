@@ -9,10 +9,11 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
 using Squidex.Assets.Internal;
+using Squidex.Hosting;
 
 namespace Squidex.Assets;
 
-public sealed class MongoGridFsAssetStore : IAssetStore
+public sealed class MongoGridFsAssetStore : IAssetStore, IInitializable
 {
     private static readonly FilterDefinitionBuilder<GridFSFileInfo<string>> Filters = Builders<GridFSFileInfo<string>>.Filter;
     private static readonly GridFSDownloadOptions DownloadDefault = new GridFSDownloadOptions();
@@ -21,8 +22,6 @@ public sealed class MongoGridFsAssetStore : IAssetStore
 
     public MongoGridFsAssetStore(IGridFSBucket<string> bucket)
     {
-        Guard.NotNull(bucket, nameof(bucket));
-
         this.bucket = bucket;
     }
 

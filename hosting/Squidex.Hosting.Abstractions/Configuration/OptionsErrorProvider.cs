@@ -18,7 +18,6 @@ public sealed class OptionsErrorProvider<T> : IErrorProvider, IValidateOptions<T
     public OptionsErrorProvider(IOptions<T> options, string prefix)
     {
         this.options = options;
-
         this.prefix = prefix;
     }
 

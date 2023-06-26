@@ -13,10 +13,13 @@ public sealed class CloudflareR2Fixture
 
     public CloudflareR2Fixture()
     {
-        // https://dash.cloudflare.com/{PROJECT_ID}/r2/overview/api-tokens
-        var options = TestHelpers.Configuration.GetSection("r2").Get<AmazonS3AssetOptions>()!;
+        // From: https://dash.cloudflare.com/{PROJECT_ID}/r2/overview/api-tokens
+        var services =
+            new ServiceCollection()
+                .AddAmazonS3AssetStore(TestHelpers.Configuration, null, "assetStore:r2")
+                .BuildServiceProvider();
 
-        AssetStore = new AmazonS3AssetStore(options);
+        AssetStore = services.GetRequiredService<AmazonS3AssetStore>();
         AssetStore.InitializeAsync(default).Wait();
     }
 }

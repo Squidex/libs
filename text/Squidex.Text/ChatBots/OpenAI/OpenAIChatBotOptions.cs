@@ -5,14 +5,15 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Text.Translations;
+using OpenAI.ObjectModels;
 
-public enum TranslationResultCode
+namespace Squidex.Text.ChatBots.OpenAI;
+
+public sealed class OpenAIChatBotOptions
 {
-    Translated,
-    LanguageNotSupported,
-    NotTranslated,
-    NotConfigured,
-    Unauthorized,
-    Failed
+    public string ApiKey { get; set; }
+
+    public string Model { get; set; } = Models.ChatGpt3_5Turbo;
+
+    public int? MaxTokens { get; set; }
 }

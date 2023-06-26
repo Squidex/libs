@@ -8,11 +8,13 @@
 using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Microsoft.Extensions.Options;
 using Squidex.Assets.Internal;
+using Squidex.Hosting;
 
 namespace Squidex.Assets;
 
-public class AzureBlobAssetStore : IAssetStore
+public class AzureBlobAssetStore : IAssetStore, IInitializable
 {
     private static readonly BlobUploadOptions NoOverwriteUpload = new BlobUploadOptions
     {
@@ -28,19 +30,13 @@ public class AzureBlobAssetStore : IAssetStore
             IfNoneMatch = new ETag("*")
         }
     };
-    private readonly string containerName;
-    private readonly string connectionString;
+    private readonly AzureBlobAssetOptions options;
     private BlobContainerClient blobContainer;
     private BlobContainerProperties blobContainerProperties;
 
-    public AzureBlobAssetStore(AzureBlobAssetOptions options)
+    public AzureBlobAssetStore(IOptions<AzureBlobAssetOptions> options)
     {
-        Guard.NotNull(options, nameof(options));
-        Guard.NotNullOrEmpty(options.ContainerName, nameof(options.ContainerName));
-        Guard.NotNullOrEmpty(options.ConnectionString, nameof(options.ConnectionString));
-
-        connectionString = options.ConnectionString;
-        containerName = options.ContainerName;
+        this.options = options.Value;
     }
 
     public async Task InitializeAsync(
@@ -48,9 +44,9 @@ public class AzureBlobAssetStore : IAssetStore
     {
         try
         {
-            var blobServiceClient = new BlobServiceClient(connectionString);
+            var blobServiceClient = new BlobServiceClient(options.ConnectionString);
 
-            blobContainer = blobServiceClient.GetBlobContainerClient(containerName);
+            blobContainer = blobServiceClient.GetBlobContainerClient(options.ContainerName);
 
             await blobContainer.CreateIfNotExistsAsync(cancellationToken: ct);
 
@@ -58,7 +54,7 @@ public class AzureBlobAssetStore : IAssetStore
         }
         catch (Exception ex)
         {
-            throw new AssetStoreException($"Cannot connect to blob container '{containerName}'.", ex);
+            throw new AssetStoreException($"Cannot connect to blob container '{options.ContainerName}'.", ex);
         }
     }
 
@@ -143,12 +139,12 @@ public class AzureBlobAssetStore : IAssetStore
         {
             var blob = blobContainer.GetBlobClient(name);
 
-            var options = new BlobDownloadOptions
+            var downloadOptions = new BlobDownloadOptions
             {
                 Range = new HttpRange(range.From ?? 0, range.To)
             };
 
-            var result = await blob.DownloadStreamingAsync(options, ct);
+            var result = await blob.DownloadStreamingAsync(downloadOptions, ct);
 
             await using (result.Value.Content)
             {
