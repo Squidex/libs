@@ -5,9 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Text;
 using Squidex.Hosting.Web;
 using Squidex.Log;
-using System.Text;
 
 namespace Squidex.Hosting;
 

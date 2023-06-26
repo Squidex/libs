@@ -180,8 +180,9 @@ internal sealed class DelegatingConsumer : IBackgroundProcess
 
             if (created != default && trace?.Id != null)
             {
-                MessagingTelemetry.Activities.StartActivity("QueueTime", ActivityKind.Internal, trace.Id,
-                    startTime: created)?.Stop();
+                var start = new DateTimeOffset(created);
+
+                MessagingTelemetry.Activities.StartActivity("QueueTime", ActivityKind.Internal, trace.Id, startTime: start)?.Stop();
             }
 
             var typeString = transportResult.Message.Headers?.GetValueOrDefault(HeaderNames.Type);

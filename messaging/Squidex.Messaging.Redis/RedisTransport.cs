@@ -60,7 +60,7 @@ public sealed class RedisTransport : IMessagingTransport
         {
             var channel = new RedisChannel(GetTopicName(target.Name), RedisChannel.PatternMode.Literal);
 
-            await subscriber.PublishAsync(, json);
+            await subscriber.PublishAsync(channel, json);
         }
         else
         {
