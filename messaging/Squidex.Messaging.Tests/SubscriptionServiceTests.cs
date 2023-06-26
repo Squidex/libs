@@ -211,21 +211,21 @@ public class SubscriptionServiceTests : IClassFixture<MongoFixture>
 
     private static TaskCompletionSource<TestTypes.Message> Completion()
     {
-        var received = new TaskCompletionSource<TestTypes.Message>();
+        var completion = new TaskCompletionSource<TestTypes.Message>();
+        var cancelled = new CancellationTokenSource(30_000);
 
-        var cts = new CancellationTokenSource(30_000);
-
-        var registration = cts.Token.Register(() =>
+        var registration = cancelled.Token.Register(() =>
         {
-            received.TrySetCanceled();
+            completion.TrySetCanceled();
         });
-
-        received.Task.ContinueWith(x =>
+#pragma warning disable MA0134 // Observe result of async calls
+        completion.Task.ContinueWith(x =>
         {
-            cts.Dispose();
+            cancelled.Dispose();
         });
+#pragma warning restore MA0134 // Observe result of async calls
 
-        return received;
+        return completion;
     }
 
     private async Task<ISubscriptionService> CreateSubscriptionServiceAsync(bool sendToSelf = false)

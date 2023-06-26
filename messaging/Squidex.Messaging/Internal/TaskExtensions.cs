@@ -21,12 +21,14 @@ public static class TaskExtensions
         }
         else
         {
+#pragma warning disable MA0134 // Observe result of async calls
             task.ContinueWith(
                 IgnoreTaskContinuation,
                 default,
                 TaskContinuationOptions.OnlyOnFaulted |
                 TaskContinuationOptions.ExecuteSynchronously,
                 TaskScheduler.Default);
+#pragma warning restore MA0134 // Observe result of async calls
         }
     }
 }
