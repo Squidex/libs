@@ -49,27 +49,27 @@ public sealed class ResizeOptions : IOptions
 
         if (TargetWidth != null)
         {
-            yield return ("targetWidth", TargetWidth!.ToString()!);
+            yield return ("targetWidth", TargetWidth.Value.ToString(CultureInfo.InvariantCulture));
         }
 
         if (TargetHeight != null)
         {
-            yield return ("targetHeight", TargetHeight.ToString()!);
+            yield return ("targetHeight", TargetHeight.Value.ToString(CultureInfo.InvariantCulture));
         }
 
         if (Quality != null)
         {
-            yield return ("quality", Quality.ToString()!);
+            yield return ("quality", Quality.Value.ToString(CultureInfo.InvariantCulture));
         }
 
         if (FocusX != null)
         {
-            yield return ("focusX", FocusX.ToString()!);
+            yield return ("focusX", FocusX.Value.ToString(CultureInfo.InvariantCulture));
         }
 
         if (FocusY != null)
         {
-            yield return ("focusY", FocusY.ToString()!);
+            yield return ("focusY", FocusY.Value.ToString(CultureInfo.InvariantCulture));
         }
 
         if (Background != null)

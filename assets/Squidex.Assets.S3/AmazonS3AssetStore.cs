@@ -10,6 +10,7 @@ using Amazon;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Transfer;
+using Amazon.S3.Util;
 using Squidex.Assets.Internal;
 using Squidex.Hosting;
 
@@ -56,11 +57,9 @@ public sealed class AmazonS3AssetStore : IAssetStore, IInitializable
             }
 
             s3Client = new AmazonS3Client(options.AccessKey, options.SecretKey, amazonS3Config);
-
             s3Transfer = new TransferUtility(s3Client);
 
-            var exists = await s3Client.DoesS3BucketExistAsync(options.Bucket);
-
+            var exists = await AmazonS3Util.DoesS3BucketExistV2Async(s3Client, options.Bucket);
             if (!exists)
             {
                 throw new AssetStoreException($"Cannot connect to Amazon S3 bucket '{options.Bucket}'.");

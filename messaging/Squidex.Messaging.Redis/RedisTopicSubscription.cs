@@ -32,11 +32,13 @@ internal sealed class RedisTopicSubscription : IAsyncDisposable, IMessageAck
             }
         });
 
-        subscriber.Subscribe(topicName, handler);
+        var channel = new RedisChannel(topicName, RedisChannel.PatternMode.Literal);
+
+        subscriber.Subscribe(channel, handler);
 
         unsubscribe = () =>
         {
-            subscriber.Unsubscribe(topicName, handler);
+            subscriber.Unsubscribe(channel, handler);
         };
     }
 

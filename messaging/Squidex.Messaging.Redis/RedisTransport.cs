@@ -58,7 +58,9 @@ public sealed class RedisTransport : IMessagingTransport
 
         if (target.Type == ChannelType.Topic)
         {
-            await subscriber.PublishAsync(GetTopicName(target.Name), json);
+            var channel = new RedisChannel(GetTopicName(target.Name), RedisChannel.PatternMode.Literal);
+
+            await subscriber.PublishAsync(, json);
         }
         else
         {
