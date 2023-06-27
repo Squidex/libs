@@ -19,10 +19,7 @@ public static class MessagingServiceExtensions
 {
     public static IServiceCollection AddMessaging(this IServiceCollection services, Action<MessagingOptions>? configure = null)
     {
-        services.Configure<MessagingOptions>(options =>
-        {
-            configure?.Invoke(options);
-        });
+        services.ConfigureOptional(configure);
 
         services.TryAddSingleton<IMessagingSerializer,
             NewtonsoftJsonMessagingSerializer>();

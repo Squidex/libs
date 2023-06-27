@@ -16,6 +16,11 @@ public static class AssetsServiceExtensions
     public static IServiceCollection AddAssetTus(this IServiceCollection services)
     {
         services.AddSingletonAs<AssetTusStore>()
+            .As<ITusExpirationStore>()
+            .As<ITusCreationDeferLengthStore>()
+            .As<ITusCreationStore>()
+            .As<ITusReadableStore>()
+            .As<ITusTerminationStore>()
             .As<ITusStore>();
 
         services.AddSingletonAs<AssetFileLockProvider>()
