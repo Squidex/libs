@@ -97,7 +97,7 @@ public abstract class AssetThumbnailGeneratorBase : IAssetThumbnailGenerator
     protected abstract Task<string?> ComputeBlurHashCoreAsync(Stream source, string mimeType, BlurOptions options,
         CancellationToken ct = default);
 
-    public async Task FixOrientationAsync(Stream source, string mimeType, Stream destination,
+    public async Task FixAsync(Stream source, string mimeType, Stream destination,
         CancellationToken ct = default)
     {
         Guard.NotNull(source, nameof(source));
@@ -111,10 +111,10 @@ public abstract class AssetThumbnailGeneratorBase : IAssetThumbnailGenerator
             return;
         }
 
-        await FixOrientationCoreAsync(source, mimeType, destination, ct);
+        await FixCoreAsync(source, mimeType, destination, ct);
     }
 
-    protected abstract Task FixOrientationCoreAsync(Stream source, string mimeType, Stream destination,
+    protected abstract Task FixCoreAsync(Stream source, string mimeType, Stream destination,
         CancellationToken ct = default);
 
     public async Task CreateThumbnailAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,

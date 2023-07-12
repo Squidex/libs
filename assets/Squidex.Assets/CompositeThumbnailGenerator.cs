@@ -59,7 +59,7 @@ public sealed class CompositeThumbnailGenerator : AssetThumbnailGeneratorBase
         await source.CopyToAsync(destination, ct);
     }
 
-    protected override async Task FixOrientationCoreAsync(Stream source, string mimeType, Stream destination,
+    protected override async Task FixCoreAsync(Stream source, string mimeType, Stream destination,
         CancellationToken ct = default)
     {
         await maxTasks.WaitAsync(ct);
@@ -69,7 +69,7 @@ public sealed class CompositeThumbnailGenerator : AssetThumbnailGeneratorBase
             {
                 if (inner.CanReadAndWrite(mimeType))
                 {
-                    await inner.FixOrientationAsync(source, mimeType, destination, ct);
+                    await inner.FixAsync(source, mimeType, destination, ct);
                     return;
                 }
             }

@@ -21,7 +21,8 @@ public sealed class ImageResizer
     public void Map(IEndpointRouteBuilder endpoints)
     {
         endpoints.MapPost("/blur", BlurAsync);
-        endpoints.MapPost("/orient", OrientAsync);
+        endpoints.MapPost("/fix", FixAsync);
+        endpoints.MapPost("/orient", FixAsync);
         endpoints.MapPost("/resize", ResizeAsync);
     }
 
@@ -56,7 +57,7 @@ public sealed class ImageResizer
         }
     }
 
-    private async Task OrientAsync(HttpContext context)
+    private async Task FixAsync(HttpContext context)
     {
         await using var tempStream = TempHelper.GetTempStream();
 
@@ -64,7 +65,7 @@ public sealed class ImageResizer
 
         try
         {
-            await assetThumbnailGenerator.FixOrientationAsync(
+            await assetThumbnailGenerator.FixAsync(
                 tempStream,
                 context.Request.ContentType ?? "image/png",
                 context.Response.Body,

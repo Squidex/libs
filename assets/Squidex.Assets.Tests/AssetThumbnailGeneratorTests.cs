@@ -281,16 +281,20 @@ public abstract class AssetThumbnailGeneratorTests
 
         await using (var target = GetStream("oriented", "jpeg"))
         {
-            await sut.FixOrientationAsync(source, mimeType, target);
+            await sut.FixAsync(source, mimeType, target);
 
             target.Position = 0;
 
             var imageInfo = await sut.GetImageInfoAsync(target, mimeType);
 
-            Assert.Equal(135, imageInfo?.PixelHeight);
-            Assert.Equal(600, imageInfo?.PixelWidth);
-
-            Assert.Equal(ImageOrientation.TopLeft, imageInfo?.Orientation);
+            Assert.Equal(
+                new ImageInfo(
+                    ImageFormat.JPEG,
+                    PixelWidth: 600,
+                    PixelHeight: 135,
+                    ImageOrientation.None,
+                    false),
+                imageInfo!);
         }
     }
 
@@ -413,10 +417,14 @@ public abstract class AssetThumbnailGeneratorTests
 
         var imageInfo = await sut.GetImageInfoAsync(source, mimeType);
 
-        Assert.Equal(600, imageInfo!.PixelHeight);
-        Assert.Equal(600, imageInfo!.PixelWidth);
-
-        Assert.Equal(ImageOrientation.None, imageInfo.Orientation);
+        Assert.Equal(
+            new ImageInfo(
+                ImageFormat.PNG,
+                PixelWidth: 600,
+                PixelHeight: 600,
+                ImageOrientation.None,
+                false),
+            imageInfo!);
     }
 
     [Fact]
@@ -426,10 +434,14 @@ public abstract class AssetThumbnailGeneratorTests
 
         var imageInfo = await sut.GetImageInfoAsync(source, mimeType);
 
-        Assert.Equal(600, imageInfo!.PixelHeight);
-        Assert.Equal(135, imageInfo!.PixelWidth);
-
-        Assert.Equal(ImageOrientation.LeftBottom, imageInfo.Orientation);
+        Assert.Equal(
+            new ImageInfo(
+                ImageFormat.JPEG,
+                PixelWidth: 135,
+                PixelHeight: 600,
+                ImageOrientation.LeftBottom,
+                true),
+            imageInfo!);
     }
 
     [Fact]

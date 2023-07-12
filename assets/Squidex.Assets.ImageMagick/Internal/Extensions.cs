@@ -114,6 +114,16 @@ internal static class Extensions
         return result;
     }
 
+    public static IMagickImage<T> RemoveAllProfiles<T>(this IMagickImage<T> image) where T : struct, IConvertible
+    {
+        foreach (var profileName in image.ProfileNames)
+        {
+            image.RemoveProfile(profileName);
+        }
+
+        return image;
+    }
+
     public static ImageOrientation GetOrientation<T>(this IMagickImage<T> image) where T : struct, IConvertible
     {
         return (ImageOrientation)(image.GetExifProfile()?.GetValue(ExifTag.Orientation)?.Value ?? 0);

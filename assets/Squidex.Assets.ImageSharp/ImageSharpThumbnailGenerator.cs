@@ -144,7 +144,7 @@ public sealed class ImageSharpThumbnailGenerator : AssetThumbnailGeneratorBase
         }
     }
 
-    protected override async Task FixOrientationCoreAsync(Stream source, string mimeType, Stream destination,
+    protected override async Task FixCoreAsync(Stream source, string mimeType, Stream destination,
         CancellationToken ct = default)
     {
         using (var image = await Image.LoadAsync(source, ct))
@@ -162,6 +162,11 @@ public sealed class ImageSharpThumbnailGenerator : AssetThumbnailGeneratorBase
             }
 
             image.Mutate(x => x.AutoOrient());
+
+            image.Metadata.ExifProfile = null;
+            image.Metadata.IccProfile = null;
+            image.Metadata.IptcProfile = null;
+            image.Metadata.XmpProfile = null;
 
             await image.SaveAsync(destination, encoder, ct);
         }
@@ -200,9 +205,12 @@ public sealed class ImageSharpThumbnailGenerator : AssetThumbnailGeneratorBase
                 break;
         }
 
-        return new ImageInfo(imageInfo.Width, imageInfo.Height, orientation, format)
-        {
-            Format = format
-        };
+        var hasSensitiveMetadata =
+            imageInfo.Metadata.ExifProfile?.Values.Count > 0 ||
+            imageInfo.Metadata.IccProfile?.Entries.Length > 0 ||
+            imageInfo.Metadata.IptcProfile?.Values.Any() == true ||
+            imageInfo.Metadata.XmpProfile != null;
+
+        return new ImageInfo(format, imageInfo.Width, imageInfo.Height, orientation, hasSensitiveMetadata);
     }
 }

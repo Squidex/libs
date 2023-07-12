@@ -5,30 +5,13 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Squidex.Assets.Internal;
+#pragma warning disable SA1313 // Parameter names should begin with lower-case letter
 
 namespace Squidex.Assets;
 
-public sealed class ImageInfo
-{
-    public ImageFormat Format { get; set; }
-
-    public int PixelWidth { get; }
-
-    public int PixelHeight { get; }
-
-    public ImageOrientation Orientation { get; }
-
-    public ImageInfo(int pixelWidth, int pixelHeight, ImageOrientation orientation, ImageFormat format)
-    {
-        Guard.GreaterThan(pixelWidth, 0, nameof(pixelWidth));
-        Guard.GreaterThan(pixelHeight, 0, nameof(pixelHeight));
-
-        Format = format;
-
-        PixelWidth = pixelWidth;
-        PixelHeight = pixelHeight;
-
-        Orientation = orientation;
-    }
-}
+public sealed record ImageInfo(
+    ImageFormat Format,
+    int PixelWidth,
+    int PixelHeight,
+    ImageOrientation Orientation,
+    bool HasSensitiveMetadata);

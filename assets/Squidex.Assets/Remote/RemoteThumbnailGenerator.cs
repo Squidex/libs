@@ -85,7 +85,7 @@ public sealed class RemoteThumbnailGenerator : AssetThumbnailGeneratorBase
         }
     }
 
-    protected override async Task FixOrientationCoreAsync(Stream source, string mimeType, Stream destination,
+    protected override async Task FixCoreAsync(Stream source, string mimeType, Stream destination,
         CancellationToken ct = default)
     {
         using (var httpClient = httpClientFactory.CreateClient("Resize"))

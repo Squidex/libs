@@ -123,7 +123,7 @@ public sealed class ImageMagickThumbnailGenerator : AssetThumbnailGeneratorBase
         }
     }
 
-    protected override async Task FixOrientationCoreAsync(Stream source, string mimeType, Stream destination,
+    protected override async Task FixCoreAsync(Stream source, string mimeType, Stream destination,
         CancellationToken ct = default)
     {
         using (var collection = new MagickImageCollection())
@@ -135,6 +135,7 @@ public sealed class ImageMagickThumbnailGenerator : AssetThumbnailGeneratorBase
             foreach (var image in collection)
             {
                 image.AutoOrient();
+                image.RemoveAllProfiles();
             }
 
             await collection.WriteAsync(destination, ct);
@@ -153,11 +154,15 @@ public sealed class ImageMagickThumbnailGenerator : AssetThumbnailGeneratorBase
                     Format = GetFormat(mimeType)
                 });
 
+                var hasSensitiveMetadata =
+                    image.ProfileNames.Any();
+
                 return Task.FromResult<ImageInfo?>(new ImageInfo(
+                    image.Format.ToImageFormat(),
                     image.Width,
                     image.Height,
                     image.Orientation.GetOrientation(),
-                    image.Format.ToImageFormat()));
+                    hasSensitiveMetadata));
             }
         }
         catch
