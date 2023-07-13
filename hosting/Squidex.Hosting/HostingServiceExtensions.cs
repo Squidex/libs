@@ -22,7 +22,7 @@ public static class HostingServiceExtensions
     {
         return services.AddSingleton<IInitializable>(c =>
         {
-            return ActivatorUtilities.CreateInstance<DelegateSerializer2>(c, action, name, order);
+            return ActivatorUtilities.CreateInstance<DelegateInitializer>(c, action, name, order);
         });
     }
 
@@ -39,7 +39,7 @@ public static class HostingServiceExtensions
     {
         return services.AddSingleton<IInitializable>(c =>
         {
-            return ActivatorUtilities.CreateInstance<DelegateSerializer2<T>>(c, action, name, order);
+            return ActivatorUtilities.CreateInstance<DelegateInitializer<T>>(c, action, name, order);
         });
     }
 

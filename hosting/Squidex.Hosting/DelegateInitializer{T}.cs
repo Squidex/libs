@@ -9,16 +9,22 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Squidex.Hosting;
 
-public sealed class DelegateSerializer2<T> : SystemBase, IInitializable where T : class
+public sealed class DelegateInitializer<T> : IInitializable where T : class
 {
     private readonly IServiceProvider serviceProvider;
+    private readonly string name;
+    private readonly int order;
     private readonly Func<T, CancellationToken, Task> action;
 
-    public DelegateSerializer2(IServiceProvider serviceProvider, string name, int order, Func<T, CancellationToken, Task> action)
-        : base(name, order)
+    public string Name => name;
+
+    public int Order => order;
+
+    public DelegateInitializer(IServiceProvider serviceProvider, string name, int order, Func<T, CancellationToken, Task> action)
     {
         this.serviceProvider = serviceProvider;
-
+        this.name = name;
+        this.order = order;
         this.action = action;
     }
 

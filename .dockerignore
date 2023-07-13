@@ -1,0 +1,38 @@
+# User-specific files
+*.suo
+*.user
+*.vs
+*.log
+*.received.txt
+
+**/.angular
+.vs
+.git
+.github
+.idea
+.vscode
+
+# Build results
+**/bin
+**/build
+**/obj
+**/out
+**/publish
+
+# Test Output
+**/_test-output
+
+# NodeJS 
+**/node_modules
+
+**/backend/src/Squidex/Assets
+
+**/appsettings.Development.json
+**/appsettings.Production.json
+**/launchSettings.json
+
+build.ps1
+build.sh
+
+# Documentation
+CHANGELOG.md
