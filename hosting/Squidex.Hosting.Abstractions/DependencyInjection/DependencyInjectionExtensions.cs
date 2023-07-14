@@ -18,11 +18,13 @@ public static class DependencyInjectionExtensions
     {
         private readonly Registrator registerRequired;
         private readonly Registrator registerOptional;
+        private readonly IServiceCollection services;
 
-        public InterfaceRegistrator(Registrator registerRequired, Registrator registerOptional)
+        public InterfaceRegistrator(Registrator registerRequired, Registrator registerOptional, IServiceCollection services)
         {
             this.registerRequired = registerRequired;
             this.registerOptional = registerOptional;
+            this.services = services;
 
             var interfaces = typeof(T).GetInterfaces();
 
@@ -35,6 +37,11 @@ public static class DependencyInjectionExtensions
             {
                 registerRequired(typeof(IBackgroundProcess), c => c.GetRequiredService<T>());
             }
+        }
+
+        public IServiceCollection Done()
+        {
+            return services;
         }
 
         public InterfaceRegistrator<T> AsSelf()
@@ -75,43 +82,122 @@ public static class DependencyInjectionExtensions
 
     public static InterfaceRegistrator<T> AddScopedAs<T>(this IServiceCollection services, Func<IServiceProvider, T> factory) where T : class
     {
-        services.AddTransient(typeof(T), factory);
+        services.AddScoped(typeof(T), factory);
 
-        return new InterfaceRegistrator<T>((t, f) => services.AddScoped(t, f), services.TryAddScoped);
+        return new InterfaceRegistrator<T>((t, f) => services.AddScoped(t, f), services.TryAddScoped, services);
     }
 
     public static InterfaceRegistrator<T> AddScopedAs<T>(this IServiceCollection services) where T : class
     {
-        services.AddTransient<T, T>();
+        services.AddScoped<T, T>();
 
-        return new InterfaceRegistrator<T>((t, f) => services.AddScoped(t, f), services.TryAddScoped);
+        return new InterfaceRegistrator<T>((t, f) => services.AddScoped(t, f), services.TryAddScoped, services);
     }
 
     public static InterfaceRegistrator<T> AddTransientAs<T>(this IServiceCollection services, Func<IServiceProvider, T> factory) where T : class
     {
         services.AddTransient(typeof(T), factory);
 
-        return new InterfaceRegistrator<T>((t, f) => services.AddTransient(t, f), services.TryAddTransient);
+        return new InterfaceRegistrator<T>((t, f) => services.AddTransient(t, f), services.TryAddTransient, services);
     }
 
     public static InterfaceRegistrator<T> AddTransientAs<T>(this IServiceCollection services) where T : class
     {
         services.AddTransient<T, T>();
 
-        return new InterfaceRegistrator<T>((t, f) => services.AddTransient(t, f), services.TryAddTransient);
+        return new InterfaceRegistrator<T>((t, f) => services.AddTransient(t, f), services.TryAddTransient, services);
     }
 
     public static InterfaceRegistrator<T> AddSingletonAs<T>(this IServiceCollection services, Func<IServiceProvider, T> factory) where T : class
     {
         services.AddSingleton(typeof(T), factory);
 
-        return new InterfaceRegistrator<T>((t, f) => services.AddSingleton(t, f), services.TryAddSingleton);
+        return new InterfaceRegistrator<T>((t, f) => services.AddSingleton(t, f), services.TryAddSingleton, services);
     }
 
     public static InterfaceRegistrator<T> AddSingletonAs<T>(this IServiceCollection services) where T : class
     {
         services.AddSingleton<T, T>();
 
-        return new InterfaceRegistrator<T>((t, f) => services.AddSingleton(t, f), services.TryAddSingleton);
+        return new InterfaceRegistrator<T>((t, f) => services.AddSingleton(t, f), services.TryAddSingleton, services);
+    }
+
+    public static IServiceCollection AddSingletonWrapper<TService, TImplementation>(this IServiceCollection services) where TService : class where TImplementation : class, TService
+    {
+        return services.AddWrapper<TService, TImplementation>(ServiceLifetime.Singleton);
+    }
+
+    public static IServiceCollection AddWrapper<TService, TImplementation>(this IServiceCollection services, ServiceLifetime lifetime) where TService : class where TImplementation : class, TService
+    {
+        var existing = services.FirstOrDefault(x => x.ServiceType == typeof(TService) && x.Lifetime == lifetime);
+
+        // Build an inner factory to cache the reflection logic.
+        var innerFactory = BuildFactory(existing);
+
+        var factory = ActivatorUtilities.CreateFactory(typeof(TImplementation), new Type[] { typeof(TService) });
+
+        services.Add(
+            new ServiceDescriptor(
+                typeof(TService),
+                s =>
+                {
+                    var wrapped = (TService)innerFactory(s);
+
+                    return factory(s, new object[] { wrapped });
+                },
+                lifetime));
+
+        return services;
+    }
+
+    public static IServiceCollection AddSingletonWrapper<TService>(this IServiceCollection services, Func<IServiceProvider, TService, TService> factory) where TService : class
+    {
+        return services.AddWrapper(factory, ServiceLifetime.Singleton);
+    }
+
+    public static IServiceCollection AddWrapper<TService>(this IServiceCollection services, Func<IServiceProvider, TService, TService> factory, ServiceLifetime lifetime)
+        where TService : class
+    {
+        var existing = services.FirstOrDefault(x => x.ServiceType == typeof(TService) && x.Lifetime == lifetime);
+
+        // Build an inner factory to cache the reflection logic.
+        var innerFactory = BuildFactory(existing);
+
+        services.Add(
+            new ServiceDescriptor(
+                typeof(TService),
+                s =>
+                {
+                    var wrapped = (TService)innerFactory(s);
+
+                    return factory(s, wrapped);
+                },
+                lifetime));
+
+        return services;
+    }
+
+    private static Func<IServiceProvider, object> BuildFactory(ServiceDescriptor? descriptor)
+    {
+        if (descriptor?.ImplementationFactory != null)
+        {
+            return descriptor.ImplementationFactory;
+        }
+
+        var instance = descriptor?.ImplementationInstance;
+
+        if (instance != null)
+        {
+            return _ => instance;
+        }
+
+        if (descriptor?.ImplementationType != null)
+        {
+            var factory = ActivatorUtilities.CreateFactory(descriptor.ImplementationType, Array.Empty<Type>());
+
+            return s => factory(s, null);
+        }
+
+        throw new InvalidOperationException("Cannot instantiate wrapped service.");
     }
 }
