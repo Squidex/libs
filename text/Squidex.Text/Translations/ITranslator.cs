@@ -12,6 +12,6 @@ public interface ITranslator
     Task<IReadOnlyList<TranslationResult>> TranslateAsync(IEnumerable<string> texts, string targetLanguage, string? sourceLanguage = null,
         CancellationToken ct = default);
 
-    Task<TranslationResult> TranslateAsync(string sourceText, string targetLanguage, string? sourceLanguage = null,
+    Task<TranslationResult> TranslateAsync(string text, string targetLanguage, string? sourceLanguage = null,
         CancellationToken ct = default);
 }
