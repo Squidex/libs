@@ -16,7 +16,8 @@ namespace Squidex.Text.Translations.DeepL;
 [ExcludeFromCodeCoverage]
 public sealed class DeepLTranslationService : ITranslationService
 {
-    private const string Url = "https://api.deepl.com/v2/translate";
+    private const string UrlPaid = "https://api.deepl.com/v2/translate";
+    private const string UrlFree = "https://api-free.deepl.com/v2/translate";
     private readonly DeepLTranslationOptions options;
     private readonly IHttpClientFactory httpClientFactory;
 
@@ -78,7 +79,12 @@ public sealed class DeepLTranslationService : ITranslationService
             parameters.Add(new KeyValuePair<string, string>("source_lang", GetLanguageCode(sourceLanguage)));
         }
 
-        var requestMessage = new HttpRequestMessage(HttpMethod.Post, Url);
+        var url =
+            options.AuthKey.EndsWith(":fx", StringComparison.Ordinal) ?
+            UrlFree :
+            UrlPaid;
+
+        var requestMessage = new HttpRequestMessage(HttpMethod.Post, url);
 
         requestMessage.Headers.Add("Authorization", $"DeepL-Auth-Key {options.AuthKey}");
         requestMessage.Content = new FormUrlEncodedContent(parameters!);
