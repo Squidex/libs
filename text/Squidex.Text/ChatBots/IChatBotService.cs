@@ -9,6 +9,6 @@ namespace Squidex.Text.ChatBots;
 
 public interface IChatBotService
 {
-    Task<ChatBotAnswer> AskQuestionAsync(string prompt,
+    Task<ChatBotResult> AskQuestionAsync(string prompt,
         CancellationToken ct = default);
 }

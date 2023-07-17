@@ -22,14 +22,14 @@ public sealed class OpenAIChatBotService : IChatBotService
         this.options = options.Value;
     }
 
-    public async Task<ChatBotAnswer> AskQuestionAsync(string prompt,
+    public async Task<ChatBotResult> AskQuestionAsync(string prompt,
         CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(options.ApiKey))
         {
-            return new ChatBotAnswer
+            return new ChatBotResult
             {
-                Alternatives = new List<string>()
+                Choices = new List<string>()
             };
         }
 
@@ -51,9 +51,9 @@ public sealed class OpenAIChatBotService : IChatBotService
         var numTokensInput = response.Usage.PromptTokens;
         var numTokensOutput = response.Usage.CompletionTokens ?? 0;
 
-        return new ChatBotAnswer
+        return new ChatBotResult
         {
-            Alternatives = response.Choices.Select(x => x.Message.Content).ToList(),
+            Choices = response.Choices.Select(x => x.Message.Content).ToList(),
             EstimatedCostsInEUR =
                 (numTokensInput * options.PricePerInputTokenInEUR) +
                 (numTokensOutput * options.PricePerOutputTokenInEUR)

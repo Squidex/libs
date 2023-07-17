@@ -21,20 +21,20 @@ public sealed class ChatBot : IChatBot
         this.log = log;
     }
 
-    public async Task<ChatBotAnswer> AskQuestionAsync(string prompt,
+    public async Task<ChatBotResult> AskQuestionAsync(string prompt,
         CancellationToken ct = default)
     {
         var results = await Task.WhenAll(services.Select(x => AskQuestionSafeAsync(x, prompt, ct)));
 
-        return new ChatBotAnswer
+        return new ChatBotResult
         {
-            Alternatives = results.SelectMany(x => x.Alternatives).Distinct().ToList(),
+            Choices = results.SelectMany(x => x.Choices).Distinct().ToList(),
             // We just sum up all costs.
             EstimatedCostsInEUR = results.Sum(x => x.EstimatedCostsInEUR)
         };
     }
 
-    private async Task<ChatBotAnswer> AskQuestionSafeAsync(IChatBotService service, string prompt,
+    private async Task<ChatBotResult> AskQuestionSafeAsync(IChatBotService service, string prompt,
         CancellationToken ct)
     {
         try
@@ -45,9 +45,9 @@ public sealed class ChatBot : IChatBot
         {
             log.LogWarning(ex, "Failed to call chatbot service {serivce}.", service);
 
-            return new ChatBotAnswer
+            return new ChatBotResult
             {
-                Alternatives = new List<string>()
+                Choices = new List<string>()
             };
         }
     }

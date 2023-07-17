@@ -14,7 +14,7 @@ public sealed record TranslationResult(
     string? Text = null,
     string? SourceLanguage = null,
     Exception? Error = null,
-    decimal EstimatedCosts = 0)
+    decimal EstimatedCostsInEUR = 0)
 {
     public static readonly TranslationResult Unauthorized = new TranslationResult(TranslationStatus.Unauthorized);
 
@@ -29,8 +29,8 @@ public sealed record TranslationResult(
         return new TranslationResult(TranslationStatus.Failed, Error: exception);
     }
 
-    public static TranslationResult Success(string text, string sourceLanguage, decimal estimatedCosts)
+    public static TranslationResult Success(string text, string sourceLanguage, decimal estimatedCostsInEUR)
     {
-        return new TranslationResult(TranslationStatus.Translated, text, sourceLanguage, null, estimatedCosts);
+        return new TranslationResult(TranslationStatus.Translated, text, sourceLanguage, null, estimatedCostsInEUR);
     }
 }

@@ -7,9 +7,9 @@
 
 namespace Squidex.Text.ChatBots;
 
-public sealed class ChatBotAnswer
+public sealed class ChatBotResult
 {
-    required public IReadOnlyList<string> Alternatives { get; init; }
+    required public IReadOnlyList<string> Choices { get; init; }
 
     public decimal EstimatedCostsInEUR { get; init; }
 }

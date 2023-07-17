@@ -31,6 +31,6 @@ public class OpenAIChatBotServiceTests
         var results = await sut.AskQuestionAsync("Provide an interesting article about Paris.");
 
         Assert.True(results.EstimatedCostsInEUR is > 0 and < 1);
-        Assert.NotEmpty(results.Alternatives);
+        Assert.NotEmpty(results.Choices);
     }
 }
