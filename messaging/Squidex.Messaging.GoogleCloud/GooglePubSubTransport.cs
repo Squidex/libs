@@ -213,7 +213,7 @@ public sealed class GooglePubSubTransport : IMessagingTransport
             {
                 Ttl = Duration.FromTimeSpan(TimeSpan.FromDays(2))
             },
-            TopicAsTopicName = publisherClient.TopicName,
+            TopicAsTopicName = publisherClient.TopicName
         };
 
         await subscriptionApi.CreateSubscriptionAsync(request, ct);

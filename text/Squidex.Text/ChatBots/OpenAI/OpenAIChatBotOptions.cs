@@ -15,5 +15,9 @@ public sealed class OpenAIChatBotOptions
 
     public string Model { get; set; } = Models.ChatGpt3_5Turbo;
 
+    public decimal PricePerInputTokenInEUR { get; set; } = 0.003m / 1000;
+
+    public decimal PricePerOutputTokenInEUR { get; set; } = 0.004m / 1000;
+
     public int? MaxTokens { get; set; }
 }

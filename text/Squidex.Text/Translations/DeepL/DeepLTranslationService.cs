@@ -44,11 +44,13 @@ public sealed class DeepLTranslationService : ITranslationService
     public async Task<IReadOnlyList<TranslationResult>> TranslateAsync(IEnumerable<string> texts, string targetLanguage, string? sourceLanguage = null,
         CancellationToken ct = default)
     {
+        var textsArray = texts.ToArray();
+
         var results = new List<TranslationResult>();
 
         if (string.IsNullOrWhiteSpace(options.AuthKey))
         {
-            for (var i = 0; i < texts.Count(); i++)
+            for (var i = 0; i < textsArray.Length; i++)
             {
                 results.Add(TranslationResult.NotConfigured);
             }
@@ -56,18 +58,17 @@ public sealed class DeepLTranslationService : ITranslationService
             return results;
         }
 
-        if (!texts.Any())
+        if (textsArray.Length == 0)
         {
             return results;
         }
 
         var parameters = new List<KeyValuePair<string, string>>
         {
-            new KeyValuePair<string, string>("auth_key", options.AuthKey),
             new KeyValuePair<string, string>("target_lang", GetLanguageCode(targetLanguage))
         };
 
-        foreach (var text in texts)
+        foreach (var text in textsArray)
         {
             parameters.Add(new KeyValuePair<string, string>("text", text));
         }
@@ -77,11 +78,14 @@ public sealed class DeepLTranslationService : ITranslationService
             parameters.Add(new KeyValuePair<string, string>("source_lang", GetLanguageCode(sourceLanguage)));
         }
 
-        var body = new FormUrlEncodedContent(parameters!);
+        var requestMessage = new HttpRequestMessage(HttpMethod.Post, Url);
+
+        requestMessage.Headers.Add("Authorization", $"DeepL-Auth-Key {options.AuthKey}");
+        requestMessage.Content = new FormUrlEncodedContent(parameters!);
 
         var httpClient = httpClientFactory.CreateClient("DeepL");
 
-        using (var response = await httpClient.PostAsync(Url, body, ct))
+        using (var response = await httpClient.SendAsync(requestMessage, ct))
         {
             try
             {
@@ -90,11 +94,16 @@ public sealed class DeepLTranslationService : ITranslationService
                 var jsonString = await response.Content.ReadAsStringAsync(ct);
                 var jsonResponse = JsonSerializer.Deserialize<TranslationsDto>(jsonString)!;
 
+                var index = 0;
                 foreach (var translation in jsonResponse.Translations)
                 {
+                    var estimationSource = textsArray[index];
+                    var estimatedCosts = estimationSource.Length * options.CostsPerCharacterInEUR;
+
                     var language = GetSourceLanguage(translation.DetectedSourceLanguage, sourceLanguage);
 
-                    results.Add(TranslationResult.Success(translation.Text, language));
+                    results.Add(TranslationResult.Success(translation.Text, language, estimatedCosts));
+                    index++;
                 }
             }
             catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.BadRequest)
@@ -115,7 +124,7 @@ public sealed class DeepLTranslationService : ITranslationService
 
         void AddError(TranslationResult result)
         {
-            for (var i = 0; i < texts.Count(); i++)
+            for (var i = 0; i < textsArray.Length; i++)
             {
                 results.Add(result);
             }

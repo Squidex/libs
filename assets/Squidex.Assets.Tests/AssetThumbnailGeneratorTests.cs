@@ -255,7 +255,7 @@ public abstract class AssetThumbnailGeneratorTests
                 Background = color,
                 TargetWidth = w,
                 TargetHeight = h,
-                Mode = mode,
+                Mode = mode
             });
 
             target.Position = 0;

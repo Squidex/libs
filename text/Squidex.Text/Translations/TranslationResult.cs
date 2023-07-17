@@ -9,7 +9,12 @@
 
 namespace Squidex.Text.Translations;
 
-public sealed record TranslationResult(TranslationStatus Status, string? Text = null, string? SourceLanguage = null, Exception? Error = null)
+public sealed record TranslationResult(
+    TranslationStatus Status,
+    string? Text = null,
+    string? SourceLanguage = null,
+    Exception? Error = null,
+    decimal EstimatedCosts = 0)
 {
     public static readonly TranslationResult Unauthorized = new TranslationResult(TranslationStatus.Unauthorized);
 
@@ -24,8 +29,8 @@ public sealed record TranslationResult(TranslationStatus Status, string? Text = 
         return new TranslationResult(TranslationStatus.Failed, Error: exception);
     }
 
-    public static TranslationResult Success(string text, string sourceLanguage)
+    public static TranslationResult Success(string text, string sourceLanguage, decimal estimatedCosts)
     {
-        return new TranslationResult(TranslationStatus.Translated, text, sourceLanguage);
+        return new TranslationResult(TranslationStatus.Translated, text, sourceLanguage, null, estimatedCosts);
     }
 }

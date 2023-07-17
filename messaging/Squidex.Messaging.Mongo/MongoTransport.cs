@@ -114,7 +114,7 @@ public sealed class MongoTransport : IMessagingTransport
                 QueueName = queueName,
                 MessageData = transportMessage.Data,
                 MessageHeaders = transportMessage.Headers,
-                TimeToLive = GetTimeToLive(transportMessage.Headers),
+                TimeToLive = GetTimeToLive(transportMessage.Headers)
             };
 
             await collection.InsertOneAsync(request, null, ct);
@@ -154,7 +154,7 @@ public sealed class MongoTransport : IMessagingTransport
                                 .Ascending(x => x.TimeToLive),
                             new CreateIndexOptions
                             {
-                                ExpireAfter = TimeSpan.Zero,
+                                ExpireAfter = TimeSpan.Zero
                             })
                     },
                     default);

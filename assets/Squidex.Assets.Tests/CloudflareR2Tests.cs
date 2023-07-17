@@ -37,7 +37,7 @@ public class CloudflareR2Tests : AssetStoreTests<AmazonS3AssetStore>, IClassFixt
             ForcePathStyle = false,
             RegionName = "invalid",
             SecretKey = "invalid",
-            ServiceUrl = null!,
+            ServiceUrl = null!
         });
 
         await Assert.ThrowsAsync<AssetStoreException>(() => sut.InitializeAsync(default));

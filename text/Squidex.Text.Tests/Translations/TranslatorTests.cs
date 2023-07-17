@@ -47,14 +47,14 @@ public class TranslatorTests
         A.CallTo(() => service1.TranslateAsync(IsRequest("KeyA"), "de", null!, ct))
             .Returns(new List<TranslationResult>
             {
-                TranslationResult.Success("TextA", "en")
+                TranslationResult.Success("TextA", "en", 10)
             });
 
         var results = await sut.TranslateAsync(new[] { "KeyA" }, "de", ct: ct);
 
         Assert.Equal(new[]
         {
-            TranslationResult.Success("TextA", "en")
+            TranslationResult.Success("TextA", "en", 10)
         }, results);
 
         A.CallTo(() => service2.TranslateAsync(A<IEnumerable<string>>._, A<string>._, A<string>._, ct))
@@ -73,14 +73,14 @@ public class TranslatorTests
         A.CallTo(() => service2.TranslateAsync(IsRequest("KeyA"), "de", null!, ct))
             .Returns(new List<TranslationResult>
             {
-                TranslationResult.Success("TextA", "en")
+                TranslationResult.Success("TextA", "en", 13)
             });
 
         var results = await sut.TranslateAsync(new[] { "KeyA" }, "de", ct: ct);
 
         Assert.Equal(new[]
         {
-            TranslationResult.Success("TextA", "en")
+            TranslationResult.Success("TextA", "en", 13)
         }, results);
     }
 
@@ -90,27 +90,27 @@ public class TranslatorTests
         A.CallTo(() => service1.TranslateAsync(IsRequest("KeyA", "KeyB", "KeyC", "KeyD"), "de", null!, ct))
             .Returns(new List<TranslationResult>
             {
-                TranslationResult.Success("TextA", "en"),
+                TranslationResult.Success("TextA", "en", 13),
                 TranslationResult.Failed(),
                 TranslationResult.Failed(),
-                TranslationResult.Success("TextD", "en")
+                TranslationResult.Success("TextD", "en", 6)
             });
 
         A.CallTo(() => service2.TranslateAsync(IsRequest("KeyB", "KeyC"), "de", null!, ct))
             .Returns(new List<TranslationResult>
             {
-                TranslationResult.Success("TextB", "en"),
-                TranslationResult.Success("TextC", "en")
+                TranslationResult.Success("TextB", "en", 17),
+                TranslationResult.Success("TextC", "en", 11)
             });
 
         var results = await sut.TranslateAsync(new[] { "KeyA", "KeyB", "KeyC", "KeyD" }, "de", ct: ct);
 
         Assert.Equal(new[]
         {
-            TranslationResult.Success("TextA", "en"),
-            TranslationResult.Success("TextB", "en"),
-            TranslationResult.Success("TextC", "en"),
-            TranslationResult.Success("TextD", "en"),
+            TranslationResult.Success("TextA", "en", 13),
+            TranslationResult.Success("TextB", "en", 17),
+            TranslationResult.Success("TextC", "en", 11),
+            TranslationResult.Success("TextD", "en", 6)
         }, results);
     }
 

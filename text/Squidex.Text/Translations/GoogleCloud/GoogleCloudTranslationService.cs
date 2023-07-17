@@ -24,6 +24,8 @@ public sealed class GoogleCloudTranslationService : ITranslationService
     public async Task<IReadOnlyList<TranslationResult>> TranslateAsync(IEnumerable<string> texts, string targetLanguage, string? sourceLanguage = null,
         CancellationToken ct = default)
     {
+        var textsArray = texts.ToArray();
+
         var results = new List<TranslationResult>();
 
         if (string.IsNullOrWhiteSpace(options.ProjectId))
@@ -36,7 +38,7 @@ public sealed class GoogleCloudTranslationService : ITranslationService
             return results;
         }
 
-        if (!texts.Any())
+        if (textsArray.Length == 0)
         {
             return results;
         }
@@ -48,7 +50,7 @@ public sealed class GoogleCloudTranslationService : ITranslationService
             Parent = $"projects/{options.ProjectId}"
         };
 
-        foreach (var text in texts)
+        foreach (var text in textsArray)
         {
             request.Contents.Add(text);
         }
@@ -66,18 +68,23 @@ public sealed class GoogleCloudTranslationService : ITranslationService
         {
             var response = await service.TranslateTextAsync(request, ct);
 
+            var index = 0;
             foreach (var translation in response.Translations)
             {
+                var estimationSource = textsArray[index];
+                var estimatedCosts = estimationSource.Length * options.CostsPerCharacterInEUR;
+
                 var language = GetSourceLanguage(translation.DetectedLanguageCode, sourceLanguage);
 
-                results.Add(TranslationResult.Success(translation.TranslatedText, language));
+                results.Add(TranslationResult.Success(translation.TranslatedText, language, estimatedCosts));
+                index++;
             }
         }
         catch (RpcException ex)
         {
             var result = GetResult(ex.Status);
 
-            for (var i = 0; i < texts.Count(); i++)
+            for (var i = 0; i < textsArray.Length; i++)
             {
                 results.Add(result);
             }

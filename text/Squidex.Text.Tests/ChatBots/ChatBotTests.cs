@@ -34,14 +34,23 @@ public class ChatBotTests
     public async Task Should_merge_results_from_services()
     {
         A.CallTo(() => service1.AskQuestionAsync("MyPrompt", ct))
-            .Returns(new List<string> { "A", "B" });
+            .Returns(new ChatBotAnswer
+            {
+                Alternatives = new List<string> { "A", "B" },
+                EstimatedCostsInEUR = 6
+            });
 
         A.CallTo(() => service2.AskQuestionAsync("MyPrompt", ct))
-            .Returns(new List<string> { "B", "C" });
+            .Returns(new ChatBotAnswer
+            {
+                Alternatives = new List<string> { "B", "C" },
+                EstimatedCostsInEUR = 13
+            });
 
         var result = await sut.AskQuestionAsync("MyPrompt", ct);
 
-        Assert.Equal(new[] { "A", "B", "C" }, result.ToArray());
+        Assert.Equal(19, result.EstimatedCostsInEUR);
+        Assert.Equal(new[] { "A", "B", "C" }, result.Alternatives.ToArray());
     }
 
     [Fact]
@@ -51,10 +60,15 @@ public class ChatBotTests
             .Throws(new InvalidOperationException());
 
         A.CallTo(() => service2.AskQuestionAsync("MyPrompt", ct))
-            .Returns(new List<string> { "B", "C" });
+            .Returns(new ChatBotAnswer
+            {
+                Alternatives = new List<string> { "B", "C" },
+                EstimatedCostsInEUR = 13
+            });
 
         var result = await sut.AskQuestionAsync("MyPrompt", ct);
 
-        Assert.Equal(new[] { "B", "C" }, result.ToArray());
+        Assert.Equal(13, result.EstimatedCostsInEUR);
+        Assert.Equal(new[] { "B", "C" }, result.Alternatives.ToArray());
     }
 }

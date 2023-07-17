@@ -25,7 +25,7 @@ internal sealed class KafkaSubscription : IMessageAck, IAsyncDisposable
 
         var config = factory.Options.Configure(new ConsumerConfig
         {
-            AutoOffsetReset = AutoOffsetReset.Earliest,
+            AutoOffsetReset = AutoOffsetReset.Earliest
         });
 
         // We do not commit automatically, because the message might be scheduled.

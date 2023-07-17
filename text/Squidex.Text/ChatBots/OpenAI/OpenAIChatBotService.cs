@@ -22,12 +22,15 @@ public sealed class OpenAIChatBotService : IChatBotService
         this.options = options.Value;
     }
 
-    public async Task<IReadOnlyList<string>> AskQuestionAsync(string prompt,
+    public async Task<ChatBotAnswer> AskQuestionAsync(string prompt,
         CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(options.ApiKey))
         {
-            return new List<string>();
+            return new ChatBotAnswer
+            {
+                Alternatives = new List<string>()
+            };
         }
 
         service ??= new OpenAIService(new OpenAiOptions
@@ -45,6 +48,15 @@ public sealed class OpenAIChatBotService : IChatBotService
             MaxTokens = options.MaxTokens
         }, cancellationToken: ct);
 
-        return response.Choices.Select(x => x.Message.Content).ToList();
+        var numTokensInput = response.Usage.PromptTokens;
+        var numTokensOutput = response.Usage.CompletionTokens ?? 0;
+
+        return new ChatBotAnswer
+        {
+            Alternatives = response.Choices.Select(x => x.Message.Content).ToList(),
+            EstimatedCostsInEUR =
+                (numTokensInput * options.PricePerInputTokenInEUR) +
+                (numTokensOutput * options.PricePerOutputTokenInEUR)
+        };
     }
 }

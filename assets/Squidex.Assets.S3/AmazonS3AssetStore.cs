@@ -160,7 +160,7 @@ public sealed class AmazonS3AssetStore : IAssetStore, IInitializable
                     Key = keyTarget,
                     DisablePayloadSigning = options.DisablePayloadSigning,
                     DisableMD5Stream = false,
-                    InputStream = teamStream,
+                    InputStream = teamStream
                 };
 
                 await s3Transfer.UploadAsync(uploadRequest, ct);

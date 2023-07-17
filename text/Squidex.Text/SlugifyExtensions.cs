@@ -13,9 +13,9 @@ namespace Squidex.Text;
 /// <summary>
 /// Provides helper methods to create slugs.
 /// </summary>
-public static class SlugifyExtensions
+public static partial class SlugifyExtensions
 {
-    private static readonly Regex SlugRegex = new Regex("^[a-z0-9]+(\\-[a-z0-9]+)*$", RegexOptions.Compiled | RegexOptions.ExplicitCapture);
+    private static readonly Regex SlugRegex = SlugRegexFactory();
 
     private static readonly Dictionary<char, string> LowerCaseDiacritics;
     private static readonly Dictionary<char, string> Diacritics = new Dictionary<char, string>
@@ -605,4 +605,7 @@ public static class SlugifyExtensions
 
         return result.ToString().Trim(separator);
     }
+
+    [GeneratedRegex("^[a-z0-9]+(\\-[a-z0-9]+)*$", RegexOptions.Compiled | RegexOptions.ExplicitCapture)]
+    private static partial Regex SlugRegexFactory();
 }

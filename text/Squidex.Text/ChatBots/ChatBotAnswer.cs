@@ -7,8 +7,9 @@
 
 namespace Squidex.Text.ChatBots;
 
-public interface IChatBotService
+public sealed class ChatBotAnswer
 {
-    Task<ChatBotAnswer> AskQuestionAsync(string prompt,
-        CancellationToken ct = default);
+    required public IReadOnlyList<string> Alternatives { get; init; }
+
+    public decimal EstimatedCostsInEUR { get; init; }
 }

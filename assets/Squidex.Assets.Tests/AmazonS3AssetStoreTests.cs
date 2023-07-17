@@ -37,7 +37,7 @@ public class AmazonS3AssetStoreTests : AssetStoreTests<AmazonS3AssetStore>, ICla
             ForcePathStyle = false,
             RegionName = "invalid",
             SecretKey = "invalid",
-            ServiceUrl = null!,
+            ServiceUrl = null!
         });
 
         await Assert.ThrowsAsync<AssetStoreException>(() => sut.InitializeAsync(default));
