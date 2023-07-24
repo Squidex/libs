@@ -37,6 +37,31 @@ public class ReplicatedCacheTests
     }
 
     [Fact]
+    public async Task Should_serve_from_cache_when_many_added()
+    {
+        await sut.AddAsync(
+            new[]
+            {
+                new KeyValuePair<string, object?>("Key1", 1),
+                new KeyValuePair<string, object?>("Key2", 1),
+            },
+            TimeSpan.FromMinutes(10));
+
+        AssertCache(sut, "Key1", 1, true);
+        AssertCache(sut, "Key2", 1, true);
+
+        await sut.RemoveAsync(
+            new[]
+            {
+                "Key1",
+                "Key2"
+            });
+
+        AssertCache(sut, "Key1", null, false);
+        AssertCache(sut, "Key2", null, false);
+    }
+
+    [Fact]
     public async Task Should_not_serve_from_cache_when_disabled()
     {
         options.Enable = false;

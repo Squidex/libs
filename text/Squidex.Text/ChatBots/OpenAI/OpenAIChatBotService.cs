@@ -48,8 +48,13 @@ public sealed class OpenAIChatBotService : IChatBotService
             MaxTokens = options.MaxTokens
         }, cancellationToken: ct);
 
-        var numTokensInput = response.Usage.PromptTokens;
-        var numTokensOutput = response.Usage.CompletionTokens ?? 0;
+        if (response.Error != null)
+        {
+            throw new InvalidOperationException(response.Error.Message);
+        }
+
+        var numTokensInput = response.Usage?.PromptTokens ?? 0;
+        var numTokensOutput = response.Usage?.CompletionTokens ?? 0;
 
         return new ChatBotResult
         {

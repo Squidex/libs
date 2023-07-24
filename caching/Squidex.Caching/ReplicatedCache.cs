@@ -56,6 +56,22 @@ public sealed class ReplicatedCache : IReplicatedCache, IMessageHandler<CacheInv
         return Task.CompletedTask;
     }
 
+    public Task AddAsync(IEnumerable<KeyValuePair<string, object?>> items, TimeSpan expiration,
+        CancellationToken ct = default)
+    {
+        if (!options.Enable)
+        {
+            return Task.CompletedTask;
+        }
+
+        foreach (var (key, value) in items)
+        {
+            memoryCache.Set(key, value, expiration);
+        }
+
+        return Task.CompletedTask;
+    }
+
     public Task RemoveAsync(string key,
         CancellationToken ct = default)
     {
