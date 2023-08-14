@@ -122,9 +122,24 @@ public class MemoryAssetStore : IAssetStore
     {
         Guard.NotNullOrEmpty(prefix, nameof(prefix));
 
-        foreach (var key in streams.Keys.Where(x => x.StartsWith(prefix, StringComparison.Ordinal)).ToList())
+        // ToList on concurrent dictionary is not thread safe, therefore we maintain our own local copy.
+        HashSet<string>? toRemove = null;
+
+        foreach (var (key, _) in streams)
         {
-            streams.TryRemove(key, out _);
+            if (key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                toRemove ??= new HashSet<string>();
+                toRemove.Add(key);
+            }
+        }
+
+        if (toRemove != null)
+        {
+            foreach (var key in toRemove)
+            {
+                streams.Remove(key, out _);
+            }
         }
 
         return Task.CompletedTask;

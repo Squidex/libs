@@ -53,9 +53,21 @@ public class InMemorySubscriptionStore : IMessagingSubscriptionStore
     public Task CleanupAsync(DateTime now,
         CancellationToken ct)
     {
-        foreach (var (key, subscription) in subscriptions.ToList())
+        // ToList on concurrent dictionary is not thread safe, therefore we maintain our own local copy.
+        HashSet<(string Group, string Key)>? toRemove = null;
+
+        foreach (var (key, subscription) in subscriptions)
         {
             if (subscription.Expiration < now)
+            {
+                toRemove ??= new HashSet<(string Group, string Key)>();
+                toRemove.Add(key);
+            }
+        }
+
+        if (toRemove != null)
+        {
+            foreach (var key in toRemove)
             {
                 subscriptions.TryRemove(key, out _);
             }

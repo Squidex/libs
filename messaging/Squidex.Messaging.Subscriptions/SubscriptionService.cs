@@ -75,10 +75,18 @@ public sealed class SubscriptionService : ISubscriptionService, IInitializable, 
     {
         if (!localSubscriptions.IsEmpty)
         {
+            var subscriptionIds = new List<Guid>();
+
+            // ToList on concurrent dictionary is not thread safe, therefore we maintain our own local copy.
+            foreach (var (key, _) in localSubscriptions)
+            {
+                subscriptionIds.Add(key);
+            }
+
             // Only publish a message if there is at least one subscription.
             await messageBus.PublishAsync(new SubscriptionsAliveMessage
             {
-                SubscriptionIds = localSubscriptions.Keys.ToList(),
+                SubscriptionIds = subscriptionIds,
 
                 // Ensure that we do not update the current instance.
                 SourceId = instanceName
@@ -89,20 +97,26 @@ public sealed class SubscriptionService : ISubscriptionService, IInitializable, 
         {
             var now = clock.UtcNow;
 
-            var numExpiredSubscriptions = 0;
+            // ToList on concurrent dictionary is not thread safe, therefore we maintain our own local copy.
+            HashSet<Guid>? toUnsubscribe = null;
 
-            foreach (var entry in clusterSubscriptions.Values.ToList())
+            foreach (var (_, subscription) in clusterSubscriptions)
             {
-                if (entry.ExpiresUtc < now)
+                if (subscription.ExpiresUtc < now)
                 {
-                    UnsubscribeAsClusterSubscription(entry.SubscriptionId);
-                    numExpiredSubscriptions++;
+                    toUnsubscribe ??= new HashSet<Guid>();
+                    toUnsubscribe.Add(subscription.SubscriptionId);
                 }
             }
 
-            if (numExpiredSubscriptions > 0)
+            if (toUnsubscribe != null)
             {
-                log.LogInformation("Removed {numExpiredSubscriptions} expired subscriptions.", numExpiredSubscriptions);
+                foreach (var id in toUnsubscribe)
+                {
+                    UnsubscribeAsClusterSubscription(id);
+                }
+
+                log.LogInformation("Removed {numExpiredSubscriptions} expired subscriptions.", toUnsubscribe.Count);
             }
         }
     }
@@ -252,13 +266,11 @@ public sealed class SubscriptionService : ISubscriptionService, IInitializable, 
 
     internal void SubscribeCore(Guid id, IUntypedLocalSubscription localSubscription, ISubscription subscription)
     {
-        var expires = options.SubscriptionExpirationTime;
-
         // Also store the subscription in the database to have them available for the next start.
-        messagingSubscriptions.SubscribeAsync(options.GroupName, id.ToString(), subscription, expires).Forget();
+        messagingSubscriptions.SubscribeAsync(options.GroupName, id.ToString(), subscription, options.SubscriptionExpirationTime).Forget();
 
-        messageBus.PublishAsync(
-            MessageFactories.Subscribe(id, subscription, instanceName)).Forget();
+        // Send the update to other cluster members, so that they can update their local entry.
+        messageBus.PublishAsync(MessageFactories.Subscribe(id, subscription, instanceName)).Forget();
 
         localSubscriptions[id] = localSubscription;
 
@@ -270,8 +282,8 @@ public sealed class SubscriptionService : ISubscriptionService, IInitializable, 
         // Also remove the subscription from the store, so it does not get restored.
         messagingSubscriptions.UnsubscribeAsync(options.GroupName, id.ToString()).Forget();
 
-        messageBus.PublishAsync(
-            MessageFactories.Unsubscribe(id, instanceName)).Forget();
+        // Send the update to other cluster members, so that they can update their local entry.
+        messageBus.PublishAsync(MessageFactories.Unsubscribe(id, instanceName)).Forget();
 
         localSubscriptions.TryRemove(id, out _);
 
