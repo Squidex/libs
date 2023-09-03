@@ -22,9 +22,9 @@ public static class UrlExtensions
         }
 
         if (trailingSlash &&
-            url.IndexOf("#", StringComparison.OrdinalIgnoreCase) < 0 &&
-            url.IndexOf("?", StringComparison.OrdinalIgnoreCase) < 0 &&
-            url.IndexOf(";", StringComparison.OrdinalIgnoreCase) < 0)
+            url.IndexOf('#', StringComparison.OrdinalIgnoreCase) < 0 &&
+            url.IndexOf('?', StringComparison.OrdinalIgnoreCase) < 0 &&
+            url.IndexOf(';', StringComparison.OrdinalIgnoreCase) < 0)
         {
             url += "/";
         }

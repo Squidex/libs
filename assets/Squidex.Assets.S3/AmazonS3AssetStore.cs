@@ -361,7 +361,7 @@ public sealed class AmazonS3AssetStore : IAssetStore, IInitializable
     {
         Guard.NotNullOrEmpty(fileName, parameterName);
 
-        fileName = fileName.Replace("\\", "/", System.StringComparison.Ordinal);
+        fileName = fileName.Replace('\\', '/');
 
         if (!string.IsNullOrWhiteSpace(options.BucketFolder))
         {

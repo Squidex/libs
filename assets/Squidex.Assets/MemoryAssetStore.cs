@@ -159,6 +159,6 @@ public class MemoryAssetStore : IAssetStore
     {
         Guard.NotNullOrEmpty(fileName, parameterName);
 
-        return fileName.Replace("\\", "/", StringComparison.Ordinal);
+        return fileName.Replace('\\', '/');
     }
 }

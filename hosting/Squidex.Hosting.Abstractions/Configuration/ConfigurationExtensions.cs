@@ -55,7 +55,7 @@ public static class ConfigurationExtensions
         }
         else
         {
-            var error = new ConfigurationError($"Unsupported value '{value}', supported: {string.Join(" ", options.Keys)}.", path);
+            var error = new ConfigurationError($"Unsupported value '{value}', supported: {string.Join(' ', options.Keys)}.", path);
 
             throw new ConfigurationException(error);
         }

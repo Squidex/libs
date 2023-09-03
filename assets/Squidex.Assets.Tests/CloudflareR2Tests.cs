@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Microsoft.Extensions.Options;
 using Xunit;
 
 #pragma warning disable SA1300 // Element should begin with upper-case letter
@@ -29,7 +30,7 @@ public class CloudflareR2Tests : AssetStoreTests<AmazonS3AssetStore>, IClassFixt
     [Fact]
     public async Task Should_throw_exception_for_invalid_config()
     {
-        var sut = new AmazonS3AssetStore(new AmazonS3AssetOptions
+        var sut = new AmazonS3AssetStore(Options.Create(new AmazonS3AssetOptions
         {
             AccessKey = "invalid",
             Bucket = "invalid",
@@ -38,7 +39,7 @@ public class CloudflareR2Tests : AssetStoreTests<AmazonS3AssetStore>, IClassFixt
             RegionName = "invalid",
             SecretKey = "invalid",
             ServiceUrl = null!
-        });
+        }));
 
         await Assert.ThrowsAsync<AssetStoreException>(() => sut.InitializeAsync(default));
     }

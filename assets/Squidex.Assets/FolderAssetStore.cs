@@ -216,6 +216,6 @@ public sealed class FolderAssetStore : IAssetStore, IInitializable
     {
         Guard.NotNullOrEmpty(fileName, parameterName);
 
-        return fileName.Replace("\\", "/", StringComparison.Ordinal);
+        return fileName.Replace('\\', '/');
     }
 }
