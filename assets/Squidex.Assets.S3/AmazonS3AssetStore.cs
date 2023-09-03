@@ -11,6 +11,7 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Transfer;
 using Amazon.S3.Util;
+using Microsoft.Extensions.Options;
 using Squidex.Assets.Internal;
 using Squidex.Hosting;
 
@@ -24,11 +25,9 @@ public sealed class AmazonS3AssetStore : IAssetStore, IInitializable
     private IAmazonS3 s3Client;
     private bool canCopy = true;
 
-    public AmazonS3AssetStore(AmazonS3AssetOptions options)
+    public AmazonS3AssetStore(IOptions<AmazonS3AssetOptions> options)
     {
-        Guard.NotNull(options, nameof(options));
-
-        this.options = options;
+        this.options = options.Value;
     }
 
     public Task ReleaseAsync(
