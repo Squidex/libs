@@ -11,9 +11,16 @@ public sealed class Translator : ITranslator
 {
     private readonly IEnumerable<ITranslationService> services;
 
+    public bool IsConfigured { get; }
+
     public Translator(IEnumerable<ITranslationService> services)
     {
         this.services = services;
+
+        foreach (var service in services)
+        {
+            IsConfigured |= service.IsConfigured;
+        }
     }
 
     public async Task<IReadOnlyList<TranslationResult>> TranslateAsync(IEnumerable<string> texts, string targetLanguage, string? sourceLanguage = null,

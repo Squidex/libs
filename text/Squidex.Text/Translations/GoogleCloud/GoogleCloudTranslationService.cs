@@ -16,9 +16,13 @@ public sealed class GoogleCloudTranslationService : ITranslationService
     private readonly GoogleCloudTranslationOptions options;
     private TranslationServiceClient service;
 
+    public bool IsConfigured { get; }
+
     public GoogleCloudTranslationService(IOptions<GoogleCloudTranslationOptions> options)
     {
         this.options = options.Value;
+
+        IsConfigured = !string.IsNullOrWhiteSpace(options.Value.ProjectId);
     }
 
     public async Task<IReadOnlyList<TranslationResult>> TranslateAsync(IEnumerable<string> texts, string targetLanguage, string? sourceLanguage = null,
@@ -28,7 +32,7 @@ public sealed class GoogleCloudTranslationService : ITranslationService
 
         var results = new List<TranslationResult>();
 
-        if (string.IsNullOrWhiteSpace(options.ProjectId))
+        if (!IsConfigured)
         {
             for (var i = 0; i < texts.Count(); i++)
             {

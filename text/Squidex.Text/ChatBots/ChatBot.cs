@@ -14,9 +14,16 @@ public sealed class ChatBot : IChatBot
     private readonly IEnumerable<IChatBotService> services;
     private readonly ILogger<ChatBot> log;
 
+    public bool IsConfigured { get; }
+
     public ChatBot(IEnumerable<IChatBotService> services, ILogger<ChatBot> log)
     {
         this.services = services;
+
+        foreach (var service in services)
+        {
+            IsConfigured |= service.IsConfigured;
+        }
 
         this.log = log;
     }

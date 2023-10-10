@@ -36,10 +36,14 @@ public sealed class DeepLTranslationService : ITranslationService
         public string DetectedSourceLanguage { get; set; }
     }
 
+    public bool IsConfigured { get; }
+
     public DeepLTranslationService(IOptions<DeepLTranslationOptions> options, IHttpClientFactory httpClientFactory)
     {
         this.options = options.Value;
         this.httpClientFactory = httpClientFactory;
+
+        IsConfigured = !string.IsNullOrWhiteSpace(options.Value.AuthKey);
     }
 
     public async Task<IReadOnlyList<TranslationResult>> TranslateAsync(IEnumerable<string> texts, string targetLanguage, string? sourceLanguage = null,
@@ -49,7 +53,7 @@ public sealed class DeepLTranslationService : ITranslationService
 
         var results = new List<TranslationResult>();
 
-        if (string.IsNullOrWhiteSpace(options.AuthKey))
+        if (!IsConfigured)
         {
             for (var i = 0; i < textsArray.Length; i++)
             {

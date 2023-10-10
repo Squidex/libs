@@ -17,15 +17,19 @@ public sealed class OpenAIChatBotService : IChatBotService
     private readonly OpenAIChatBotOptions options;
     private OpenAIService? service;
 
+    public bool IsConfigured { get; }
+
     public OpenAIChatBotService(IOptions<OpenAIChatBotOptions> options)
     {
         this.options = options.Value;
+
+        IsConfigured = !string.IsNullOrWhiteSpace(options.Value.ApiKey);
     }
 
     public async Task<ChatBotResult> AskQuestionAsync(string prompt,
         CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(options.ApiKey))
+        if (!IsConfigured)
         {
             return new ChatBotResult
             {

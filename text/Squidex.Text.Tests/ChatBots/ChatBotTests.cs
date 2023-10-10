@@ -31,6 +31,59 @@ public class ChatBotTests
     }
 
     [Fact]
+    public void Should_not_be_configured_if_no_service_is_configured()
+    {
+        Assert.False(sut.IsConfigured);
+    }
+
+    [Fact]
+    public void Should_be_configured_if_any_service_is_configured1()
+    {
+        A.CallTo(() => service1.IsConfigured)
+            .Returns(true);
+
+        var sut2 = new ChatBot(new[]
+        {
+            service1,
+            service2
+        }, A.Fake<ILogger<ChatBot>>());
+
+        Assert.True(sut2.IsConfigured);
+    }
+
+    [Fact]
+    public void Should_be_configured_if_any_service_is_configured2()
+    {
+        A.CallTo(() => service2.IsConfigured)
+            .Returns(true);
+
+        var sut2 = new ChatBot(new[]
+        {
+            service1,
+            service2
+        }, A.Fake<ILogger<ChatBot>>());
+
+        Assert.True(sut2.IsConfigured);
+    }
+
+    [Fact]
+    public void Should_be_configured_if_any_service_is_configured()
+    {
+        A.CallTo(() => service1.IsConfigured)
+            .Returns(true);
+        A.CallTo(() => service2.IsConfigured)
+            .Returns(true);
+
+        var sut2 = new ChatBot(new[]
+        {
+            service1,
+            service2
+        }, A.Fake<ILogger<ChatBot>>());
+
+        Assert.True(sut2.IsConfigured);
+    }
+
+    [Fact]
     public async Task Should_merge_results_from_services()
     {
         A.CallTo(() => service1.AskQuestionAsync("MyPrompt", ct))

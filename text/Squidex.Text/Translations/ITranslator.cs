@@ -9,6 +9,8 @@ namespace Squidex.Text.Translations;
 
 public interface ITranslator
 {
+    bool IsConfigured { get; }
+
     Task<IReadOnlyList<TranslationResult>> TranslateAsync(IEnumerable<string> texts, string targetLanguage, string? sourceLanguage = null,
         CancellationToken ct = default);
 
