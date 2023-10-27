@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.IO;
 using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
@@ -205,6 +206,6 @@ public class AzureBlobAssetStore : IAssetStore, IInitializable
     {
         Guard.NotNullOrEmpty(fileName, parameterName);
 
-        return fileName.Replace('\\', '/');
+        return FilePathHelper.EnsureThatPathIsChildOf(fileName.Replace('\\', '/'), "./");
     }
 }

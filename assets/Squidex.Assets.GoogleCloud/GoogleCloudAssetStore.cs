@@ -174,6 +174,6 @@ public sealed class GoogleCloudAssetStore : IAssetStore, IInitializable
     {
         Guard.NotNullOrEmpty(fileName, parameterName);
 
-        return fileName.Replace('\\', '/');
+        return FilePathHelper.EnsureThatPathIsChildOf(fileName.Replace('\\', '/'), "./");
     }
 }

@@ -365,12 +365,10 @@ public sealed class AmazonS3AssetStore : IAssetStore, IInitializable
 
         if (!string.IsNullOrWhiteSpace(options.BucketFolder))
         {
-            return $"{options.BucketFolder}/{fileName}";
+            fileName = $"{options.BucketFolder}/{fileName}";
         }
-        else
-        {
-            return fileName;
-        }
+
+        return FilePathHelper.EnsureThatPathIsChildOf(fileName, options.BucketFolder);
     }
 
     private async Task EnsureNotExistsAsync(string key, string fileName,

@@ -209,7 +209,9 @@ public sealed class FolderAssetStore : IAssetStore, IInitializable
 
     private string GetPath(string name)
     {
-        return Path.Combine(directory.FullName, name);
+        var path = Path.Combine(directory.FullName, name);
+
+        return FilePathHelper.EnsureThatPathIsChildOf(path, directory.FullName);
     }
 
     private static string GetFileName(string fileName, string parameterName)

@@ -51,6 +51,20 @@ public abstract class AssetStoreTests<T> where T : IAssetStore
     }
 
     [Theory]
+    [InlineData("../{file}.png")]
+    [InlineData("../../{file}.png")]
+    [InlineData("./../../{file}.png")]
+    [InlineData("folder/../../{file}.png")]
+    public async Task Should_not_be_able_to_store_files_in_parent_folder(string path)
+    {
+        path = path.Replace("{file}", Guid.NewGuid().ToString(), StringComparison.Ordinal);
+
+        var data = new MemoryStream(new byte[] { 0x1, 0x2, 0x3, 0x4, 0x5 });
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => Sut.UploadAsync(path, data, true));
+    }
+
+    [Theory]
     [MemberData(nameof(FolderCases))]
     public virtual async Task Should_throw_exception_if_asset_to_get_size_is_not_found(TestCase testCase)
     {

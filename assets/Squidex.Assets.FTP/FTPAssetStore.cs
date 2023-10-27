@@ -224,7 +224,7 @@ public sealed class FTPAssetStore : IAssetStore, IInitializable
     {
         Guard.NotNullOrEmpty(fileName, parameterName);
 
-        return fileName.Replace('\\', '/');
+        return FilePathHelper.EnsureThatPathIsChildOf(fileName.Replace('\\', '/'), "./");
     }
 
     private async Task<IAsyncFtpClient> GetClientAsync(
