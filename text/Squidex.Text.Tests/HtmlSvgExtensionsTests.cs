@@ -5,41 +5,56 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Squidex.Text.Properties;
 using Xunit;
 
 namespace Squidex.Text;
 
 public class HtmlSvgExtensionsTests
 {
-    [Fact]
-    public void Should_return_true_for_valid_svg()
+    [Theory]
+    [InlineData("SvgValid.svg")]
+    public void Should_return_true_for_valid_svg(string fileName)
     {
-        var isValid = Resources.SvgValid.IsValidSvg();
+        var svg = File.ReadAllText(Path.Combine("TestFiles", fileName));
+
+        var isValid = svg.IsValidSvg();
 
         Assert.True(isValid);
     }
 
-    [Fact]
-    public void Should_return_empty_errors_for_valid_svg()
+    [Theory]
+    [InlineData("SvgValid.svg")]
+    public void Should_return_empty_errors_for_valid_svg(string fileName)
     {
-        var errors = Resources.SvgValid.GetSvgErrors();
+        var svg = File.ReadAllText(Path.Combine("TestFiles", fileName));
+
+        var errors = svg.GetSvgErrors();
 
         Assert.Empty(errors);
     }
 
-    [Fact]
-    public void Should_return_false_for_invalid_svg()
+    [Theory]
+    [InlineData("SvgIframeTag.svg")]
+    [InlineData("SvgScriptAttribute.svg")]
+    [InlineData("SvgScriptTag.svg")]
+    public void Should_return_false_for_invalid_svg(string fileName)
     {
-        var isValid = Resources.SvgInvalid.IsValidSvg();
+        var svg = File.ReadAllText(Path.Combine("TestFiles", fileName));
+
+        var isValid = svg.IsValidSvg();
 
         Assert.False(isValid);
     }
 
-    [Fact]
-    public void Should_return_nonempty_errors_for_invalid_svg()
+    [Theory]
+    [InlineData("SvgIframeTag.svg")]
+    [InlineData("SvgScriptAttribute.svg")]
+    [InlineData("SvgScriptTag.svg")]
+    public void Should_return_nonempty_errors_for_invalid_svg(string fileName)
     {
-        var errors = Resources.SvgInvalid.GetSvgErrors();
+        var svg = File.ReadAllText(Path.Combine("TestFiles", fileName));
+
+        var errors = svg.GetSvgErrors();
 
         Assert.NotEmpty(errors);
     }

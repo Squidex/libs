@@ -13,7 +13,8 @@ public static class HtmlSvgExtensions
 {
     private static readonly HashSet<string> InvalidSvgElements = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
-        "script"
+        "script",
+        "iframe"
     };
 
     public static bool IsValidSvg(this string html)
