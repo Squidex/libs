@@ -6,22 +6,21 @@
 // ==========================================================================
 
 using HtmlAgilityPack;
+using Squidex.Text.Svg;
 
 namespace Squidex.Text;
 
 public static class HtmlSvgExtensions
 {
-    private static readonly HashSet<string> InvalidSvgElements = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    public static readonly HashSet<string> AllowedUriSchemes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
-        "script",
-        "iframe"
+        "http",
+        "https"
     };
 
     public static bool IsValidSvg(this string html)
     {
-        var document = LoadHtml(html);
-
-        return IsValid(document.DocumentNode);
+        return GetSvgErrors(html).Count == 0;
     }
 
     public static List<HtmlSvgError> GetSvgErrors(this string html)
@@ -44,56 +43,6 @@ public static class HtmlSvgExtensions
         return document;
     }
 
-    private static bool IsValid(HtmlNode node)
-    {
-        switch (node.NodeType)
-        {
-            case HtmlNodeType.Document:
-                return IsChildrenValid(node);
-
-            case HtmlNodeType.Element:
-                if (InvalidSvgElements.Contains(node.Name))
-                {
-                    return false;
-                }
-
-                if (node.HasAttributes)
-                {
-                    for (var i = 0; i < node.Attributes.Count; i++)
-                    {
-                        var attribute = node.Attributes[i];
-
-                        if (attribute.Name.StartsWith("on", StringComparison.OrdinalIgnoreCase))
-                        {
-                            return false;
-                        }
-                    }
-                }
-
-                if (node.HasChildNodes)
-                {
-                    return IsChildrenValid(node);
-                }
-
-                break;
-        }
-
-        return true;
-    }
-
-    private static bool IsChildrenValid(HtmlNode node)
-    {
-        foreach (var child in node.ChildNodes)
-        {
-            if (!IsValid(child))
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
     private static void AddErrors(HtmlNode node, List<HtmlSvgError> errors)
     {
         switch (node.NodeType)
@@ -103,7 +52,7 @@ public static class HtmlSvgExtensions
                 break;
 
             case HtmlNodeType.Element:
-                if (InvalidSvgElements.Contains(node.Name))
+                if (!SvgElements.Allowed.Contains(node.Name))
                 {
                     errors.Add(new HtmlSvgError($"Invalid element '{node.Name}'",
                         node.Line,
@@ -116,11 +65,29 @@ public static class HtmlSvgExtensions
                     {
                         var attribute = node.Attributes[i];
 
-                        if (attribute.Name.StartsWith("on", StringComparison.OrdinalIgnoreCase))
+                        if (!SvgAttributes.Allowed.Contains(attribute.Name))
                         {
                             errors.Add(new HtmlSvgError($"Invalid attribute '{attribute.Name}'",
                                 attribute.Line,
                                 attribute.LinePosition));
+                        }
+                        else if (SvgAttributes.Urls.Contains(attribute.Name))
+                        {
+                            if (!Uri.TryCreate(attribute.Value, UriKind.RelativeOrAbsolute, out var uri))
+                            {
+                                errors.Add(new HtmlSvgError($"Invalid URL for attribute '{attribute.Name}'",
+                                    attribute.Line,
+                                    attribute.LinePosition));
+                            }
+                            else
+                            {
+                                if (uri.IsAbsoluteUri && !AllowedUriSchemes.Contains(uri.Scheme))
+                                {
+                                    errors.Add(new HtmlSvgError($"Invalid URL scheme '{uri.Scheme}' for attribute '{attribute.Name}'",
+                                        attribute.Line,
+                                        attribute.LinePosition));
+                                }
+                            }
                         }
                     }
                 }

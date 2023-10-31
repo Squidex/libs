@@ -34,6 +34,7 @@ public class HtmlSvgExtensionsTests
     }
 
     [Theory]
+    [InlineData("SvgBase64Use.svg")]
     [InlineData("SvgIframeTag.svg")]
     [InlineData("SvgScriptAttribute.svg")]
     [InlineData("SvgScriptTag.svg")]
@@ -47,6 +48,7 @@ public class HtmlSvgExtensionsTests
     }
 
     [Theory]
+    [InlineData("SvgBase64Use.svg")]
     [InlineData("SvgIframeTag.svg")]
     [InlineData("SvgScriptAttribute.svg")]
     [InlineData("SvgScriptTag.svg")]

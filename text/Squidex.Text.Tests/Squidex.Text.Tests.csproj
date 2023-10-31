@@ -43,6 +43,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="TestFiles\SvgBase64Use.svg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="TestFiles\SvgIframeTag.svg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
