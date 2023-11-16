@@ -7,9 +7,6 @@
 
 using Squidex.Hosting.Configuration;
 
-#pragma warning disable SA1011 // Closing square brackets should be spaced correctly
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-
 namespace Squidex.Hosting.Web;
 
 public sealed class UrlOptions : IValidatableOptions

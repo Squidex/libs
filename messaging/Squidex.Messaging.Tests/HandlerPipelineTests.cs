@@ -96,7 +96,7 @@ public sealed class HandlerPipelineTests
 
         var sut = new HandlerPipeline(handlers);
 
-        Assert.Equal(6, sut.GetHandlers(typeof(Concrete)).Count());
+        Assert.Equal(6, sut.GetHandlers(typeof(Concrete)).Count);
     }
 
     private static void IsValidHandler(IMessageHandler handler)

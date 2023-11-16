@@ -152,7 +152,7 @@ public static class SemanticLogExtensions
         return log.Measure(SemanticLogLevel.Information, context, action);
     }
 
-    private static IDisposable Measure<T>(this ISemanticLog log, SemanticLogLevel logLevel, T context, LogFormatter<T> action)
+    private static DelegateDisposable Measure<T>(this ISemanticLog log, SemanticLogLevel logLevel, T context, LogFormatter<T> action)
     {
         var watch = ValueStopwatch.StartNew();
 

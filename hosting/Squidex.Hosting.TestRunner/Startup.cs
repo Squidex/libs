@@ -69,18 +69,18 @@ public sealed class Startup
             {
                 context.Response.Headers.ContentType = "text/html";
 
-                await context.Response.WriteAsync("<html><body>Hello World</body></html>");
+                await context.Response.WriteAsync("<html><body>Hello World</body></html>", context.RequestAborted);
             });
             endpoints.MapGet("/hello.bytes", async context =>
             {
                 context.Response.Headers.ContentType = "text/html";
 
-                await context.Response.Body.WriteAsync(Encoding.UTF8.GetBytes("<html><body>Hello World</body></html>"));
+                await context.Response.Body.WriteAsync(Encoding.UTF8.GetBytes("<html><body>Hello World</body></html>"), context.RequestAborted);
             });
 
             endpoints.MapGet("/hello", async context =>
             {
-                await context.Response.WriteAsync("Hello, World!");
+                await context.Response.WriteAsync("Hello, World!", context.RequestAborted);
             });
         });
 

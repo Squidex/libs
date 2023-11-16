@@ -15,7 +15,7 @@ namespace Squidex.Messaging.Mongo;
 
 public sealed class MongoTransport : IMessagingTransport
 {
-    private readonly Dictionary<string, Task<IMongoCollection<MongoMessage>>> collections = new Dictionary<string, Task<IMongoCollection<MongoMessage>>>();
+    private readonly Dictionary<string, Task<IMongoCollection<MongoMessage>>> collections = [];
     private readonly MongoTransportOptions options;
     private readonly IMongoDatabase database;
     private readonly IMessagingSubscriptions subscriptions;

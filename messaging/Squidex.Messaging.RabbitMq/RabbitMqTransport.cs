@@ -15,7 +15,7 @@ public sealed class RabbitMqTransport : IMessagingTransport
 {
     private readonly RabbitMqOwner owner;
     private readonly ILogger<RabbitMqTransport> log;
-    private readonly HashSet<string> createdQueues = new HashSet<string>();
+    private readonly HashSet<string> createdQueues = [];
     private IModel? model;
 
     public RabbitMqTransport(RabbitMqOwner owner,
@@ -116,10 +116,10 @@ public sealed class RabbitMqTransport : IMessagingTransport
     public Task<IAsyncDisposable> SubscribeAsync(ChannelName channel, string instanceName, MessageTransportCallback callback,
         CancellationToken ct)
     {
-        return Task.FromResult(SubscribeCore(channel, instanceName, callback));
+        return Task.FromResult<IAsyncDisposable>(SubscribeCore(channel, instanceName, callback));
     }
 
-    private IAsyncDisposable SubscribeCore(ChannelName channel, string instanceName, MessageTransportCallback callback)
+    private RabbitMqSubscription SubscribeCore(ChannelName channel, string instanceName, MessageTransportCallback callback)
     {
         if (model == null)
         {

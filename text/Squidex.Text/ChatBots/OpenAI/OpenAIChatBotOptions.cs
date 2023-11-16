@@ -13,7 +13,7 @@ public sealed class OpenAIChatBotOptions
 {
     public string ApiKey { get; set; }
 
-    public string Model { get; set; } = Models.ChatGpt3_5Turbo;
+    public string Model { get; set; } = Models.Gpt_3_5_Turbo;
 
     public decimal PricePerInputTokenInEUR { get; set; } = 0.003m / 1000;
 

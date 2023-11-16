@@ -8,7 +8,6 @@
 using System.Globalization;
 using System.Net;
 using System.Text;
-using Microsoft.Net.Http.Headers;
 using Squidex.Assets.Internal;
 
 #pragma warning disable MA0098 // Use indexer instead of LINQ methods
@@ -18,6 +17,7 @@ namespace Squidex.Assets;
 public static class UploadHttpClientExtension
 {
     private static readonly HttpMethod Patch = new HttpMethod("PATCH");
+    private static readonly char[] SplitSeparators = ['/'];
 
     private static class TusHeaders
     {
@@ -101,7 +101,7 @@ public static class UploadHttpClientExtension
                 }
             });
 
-            content.Headers.TryAddWithoutValidation(HeaderNames.ContentType, TusHeaders.ContentType);
+            content.Headers.TryAddWithoutValidation("Content-Type", TusHeaders.ContentType);
 
             var request =
                 new HttpRequestMessage(Patch, GetFileIdUrl(uri, fileId!)) { Content = content }
@@ -262,12 +262,12 @@ public static class UploadHttpClientExtension
             throw new HttpRequestException($"Server did not answer with status code 201. Received: {(int)response.StatusCode}.");
         }
 
-        if (!response.Headers.TryGetValues(HeaderNames.Location, out var location) || !location.Any())
+        if (!response.Headers.TryGetValues("Location", out var location) || !location.Any())
         {
             throw new HttpRequestException($"Server did not answer location.");
         }
 
-        var locationValue = location.First().Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+        var locationValue = location.First().Split(SplitSeparators, StringSplitOptions.RemoveEmptyEntries);
 
         return locationValue.Last();
     }

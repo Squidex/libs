@@ -17,8 +17,8 @@ namespace Squidex.Log;
 
 public class SemanticLogTests
 {
-    private readonly List<ILogAppender> appenders = new List<ILogAppender>();
-    private readonly List<ILogChannel> channels = new List<ILogChannel>();
+    private readonly List<ILogAppender> appenders = [];
+    private readonly List<ILogChannel> channels = [];
     private readonly IOptions<SemanticLogOptions> options = Options.Create(new SemanticLogOptions());
     private readonly Lazy<SemanticLog> log;
     private readonly ILogChannel channel = A.Fake<ILogChannel>();

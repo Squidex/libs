@@ -154,15 +154,9 @@ public sealed class ImageSharpThumbnailGenerator : AssetThumbnailGeneratorBase
                 throw new NotSupportedException();
             }
 
-            var encoder = Configuration.Default.ImageFormatsManager.GetEncoder(image.Metadata.DecodedImageFormat);
-
-            if (encoder == null)
-            {
-                throw new NotSupportedException();
-            }
+            var encoder = Configuration.Default.ImageFormatsManager.GetEncoder(image.Metadata.DecodedImageFormat) ?? throw new NotSupportedException();
 
             image.Mutate(x => x.AutoOrient());
-
             image.Metadata.ExifProfile = null;
             image.Metadata.IccProfile = null;
             image.Metadata.IptcProfile = null;

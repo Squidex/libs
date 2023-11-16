@@ -129,7 +129,7 @@ public class MemoryAssetStore : IAssetStore
         {
             if (key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
             {
-                toRemove ??= new HashSet<string>();
+                toRemove ??= [];
                 toRemove.Add(key);
             }
         }

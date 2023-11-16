@@ -14,8 +14,8 @@ namespace Squidex.Text;
 /// </summary>
 public static class WordBoundary
 {
-    private static readonly HashSet<char> NewLines = new HashSet<char>
-    {
+    private static readonly HashSet<char> NewLines =
+    [
         '\u000A', // Line Feed
         '\u000B', // Vertical Tab
         '\u000C', // Form Feed
@@ -23,10 +23,10 @@ public static class WordBoundary
         '\u0085', // Next Line
         '\u2028', // Line Separator
         '\u2029' // Paragraph Separator
-    };
+    ];
 
-    private static readonly HashSet<char> MidLetter = new HashSet<char>
-    {
+    private static readonly HashSet<char> MidLetter =
+    [
         ':',
         '.',
         '’',
@@ -37,7 +37,7 @@ public static class WordBoundary
         '\uFE13', // Presentation form for vertical colon
         '\uFE55', // Small Colon
         '\uFF1A' // Full Width Colon
-    };
+    ];
 
     /// <summary>
     /// Checks if the given char in string is the end of a word.

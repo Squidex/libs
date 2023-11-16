@@ -11,7 +11,7 @@ namespace Squidex.Caching;
 
 public sealed class LRUCache<TKey, TValue> where TKey : notnull
 {
-    private readonly Dictionary<TKey, LinkedListNode<LRUCacheItem<TKey, TValue>>> cacheMap = new Dictionary<TKey, LinkedListNode<LRUCacheItem<TKey, TValue>>>();
+    private readonly Dictionary<TKey, LinkedListNode<LRUCacheItem<TKey, TValue>>> cacheMap = [];
     private readonly LinkedList<LRUCacheItem<TKey, TValue>> cacheHistory = new LinkedList<LRUCacheItem<TKey, TValue>>();
     private readonly int capacity;
     private readonly Action<TKey, TValue> itemEvicted;

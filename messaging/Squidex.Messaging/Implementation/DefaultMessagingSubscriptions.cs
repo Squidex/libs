@@ -14,7 +14,7 @@ namespace Squidex.Messaging.Implementation;
 
 public sealed class DefaultMessagingSubscriptions : IMessagingSubscriptions, IBackgroundProcess
 {
-    private readonly Dictionary<(string Group, string Key), (SerializedObject Value, TimeSpan Expires)> localSubscriptions = new ();
+    private readonly Dictionary<(string Group, string Key), (SerializedObject Value, TimeSpan Expires)> localSubscriptions = [];
     private readonly MessagingOptions options;
     private readonly IMessagingSubscriptionStore messagingSubscriptionStore;
     private readonly IMessagingSerializer messagingSerializer;
@@ -145,7 +145,7 @@ public sealed class DefaultMessagingSubscriptions : IMessagingSubscriptions, IBa
 
         var request = new SubscribeRequest(group, key, serialized, CalculateExpiration(clock.UtcNow, expiresAfter));
 
-        await messagingSubscriptionStore.SubscribeManyAsync(new[] { request }, ct);
+        await messagingSubscriptionStore.SubscribeManyAsync([request], ct);
 
         return new DelegateAsyncDisposable(() =>
         {

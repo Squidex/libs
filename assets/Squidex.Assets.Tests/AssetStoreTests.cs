@@ -29,9 +29,7 @@ public abstract class AssetStoreTests<T> where T : IAssetStore
 
     protected AssetStoreTests()
     {
-#pragma warning disable MA0056 // Do not call overridable members in constructor
         sut = new Lazy<T>(CreateStore);
-#pragma warning restore MA0056 // Do not call overridable members in constructor
     }
 
     public abstract T CreateStore();
@@ -59,7 +57,7 @@ public abstract class AssetStoreTests<T> where T : IAssetStore
     {
         path = path.Replace("{file}", Guid.NewGuid().ToString(), StringComparison.Ordinal);
 
-        var data = new MemoryStream(new byte[] { 0x1, 0x2, 0x3, 0x4, 0x5 });
+        var data = new MemoryStream([0x1, 0x2, 0x3, 0x4, 0x5]);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => Sut.UploadAsync(path, data, true));
     }
@@ -287,7 +285,7 @@ public abstract class AssetStoreTests<T> where T : IAssetStore
     {
         var path = GetPath(testCase);
 
-        var oldData = new MemoryStream(new byte[] { 0x1, 0x2, 0x3, 0x4, 0x5 });
+        var oldData = new MemoryStream([0x1, 0x2, 0x3, 0x4, 0x5]);
 
         await Sut.UploadAsync(path, oldData);
         await Sut.UploadAsync(path, assetSmall, true);

@@ -5,7 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System.Runtime.Serialization;
 using Squidex.Assets.Internal;
 
 namespace Squidex.Assets;
@@ -15,11 +14,6 @@ public class AssetAlreadyExistsException : Exception
 {
     public AssetAlreadyExistsException(string fileName, Exception? inner = null)
         : base(FormatMessage(fileName), inner)
-    {
-    }
-
-    protected AssetAlreadyExistsException(SerializationInfo info, StreamingContext context)
-        : base(info, context)
     {
     }
 

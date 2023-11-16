@@ -12,7 +12,7 @@ namespace Squidex.Assets;
 
 public sealed class MongoGridFSAssetStoreFixture : IDisposable
 {
-    private readonly IMongoClient mongoClient = new MongoClient(TestHelpers.Configuration["assetStore:mongoDB:connectionString"]);
+    private readonly MongoClient mongoClient = new MongoClient(TestHelpers.Configuration["assetStore:mongoDB:connectionString"]);
 
     public MongoGridFsAssetStore AssetStore { get; }
 

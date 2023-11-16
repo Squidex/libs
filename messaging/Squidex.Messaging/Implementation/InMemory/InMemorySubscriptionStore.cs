@@ -60,7 +60,7 @@ public class InMemorySubscriptionStore : IMessagingSubscriptionStore
         {
             if (subscription.Expiration < now)
             {
-                toRemove ??= new HashSet<(string Group, string Key)>();
+                toRemove ??= [];
                 toRemove.Add(key);
             }
         }

@@ -5,11 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using FakeItEasy;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using Squidex.Text.Translations.DeepL;
-using Squidex.Text.Translations.GoogleCloud;
 using Xunit;
 
 namespace Squidex.Text.Translations;
@@ -34,7 +30,7 @@ public class GoogleCloudTranslationServiceTests : TranslationServiceTestsBase
     {
         var sut =
             new ServiceCollection()
-                .AddGoogleCloudTranslations(TestHelpers.Configuration, c => c.ProjectId = projectId)
+                .AddGoogleCloudTranslations(TestHelpers.Configuration, c => c.ProjectId = projectId!)
                 .BuildServiceProvider()
                 .GetRequiredService<ITranslationService>();
 

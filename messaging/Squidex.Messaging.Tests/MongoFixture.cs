@@ -11,7 +11,7 @@ namespace Squidex.Messaging;
 
 public sealed class MongoFixture : IDisposable
 {
-    private readonly List<Predicate<string>> collectionsToClean = new List<Predicate<string>>();
+    private readonly List<Predicate<string>> collectionsToClean = [];
 
     public IMongoDatabase Database { get; }
 
@@ -34,7 +34,7 @@ public sealed class MongoFixture : IDisposable
     {
         var collections = Database.ListCollectionNames().ToList();
 
-        foreach (var collectionName in collections.Where(x => collectionsToClean.Any(p => p(x))))
+        foreach (var collectionName in collections.Where(x => collectionsToClean.Exists(p => p(x))))
         {
             Database.DropCollection(collectionName);
         }

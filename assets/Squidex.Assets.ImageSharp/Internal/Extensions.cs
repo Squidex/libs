@@ -33,13 +33,7 @@ internal static class Extensions
             throw new NotSupportedException();
         }
 
-        var encoder = imageFormatsManager.GetEncoder(format);
-
-        if (encoder == null)
-        {
-            throw new NotSupportedException();
-        }
-
+        var encoder = imageFormatsManager.GetEncoder(format) ?? throw new NotSupportedException();
         if (encoder is PngEncoder png && png.ColorType != PngColorType.RgbWithAlpha)
         {
             encoder = new PngEncoder

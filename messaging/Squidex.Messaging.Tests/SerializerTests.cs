@@ -12,7 +12,7 @@ namespace Squidex.Messaging;
 
 public class SerializerTests
 {
-    private class TestObject
+    private sealed class TestObject
     {
         public string Value { get; set; }
     }
@@ -78,7 +78,7 @@ public class SerializerTests
 
     private static void ThrowExceptionWhenDeserializingInvalidType(IMessagingSerializer serializer)
     {
-        var input = new SerializedObject(Array.Empty<byte>(), "Invalid", "format");
+        var input = new SerializedObject([], "Invalid", "format");
 
         Assert.Throws<ArgumentException>(() => serializer.Deserialize(input!));
     }
