@@ -46,12 +46,7 @@ public sealed class MongoGridFsAssetStore : IAssetStore, IInitializable
         var fileQuery = await bucket.FindAsync(Filters.Eq(x => x.Id, name), cancellationToken: ct);
         var fileObject = await fileQuery.FirstOrDefaultAsync(ct);
 
-        if (fileObject == null)
-        {
-            throw new AssetNotFoundException(fileName);
-        }
-
-        return fileObject.Length;
+        return fileObject == null ? throw new AssetNotFoundException(fileName) : fileObject.Length;
     }
 
     public async Task CopyAsync(string sourceFileName, string targetFileName,

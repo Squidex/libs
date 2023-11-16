@@ -28,14 +28,14 @@ public class FolderAssetStoreTests : AssetStoreTests<FolderAssetStore>, IClassFi
     }
 
     [Fact]
-    public void Should_throw_when_creating_directory_failed()
+    public async Task Should_throw_when_creating_directory_failed()
     {
         var options = Options.Create(new FolderAssetOptions
         {
             Path = CreateInvalidPath()
         });
 
-        Assert.Throws<AssetStoreException>(() => new FolderAssetStore(options, A.Dummy<ILogger<FolderAssetStore>>()).InitializeAsync(default).Wait());
+        await Assert.ThrowsAsync<AssetStoreException>(() => new FolderAssetStore(options, A.Dummy<ILogger<FolderAssetStore>>()).InitializeAsync(default));
     }
 
     [Fact]

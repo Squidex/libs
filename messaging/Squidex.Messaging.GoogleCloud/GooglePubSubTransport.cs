@@ -18,11 +18,11 @@ namespace Squidex.Messaging.GoogleCloud;
 
 public sealed class GooglePubSubTransport : IMessagingTransport
 {
-    private readonly Dictionary<string, Task<PublisherClient>> publishers = new Dictionary<string, Task<PublisherClient>>();
+    private readonly Dictionary<string, Task<PublisherClient>> publishers = [];
     private readonly GooglePubSubTransportOptions options;
     private readonly GooglePushConfig pushConfig = new GooglePushConfig();
-    private readonly HashSet<string> createdSubcriptions = new HashSet<string>();
-    private readonly HashSet<string> createdTopics = new HashSet<string>();
+    private readonly HashSet<string> createdSubcriptions = [];
+    private readonly HashSet<string> createdTopics = [];
     private readonly ILogger<GooglePubSubTransport> log;
 
     public GooglePubSubTransport(IOptions<GooglePubSubTransportOptions> options,

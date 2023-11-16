@@ -13,7 +13,7 @@ namespace Squidex.Messaging.Implementation;
 
 public sealed class DelegatingProducer : IInternalMessageProducer
 {
-    private readonly HashSet<string> initializedChannels = new HashSet<string>();
+    private readonly HashSet<string> initializedChannels = [];
     private readonly SemaphoreSlim semaphore = new SemaphoreSlim(1);
     private readonly string instanceName;
     private readonly IMessagingTransports messagingTransports;

@@ -13,7 +13,7 @@ namespace Squidex.Hosting.Web;
 
 public sealed class UrlGenerator : IUrlGenerator
 {
-    private readonly HashSet<HostString> allTrustedHosts = new HashSet<HostString>();
+    private readonly HashSet<HostString> allTrustedHosts = [];
     private readonly string baseUrl;
     private readonly string basePath;
     private readonly string? callbackUrl;

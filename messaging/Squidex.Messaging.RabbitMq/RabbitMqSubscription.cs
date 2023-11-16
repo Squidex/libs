@@ -56,14 +56,12 @@ internal sealed class RabbitMqSubscription : IMessageAck, IAsyncDisposable
         this.log = log;
     }
 
-    public ValueTask DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
-        stopToken.Cancel();
+        await stopToken.CancelAsync();
 
         model.BasicCancel(consumerTag);
         model.Dispose();
-
-        return default;
     }
 
     public Task OnErrorAsync(TransportResult result,

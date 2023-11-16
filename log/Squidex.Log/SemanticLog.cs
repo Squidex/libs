@@ -73,7 +73,7 @@ public sealed class SemanticLog : ISemanticLog
             }
             catch (Exception ex)
             {
-                exceptions ??= new List<Exception>();
+                exceptions ??= [];
                 exceptions.Add(ex);
             }
         }

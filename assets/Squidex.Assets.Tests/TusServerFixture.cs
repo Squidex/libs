@@ -17,7 +17,7 @@ namespace Squidex.Assets;
 
 public class TusServerFixture
 {
-    public static List<AssetTusFile> Files { get; } = new List<AssetTusFile>();
+    public static List<AssetTusFile> Files { get; } = [];
 
     public TestServer TestServer { get; private set; }
 

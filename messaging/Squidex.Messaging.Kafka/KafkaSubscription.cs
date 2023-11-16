@@ -78,11 +78,11 @@ internal sealed class KafkaSubscription : IMessageAck, IAsyncDisposable
 #pragma warning restore IDE0017 // Simplify object initialization
     }
 
-    public ValueTask DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         try
         {
-            stopToken.Cancel();
+            await stopToken.CancelAsync();
 
             consumerThread.Join(1500);
         }
@@ -95,8 +95,6 @@ internal sealed class KafkaSubscription : IMessageAck, IAsyncDisposable
             consumer.Close();
             consumer.Dispose();
         }
-
-        return default;
     }
 
     public Task OnErrorAsync(TransportResult result,

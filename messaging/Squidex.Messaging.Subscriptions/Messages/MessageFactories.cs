@@ -27,7 +27,7 @@ internal static class MessageFactories
         {
             var method = BuildSubscribeFactoryMethod.MakeGenericMethod(type);
 
-            return (Func<Guid, ISubscription, SubscribeMessageBase>)method.Invoke(null, Array.Empty<object?>())!;
+            return (Func<Guid, ISubscription, SubscribeMessageBase>)method.Invoke(null, [])!;
         });
 
         var result = factory(id, subscription);
@@ -41,7 +41,7 @@ internal static class MessageFactories
         {
             var method = BuildPayloadFactoryMethod.MakeGenericMethod(type);
 
-            return (Func<List<Guid>, object, PayloadMessageBase>)method.Invoke(null, Array.Empty<object?>())!;
+            return (Func<List<Guid>, object, PayloadMessageBase>)method.Invoke(null, [])!;
         });
 
         var result = factory(ids, message);

@@ -84,7 +84,7 @@ public sealed class MongoSubscriptionStore : IMessagingSubscriptionStore, IIniti
 
         foreach (var (group, key, value, expiration) in requests)
         {
-            updates ??= new List<WriteModel<Entity>>();
+            updates ??= [];
             updates.Add(new UpdateOneModel<Entity>(
                 Builders<Entity>.Filter.Eq(x => x.Id, GetId(group, key)),
                 Builders<Entity>.Update

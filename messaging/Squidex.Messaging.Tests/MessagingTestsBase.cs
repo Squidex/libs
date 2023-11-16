@@ -31,7 +31,7 @@ public abstract class MessagingTestsBase
         private readonly int expectCount;
         private readonly Guid expectedId;
         private readonly TaskCompletionSource tcs = new TaskCompletionSource();
-        private readonly ConcurrentBag<int> messagesReceives = new ConcurrentBag<int>();
+        private readonly ConcurrentBag<int> messagesReceives = [];
         private readonly CancellationTokenSource cts;
 
         public Task Completion => tcs.Task;

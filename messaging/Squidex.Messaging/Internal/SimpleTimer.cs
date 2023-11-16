@@ -47,10 +47,8 @@ public sealed class SimpleTimer : IAsyncDisposable
         }, stopToken.Token);
     }
 
-    public ValueTask DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
-        stopToken.Cancel();
-
-        return default;
+        await stopToken.CancelAsync();
     }
 }

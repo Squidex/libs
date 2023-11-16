@@ -52,7 +52,9 @@ public class TusController : ControllerBase
         }
     }
 
+#pragma warning disable ASP0018 // Unused route parameter
     [Route("files/controller/{**catchAll}")]
+#pragma warning restore ASP0018 // Unused route parameter
     public async Task<IActionResult> Tus()
     {
         var (result, file) = await runner.InvokeAsync(HttpContext, Url.Action(null, new { catchAll = (string?)null })!);
@@ -85,9 +87,9 @@ public class TusController : ControllerBase
     {
         public string FileId { get; private set; }
 
-        public List<int> Progress { get; } = new List<int>();
+        public List<int> Progress { get; } = [];
 
-        public List<int> Uploads { get; } = new List<int>();
+        public List<int> Uploads { get; } = [];
 
         public Exception? Exception { get; private set; }
 

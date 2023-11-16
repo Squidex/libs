@@ -81,7 +81,7 @@ public sealed class KafkaTransport : IMessagingTransport
 
         if (transportMessage.Headers.Count > 0)
         {
-            message.Headers = new Headers();
+            message.Headers = [];
 
             foreach (var (key, value) in transportMessage.Headers)
             {
@@ -125,10 +125,10 @@ public sealed class KafkaTransport : IMessagingTransport
     public Task<IAsyncDisposable> SubscribeAsync(ChannelName channel, string instanceName, MessageTransportCallback callback,
         CancellationToken ct)
     {
-        return Task.FromResult(SubscribeCore(channel, callback));
+        return Task.FromResult<IAsyncDisposable>(SubscribeCore(channel, callback));
     }
 
-    private IAsyncDisposable SubscribeCore(ChannelName channel, MessageTransportCallback callback)
+    private KafkaSubscription SubscribeCore(ChannelName channel, MessageTransportCallback callback)
     {
         if (producer == null)
         {

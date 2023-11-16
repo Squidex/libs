@@ -44,13 +44,10 @@ public class HasherStreamTests
 
     private static string Sha256Base64(byte[] bytes)
     {
-        using (var sha = SHA256.Create())
-        {
-            var bytesHash = sha.ComputeHash(bytes);
+        var bytesHash = SHA256.HashData(bytes);
 
-            var result = Convert.ToBase64String(bytesHash);
+        var result = Convert.ToBase64String(bytesHash);
 
-            return result;
-        }
+        return result;
     }
 }

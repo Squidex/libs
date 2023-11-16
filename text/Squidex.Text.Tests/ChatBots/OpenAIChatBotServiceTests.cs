@@ -6,8 +6,6 @@
 // ==========================================================================
 
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using Squidex.Text.ChatBots.OpenAI;
 using Xunit;
 
 namespace Squidex.Text.ChatBots;

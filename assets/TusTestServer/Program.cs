@@ -59,4 +59,4 @@ app.UseStaticFiles();
 app.UseRouting();
 app.MapControllers();
 
-app.Run();
+await app.RunAsync();

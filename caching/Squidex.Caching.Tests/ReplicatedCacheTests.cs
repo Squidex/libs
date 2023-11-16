@@ -116,7 +116,7 @@ public class ReplicatedCacheTests
     public async Task Should_invalidate_keys_when_message_received()
     {
         await sut.AddAsync("Key", 1, TimeSpan.FromHours(1));
-        await sut.HandleAsync(new CacheInvalidateMessage { Keys = new[] { "Key" } }, default);
+        await sut.HandleAsync(new CacheInvalidateMessage { Keys = ["Key"] }, default);
 
         AssertCache(sut, "Key", null, false);
     }
@@ -125,7 +125,7 @@ public class ReplicatedCacheTests
     public async Task Should_invalidate_keys_when_message_received_from_same_instance()
     {
         await sut.AddAsync("Key", 1, TimeSpan.FromHours(1));
-        await sut.HandleAsync(new CacheInvalidateMessage { Keys = new[] { "Key" }, Source = sut.InstanceId }, default);
+        await sut.HandleAsync(new CacheInvalidateMessage { Keys = ["Key"], Source = sut.InstanceId }, default);
 
         AssertCache(sut, "Key", 1, true);
     }
@@ -136,7 +136,7 @@ public class ReplicatedCacheTests
         await sut.HandleAsync(new CacheInvalidateMessage { }, default);
     }
 
-    private static void AssertCache(IReplicatedCache cache, string key, object? expectedValue, bool expectedFound)
+    private static void AssertCache(ReplicatedCache cache, string key, object? expectedValue, bool expectedFound)
     {
         var found = cache.TryGetValue(key, out var value);
 

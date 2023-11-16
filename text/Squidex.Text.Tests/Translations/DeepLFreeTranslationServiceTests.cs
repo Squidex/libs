@@ -5,11 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using FakeItEasy;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using Squidex.Text.ChatBots.OpenAI;
-using Squidex.Text.Translations.DeepL;
 using Xunit;
 
 namespace Squidex.Text.Translations;

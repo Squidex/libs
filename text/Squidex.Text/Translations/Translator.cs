@@ -26,32 +26,28 @@ public sealed class Translator : ITranslator
     public async Task<IReadOnlyList<TranslationResult>> TranslateAsync(IEnumerable<string> texts, string targetLanguage, string? sourceLanguage = null,
         CancellationToken ct = default)
     {
-        if (texts == null)
-        {
-            throw new ArgumentNullException(nameof(texts));
-        }
+        ArgumentNullException.ThrowIfNull(texts);
 
         var textArray = texts.ToArray();
-
-        var results = new List<TranslationResult>(textArray.Length);
+        var textResult = new List<TranslationResult>(textArray.Length);
 
         if (textArray.Length == 0)
         {
-            return results;
+            return textResult;
         }
 
         for (var i = 0; i < textArray.Length; i++)
         {
-            results.Add(TranslationResult.NotTranslated);
+            textResult.Add(TranslationResult.NotTranslated);
         }
 
         foreach (var service in services)
         {
             var serviceTexts = new List<string>();
 
-            for (var i = 0; i < results.Count; i++)
+            for (var i = 0; i < textResult.Count; i++)
             {
-                if (results[i].Status != TranslationStatus.Translated)
+                if (textResult[i].Status != TranslationStatus.Translated)
                 {
                     serviceTexts.Add(textArray[i]);
                 }
@@ -71,26 +67,23 @@ public sealed class Translator : ITranslator
 
             var j = 0;
 
-            for (var i = 0; i < results.Count; i++)
+            for (var i = 0; i < textResult.Count; i++)
             {
-                if (results[i].Status != TranslationStatus.Translated)
+                if (textResult[i].Status != TranslationStatus.Translated)
                 {
-                    results[i] = serviceResults[j];
+                    textResult[i] = serviceResults[j];
                     j++;
                 }
             }
         }
 
-        return results;
+        return textResult;
     }
 
     public async Task<TranslationResult> TranslateAsync(string text, string targetLanguage, string? sourceLanguage = null,
         CancellationToken ct = default)
     {
-        if (text == null)
-        {
-            throw new ArgumentNullException(nameof(text));
-        }
+        ArgumentNullException.ThrowIfNull(text);
 
         var results = await TranslateAsync(Enumerable.Repeat(text, 1), targetLanguage, sourceLanguage, ct);
 

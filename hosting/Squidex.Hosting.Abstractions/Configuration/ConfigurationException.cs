@@ -5,7 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System.Runtime.Serialization;
 using System.Text;
 
 namespace Squidex.Hosting.Configuration;
@@ -26,25 +25,9 @@ public class ConfigurationException : Exception
         Errors = errors;
     }
 
-    protected ConfigurationException(SerializationInfo info, StreamingContext context)
-        : base(info, context)
-    {
-        Errors = (List<ConfigurationError>)info.GetValue(nameof(Errors), typeof(List<ConfigurationError>))!;
-    }
-
-    public override void GetObjectData(SerializationInfo info, StreamingContext context)
-    {
-        info.AddValue(nameof(Errors), Errors);
-
-        base.GetObjectData(info, context);
-    }
-
     private static string FormatMessage(IReadOnlyList<ConfigurationError> errors)
     {
-        if (errors == null)
-        {
-            throw new ArgumentNullException(nameof(errors));
-        }
+        ArgumentNullException.ThrowIfNull(errors);
 
         var sb = new StringBuilder();
 

@@ -21,7 +21,7 @@ public sealed class DefaultMessageEvaluator : IMessageEvaluator
         {
             if (await subscription.ShouldHandle(message))
             {
-                result ??= new List<Guid>();
+                result ??= [];
                 result.Add(id);
             }
         }

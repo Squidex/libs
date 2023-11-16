@@ -195,7 +195,7 @@ public class TusServerTests : IClassFixture<TusServerFixture>
         {
             while (!cts.IsCancellationRequested)
             {
-                if (TusServerFixture.Files.Any(x => x.FileName == file.FileName && x.MimeType == file.ContentType))
+                if (TusServerFixture.Files.Exists(x => x.FileName == file.FileName && x.MimeType == file.ContentType))
                 {
                     break;
                 }

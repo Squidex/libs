@@ -19,7 +19,7 @@ namespace Squidex.Log;
 public class SemanticLogAdapterTests
 {
     private readonly IOptions<SemanticLogOptions> options = Options.Create(new SemanticLogOptions());
-    private readonly List<ILogChannel> channels = new List<ILogChannel>();
+    private readonly List<ILogChannel> channels = [];
     private readonly Lazy<SemanticLog> log;
     private readonly ILogChannel channel = A.Fake<ILogChannel>();
     private readonly SemanticLogLoggerProvider sut;

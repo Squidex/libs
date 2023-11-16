@@ -29,7 +29,7 @@ public sealed class SubscriptionService : ISubscriptionService, IInitializable, 
     private readonly ILogger<SubscriptionService> log;
     private readonly SimpleTimer cleanupTimer;
 
-    public bool HasSubscriptions => clusterSubscriptions.Any();
+    public bool HasSubscriptions => !clusterSubscriptions.IsEmpty;
 
     public int Order => int.MaxValue;
 
@@ -104,7 +104,7 @@ public sealed class SubscriptionService : ISubscriptionService, IInitializable, 
             {
                 if (subscription.ExpiresUtc < now)
                 {
-                    toUnsubscribe ??= new HashSet<Guid>();
+                    toUnsubscribe ??= [];
                     toUnsubscribe.Add(subscription.SubscriptionId);
                 }
             }
@@ -204,7 +204,7 @@ public sealed class SubscriptionService : ISubscriptionService, IInitializable, 
             }
             else
             {
-                remoteSubscriptionIds ??= new List<Guid>();
+                remoteSubscriptionIds ??= [];
                 remoteSubscriptionIds.Add(id);
             }
         }
@@ -236,7 +236,7 @@ public sealed class SubscriptionService : ISubscriptionService, IInitializable, 
             }
             else
             {
-                remoteSubscriptionIds ??= new List<Guid>();
+                remoteSubscriptionIds ??= [];
                 remoteSubscriptionIds.Add(id);
             }
         }
