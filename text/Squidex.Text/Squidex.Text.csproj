@@ -15,6 +15,7 @@
     <PackageReference Include="Betalgo.OpenAI" Version="7.4.1" />
     <PackageReference Include="Google.Cloud.Translate.V3" Version="3.3.0" />
     <PackageReference Include="HtmlAgilityPack" Version="1.11.54" />
+    <PackageReference Include="HtmlTextWriter" Version="2.1.1" />
     <PackageReference Include="Meziantou.Analyzer" Version="2.0.110">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
