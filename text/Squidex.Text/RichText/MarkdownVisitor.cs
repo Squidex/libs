@@ -21,55 +21,73 @@ public sealed class MarkdownVisitor : Visitor
         this.renderer = renderer;
     }
 
-    public static void Render(NodeBase node, TextWriter textWriter)
+    public static void Render(INode node, TextWriter textWriter)
     {
         var newRenderer = new NormalizeRenderer(textWriter);
 
         new MarkdownVisitor(newRenderer).Visit(node);
     }
 
-    protected override void VisitBlockquote(NodeBase node)
+    protected override void VisitBlockquote(INode node)
     {
         renderer.PushIndent("> ");
         VisitChildren(node);
         renderer.PopIndent();
+
+        FinishBlock(true);
     }
 
-    protected override void VisitBulletList(NodeBase node)
+    protected override void VisitBulletList(INode node)
     {
-        node.IterateContent(this, (node, self) =>
+        IterateChildren(node, this, (child, self) =>
         {
             self.renderer.EnsureLine();
             self.renderer.Write('*');
-            self.renderer.Write(' ');
-            self.renderer.PushIndent("  ");
-            self.Visit(node);
+            self.renderer.Write("   ");
+            self.renderer.PushIndent("    ");
+            self.Visit(child);
             self.renderer.PopIndent();
+
+            if (!IsLastInContainer)
+            {
+                self.renderer.EnsureLine();
+                self.renderer.WriteLine();
+            }
         });
 
-        renderer.FinishBlock(true);
+        renderer.EnsureLine();
+
+        FinishBlock(true);
     }
 
-    protected override void VisitOrderedList(NodeBase node)
+    protected override void VisitOrderedList(INode node)
     {
         currentIndex = 0;
 
-        node.IterateContent(this, (node, self) =>
+        IterateChildren(node, this, (child, self) =>
         {
             self.currentIndex++;
             self.renderer.EnsureLine();
             self.renderer.Write(self.currentIndex.ToString(CultureInfo.InvariantCulture));
             self.renderer.Write('.');
-            self.renderer.Write(' ');
-            self.renderer.PushIndent(new string(' ', IntLog10Fast(currentIndex) + 3));
-            self.Visit(node);
+            self.renderer.Write("  ");
+            self.renderer.PushIndent(new string(' ', IntLog10Fast(currentIndex) + 4));
+            self.Visit(child);
             self.renderer.PopIndent();
+
+            if (!IsLastInContainer)
+            {
+                self.renderer.EnsureLine();
+                self.renderer.WriteLine();
+            }
         });
 
-        renderer.FinishBlock(true);
+        renderer.EnsureLine();
+
+        FinishBlock(true);
     }
 
-    protected override void VisitCodeBlock(NodeBase node, string? language)
+    protected override void VisitCodeBlock(INode node, string? language)
     {
         renderer.Write("```");
         renderer.Write(language ?? string.Empty);
@@ -77,9 +95,11 @@ public sealed class MarkdownVisitor : Visitor
         VisitChildren(node);
         renderer.WriteLine();
         renderer.Write("```");
+
+        FinishBlock(true);
     }
 
-    protected override void VisitImage(NodeBase node, string? src, string? alt, string? title)
+    protected override void VisitImage(INode node, string? src, string? alt, string? title)
     {
         renderer.Write('!');
         renderer.Write('[');
@@ -99,17 +119,19 @@ public sealed class MarkdownVisitor : Visitor
         renderer.Write(')');
     }
 
-    protected override void VisitHorizontalLine(NodeBase node)
+    protected override void VisitHorizontalRule(INode node)
     {
         renderer.WriteLine("---");
+
+        FinishBlock(false);
     }
 
-    protected override void VisitHardBreak(NodeBase node)
+    protected override void VisitHardBreak(INode node)
     {
         renderer.WriteLine();
     }
 
-    protected override void VisitHeading(NodeBase node, int level)
+    protected override void VisitHeading(INode node, int level)
     {
         for (var i = 0; i < level; i++)
         {
@@ -118,16 +140,18 @@ public sealed class MarkdownVisitor : Visitor
 
         renderer.Write(' ');
         VisitChildren(node);
-        renderer.FinishBlock(false);
+
+        FinishBlock(true);
     }
 
-    protected override void VisitParagraph(NodeBase node)
+    protected override void VisitParagraph(INode node)
     {
         VisitChildren(node);
-        renderer.FinishBlock(true);
+
+        FinishBlock(true);
     }
 
-    protected override void VisitLink(MarkBase mark, Action inner, string? href, string? target)
+    protected override void VisitLink(IMark mark, Action inner, string? href, string? target)
     {
         if (string.IsNullOrWhiteSpace(href))
         {
@@ -143,37 +167,38 @@ public sealed class MarkdownVisitor : Visitor
         renderer.Write(')');
     }
 
-    protected override void VisitCode(MarkBase mark, Action inner)
+    protected override void VisitCode(IMark mark, Action inner)
     {
         renderer.Write('`');
         inner();
         renderer.Write('`');
     }
 
-    protected override void VisitBold(MarkBase mark, Action inner)
+    protected override void VisitBold(IMark mark, Action inner)
     {
         renderer.Write("**");
         inner();
         renderer.Write("**");
     }
 
-    protected override void VisitItalic(MarkBase mark, Action inner)
+    protected override void VisitItalic(IMark mark, Action inner)
     {
         renderer.Write('*');
         inner();
         renderer.Write('*');
     }
 
-    protected override void VisitUnderline(MarkBase mark, Action inner)
+    protected override void VisitText(INode node)
     {
-        renderer.Write('_');
-        inner();
-        renderer.Write('_');
+        renderer.Write(node.Text);
     }
 
-    protected override void VisitText(NodeBase node)
+    private void FinishBlock(bool newLine)
     {
-        renderer.Write(node.GetText());
+        if (!IsLastInContainer)
+        {
+            renderer.FinishBlock(newLine);
+        }
     }
 
     private static int IntLog10Fast(int input) =>

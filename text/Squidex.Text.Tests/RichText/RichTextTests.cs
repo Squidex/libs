@@ -48,7 +48,7 @@ Paragraph1";
     {
         var source = new Node
         {
-            Type = NodeType.Document,
+            Type = NodeType.Doc,
             Content =
             [
                 new Node
@@ -146,7 +146,7 @@ Paragraph2";
     {
         var source = new Node
         {
-            Type = NodeType.HorizontalLine
+            Type = NodeType.HorizontalRule
         };
 
         var (markdown, html) = RenderUtils.Render(source);
@@ -158,6 +158,70 @@ Paragraph2";
 
         var expectedHtml = @"
 <hr>";
+
+        Assert.Equal(expectedHtml.TrimExpected(), html);
+    }
+
+    [Fact]
+    public void Should_render_block_quote()
+    {
+        var source = new Node
+        {
+            Type = NodeType.Doc,
+            Content =
+            [
+                new Node
+                {
+                    Type = NodeType.Blockquote,
+                    Content =
+                    [
+                        new Node
+                        {
+                            Type = NodeType.Paragraph,
+                            Content =
+                            [
+                                new Node
+                                {
+                                    Type = NodeType.Text,
+                                    Text = "Text1"
+                                },
+                            ]
+                        },
+                    ],
+                },
+                new Node
+                {
+                    Type = NodeType.Paragraph,
+                    Content =
+                    [
+                        new Node
+                        {
+                            Type = NodeType.Text,
+                            Text = "Text2"
+                        },
+                    ]
+                },
+            ]
+        };
+
+        var (markdown, html) = RenderUtils.Render(source);
+
+        var expectedMarkdown = @"
+> Text1
+
+Text2";
+
+        Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
+
+        var expectedHtml = @"
+<blockquote>
+    <p>
+        Text1
+    </p>
+</blockquote>
+<p>
+    Text2
+</p>";
 
         Assert.Equal(expectedHtml.TrimExpected(), html);
     }

@@ -9,10 +9,11 @@ using Squidex.Text.RichText.Model;
 
 namespace Squidex.RichText.Json;
 
-internal sealed class JsonMark : MarkBase
+internal sealed class JsonMark : IMark
 {
     private JsonObject? attrs;
-    private MarkType type;
+
+    public MarkType Type { get; private set; }
 
     public bool TryUse(JsonObject source)
     {
@@ -24,7 +25,7 @@ internal sealed class JsonMark : MarkBase
             switch (key)
             {
                 case "type" when value.TryGetEnum<MarkType>(out var type):
-                    this.type = type;
+                    Type = type;
                     break;
                 case "attrs" when value is JsonObject attrs:
                     this.attrs = attrs;
@@ -38,28 +39,13 @@ internal sealed class JsonMark : MarkBase
         return isValid;
     }
 
-    public override MarkType GetMarkType()
+    public int GetIntAttr(string name, int defaultValue = 0)
     {
-        return type;
+        return attrs.GetIntAttr(name, defaultValue);
     }
 
-    public override int GetIntAttr(string name, int defaultValue = 0)
+    public string GetStringAttr(string name, string defaultValue = "")
     {
-        if (attrs?.TryGetValue(name, out var value) == true && value is int attr)
-        {
-            return attr;
-        }
-
-        return defaultValue;
-    }
-
-    public override string GetStringAttr(string name, string defaultValue = "")
-    {
-        if (attrs?.TryGetValue(name, out var value) == true && value is string attr)
-        {
-            return attr;
-        }
-
-        return defaultValue;
+        return attrs.GetStringAttr(name, defaultValue);
     }
 }

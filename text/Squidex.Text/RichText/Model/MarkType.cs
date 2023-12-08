@@ -9,6 +9,7 @@ namespace Squidex.Text.RichText.Model;
 
 public enum MarkType
 {
+    Undefined,
     Bold,
     Code,
     Italic,

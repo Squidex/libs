@@ -9,12 +9,13 @@ namespace Squidex.Text.RichText.Model;
 
 public enum NodeType
 {
+    Undefined,
     Blockquote,
     BulletList,
     CodeBlock,
-    Document,
+    Doc,
     HardBreak,
-    HorizontalLine,
+    HorizontalRule,
     Image,
     ListItem,
     OrderedList,

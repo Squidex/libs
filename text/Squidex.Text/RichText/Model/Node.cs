@@ -5,38 +5,37 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
 namespace Squidex.Text.RichText.Model;
 
-public sealed class Node : NodeBase
+public sealed class Node : INode
 {
     private int currentMark;
 
+    [JsonPropertyName("type")]
+    [JsonConverter(typeof(JsonStringEnumConverter<NodeType>))]
     public NodeType Type { get; set; }
 
-    public string? Text { get; set; }
+    [JsonPropertyName("text")]
+    public string Text { get; set; }
 
+    [JsonPropertyName("marks")]
     public Mark[]? Marks { get; set; }
 
+    [JsonPropertyName("content")]
     public Node[]? Content { get; set; }
 
+    [JsonPropertyName("attrs")]
     public Attributes? Attributes { get; set; }
 
-    public override NodeType GetNodeType()
-    {
-        return Type;
-    }
-
-    public override string GetText()
-    {
-        return Text ?? string.Empty;
-    }
-
-    public override void Reset()
+    public void Reset()
     {
         currentMark = 0;
     }
 
-    public override MarkBase? GetNextMark()
+    public IMark? GetNextMark()
     {
         if (Marks == null || currentMark >= Marks.Length)
         {
@@ -46,36 +45,31 @@ public sealed class Node : NodeBase
         return Marks[currentMark++];
     }
 
-    public override void IterateContent<T>(T state, Action<NodeBase, T> action)
+    public void IterateContent<T>(T state, Action<INode, T, bool, bool> action)
     {
         if (Content == null)
         {
             return;
         }
 
+        var i = 0;
         foreach (var item in Content)
         {
-            action(item, state);
+            var isFirst = i == 0;
+            var isLast = i == Content.Length - 1;
+
+            action(item, state, isFirst, isLast);
+            i++;
         }
     }
 
-    public override int GetIntAttr(string name, int defaultValue = 0)
+    public int GetIntAttr(string name, int defaultValue = 0)
     {
-        if (Attributes?.TryGetValue(name, out var attr) == true && attr is int value)
-        {
-            return value;
-        }
-
-        return defaultValue;
+        return Attributes?.GetIntAttr(name, defaultValue) ?? defaultValue;
     }
 
-    public override string GetStringAttr(string name, string defaultValue = "")
+    public string GetStringAttr(string name, string defaultValue = "")
     {
-        if (Attributes?.TryGetValue(name, out var attr) == true && attr is string value)
-        {
-            return value;
-        }
-
-        return defaultValue;
+        return Attributes?.GetStringAttr(name, defaultValue) ?? defaultValue;
     }
 }

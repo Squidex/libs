@@ -5,36 +5,26 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Text.Json.Serialization;
+
 namespace Squidex.Text.RichText.Model;
 
-public class Mark : MarkBase
+public class Mark : IMark
 {
+    [JsonPropertyName("type")]
+    [JsonConverter(typeof(JsonStringEnumConverter<MarkType>))]
     public MarkType Type { get; set; }
 
+    [JsonPropertyName("attrs")]
     public Attributes? Attributes { get; set; }
 
-    public override MarkType GetMarkType()
+    public int GetIntAttr(string name, int defaultValue = 0)
     {
-        return Type;
+        return Attributes?.GetIntAttr(name, defaultValue) ?? defaultValue;
     }
 
-    public override int GetIntAttr(string name, int defaultValue = 0)
+    public string GetStringAttr(string name, string defaultValue = "")
     {
-        if (Attributes?.TryGetValue(name, out var attr) == true && attr is int value)
-        {
-            return value;
-        }
-
-        return defaultValue;
-    }
-
-    public override string GetStringAttr(string name, string defaultValue = "")
-    {
-        if (Attributes?.TryGetValue(name, out var attr) == true && attr is string value)
-        {
-            return value;
-        }
-
-        return defaultValue;
+        return Attributes?.GetStringAttr(name, defaultValue) ?? defaultValue;
     }
 }

@@ -7,17 +7,9 @@
 
 namespace Squidex.Text.RichText.Model;
 
-public abstract class NodeBase : Attributed
+public interface IAttributed
 {
-    public abstract NodeType GetNodeType();
+    int GetIntAttr(string name, int defaultValue = 0);
 
-    public abstract string GetText();
-
-    public abstract MarkBase? GetNextMark();
-
-    public abstract void IterateContent<T>(T state, Action<NodeBase, T> action);
-
-    public virtual void Reset()
-    {
-    }
+    string GetStringAttr(string name, string defaultValue = "");
 }

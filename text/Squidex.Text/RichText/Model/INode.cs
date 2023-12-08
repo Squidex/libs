@@ -7,7 +7,17 @@
 
 namespace Squidex.Text.RichText.Model;
 
-public abstract class MarkBase : Attributed
+public interface INode : IAttributed
 {
-    public abstract MarkType GetMarkType();
+    NodeType Type { get; }
+
+    string? Text { get; }
+
+    IMark? GetNextMark();
+
+    void IterateContent<T>(T state, Action<INode, T, bool, bool> action);
+
+    public void Reset()
+    {
+    }
 }

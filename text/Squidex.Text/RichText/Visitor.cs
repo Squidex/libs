@@ -12,14 +12,26 @@ namespace Squidex.Text.RichText;
 public abstract class Visitor
 {
     private readonly Action visitInner;
-    private NodeBase currentNode;
+    private INode currentNode;
+
+    public bool IsLastInContainer { get; private set; }
+
+    public bool IsFirstInContainer { get; private set; }
 
     protected Visitor()
     {
         visitInner = VisitCurrentMarkOrNode;
     }
 
-    public void Visit(NodeBase node)
+    public void VisitRoot(INode node)
+    {
+        IsLastInContainer = true;
+        IsFirstInContainer = true;
+
+        Visit(node);
+    }
+
+    public void Visit(INode node)
     {
         currentNode = node;
         currentNode.Reset();
@@ -41,9 +53,9 @@ public abstract class Visitor
         }
     }
 
-    private void VisitMark(MarkBase mark)
+    private void VisitMark(IMark mark)
     {
-        var type = mark.GetMarkType();
+        var type = mark.Type;
 
         switch (type)
         {
@@ -65,39 +77,39 @@ public abstract class Visitor
                 VisitUnderline(mark, visitInner);
                 break;
             default:
-                ThrowInvalidType(type);
+                visitInner();
                 break;
         }
     }
 
-    protected virtual void VisitBold(MarkBase mark, Action inner)
+    protected virtual void VisitBold(IMark mark, Action inner)
     {
         inner();
     }
 
-    protected virtual void VisitCode(MarkBase mark, Action inner)
+    protected virtual void VisitCode(IMark mark, Action inner)
     {
         inner();
     }
 
-    protected virtual void VisitItalic(MarkBase mark, Action inner)
+    protected virtual void VisitItalic(IMark mark, Action inner)
     {
         inner();
     }
 
-    protected virtual void VisitLink(MarkBase mark, Action inner, string? href, string? target)
+    protected virtual void VisitLink(IMark mark, Action inner, string? href, string? target)
     {
         inner();
     }
 
-    protected virtual void VisitUnderline(MarkBase mark, Action inner)
+    protected virtual void VisitUnderline(IMark mark, Action inner)
     {
         inner();
     }
 
-    private void VisitNode(NodeBase node)
+    private void VisitNode(INode node)
     {
-        var type = node.GetNodeType();
+        var type = node.Type;
 
         switch (type)
         {
@@ -121,14 +133,14 @@ public abstract class Visitor
             case NodeType.BulletList:
                 VisitBulletList(node);
                 break;
-            case NodeType.Document:
+            case NodeType.Doc:
                 VisitDocument(node);
                 break;
             case NodeType.HardBreak:
                 VisitHardBreak(node);
                 break;
-            case NodeType.HorizontalLine:
-                VisitHorizontalLine(node);
+            case NodeType.HorizontalRule:
+                VisitHorizontalRule(node);
                 break;
             case NodeType.ListItem:
                 VisitListItem(node);
@@ -143,86 +155,93 @@ public abstract class Visitor
                 VisitText(node);
                 break;
             default:
-                ThrowInvalidType(type);
+                VisitChildren(node);
                 break;
         }
     }
 
-    protected virtual void VisitBlockquote(NodeBase node)
+    protected virtual void VisitBlockquote(INode node)
     {
         VisitChildren(node);
     }
 
-    protected virtual void VisitBulletList(NodeBase node)
+    protected virtual void VisitBulletList(INode node)
     {
         VisitChildren(node);
     }
 
-    protected virtual void VisitCodeBlock(NodeBase node, string? language)
+    protected virtual void VisitCodeBlock(INode node, string? language)
     {
         VisitChildren(node);
     }
 
-    protected virtual void VisitDocument(NodeBase node)
+    protected virtual void VisitDocument(INode node)
     {
         VisitChildren(node);
     }
 
-    protected virtual void VisitHardBreak(NodeBase node)
+    protected virtual void VisitHardBreak(INode node)
     {
         VisitChildren(node);
     }
 
-    protected virtual void VisitHeading(NodeBase node, int level)
+    protected virtual void VisitHeading(INode node, int level)
     {
         VisitChildren(node);
     }
 
-    protected virtual void VisitHorizontalLine(NodeBase node)
+    protected virtual void VisitHorizontalRule(INode node)
     {
         VisitChildren(node);
     }
 
-    protected virtual void VisitImage(NodeBase node, string? src, string? alt, string? title)
+    protected virtual void VisitImage(INode node, string? src, string? alt, string? title)
     {
         VisitChildren(node);
     }
 
-    protected virtual void VisitListItem(NodeBase node)
+    protected virtual void VisitListItem(INode node)
     {
         VisitChildren(node);
     }
 
-    protected virtual void VisitOrderedList(NodeBase node)
+    protected virtual void VisitOrderedList(INode node)
     {
         VisitChildren(node);
     }
 
-    protected virtual void VisitParagraph(NodeBase node)
+    protected virtual void VisitParagraph(INode node)
     {
         VisitChildren(node);
     }
 
-    protected virtual void VisitText(NodeBase node)
+    protected virtual void VisitText(INode node)
     {
         VisitChildren(node);
     }
 
-    protected void VisitChildren(NodeBase node)
+    protected void IterateChildren<T>(INode node, T state, Action<INode, T> action)
     {
-        node.IterateContent(this, (child, self) =>
+        var prevIsLastInContainer = IsLastInContainer;
+        var prevIsFirstInContainer = IsFirstInContainer;
+
+        node.IterateContent((self: this, state, action), (child, _, isFirst, isLast) =>
+        {
+            _.self.IsFirstInContainer = isFirst;
+            _.self.IsLastInContainer = isLast;
+
+            _.action(child, _.state);
+        });
+
+        IsLastInContainer = prevIsLastInContainer;
+        IsFirstInContainer = prevIsFirstInContainer;
+    }
+
+    protected void VisitChildren(INode node)
+    {
+        IterateChildren(node, this, (child, self) =>
         {
             self.Visit(child);
         });
-    }
-
-    private static void ThrowInvalidType(MarkType type)
-    {
-        throw new InvalidOperationException($"Invalid type '{type}'.");
-    }
-
-    private static void ThrowInvalidType(NodeType type)
-    {
-        throw new InvalidOperationException($"Invalid type '{type}'.");
     }
 }

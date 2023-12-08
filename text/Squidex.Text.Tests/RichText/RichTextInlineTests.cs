@@ -89,7 +89,7 @@ public class RichTextInlineTests
         var (markdown, html) = RenderUtils.Render(source);
 
         var expectedMarkdown = @"
-_Text1_";
+Text1";
 
         Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
 
@@ -159,7 +159,7 @@ _Text1_";
         var (markdown, html) = RenderUtils.Render(source);
 
         var expectedMarkdown = @"
-**_*`Text1`*_**";
+***`Text1`***";
 
         Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
 

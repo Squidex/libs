@@ -9,19 +9,29 @@ using Squidex.Text.RichText.Model;
 
 namespace Squidex.RichText.Json;
 
-internal class JsonNode : NodeBase
+internal class JsonNode : INode
 {
     private readonly JsonMark mark = new JsonMark();
     private State currentState;
 
     internal struct State
     {
+        public NodeType Type;
         public JsonArray? Marks;
         public JsonObject? Attrs;
         public JsonArray? Content;
-        public NodeType Type;
         public string? Text;
         public int MarkIndex;
+    }
+
+    public NodeType Type
+    {
+        get => currentState.Type;
+    }
+
+    public string? Text
+    {
+        get => currentState.Text;
     }
 
     public bool TryUse(JsonObject source, bool recursive)
@@ -78,37 +88,17 @@ internal class JsonNode : NodeBase
         return isValid;
     }
 
-    public override NodeType GetNodeType()
+    public int GetIntAttr(string name, int defaultValue = 0)
     {
-        return currentState.Type;
+        return currentState.Attrs.GetIntAttr(name, defaultValue);
     }
 
-    public override string GetText()
+    public string GetStringAttr(string name, string defaultValue = "")
     {
-        return currentState.Text ?? string.Empty;
+        return currentState.Attrs.GetStringAttr(name, defaultValue);
     }
 
-    public override int GetIntAttr(string name, int defaultValue = 0)
-    {
-        if (currentState.Attrs?.TryGetValue(name, out var value) == true && value is double attr)
-        {
-            return (int)attr;
-        }
-
-        return defaultValue;
-    }
-
-    public override string GetStringAttr(string name, string defaultValue = "")
-    {
-        if (currentState.Attrs?.TryGetValue(name, out var value) == true && value is string attr)
-        {
-            return attr;
-        }
-
-        return defaultValue;
-    }
-
-    public override MarkBase? GetNextMark()
+    public IMark? GetNextMark()
     {
         if (currentState.Marks == null || currentState.MarkIndex >= currentState.Marks.Count)
         {
@@ -119,7 +109,7 @@ internal class JsonNode : NodeBase
         return mark;
     }
 
-    public override void IterateContent<T>(T state, Action<NodeBase, T> action)
+    public void IterateContent<T>(T state, Action<INode, T, bool, bool> action)
     {
         if (currentState.Content == null)
         {
@@ -128,10 +118,15 @@ internal class JsonNode : NodeBase
 
         var prevState = currentState;
 
+        var i = 0;
         foreach (var item in currentState.Content)
         {
+            var isFirst = i == 0;
+            var isLast = i == currentState.Content.Count - 1;
+
             TryUse((JsonObject)item, false);
-            action(this, state);
+            action(this, state, isFirst, isLast);
+            i++;
         }
 
         currentState = prevState;

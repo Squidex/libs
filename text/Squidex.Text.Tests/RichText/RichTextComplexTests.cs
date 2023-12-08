@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Text.Json;
 using Squidex.RichText.Json;
 using Squidex.Text.RichText.Model;
 using Xunit;
@@ -18,7 +19,7 @@ public class RichTextComplexTests
     {
         var source = new Node
         {
-            Type = NodeType.Document,
+            Type = NodeType.Doc,
             Content =
             [
                 new Node
@@ -136,7 +137,7 @@ Paragraph2
     {
         var source = new JsonObject
         {
-            ["type"] = "document",
+            ["type"] = "doc",
             ["content"] = new JsonArray
             {
                 new JsonObject
@@ -253,5 +254,22 @@ Paragraph2
         var html = RenderUtils.RenderHtml(node);
 
         Assert.Equal(expectedHtml.TrimExpected(), html);
+    }
+
+    [Fact]
+    public void Should_render_from_files()
+    {
+        var inputJson = File.ReadAllText("RichText/ComplexText.json");
+        var inputNode = JsonSerializer.Deserialize<Node>(inputJson)!;
+
+        var (markdown, html) = RenderUtils.Render(inputNode);
+
+        Assert.Equal(
+            File.ReadAllText("RichText/ComplexText.md").TrimExpected(),
+            markdown);
+
+        Assert.Equal(
+            File.ReadAllText("RichText/ComplexText.html").TrimExpected(),
+            html);
     }
 }
