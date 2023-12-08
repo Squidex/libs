@@ -170,7 +170,7 @@ Paragraph2";
             Type = NodeType.CodeBlock,
             Attributes = new Attributes
             {
-                ["language"] = new Model.Attribute(AttributeKind.String, "html")
+                ["language"] = "html"
             },
             Content =
             [
@@ -256,6 +256,121 @@ Paragraph2
         Paragraph2
     </code>
 </pre>";
+
+        Assert.Equal(expectedHtml.TrimExpected(), html);
+    }
+
+    [Fact]
+    public void Should_render_link()
+    {
+        var source = new Node
+        {
+            Type = NodeType.Text,
+            Marks =
+            [
+                new Mark
+                {
+                    Type = MarkType.Link,
+                    Attributes = new Attributes()
+                    {
+                        ["href"] = "https://squidex.io",
+                        ["target"] = "_blank"
+                    }
+                },
+            ],
+            Text = "Link Text"
+        };
+
+        var (markdown, html) = RenderUtils.Render(source);
+
+        var expectedMarkdown = @"
+[Link Text](https://squidex.io)";
+
+        Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
+
+        var expectedHtml = @"
+<a href=""https://squidex.io"" target=""_blank"">Link Text</a>";
+
+        Assert.Equal(expectedHtml.TrimExpected(), html);
+    }
+
+    [Fact]
+    public void Should_render_empty_link()
+    {
+        var source = new Node
+        {
+            Type = NodeType.Text,
+            Marks =
+            [
+                new Mark
+                {
+                    Type = MarkType.Link
+                },
+            ],
+            Text = "Link Text"
+        };
+
+        var (markdown, html) = RenderUtils.Render(source);
+
+        var expectedMarkdown = @"
+Link Text";
+
+        Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
+
+        var expectedHtml = @"
+<a>Link Text</a>";
+
+        Assert.Equal(expectedHtml.TrimExpected(), html);
+    }
+
+    [Fact]
+    public void Should_render_image()
+    {
+        var source = new Node
+        {
+            Type = NodeType.Image,
+            Attributes = new Attributes()
+            {
+                ["src"] = "https://squidex.io/logo.png",
+                ["alt"] = "Logo",
+                ["title"] = "Website Logo"
+            }
+        };
+
+        var (markdown, html) = RenderUtils.Render(source);
+
+        var expectedMarkdown = @"
+![Logo](https://squidex.io/logo.png ""Website Logo"")";
+
+        Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
+
+        var expectedHtml = @"
+<img src=""https://squidex.io/logo.png"" alt=""Logo"" title=""Website Logo"" />";
+
+        Assert.Equal(expectedHtml.TrimExpected(), html);
+    }
+
+    [Fact]
+    public void Should_render_blank_image()
+    {
+        var source = new Node
+        {
+            Type = NodeType.Image,
+            Attributes = new Attributes()
+            {
+                ["src"] = "https://squidex.io/logo.png"
+            }
+        };
+
+        var (markdown, html) = RenderUtils.Render(source);
+
+        var expectedMarkdown = @"
+![](https://squidex.io/logo.png)";
+
+        Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
+
+        var expectedHtml = @"
+<img src=""https://squidex.io/logo.png"" />";
 
         Assert.Equal(expectedHtml.TrimExpected(), html);
     }

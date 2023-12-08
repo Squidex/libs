@@ -11,38 +11,33 @@ using Squidex.Text.RichText.Model;
 
 namespace Squidex.Text.RichText;
 
-public sealed class MarkdownVisitor2 : Visitor<bool>
+public sealed class MarkdownVisitor : Visitor
 {
     private readonly NormalizeRenderer renderer;
 
-    private sealed class ListInfo
-    {
-        public int Index { get; set; } = 1;
-
-        public bool IsOrdered { get; set; }
-    }
-
-    public MarkdownVisitor2(NormalizeRenderer renderer)
+    public MarkdownVisitor(NormalizeRenderer renderer)
     {
         this.renderer = renderer;
     }
 
-    protected override bool VisitBlockquote(Node node)
+    public static void Render(NodeBase node, TextWriter textWriter)
+    {
+        var newRenderer = new NormalizeRenderer(textWriter);
+
+        new MarkdownVisitor(newRenderer).Visit(node);
+    }
+
+    protected override void VisitBlockquote(NodeBase node)
     {
         renderer.PushIndent("> ");
         VisitChildren(node);
         renderer.PopIndent();
-        return true;
     }
 
-    protected override bool VisitBulletList(Node node)
+    protected override void VisitBulletList(NodeBase node)
     {
-        if (node.Content is not { Length: > 0 })
-        {
-            return true;
-        }
-
-        foreach (var child in node.Content)
+        NodeBase? child;
+        while ((child = node.GetNextNode()) != null)
         {
             renderer.EnsureLine();
             renderer.Write('*');
@@ -53,19 +48,14 @@ public sealed class MarkdownVisitor2 : Visitor<bool>
         }
 
         renderer.FinishBlock(true);
-
-        return true;
     }
 
-    protected override bool VisitOrderedList(Node node)
+    protected override void VisitOrderedList(NodeBase node)
     {
-        if (node.Content is not { Length: > 0})
-        {
-            return true;
-        }
-
         var index = 0;
-        foreach (var child in node.Content)
+
+        NodeBase? child;
+        while ((child = node.GetNextNode()) != null)
         {
             index++;
             renderer.EnsureLine();
@@ -78,39 +68,50 @@ public sealed class MarkdownVisitor2 : Visitor<bool>
         }
 
         renderer.FinishBlock(true);
-
-        return true;
     }
 
-    protected override bool VisitCodeBlock(Node node)
+    protected override void VisitCodeBlock(NodeBase node, string? language)
     {
-        var lang = node.GetString("language", string.Empty);
-
         renderer.Write("```");
-        renderer.Write(lang);
+        renderer.Write(language ?? string.Empty);
         renderer.EnsureLine();
         VisitChildren(node);
         renderer.WriteLine();
         renderer.Write("```");
-        return true;
     }
 
-    protected override bool VisitHorizontalLine(Node node)
+    protected override void VisitImage(NodeBase node, string? src, string? alt, string? title)
+    {
+        renderer.Write('!');
+        renderer.Write('[');
+        renderer.Write(alt ?? string.Empty);
+        renderer.Write(']');
+        renderer.Write('(');
+        renderer.Write(src ?? string.Empty);
+
+        if (!string.IsNullOrEmpty(title))
+        {
+            renderer.Write(' ');
+            renderer.Write('"');
+            renderer.Write(title);
+            renderer.Write('"');
+        }
+
+        renderer.Write(')');
+    }
+
+    protected override void VisitHorizontalLine(NodeBase node)
     {
         renderer.WriteLine("---");
-        return true;
     }
 
-    protected override bool VisitHardBreak(Node node)
+    protected override void VisitHardBreak(NodeBase node)
     {
         renderer.WriteLine();
-        return true;
     }
 
-    protected override bool VisitHeading(Node node)
+    protected override void VisitHeading(NodeBase node, int level)
     {
-        var level = node.GetNumber("level", 1);
-
         for (var i = 0; i < level; i++)
         {
             renderer.Write('#');
@@ -119,52 +120,61 @@ public sealed class MarkdownVisitor2 : Visitor<bool>
         renderer.Write(' ');
         VisitChildren(node);
         renderer.FinishBlock(false);
-        return true;
     }
 
-    protected override bool VisitParagraph(Node node)
+    protected override void VisitParagraph(NodeBase node)
     {
         VisitChildren(node);
         renderer.FinishBlock(true);
-        return true;
     }
 
-    protected override bool VisitCode(Mark mark, Func<bool> inner)
+    protected override void VisitLink(MarkBase mark, Action inner, string? href, string? target)
+    {
+        if (string.IsNullOrWhiteSpace(href))
+        {
+            inner();
+            return;
+        }
+
+        renderer.Write('[');
+        inner();
+        renderer.Write(']');
+        renderer.Write('(');
+        renderer.Write(href);
+        renderer.Write(')');
+    }
+
+    protected override void VisitCode(MarkBase mark, Action inner)
     {
         renderer.Write('`');
         inner();
         renderer.Write('`');
-        return true;
     }
 
-    protected override bool VisitBold(Mark mark, Func<bool> inner)
+    protected override void VisitBold(MarkBase mark, Action inner)
     {
         renderer.Write("**");
         inner();
         renderer.Write("**");
-        return true;
     }
 
-    protected override bool VisitItalic(Mark mark, Func<bool> inner)
+    protected override void VisitItalic(MarkBase mark, Action inner)
     {
         renderer.Write('*');
         inner();
         renderer.Write('*');
-        return true;
     }
 
-    protected override bool VisitUnderline(Mark mark, Func<bool> inner)
+    protected override void VisitUnderline(MarkBase mark, Action inner)
     {
         renderer.Write('_');
         inner();
         renderer.Write('_');
-        return true;
     }
 
-    protected override bool VisitText(Node node)
+    protected override void VisitText(NodeBase node)
     {
-        renderer.Write(node.Text ?? string.Empty);
-        return true;
+        renderer.Write(node.GetText());
     }
 
     private static int IntLog10Fast(int input) =>

@@ -10,143 +10,133 @@ using Squidex.Text.RichText.Model;
 
 namespace Squidex.Text.RichText;
 
-public sealed class HtmlWriterVisitor : Visitor<bool>
+public sealed class HtmlWriterVisitor : Visitor
 {
-    private readonly HtmlTextWriter htmlWriter;
+    private readonly HtmlTextWriter writer;
 
-    public HtmlWriterVisitor(HtmlTextWriter htmlWriter)
+    private HtmlWriterVisitor(HtmlTextWriter writer)
     {
-        this.htmlWriter = htmlWriter;
+        this.writer = writer;
     }
 
-    protected override bool VisitHardBreak(Node node)
+    public static void Render(NodeBase node, TextWriter textWriter)
     {
-        htmlWriter.WriteLine();
-        htmlWriter.WriteBreak();
-        htmlWriter.WriteLine();
-        return true;
+        var newWriter = new HtmlTextWriter(textWriter, new string(' ', 4));
+
+        new HtmlWriterVisitor(newWriter).Visit(node);
     }
 
-    protected override bool VisitHorizontalLine(Node node)
+    protected override void VisitHardBreak(NodeBase node)
     {
-        htmlWriter.WriteFullBeginTag("hr");
-        return true;
+        writer.WriteLine();
+        writer.WriteBreak();
+        writer.WriteLine();
     }
 
-    protected override bool VisitBlockquote(Node node)
+    protected override void VisitHorizontalLine(NodeBase node)
+    {
+        writer.WriteFullBeginTag("hr");
+    }
+
+    protected override void VisitBlockquote(NodeBase node)
     {
         EmbedInTag(node, "blockquote");
-        return true;
     }
 
-    protected override bool VisitBulletList(Node node)
+    protected override void VisitBulletList(NodeBase node)
     {
         EmbedInTag(node, "ul");
-        return true;
     }
 
-    protected override bool VisitHeading(Node node)
+    protected override void VisitHeading(NodeBase node, int level)
     {
-        EmbedInTag(node, $"h{node.GetNumber("level", 1)}");
-        return true;
+        EmbedInTag(node, $"h{level}");
     }
 
-    protected override bool VisitListItem(Node node)
+    protected override void VisitListItem(NodeBase node)
     {
         EmbedInTag(node, "li");
-        return true;
     }
 
-    protected override bool VisitOrderedList(Node node)
+    protected override void VisitOrderedList(NodeBase node)
     {
         EmbedInTag(node, "ol");
-        return true;
     }
 
-    protected override bool VisitParagraph(Node node)
+    protected override void VisitParagraph(NodeBase node)
     {
         EmbedInTag(node, "p");
-        return true;
     }
 
-    protected override bool VisitImage(Node node)
+    protected override void VisitImage(NodeBase node, string? src, string? alt, string? title)
     {
-        htmlWriter.AddNonEmptyAttribute("src", node.GetString("src"));
-        htmlWriter.AddNonEmptyAttribute("alt", node.GetString("alt"));
-        htmlWriter.AddNonEmptyAttribute("title", node.GetString("title"));
-        htmlWriter.RenderBeginTag("img");
-        htmlWriter.RenderEndTag();
-        return true;
+        writer.AddNonEmptyAttribute(nameof(src), src);
+        writer.AddNonEmptyAttribute(nameof(alt), alt);
+        writer.AddNonEmptyAttribute(nameof(title), title);
+        writer.RenderBeginTag("img");
+        writer.RenderEndTag();
     }
 
-    protected override bool VisitCodeBlock(Node node)
+    protected override void VisitCodeBlock(NodeBase node, string? language)
     {
-        var language = node.GetString("language");
+        writer.AddNonEmptyAttribute("spellcheck", "false");
+        writer.AddNonEmptyAttribute("class", language, l => $"language-{l}");
+        writer.RenderBeginTag("pre");
 
-        htmlWriter.AddAttribute("spellcheck", "false");
-        htmlWriter.AddNonEmptyAttribute("class", language, l => $"language-{l}");
-        htmlWriter.RenderBeginTag("pre");
+        writer.AddNonEmptyAttribute("data-code-block-lang", language);
+        writer.RenderBeginTag("code");
+        base.VisitCodeBlock(node, language);
+        writer.RenderEndTag();
 
-        htmlWriter.AddNonEmptyAttribute("data-code-block-lang", language);
-        htmlWriter.RenderBeginTag("code");
-        base.VisitCodeBlock(node);
-        htmlWriter.RenderEndTag();
-
-        htmlWriter.RenderEndTag();
-        return true;
+        writer.RenderEndTag();
     }
 
-    protected override bool VisitBold(Mark mark, Func<bool> inner)
+    protected override void VisitBold(MarkBase mark, Action inner)
     {
         EmbedInTag(inner, "strong");
-        return true;
     }
 
-    protected override bool VisitCode(Mark mark, Func<bool> inner)
+    protected override void VisitCode(MarkBase mark, Action inner)
     {
         EmbedInTag(inner, "code");
-        return true;
     }
 
-    protected override bool VisitItalic(Mark mark, Func<bool> inner)
+    protected override void VisitItalic(MarkBase mark, Action inner)
     {
         EmbedInTag(inner, "em");
-        return true;
     }
 
-    protected override bool VisitUnderline(Mark mark, Func<bool> inner)
+    protected override void VisitUnderline(MarkBase mark, Action inner)
     {
         EmbedInTag(inner, "u");
-        return true;
     }
 
-    protected override bool VisitLink(Mark mark, Func<bool> inner)
+    protected override void VisitLink(MarkBase mark, Action inner, string? href, string? target)
     {
-        htmlWriter.AddNonEmptyAttribute("href", mark.GetString("href"));
-        htmlWriter.AddNonEmptyAttribute("target", mark.GetString("target"));
-        htmlWriter.RenderBeginTag("a");
-        base.VisitLink(mark, inner);
-        htmlWriter.RenderEndTag();
-        return true;
+        writer.WriteBeginTag("a");
+        writer.WriteNonEmptyAttribute(nameof(href), href);
+        writer.WriteNonEmptyAttribute(nameof(target), target);
+        writer.Write(">");
+        base.VisitLink(mark, inner, href, target);
+        writer.WriteEndTag("a");
     }
 
-    protected override bool VisitText(Node node)
+    protected override void VisitText(NodeBase node)
     {
-        htmlWriter.Write(node.Text);
-        return true;
+        writer.Write(node.GetText());
     }
 
-    private void EmbedInTag(Node node, string tag)
+    private void EmbedInTag(NodeBase node, string tag)
     {
-        htmlWriter.RenderBeginTag(tag);
+        writer.RenderBeginTag(tag);
         VisitChildren(node);
-        htmlWriter.RenderEndTag();
+        writer.RenderEndTag();
     }
 
-    private void EmbedInTag(Func<bool> inner, string tag)
+    private void EmbedInTag(Action inner, string tag)
     {
-        htmlWriter.WriteFullBeginTag(tag);
+        writer.WriteFullBeginTag(tag);
         inner();
-        htmlWriter.WriteEndTag(tag);
+        writer.WriteEndTag(tag);
     }
 }

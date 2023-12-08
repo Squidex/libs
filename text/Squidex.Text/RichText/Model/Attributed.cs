@@ -9,5 +9,7 @@ namespace Squidex.Text.RichText.Model;
 
 public abstract class Attributed
 {
-    public Attributes Attributes { get; set; } = [];
+    public abstract int GetIntAttr(string name, int defaultValue = 0);
+
+    public abstract string GetStringAttr(string name, string defaultValue = "");
 }

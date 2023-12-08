@@ -7,6 +7,17 @@
 
 namespace Squidex.Text.RichText.Model;
 
-public sealed class Attributes : Dictionary<string, object>
+public abstract class NodeBase : Attributed
 {
+    public abstract NodeType GetNodeType();
+
+    public abstract string GetText();
+
+    public abstract MarkBase? GetNextMarkReverse();
+
+    public abstract NodeBase? GetNextNode();
+
+    public virtual void Reset()
+    {
+    }
 }

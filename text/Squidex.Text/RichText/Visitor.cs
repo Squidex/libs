@@ -9,184 +9,192 @@ using Squidex.Text.RichText.Model;
 
 namespace Squidex.Text.RichText;
 
-public abstract class Visitor<T>
+public abstract class Visitor
 {
-    public T Visit(Node node)
+    public void Visit(NodeBase node)
     {
-        Func<T> inner = () =>
+        node.Reset();
+
+        Action inner = () =>
         {
-            switch (node.Type)
+            var type = node.GetNodeType();
+
+            switch (type)
             {
-                case NodeType.Blockquote:
-                    return VisitBlockquote(node);
-                case NodeType.BulletList:
-                    return VisitBulletList(node);
-                case NodeType.CodeBlock:
-                    return VisitCodeBlock(node);
-                case NodeType.Document:
-                    return VisitDocument(node);
-                case NodeType.HardBreak:
-                    return VisitHardBreak(node);
-                case NodeType.Heading:
-                    return VisitHeading(node);
                 case NodeType.Image:
-                    return VisitImage(node);
+                    VisitImage(node,
+                        node.GetStringAttr("src"),
+                        node.GetStringAttr("alt"),
+                        node.GetStringAttr("title"));
+                    break;
+                case NodeType.CodeBlock:
+                    VisitCodeBlock(node,
+                        node.GetStringAttr("language"));
+                    break;
+                case NodeType.Heading:
+                    VisitHeading(node,
+                        node.GetIntAttr("level", 1));
+                    break;
+                case NodeType.Blockquote:
+                    VisitBlockquote(node);
+                    break;
+                case NodeType.BulletList:
+                    VisitBulletList(node);
+                    break;
+                case NodeType.Document:
+                    VisitDocument(node);
+                    break;
+                case NodeType.HardBreak:
+                    VisitHardBreak(node);
+                    break;
                 case NodeType.HorizontalLine:
-                    return VisitHorizontalLine(node);
+                    VisitHorizontalLine(node);
+                    break;
                 case NodeType.ListItem:
-                    return VisitListItem(node);
+                    VisitListItem(node);
+                    break;
                 case NodeType.OrderedList:
-                    return VisitOrderedList(node);
+                    VisitOrderedList(node);
+                    break;
                 case NodeType.Paragraph:
-                    return VisitParagraph(node);
+                    VisitParagraph(node);
+                    break;
                 case NodeType.Text:
-                    return VisitText(node);
+                    VisitText(node);
+                    break;
                 default:
-                    ThrowInvalidType(node.Type);
-                    return default!;
+                    ThrowInvalidType(type);
+                    break;
             }
         };
 
-        if (node.Marks != null)
+        MarkBase? mark;
+        while ((mark = node.GetNextMarkReverse()) != null)
         {
-            foreach (var mark in node.Marks.Reverse())
-            {
-                var currentInner = inner;
+            var currentInner = inner;
+            var currentMark = mark;
 
-                switch (mark.Type)
-                {
-                    case MarkType.Bold:
-                        inner = () => VisitBold(mark, currentInner);
-                        break;
-                    case MarkType.Code:
-                        inner = () => VisitCode(mark, currentInner);
-                        break;
-                    case MarkType.Italic:
-                        inner = () => VisitItalic(mark, currentInner);
-                        break;
-                    case MarkType.Link:
-                        inner = () => VisitLink(mark, currentInner);
-                        break;
-                    case MarkType.Underline:
-                        inner = () => VisitUnderline(mark, currentInner);
-                        break;
-                    default:
-                        ThrowInvalidType(mark.Type);
-                        return default!;
-                }
+            var type = mark.GetMarkType();
+
+            switch (type)
+            {
+                case MarkType.Link:
+                    inner = () => VisitLink(currentMark, currentInner,
+                        currentMark.GetStringAttr("href"),
+                        currentMark.GetStringAttr("target"));
+                    break;
+                case MarkType.Bold:
+                    inner = () => VisitBold(currentMark, currentInner);
+                    break;
+                case MarkType.Code:
+                    inner = () => VisitCode(currentMark, currentInner);
+                    break;
+                case MarkType.Italic:
+                    inner = () => VisitItalic(currentMark, currentInner);
+                    break;
+                case MarkType.Underline:
+                    inner = () => VisitUnderline(currentMark, currentInner);
+                    break;
+                default:
+                    ThrowInvalidType(type);
+                    break;
             }
         }
 
-        return inner();
+        inner();
     }
 
-    protected virtual T VisitBold(Mark mark, Func<T> inner)
+    protected virtual void VisitBold(MarkBase mark, Action inner)
     {
-        return inner();
+        inner();
     }
 
-    protected virtual T VisitCode(Mark mark, Func<T> inner)
+    protected virtual void VisitCode(MarkBase mark, Action inner)
     {
-        return inner();
+        inner();
     }
 
-    protected virtual T VisitItalic(Mark mark, Func<T> inner)
+    protected virtual void VisitItalic(MarkBase mark, Action inner)
     {
-        return inner();
+        inner();
     }
 
-    protected virtual T VisitLink(Mark mark, Func<T> inner)
+    protected virtual void VisitLink(MarkBase mark, Action inner, string? href, string? target)
     {
-        return inner();
+        inner();
     }
 
-    protected virtual T VisitUnderline(Mark mark, Func<T> inner)
+    protected virtual void VisitUnderline(MarkBase mark, Action inner)
     {
-        return inner();
+        inner();
     }
 
-    protected virtual T VisitBlockquote(Node node)
-    {
-        VisitChildren(node);
-        return default!;
-    }
-
-    protected virtual T VisitBulletList(Node node)
+    protected virtual void VisitBlockquote(NodeBase node)
     {
         VisitChildren(node);
-        return default!;
     }
 
-    protected virtual T VisitCodeBlock(Node node)
+    protected virtual void VisitBulletList(NodeBase node)
     {
         VisitChildren(node);
-        return default!;
     }
 
-    protected virtual T VisitDocument(Node node)
+    protected virtual void VisitCodeBlock(NodeBase node, string? language)
     {
         VisitChildren(node);
-        return default!;
     }
 
-    protected virtual T VisitHardBreak(Node node)
+    protected virtual void VisitDocument(NodeBase node)
     {
         VisitChildren(node);
-        return default!;
     }
 
-    protected virtual T VisitHeading(Node node)
+    protected virtual void VisitHardBreak(NodeBase node)
     {
         VisitChildren(node);
-        return default!;
     }
 
-    protected virtual T VisitHorizontalLine(Node node)
+    protected virtual void VisitHeading(NodeBase node, int level)
     {
         VisitChildren(node);
-        return default!;
     }
 
-    protected virtual T VisitImage(Node node)
+    protected virtual void VisitHorizontalLine(NodeBase node)
     {
         VisitChildren(node);
-        return default!;
     }
 
-    protected virtual T VisitListItem(Node node)
+    protected virtual void VisitImage(NodeBase node, string? src, string? alt, string? title)
     {
         VisitChildren(node);
-        return default!;
     }
 
-    protected virtual T VisitOrderedList(Node node)
+    protected virtual void VisitListItem(NodeBase node)
     {
         VisitChildren(node);
-        return default!;
     }
 
-    protected virtual T VisitParagraph(Node node)
+    protected virtual void VisitOrderedList(NodeBase node)
     {
         VisitChildren(node);
-        return default!;
     }
 
-    protected virtual T VisitText(Node node)
+    protected virtual void VisitParagraph(NodeBase node)
     {
         VisitChildren(node);
-        return default!;
     }
 
-    protected void VisitChildren(Node node)
+    protected virtual void VisitText(NodeBase node)
     {
-        if (node.Content == null)
+        VisitChildren(node);
+    }
+
+    protected void VisitChildren(NodeBase node)
+    {
+        NodeBase? child;
+        while ((child = node.GetNextNode()) != null)
         {
-            return;
-        }
-
-        foreach (var content in node.Content)
-        {
-            Visit(content);
+            Visit(child);
         }
     }
 

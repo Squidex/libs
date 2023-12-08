@@ -7,6 +7,7 @@
 
 namespace Squidex.Text.RichText.Model;
 
-public sealed class Attributes : Dictionary<string, object>
+public abstract class MarkBase : Attributed
 {
+    public abstract MarkType GetMarkType();
 }

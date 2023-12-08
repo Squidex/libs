@@ -11,7 +11,7 @@ namespace Squidex.Text.RichText;
 
 internal static class HtmlExtensions
 {
-    public static void AddNonEmptyAttribute(this HtmlTextWriter writer, string name, string value)
+    public static void AddNonEmptyAttribute(this HtmlTextWriter writer, string name, string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
@@ -21,7 +21,7 @@ internal static class HtmlExtensions
         writer.AddAttribute(name, value, encode: true);
     }
 
-    public static void AddNonEmptyAttribute(this HtmlTextWriter writer, string name, string value, Func<string, string> formatter)
+    public static void AddNonEmptyAttribute(this HtmlTextWriter writer, string name, string? value, Func<string, string> formatter)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
@@ -29,5 +29,25 @@ internal static class HtmlExtensions
         }
 
         writer.AddAttribute(name, formatter(value), encode: true);
+    }
+
+    public static void WriteNonEmptyAttribute(this HtmlTextWriter writer, string name, string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return;
+        }
+
+        writer.WriteAttribute(name, value, encode: true);
+    }
+
+    public static void WriteNonEmptyAttribute(this HtmlTextWriter writer, string name, string? value, Func<string, string> formatter)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return;
+        }
+
+        writer.WriteAttribute(name, formatter(value), encode: true);
     }
 }

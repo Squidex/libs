@@ -5,8 +5,14 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Text.RichText.Model;
+namespace Squidex.Text;
 
-public sealed class Attributes : Dictionary<string, object>
+public enum JsonValueType
 {
+    Null,
+    Array,
+    Boolean,
+    Number,
+    Object,
+    String
 }
