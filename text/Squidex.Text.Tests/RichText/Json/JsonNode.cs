@@ -5,7 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Text.RichText.Model;
+using Squidex.Text.RichText.Model;
+
+namespace Squidex.RichText.Json;
 
 internal class JsonNode : NodeBase
 {
@@ -19,15 +21,12 @@ internal class JsonNode : NodeBase
         public JsonArray? Content;
         public NodeType Type;
         public string? Text;
+        public int MarkIndex;
     }
 
     public bool TryUse(JsonObject source, bool recursive)
     {
-        State state;
-        state.Attrs = null;
-        state.Content = null;
-        state.Marks = null;
-        state.Text = null;
+        State state = default;
 
         var isValid = true;
         foreach (var (key, value) in source)
@@ -37,7 +36,7 @@ internal class JsonNode : NodeBase
                 case "type" when value.TryGetEnum<NodeType>(out var type):
                     state.Type = type;
                     break;
-                case "attrs" when value.Value is JsonObject attrs:
+                case "attrs" when value is JsonObject attrs:
                     state.Attrs = attrs;
                     break;
                 case "marks" when value.TryGetArrayOfObject(out var marks):
@@ -46,7 +45,7 @@ internal class JsonNode : NodeBase
                 case "content" when value.TryGetArrayOfObject(out var content):
                     state.Content = content;
                     break;
-                case "text" when value.Value is string text:
+                case "text" when value is string text:
                     state.Text = text;
                     break;
                 default:
@@ -55,13 +54,15 @@ internal class JsonNode : NodeBase
             }
         }
 
+        currentState = state;
+
         if (recursive)
         {
             if (state.Content != null)
             {
                 foreach (var content in state.Content)
                 {
-                    isValid &= TryUse((JsonObject)content.Value!, recursive);
+                    isValid &= TryUse((JsonObject)content, recursive);
                 }
             }
 
@@ -69,7 +70,7 @@ internal class JsonNode : NodeBase
             {
                 foreach (var markObj in state.Marks)
                 {
-                    isValid &= mark.TryUse((JsonObject)markObj.Value!);
+                    isValid &= mark.TryUse((JsonObject)markObj);
                 }
             }
         }
@@ -89,7 +90,7 @@ internal class JsonNode : NodeBase
 
     public override int GetIntAttr(string name, int defaultValue = 0)
     {
-        if (currentState.Attrs?.TryGetValue(name, out var value) == true && value.Value is double attr)
+        if (currentState.Attrs?.TryGetValue(name, out var value) == true && value is double attr)
         {
             return (int)attr;
         }
@@ -99,7 +100,7 @@ internal class JsonNode : NodeBase
 
     public override string GetStringAttr(string name, string defaultValue = "")
     {
-        if (currentState.Attrs?.TryGetValue(name, out var value) == true && value.Value is string attr)
+        if (currentState.Attrs?.TryGetValue(name, out var value) == true && value is string attr)
         {
             return attr;
         }
@@ -107,13 +108,32 @@ internal class JsonNode : NodeBase
         return defaultValue;
     }
 
-    public override MarkBase? GetNextMarkReverse()
+    public override MarkBase? GetNextMark()
     {
-        throw new NotImplementedException();
+        if (currentState.Marks == null || currentState.MarkIndex >= currentState.Marks.Count)
+        {
+            return null;
+        }
+
+        mark.TryUse((JsonObject)currentState.Marks[currentState.MarkIndex++]);
+        return mark;
     }
 
-    public override NodeBase? GetNextNode()
+    public override void IterateContent<T>(T state, Action<NodeBase, T> action)
     {
-        throw new NotImplementedException();
+        if (currentState.Content == null)
+        {
+            return;
+        }
+
+        var prevState = currentState;
+
+        foreach (var item in currentState.Content)
+        {
+            TryUse((JsonObject)item, false);
+            action(this, state);
+        }
+
+        currentState = prevState;
     }
 }

@@ -11,7 +11,7 @@ namespace Squidex.Text.RichText;
 
 internal static class RenderUtils
 {
-    public static (string Markdown, string Html) Render(Node node)
+    public static (string Markdown, string Html) Render(NodeBase node)
     {
         return (RenderMarkdown(node), RenderHtml(node));
     }
@@ -21,10 +21,11 @@ internal static class RenderUtils
         result = result.TrimStart('\n', '\r');
         result = result.TrimEnd();
         result = result.Replace("\r\n", "\n", StringComparison.Ordinal);
+
         return result;
     }
 
-    private static string RenderHtml(Node node)
+    public static string RenderHtml(NodeBase node)
     {
         var htmlString = new StringWriter();
 
@@ -33,7 +34,7 @@ internal static class RenderUtils
         return htmlString.ToString().TrimExpected();
     }
 
-    private static string RenderMarkdown(Node node)
+    public static string RenderMarkdown(NodeBase node)
     {
         var markdownString = new StringWriter();
 

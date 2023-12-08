@@ -14,6 +14,7 @@ namespace Squidex.Text.RichText;
 public sealed class MarkdownVisitor : Visitor
 {
     private readonly NormalizeRenderer renderer;
+    private int currentIndex;
 
     public MarkdownVisitor(NormalizeRenderer renderer)
     {
@@ -36,36 +37,34 @@ public sealed class MarkdownVisitor : Visitor
 
     protected override void VisitBulletList(NodeBase node)
     {
-        NodeBase? child;
-        while ((child = node.GetNextNode()) != null)
+        node.IterateContent(this, (node, self) =>
         {
-            renderer.EnsureLine();
-            renderer.Write('*');
-            renderer.Write(' ');
-            renderer.PushIndent("  ");
-            Visit(child);
-            renderer.PopIndent();
-        }
+            self.renderer.EnsureLine();
+            self.renderer.Write('*');
+            self.renderer.Write(' ');
+            self.renderer.PushIndent("  ");
+            self.Visit(node);
+            self.renderer.PopIndent();
+        });
 
         renderer.FinishBlock(true);
     }
 
     protected override void VisitOrderedList(NodeBase node)
     {
-        var index = 0;
+        currentIndex = 0;
 
-        NodeBase? child;
-        while ((child = node.GetNextNode()) != null)
+        node.IterateContent(this, (node, self) =>
         {
-            index++;
-            renderer.EnsureLine();
-            renderer.Write(index.ToString(CultureInfo.InvariantCulture));
-            renderer.Write('.');
-            renderer.Write(' ');
-            renderer.PushIndent(new string(' ', IntLog10Fast(index) + 3));
-            Visit(child);
-            renderer.PopIndent();
-        }
+            self.currentIndex++;
+            self.renderer.EnsureLine();
+            self.renderer.Write(self.currentIndex.ToString(CultureInfo.InvariantCulture));
+            self.renderer.Write('.');
+            self.renderer.Write(' ');
+            self.renderer.PushIndent(new string(' ', IntLog10Fast(currentIndex) + 3));
+            self.Visit(node);
+            self.renderer.PopIndent();
+        });
 
         renderer.FinishBlock(true);
     }

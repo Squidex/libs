@@ -5,7 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Text.RichText.Model;
+using Squidex.Text.RichText.Model;
+
+namespace Squidex.RichText.Json;
 
 internal sealed class JsonMark : MarkBase
 {
@@ -24,7 +26,7 @@ internal sealed class JsonMark : MarkBase
                 case "type" when value.TryGetEnum<MarkType>(out var type):
                     this.type = type;
                     break;
-                case "attrs" when value.Value is JsonObject attrs:
+                case "attrs" when value is JsonObject attrs:
                     this.attrs = attrs;
                     break;
                 default:
@@ -43,9 +45,9 @@ internal sealed class JsonMark : MarkBase
 
     public override int GetIntAttr(string name, int defaultValue = 0)
     {
-        if (attrs?.TryGetValue(name, out var value) == true && value.Value is double attr)
+        if (attrs?.TryGetValue(name, out var value) == true && value is int attr)
         {
-            return (int)attr;
+            return attr;
         }
 
         return defaultValue;
@@ -53,7 +55,7 @@ internal sealed class JsonMark : MarkBase
 
     public override string GetStringAttr(string name, string defaultValue = "")
     {
-        if (attrs?.TryGetValue(name, out var value) == true && value.Value is string attr)
+        if (attrs?.TryGetValue(name, out var value) == true && value is string attr)
         {
             return attr;
         }

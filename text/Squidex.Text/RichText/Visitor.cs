@@ -11,97 +11,63 @@ namespace Squidex.Text.RichText;
 
 public abstract class Visitor
 {
+    private readonly Action visitInner;
+    private NodeBase currentNode;
+
+    protected Visitor()
+    {
+        visitInner = VisitCurrentMarkOrNode;
+    }
+
     public void Visit(NodeBase node)
     {
-        node.Reset();
+        currentNode = node;
+        currentNode.Reset();
 
-        Action inner = () =>
+        VisitCurrentMarkOrNode();
+    }
+
+    private void VisitCurrentMarkOrNode()
+    {
+        var mark = currentNode.GetNextMark();
+
+        if (mark != null)
         {
-            var type = node.GetNodeType();
-
-            switch (type)
-            {
-                case NodeType.Image:
-                    VisitImage(node,
-                        node.GetStringAttr("src"),
-                        node.GetStringAttr("alt"),
-                        node.GetStringAttr("title"));
-                    break;
-                case NodeType.CodeBlock:
-                    VisitCodeBlock(node,
-                        node.GetStringAttr("language"));
-                    break;
-                case NodeType.Heading:
-                    VisitHeading(node,
-                        node.GetIntAttr("level", 1));
-                    break;
-                case NodeType.Blockquote:
-                    VisitBlockquote(node);
-                    break;
-                case NodeType.BulletList:
-                    VisitBulletList(node);
-                    break;
-                case NodeType.Document:
-                    VisitDocument(node);
-                    break;
-                case NodeType.HardBreak:
-                    VisitHardBreak(node);
-                    break;
-                case NodeType.HorizontalLine:
-                    VisitHorizontalLine(node);
-                    break;
-                case NodeType.ListItem:
-                    VisitListItem(node);
-                    break;
-                case NodeType.OrderedList:
-                    VisitOrderedList(node);
-                    break;
-                case NodeType.Paragraph:
-                    VisitParagraph(node);
-                    break;
-                case NodeType.Text:
-                    VisitText(node);
-                    break;
-                default:
-                    ThrowInvalidType(type);
-                    break;
-            }
-        };
-
-        MarkBase? mark;
-        while ((mark = node.GetNextMarkReverse()) != null)
-        {
-            var currentInner = inner;
-            var currentMark = mark;
-
-            var type = mark.GetMarkType();
-
-            switch (type)
-            {
-                case MarkType.Link:
-                    inner = () => VisitLink(currentMark, currentInner,
-                        currentMark.GetStringAttr("href"),
-                        currentMark.GetStringAttr("target"));
-                    break;
-                case MarkType.Bold:
-                    inner = () => VisitBold(currentMark, currentInner);
-                    break;
-                case MarkType.Code:
-                    inner = () => VisitCode(currentMark, currentInner);
-                    break;
-                case MarkType.Italic:
-                    inner = () => VisitItalic(currentMark, currentInner);
-                    break;
-                case MarkType.Underline:
-                    inner = () => VisitUnderline(currentMark, currentInner);
-                    break;
-                default:
-                    ThrowInvalidType(type);
-                    break;
-            }
+            VisitMark(mark);
         }
+        else
+        {
+            VisitNode(currentNode);
+        }
+    }
 
-        inner();
+    private void VisitMark(MarkBase mark)
+    {
+        var type = mark.GetMarkType();
+
+        switch (type)
+        {
+            case MarkType.Link:
+                VisitLink(mark, visitInner,
+                    mark.GetStringAttr("href"),
+                    mark.GetStringAttr("target"));
+                break;
+            case MarkType.Bold:
+                VisitBold(mark, visitInner);
+                break;
+            case MarkType.Code:
+                VisitCode(mark, visitInner);
+                break;
+            case MarkType.Italic:
+                VisitItalic(mark, visitInner);
+                break;
+            case MarkType.Underline:
+                VisitUnderline(mark, visitInner);
+                break;
+            default:
+                ThrowInvalidType(type);
+                break;
+        }
     }
 
     protected virtual void VisitBold(MarkBase mark, Action inner)
@@ -127,6 +93,59 @@ public abstract class Visitor
     protected virtual void VisitUnderline(MarkBase mark, Action inner)
     {
         inner();
+    }
+
+    private void VisitNode(NodeBase node)
+    {
+        var type = node.GetNodeType();
+
+        switch (type)
+        {
+            case NodeType.Image:
+                VisitImage(node,
+                    node.GetStringAttr("src"),
+                    node.GetStringAttr("alt"),
+                    node.GetStringAttr("title"));
+                break;
+            case NodeType.CodeBlock:
+                VisitCodeBlock(node,
+                    node.GetStringAttr("language"));
+                break;
+            case NodeType.Heading:
+                VisitHeading(node,
+                    node.GetIntAttr("level", 1));
+                break;
+            case NodeType.Blockquote:
+                VisitBlockquote(node);
+                break;
+            case NodeType.BulletList:
+                VisitBulletList(node);
+                break;
+            case NodeType.Document:
+                VisitDocument(node);
+                break;
+            case NodeType.HardBreak:
+                VisitHardBreak(node);
+                break;
+            case NodeType.HorizontalLine:
+                VisitHorizontalLine(node);
+                break;
+            case NodeType.ListItem:
+                VisitListItem(node);
+                break;
+            case NodeType.OrderedList:
+                VisitOrderedList(node);
+                break;
+            case NodeType.Paragraph:
+                VisitParagraph(node);
+                break;
+            case NodeType.Text:
+                VisitText(node);
+                break;
+            default:
+                ThrowInvalidType(type);
+                break;
+        }
     }
 
     protected virtual void VisitBlockquote(NodeBase node)
@@ -191,11 +210,10 @@ public abstract class Visitor
 
     protected void VisitChildren(NodeBase node)
     {
-        NodeBase? child;
-        while ((child = node.GetNextNode()) != null)
+        node.IterateContent(this, (child, self) =>
         {
-            Visit(child);
-        }
+            self.Visit(child);
+        });
     }
 
     private static void ThrowInvalidType(MarkType type)

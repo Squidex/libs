@@ -79,6 +79,7 @@ public class RichTextListTests
                 new Node
                 {
                     Type = NodeType.ListItem,
+
                     Content =
                     [
                         new Node

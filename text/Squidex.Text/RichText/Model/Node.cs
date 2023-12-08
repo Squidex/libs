@@ -10,7 +10,6 @@ namespace Squidex.Text.RichText.Model;
 public sealed class Node : NodeBase
 {
     private int currentMark;
-    private int currentNode;
 
     public NodeType Type { get; set; }
 
@@ -34,28 +33,30 @@ public sealed class Node : NodeBase
 
     public override void Reset()
     {
-        currentNode = 0;
-        currentMark = (Marks?.Length ?? int.MaxValue) - 1;
+        currentMark = 0;
     }
 
-    public override NodeBase? GetNextNode()
+    public override MarkBase? GetNextMark()
     {
-        if (Content == null || currentNode >= Content.Length)
+        if (Marks == null || currentMark >= Marks.Length)
         {
             return null;
         }
 
-        return Content[currentNode++];
+        return Marks[currentMark++];
     }
 
-    public override MarkBase? GetNextMarkReverse()
+    public override void IterateContent<T>(T state, Action<NodeBase, T> action)
     {
-        if (Marks == null || currentMark < 0)
+        if (Content == null)
         {
-            return null;
+            return;
         }
 
-        return Marks[currentMark--];
+        foreach (var item in Content)
+        {
+            action(item, state);
+        }
     }
 
     public override int GetIntAttr(string name, int defaultValue = 0)

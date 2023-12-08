@@ -5,14 +5,8 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Text;
+namespace Squidex.RichText.Json;
 
-public enum JsonValueType
+public class JsonObject : Dictionary<string, object>
 {
-    Null,
-    Array,
-    Boolean,
-    Number,
-    Object,
-    String
 }
