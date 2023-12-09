@@ -12,15 +12,11 @@ Just another paragraph
 
 ---
 
-*   Item 1
+* Item 1
+* Item 2
 
-*   Item 2
-
-
-1.  Item A
-
-2.  Item B
-
+1. Item A
+2. Item B
 
 [A link](Link Content)
 

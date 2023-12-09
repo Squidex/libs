@@ -9,6 +9,7 @@ using System.Text.Json;
 using Squidex.RichText.Json;
 using Squidex.Text.RichText.Model;
 using Xunit;
+using static Google.Rpc.Context.AttributeContext.Types;
 
 namespace Squidex.Text.RichText;
 
@@ -99,37 +100,26 @@ public class RichTextComplexTests
             ]
         };
 
-        var (markdown, html) = RenderUtils.Render(source);
-
-        var expectedMarkdown = @"
+        RenderUtils.AssertNode(source,
+            expectedMarkdown: @"
 Paragraph1
 
 Paragraph2
 * **Item1**
 * Item2
-* Item3";
-
-        Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
-
-        var expectedHtml = @"
+* Item3",
+            expectedFormattedHtml: @"
+<p>Paragraph1</p>
 <p>
-    Paragraph1
-</p>
-<p>
-    Paragraph2<ul>
-        <li>
-            <strong>Item1</strong>
-        </li>
-        <li>
-            Item2
-        </li>
-        <li>
-            Item3
-        </li>
+    Paragraph2
+    <ul>
+        <li><strong>Item1</strong></li>
+        <li>Item2</li>
+        <li>Item3</li>
     </ul>
-</p>";
-
-        Assert.Equal(expectedHtml.TrimExpected(), html);
+</p>",
+            expectedCompressedHtml: @"
+<p>Paragraph1</p><p>Paragraph2<ul><li><strong>Item1</strong></li><li>Item2</li><li>Item3</li></ul></p>");
     }
 
     [Fact]
@@ -218,42 +208,28 @@ Paragraph2
         };
 
         var node = new JsonNode();
+        node.TryUse(source, false);
 
-        var expectedMarkdown = @"
+        RenderUtils.AssertNode(node,
+            expectedMarkdown: @"
 Paragraph1
 
 Paragraph2
 * **Item1**
 * Item2
-* Item3";
-
-        node.TryUse(source, false);
-        var markdown = RenderUtils.RenderMarkdown(node);
-
-        Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
-
-        var expectedHtml = @"
+* Item3",
+            expectedFormattedHtml: @"
+<p>Paragraph1</p>
 <p>
-    Paragraph1
-</p>
-<p>
-    Paragraph2<ul>
-        <li>
-            <strong>Item1</strong>
-        </li>
-        <li>
-            Item2
-        </li>
-        <li>
-            Item3
-        </li>
+    Paragraph2
+    <ul>
+        <li><strong>Item1</strong></li>
+        <li>Item2</li>
+        <li>Item3</li>
     </ul>
-</p>";
-
-        node.TryUse(source, false);
-        var html = RenderUtils.RenderHtml(node);
-
-        Assert.Equal(expectedHtml.TrimExpected(), html);
+</p>",
+            expectedCompressedHtml: @"
+<p>Paragraph1</p><p>Paragraph2<ul><li><strong>Item1</strong></li><li>Item2</li><li>Item3</li></ul></p>");
     }
 
     [Fact]
@@ -262,14 +238,9 @@ Paragraph2
         var inputJson = File.ReadAllText("RichText/ComplexText.json");
         var inputNode = JsonSerializer.Deserialize<Node>(inputJson)!;
 
-        var (markdown, html) = RenderUtils.Render(inputNode);
-
-        Assert.Equal(
-            File.ReadAllText("RichText/ComplexText.md").TrimExpected(),
-            markdown);
-
-        Assert.Equal(
-            File.ReadAllText("RichText/ComplexText.html").TrimExpected(),
-            html);
+        RenderUtils.AssertNode(inputNode,
+            File.ReadAllText("RichText/ComplexText.md"),
+            File.ReadAllText("RichText/ComplexText.html"),
+            File.ReadAllText("RichText/ComplexText.min.html"));
     }
 }

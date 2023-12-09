@@ -28,19 +28,13 @@ public class RichTextTests
             ],
         };
 
-        var (markdown, html) = RenderUtils.Render(source);
-
-        var expectedMarkdown = @"
-Paragraph1";
-
-        Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
-
-        var expectedHtml = @"
-<p>
-    Paragraph1
-</p>";
-
-        Assert.Equal(expectedHtml.TrimExpected(), html);
+        RenderUtils.AssertNode(source,
+            expectedMarkdown: @"
+Paragraph1",
+            expectedFormattedHtml: @"
+<p>Paragraph1</p>",
+            expectedCompressedHtml: @"
+<p>Paragraph1</p>");
     }
 
     [Fact]
@@ -78,24 +72,16 @@ Paragraph1";
             ]
         };
 
-        var (markdown, html) = RenderUtils.Render(source);
-
-        var expectedMarkdown = @"
+        RenderUtils.AssertNode(source,
+            expectedMarkdown: @"
 Paragraph1
 
-Paragraph2";
-
-        Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
-
-        var expectedHtml = @"
-<p>
-    Paragraph1
-</p>
-<p>
-    Paragraph2
-</p>";
-
-        Assert.Equal(expectedHtml.TrimExpected(), html);
+Paragraph2",
+            expectedFormattedHtml: @"
+<p>Paragraph1</p>
+<p>Paragraph2</p>",
+            expectedCompressedHtml: @"
+<p>Paragraph1</p><p>Paragraph2</p>");
     }
 
     [Fact]
@@ -123,22 +109,18 @@ Paragraph2";
             ]
         };
 
-        var (markdown, html) = RenderUtils.Render(source);
-
-        var expectedMarkdown = @"
+        RenderUtils.AssertNode(source,
+            expectedMarkdown: @"
 Paragraph1
-Paragraph2";
-
-        Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
-
-        var expectedHtml = @"
+Paragraph2",
+            expectedFormattedHtml: @"
 <p>
     Paragraph1
-    <br />
+    <br>
     Paragraph2
-</p>";
-
-        Assert.Equal(expectedHtml.TrimExpected(), html);
+</p>",
+            expectedCompressedHtml: @"
+<p>Paragraph1<br>Paragraph2</p>");
     }
 
     [Fact]
@@ -149,17 +131,13 @@ Paragraph2";
             Type = NodeType.HorizontalRule
         };
 
-        var (markdown, html) = RenderUtils.Render(source);
-
-        var expectedMarkdown = @"
----";
-
-        Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
-
-        var expectedHtml = @"
-<hr>";
-
-        Assert.Equal(expectedHtml.TrimExpected(), html);
+        RenderUtils.AssertNode(source,
+            expectedMarkdown: @"
+---",
+            expectedFormattedHtml: @"
+<hr>",
+            expectedCompressedHtml: @"
+<hr>");
     }
 
     [Fact]
@@ -204,26 +182,18 @@ Paragraph2";
             ]
         };
 
-        var (markdown, html) = RenderUtils.Render(source);
-
-        var expectedMarkdown = @"
+        RenderUtils.AssertNode(source,
+            expectedMarkdown: @"
 > Text1
 
-Text2";
-
-        Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
-
-        var expectedHtml = @"
+Text2",
+            expectedFormattedHtml: @"
 <blockquote>
-    <p>
-        Text1
-    </p>
+    <p>Text1</p>
 </blockquote>
-<p>
-    Text2
-</p>";
-
-        Assert.Equal(expectedHtml.TrimExpected(), html);
+<p>Text2</p>",
+            expectedCompressedHtml: @"
+<blockquote><p>Text1</p></blockquote><p>Text2</p>");
     }
 
     [Fact]
@@ -255,26 +225,22 @@ Text2";
             ]
         };
 
-        var (markdown, html) = RenderUtils.Render(source);
-
-        var expectedMarkdown = @"
+        RenderUtils.AssertNode(source,
+            expectedMarkdown: @"
 ```html
 Paragraph1
 Paragraph2
-```";
-
-        Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
-
-        var expectedHtml = @"
-<pre spellcheck=""false"" class=""language-html"">
-    <code data-code-block-lang=""html"">
+```",
+            expectedFormattedHtml: @"
+<pre class=""language-html"">
+    <code data-code-block-language=""html"">
         Paragraph1
-        <br />
+        <br>
         Paragraph2
     </code>
-</pre>";
-
-        Assert.Equal(expectedHtml.TrimExpected(), html);
+</pre>",
+            expectedCompressedHtml: @"
+<pre class=""language-html""><code data-code-block-language=""html"">Paragraph1<br>Paragraph2</code></pre>");
     }
 
     [Fact]
@@ -302,26 +268,22 @@ Paragraph2
             ]
         };
 
-        var (markdown, html) = RenderUtils.Render(source);
-
-        var expectedMarkdown = @"
+        RenderUtils.AssertNode(source,
+            expectedMarkdown: @"
 ```
 Paragraph1
 Paragraph2
-```";
-
-        Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
-
-        var expectedHtml = @"
-<pre spellcheck=""false"">
+```",
+            expectedFormattedHtml: @"
+<pre>
     <code>
         Paragraph1
-        <br />
+        <br>
         Paragraph2
     </code>
-</pre>";
-
-        Assert.Equal(expectedHtml.TrimExpected(), html);
+</pre>",
+            expectedCompressedHtml: @"
+<pre><code>Paragraph1<br>Paragraph2</code></pre>");
     }
 
     [Fact]
@@ -345,17 +307,13 @@ Paragraph2
             Text = "Link Text"
         };
 
-        var (markdown, html) = RenderUtils.Render(source);
-
-        var expectedMarkdown = @"
-[Link Text](https://squidex.io)";
-
-        Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
-
-        var expectedHtml = @"
-<a href=""https://squidex.io"" target=""_blank"">Link Text</a>";
-
-        Assert.Equal(expectedHtml.TrimExpected(), html);
+        RenderUtils.AssertNode(source,
+            expectedMarkdown: @"
+[Link Text](https://squidex.io)",
+            expectedFormattedHtml: @"
+<a href=""https://squidex.io"" target=""_blank"" rel=""noopener noreferrer nofollow"">Link Text</a>",
+            expectedCompressedHtml: @"
+<a href=""https://squidex.io"" target=""_blank"" rel=""noopener noreferrer nofollow"">Link Text</a>");
     }
 
     [Fact]
@@ -374,17 +332,13 @@ Paragraph2
             Text = "Link Text"
         };
 
-        var (markdown, html) = RenderUtils.Render(source);
-
-        var expectedMarkdown = @"
-Link Text";
-
-        Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
-
-        var expectedHtml = @"
-<a>Link Text</a>";
-
-        Assert.Equal(expectedHtml.TrimExpected(), html);
+        RenderUtils.AssertNode(source,
+            expectedMarkdown: @"
+Link Text",
+            expectedFormattedHtml: @"
+<a rel=""noopener noreferrer nofollow"">Link Text</a>",
+            expectedCompressedHtml: @"
+<a rel=""noopener noreferrer nofollow"">Link Text</a>");
     }
 
     [Fact]
@@ -401,17 +355,13 @@ Link Text";
             }
         };
 
-        var (markdown, html) = RenderUtils.Render(source);
-
-        var expectedMarkdown = @"
-![Logo](https://squidex.io/logo.png ""Website Logo"")";
-
-        Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
-
-        var expectedHtml = @"
-<img src=""https://squidex.io/logo.png"" alt=""Logo"" title=""Website Logo"" />";
-
-        Assert.Equal(expectedHtml.TrimExpected(), html);
+        RenderUtils.AssertNode(source,
+            expectedMarkdown: @"
+![Logo](https://squidex.io/logo.png ""Website Logo"")",
+            expectedFormattedHtml: @"
+<img alt=""Logo"" src=""https://squidex.io/logo.png"" title=""Website Logo"">",
+            expectedCompressedHtml: @"
+<img alt=""Logo"" src=""https://squidex.io/logo.png"" title=""Website Logo"">");
     }
 
     [Fact]
@@ -426,16 +376,12 @@ Link Text";
             }
         };
 
-        var (markdown, html) = RenderUtils.Render(source);
-
-        var expectedMarkdown = @"
-![](https://squidex.io/logo.png)";
-
-        Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
-
-        var expectedHtml = @"
-<img src=""https://squidex.io/logo.png"" />";
-
-        Assert.Equal(expectedHtml.TrimExpected(), html);
+        RenderUtils.AssertNode(source,
+            expectedMarkdown: @"
+![](https://squidex.io/logo.png)",
+            expectedFormattedHtml: @"
+<img src=""https://squidex.io/logo.png"">",
+            expectedCompressedHtml: @"
+<img src=""https://squidex.io/logo.png"">");
     }
 }

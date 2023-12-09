@@ -6,56 +6,49 @@
 // ==========================================================================
 
 using System.Globalization;
+using System.Text;
 using Markdig.Renderers.Normalize;
 using Squidex.Text.RichText.Model;
+using Squidex.Text.RichText.Writer;
 
 namespace Squidex.Text.RichText;
 
 public sealed class MarkdownVisitor : Visitor
 {
-    private readonly NormalizeRenderer renderer;
+    private readonly IWriter writer;
     private int currentIndex;
 
-    public MarkdownVisitor(NormalizeRenderer renderer)
+    private MarkdownVisitor(IWriter writer)
     {
-        this.renderer = renderer;
+        this.writer = writer;
     }
 
-    public static void Render(INode node, TextWriter textWriter)
+    public static void Render(INode node, StringBuilder stringBuilder)
     {
-        var newRenderer = new NormalizeRenderer(textWriter);
+        var newWriter = new IndentedWriter(stringBuilder);
 
-        new MarkdownVisitor(newRenderer).Visit(node);
+        new MarkdownVisitor(newWriter).Visit(node);
     }
 
     protected override void VisitBlockquote(INode node)
     {
-        renderer.PushIndent("> ");
+        writer.PushIndent("> ");
         VisitChildren(node);
-        renderer.PopIndent();
+        writer.PopIndent();
 
         FinishBlock(true);
     }
 
     protected override void VisitBulletList(INode node)
     {
-        IterateChildren(node, this, (child, self) =>
+        IterateChildren(node, this, static (child, self) =>
         {
-            self.renderer.EnsureLine();
-            self.renderer.Write('*');
-            self.renderer.Write("   ");
-            self.renderer.PushIndent("    ");
+            self.writer.EnsureLine();
+            self.writer.Write("* ");
+            self.writer.PushIndent("  ");
             self.Visit(child);
-            self.renderer.PopIndent();
-
-            if (!IsLastInContainer)
-            {
-                self.renderer.EnsureLine();
-                self.renderer.WriteLine();
-            }
+            self.writer.PopIndent();
         });
-
-        renderer.EnsureLine();
 
         FinishBlock(true);
     }
@@ -64,81 +57,69 @@ public sealed class MarkdownVisitor : Visitor
     {
         currentIndex = 0;
 
-        IterateChildren(node, this, (child, self) =>
+        IterateChildren(node, this, static (child, self) =>
         {
             self.currentIndex++;
-            self.renderer.EnsureLine();
-            self.renderer.Write(self.currentIndex.ToString(CultureInfo.InvariantCulture));
-            self.renderer.Write('.');
-            self.renderer.Write("  ");
-            self.renderer.PushIndent(new string(' ', IntLog10Fast(currentIndex) + 4));
+            self.writer.EnsureLine();
+            self.writer.Write(self.currentIndex.ToString(CultureInfo.InvariantCulture));
+            self.writer.Write(". ");
+            self.writer.PushIndent(GetIndentByPRefix(self.currentIndex) + 3);
             self.Visit(child);
-            self.renderer.PopIndent();
-
-            if (!IsLastInContainer)
-            {
-                self.renderer.EnsureLine();
-                self.renderer.WriteLine();
-            }
+            self.writer.PopIndent();
         });
-
-        renderer.EnsureLine();
 
         FinishBlock(true);
     }
 
     protected override void VisitCodeBlock(INode node, string? language)
     {
-        renderer.Write("```");
-        renderer.Write(language ?? string.Empty);
-        renderer.EnsureLine();
+        writer.Write("```");
+        writer.Write(language ?? string.Empty);
+        writer.EnsureLine();
         VisitChildren(node);
-        renderer.WriteLine();
-        renderer.Write("```");
+        writer.WriteLine();
+        writer.Write("```");
 
         FinishBlock(true);
     }
 
     protected override void VisitImage(INode node, string? src, string? alt, string? title)
     {
-        renderer.Write('!');
-        renderer.Write('[');
-        renderer.Write(alt ?? string.Empty);
-        renderer.Write(']');
-        renderer.Write('(');
-        renderer.Write(src ?? string.Empty);
+        writer.Write("![");
+        writer.Write(alt ?? string.Empty);
+        writer.Write("](");
+        writer.Write(src ?? string.Empty);
 
         if (!string.IsNullOrEmpty(title))
         {
-            renderer.Write(' ');
-            renderer.Write('"');
-            renderer.Write(title);
-            renderer.Write('"');
+            writer.Write(" \"");
+            writer.Write(title);
+            writer.Write("\"");
         }
 
-        renderer.Write(')');
+        writer.Write(")");
     }
 
     protected override void VisitHorizontalRule(INode node)
     {
-        renderer.WriteLine("---");
+        writer.WriteLine("---");
 
         FinishBlock(false);
     }
 
     protected override void VisitHardBreak(INode node)
     {
-        renderer.WriteLine();
+        writer.WriteLine();
     }
 
     protected override void VisitHeading(INode node, int level)
     {
         for (var i = 0; i < level; i++)
         {
-            renderer.Write('#');
+            writer.Write("#");
         }
 
-        renderer.Write(' ');
+        writer.Write(" ");
         VisitChildren(node);
 
         FinishBlock(true);
@@ -151,7 +132,7 @@ public sealed class MarkdownVisitor : Visitor
         FinishBlock(true);
     }
 
-    protected override void VisitLink(IMark mark, Action inner, string? href, string? target)
+    protected override void VisitLink(IMark mark, Action inner, string? href, string? target, string rel)
     {
         if (string.IsNullOrWhiteSpace(href))
         {
@@ -159,56 +140,65 @@ public sealed class MarkdownVisitor : Visitor
             return;
         }
 
-        renderer.Write('[');
+        writer.Write("[");
         inner();
-        renderer.Write(']');
-        renderer.Write('(');
-        renderer.Write(href);
-        renderer.Write(')');
+        writer.Write("](");
+        writer.Write(href);
+        writer.Write(")");
     }
 
     protected override void VisitCode(IMark mark, Action inner)
     {
-        renderer.Write('`');
+        writer.Write("`");
         inner();
-        renderer.Write('`');
+        writer.Write("`");
     }
 
     protected override void VisitBold(IMark mark, Action inner)
     {
-        renderer.Write("**");
+        writer.Write("**");
         inner();
-        renderer.Write("**");
+        writer.Write("**");
     }
 
     protected override void VisitItalic(IMark mark, Action inner)
     {
-        renderer.Write('*');
+        writer.Write("*");
         inner();
-        renderer.Write('*');
+        writer.Write("*");
     }
 
     protected override void VisitText(INode node)
     {
-        renderer.Write(node.Text);
+        writer.Write(node.Text ?? string.Empty);
     }
 
     private void FinishBlock(bool newLine)
     {
         if (!IsLastInContainer)
         {
-            renderer.FinishBlock(newLine);
+            writer.WriteLine();
+
+            if (newLine)
+            {
+                writer.WriteLine();
+            }
         }
     }
 
-    private static int IntLog10Fast(int input) =>
-        (input < 10) ? 0 :
-        (input < 100) ? 1 :
-        (input < 1000) ? 2 :
-        (input < 10000) ? 3 :
-        (input < 100000) ? 4 :
-        (input < 1000000) ? 5 :
-        (input < 10000000) ? 6 :
-        (input < 100000000) ? 7 :
-        (input < 1000000000) ? 8 : 9;
+    private static string GetIndentByPRefix(int input)
+    {
+        static int IntLog10Fast(int input) =>
+            (input < 10) ? 0 :
+            (input < 100) ? 1 :
+            (input < 1000) ? 2 :
+            (input < 10000) ? 3 :
+            (input < 100000) ? 4 :
+            (input < 1000000) ? 5 :
+            (input < 10000000) ? 6 :
+            (input < 100000000) ? 7 :
+            (input < 1000000000) ? 8 : 9;
+
+        return new string(' ', IntLog10Fast(input));
+    }
 }

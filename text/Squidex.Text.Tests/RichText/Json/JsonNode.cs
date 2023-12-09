@@ -111,18 +111,18 @@ internal class JsonNode : INode
 
     public void IterateContent<T>(T state, Action<INode, T, bool, bool> action)
     {
-        if (currentState.Content == null)
+        var prevState = currentState;
+
+        if (prevState.Content == null)
         {
             return;
         }
 
-        var prevState = currentState;
-
         var i = 0;
-        foreach (var item in currentState.Content)
+        foreach (var item in prevState.Content)
         {
             var isFirst = i == 0;
-            var isLast = i == currentState.Content.Count - 1;
+            var isLast = i == prevState.Content.Count - 1;
 
             TryUse((JsonObject)item, false);
             action(this, state, isFirst, isLast);

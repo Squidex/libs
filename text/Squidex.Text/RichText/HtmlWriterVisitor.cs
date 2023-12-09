@@ -5,120 +5,163 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System.Web.UI;
+using System.Net;
+using System.Text;
 using Squidex.Text.RichText.Model;
+using Squidex.Text.RichText.Writer;
 
 namespace Squidex.Text.RichText;
 
 public sealed class HtmlWriterVisitor : Visitor
 {
-    private readonly HtmlTextWriter writer;
+    private static readonly string Indent2 = "  ";
+    private static readonly string Indent4 = "    ";
+    private static readonly string[] Headings =
+        [
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "h5",
+            "h6"
+        ];
 
-    private HtmlWriterVisitor(HtmlTextWriter writer)
+    private readonly List<(string Key, string? Value)> attributes = [];
+    private readonly IWriter writer;
+    private readonly string indent;
+    private bool hasBlockChildren;
+
+    private HtmlWriterVisitor(IWriter writer, string indent)
     {
         this.writer = writer;
+        this.indent = indent;
     }
 
-    public static void Render(INode node, TextWriter textWriter)
+    public static void Render(INode node, StringBuilder stringBuilder, HtmlWriterOptions options)
     {
-        var newWriter = new HtmlTextWriter(textWriter, new string(' ', 4));
+        var newIndent = options.Indentation switch
+        {
+            0 => string.Empty,
+            2 => Indent2,
+            4 => Indent4,
+            _ => new string(' ', options.Indentation)
+        };
 
-        new HtmlWriterVisitor(newWriter).Visit(node);
-    }
+        IWriter newWriter = options.Indentation > 0 ? new IndentedWriter(stringBuilder) : new PlainWriter(stringBuilder);
 
-    protected override void VisitHardBreak(INode node)
-    {
-        writer.WriteLine();
-        writer.WriteBreak();
-        writer.WriteLine();
-    }
-
-    protected override void VisitHorizontalRule(INode node)
-    {
-        writer.WriteFullBeginTag("hr");
-    }
-
-    protected override void VisitBlockquote(INode node)
-    {
-        EmbedInTag(node, "blockquote");
-    }
-
-    protected override void VisitBulletList(INode node)
-    {
-        EmbedInTag(node, "ul");
-    }
-
-    protected override void VisitHeading(INode node, int level)
-    {
-        EmbedInTag(node, $"h{level}");
-    }
-
-    protected override void VisitListItem(INode node)
-    {
-        EmbedInTag(node, "li");
-    }
-
-    protected override void VisitOrderedList(INode node)
-    {
-        EmbedInTag(node, "ol");
-    }
-
-    protected override void VisitParagraph(INode node)
-    {
-        EmbedInTag(node, "p");
+        new HtmlWriterVisitor(newWriter, newIndent).Visit(node);
     }
 
     protected override void VisitImage(INode node, string? src, string? alt, string? title)
     {
-        writer.AddNonEmptyAttribute(nameof(src), src);
-        writer.AddNonEmptyAttribute(nameof(alt), alt);
-        writer.AddNonEmptyAttribute(nameof(title), title);
-        writer.RenderBeginTag("img");
-        writer.RenderEndTag();
+        attributes.Add((nameof(alt), alt));
+        attributes.Add((nameof(src), src));
+        attributes.Add((nameof(title), title));
+
+        writer.Write("<img");
+        WriteAttributes();
+        writer.Write(">");
     }
 
     protected override void VisitCodeBlock(INode node, string? language)
     {
-        writer.AddNonEmptyAttribute("spellcheck", "false");
-        writer.AddNonEmptyAttribute("class", language, l => $"language-{l}");
-        writer.RenderBeginTag("pre");
+        if (!string.IsNullOrWhiteSpace(language))
+        {
+            attributes.Add(("class", $"language-{language}"));
+        }
 
-        writer.AddNonEmptyAttribute("data-code-block-lang", language);
-        writer.RenderBeginTag("code");
-        base.VisitCodeBlock(node, language);
-        writer.RenderEndTag();
+        RenderBlock(node, (self: this, node, language), "pre", static s =>
+        {
+            if (!string.IsNullOrWhiteSpace(s.language))
+            {
+                s.self.attributes.Add(("data-code-block-language", s.language));
+            }
 
-        writer.RenderEndTag();
+            s.self.RenderBlock(s.node, s, "code", static s =>
+            {
+                s.self.VisitChildren(s.node);
+            });
+        }, true);
+    }
+
+    protected override void VisitHardBreak(INode node)
+    {
+        writer.EnsureLine().WriteLine("<br>");
+    }
+
+    protected override void VisitHorizontalRule(INode node)
+    {
+        writer.EnsureLine().WriteLine("<hr>");
+    }
+
+    protected override void VisitBlockquote(INode node)
+    {
+        RenderBlock(node, (self: this, node), "blockquote",
+            static s => s.self.VisitChildren(s.node));
+    }
+
+    protected override void VisitBulletList(INode node)
+    {
+        RenderBlock(node, (self: this, node), "ul",
+            static s => s.self.VisitChildren(s.node));
+    }
+
+    protected override void VisitHeading(INode node, int level)
+    {
+        RenderBlock(node, (self: this, node), GetHeading(level),
+            static s => s.self.VisitChildren(s.node));
+    }
+
+    protected override void VisitListItem(INode node)
+    {
+        RenderBlock(node, (self: this, node), "li",
+            static s => s.self.VisitChildren(s.node));
+    }
+
+    protected override void VisitOrderedList(INode node)
+    {
+        RenderBlock(node, (self: this, node), "ol",
+            static s => s.self.VisitChildren(s.node));
+    }
+
+    protected override void VisitParagraph(INode node)
+    {
+        RenderBlock(node, (self: this, node), "p",
+            static s => s.self.VisitChildren(s.node));
     }
 
     protected override void VisitBold(IMark mark, Action inner)
     {
-        EmbedInTag(inner, "strong");
+        RenderInline(inner, "strong",
+            static a => a());
     }
 
     protected override void VisitCode(IMark mark, Action inner)
     {
-        EmbedInTag(inner, "code");
+        RenderInline(inner, "code",
+            static a => a());
     }
 
     protected override void VisitItalic(IMark mark, Action inner)
     {
-        EmbedInTag(inner, "em");
+        RenderInline(inner, "em",
+            static a => a());
     }
 
     protected override void VisitUnderline(IMark mark, Action inner)
     {
-        EmbedInTag(inner, "u");
+        RenderInline(inner, "u",
+            static a => a());
     }
 
-    protected override void VisitLink(IMark mark, Action inner, string? href, string? target)
+    protected override void VisitLink(IMark mark, Action inner, string? href, string? target, string rel)
     {
-        writer.WriteBeginTag("a");
-        writer.WriteNonEmptyAttribute(nameof(href), href);
-        writer.WriteNonEmptyAttribute(nameof(target), target);
-        writer.Write(">");
-        base.VisitLink(mark, inner, href, target);
-        writer.WriteEndTag("a");
+        attributes.Add((nameof(href), href));
+        attributes.Add((nameof(target), target));
+        attributes.Add((nameof(rel), rel));
+
+        RenderInline(inner, "a",
+            static a => a());
     }
 
     protected override void VisitText(INode node)
@@ -126,17 +169,89 @@ public sealed class HtmlWriterVisitor : Visitor
         writer.Write(node.Text ?? string.Empty);
     }
 
-    private void EmbedInTag(INode node, string tag)
+    private void RenderInline<T>(T state, string tag, Action<T> inner)
     {
-        writer.RenderBeginTag(tag);
-        VisitChildren(node);
-        writer.RenderEndTag();
+        writer.Write("<");
+        writer.Write(tag);
+        WriteAttributes();
+        writer.Write(">");
+        inner(state);
+        writer.Write("</");
+        writer.Write(tag);
+        writer.Write(">");
     }
 
-    private void EmbedInTag(Action inner, string tag)
+    private void RenderBlock<T>(INode? node, T state, string tag, Action<T> inner, bool asBlock = false)
     {
-        writer.WriteFullBeginTag(tag);
-        inner();
-        writer.WriteEndTag(tag);
+        hasBlockChildren = asBlock;
+
+        if (node != null && !asBlock)
+        {
+            IterateChildren(node, this, (child, self) =>
+            {
+                self.hasBlockChildren |= child.Type is not NodeType.Image and not NodeType.Text;
+            });
+        }
+
+        writer.EnsureLine();
+        writer.Write("<");
+        writer.Write(tag);
+        WriteAttributes();
+        writer.Write(">");
+
+        if (hasBlockChildren)
+        {
+            writer.PushIndent(indent);
+            writer.WriteLine();
+            inner(state);
+            writer.EnsureLine();
+            writer.PopIndent();
+        }
+        else
+        {
+            inner(state);
+        }
+
+        writer.Write("</");
+        writer.Write(tag);
+        writer.Write(">");
+        writer.WriteLine();
+    }
+
+    private void WriteAttributes()
+    {
+        if (attributes.Count <= 0)
+        {
+            return;
+        }
+
+        foreach (var (key, value) in attributes)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                continue;
+            }
+
+            writer.Write(" ");
+            writer.Write(key);
+            writer.Write("=");
+            writer.Write("\"");
+            writer.Write(WebUtility.HtmlEncode(value)!);
+            writer.Write("\"");
+        }
+
+        attributes.Clear();
+    }
+
+    private static string GetHeading(int level)
+    {
+        if (level < 0 || level >= Headings.Length)
+        {
+            return Headings[^1];
+        }
+        else
+        {
+            return Headings[0];
+        }
     }
 }

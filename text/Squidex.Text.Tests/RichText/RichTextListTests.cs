@@ -47,25 +47,17 @@ public class RichTextListTests
             ]
         };
 
-        var (markdown, html) = RenderUtils.Render(source);
-
-        var expectedMarkdown = @"
+        RenderUtils.AssertNode(source,
+            expectedMarkdown: @"
 1. Item1
-2. Item2";
-
-        Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
-
-        var expectedHtml = @"
+2. Item2",
+            expectedFormattedHtml: @"
 <ol>
-    <li>
-        Item1
-    </li>
-    <li>
-        Item2
-    </li>
-</ol>";
-
-        Assert.Equal(expectedHtml.TrimExpected(), html);
+    <li>Item1</li>
+    <li>Item2</li>
+</ol>",
+            expectedCompressedHtml: @"
+<ol><li>Item1</li><li>Item2</li></ol>");
     }
 
     [Fact]
@@ -104,25 +96,17 @@ public class RichTextListTests
             ]
         };
 
-        var (markdown, html) = RenderUtils.Render(source);
-
-        var expectedMarkdown = @"
+        RenderUtils.AssertNode(source,
+            expectedMarkdown: @"
 * Item1
-* Item2";
-
-        Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
-
-        var expectedHtml = @"
+* Item2",
+            expectedFormattedHtml: @"
 <ul>
-    <li>
-        Item1
-    </li>
-    <li>
-        Item2
-    </li>
-</ul>";
-
-        Assert.Equal(expectedHtml.TrimExpected(), html);
+    <li>Item1</li>
+    <li>Item2</li>
+</ul>",
+            expectedCompressedHtml: @"
+<ul><li>Item1</li><li>Item2</li></ul>");
     }
 
     [Fact]
@@ -191,33 +175,24 @@ public class RichTextListTests
             ]
         };
 
-        var (markdown, html) = RenderUtils.Render(source);
-
-        var expectedMarkdown = @"
+        RenderUtils.AssertNode(source,
+            expectedMarkdown: @"
 * Item1
 * Item2
   1. Item2_1
-  2. Item2_2";
-
-        Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
-
-        var expectedHtml = @"
+  2. Item2_2",
+            expectedFormattedHtml: @"
 <ul>
+    <li>Item1</li>
     <li>
-        Item1
-    </li>
-    <li>
-        Item2<ol>
-            <li>
-                Item2_1
-            </li>
-            <li>
-                Item2_2
-            </li>
+        Item2
+        <ol>
+            <li>Item2_1</li>
+            <li>Item2_2</li>
         </ol>
     </li>
-</ul>";
-
-        Assert.Equal(expectedHtml.TrimExpected(), html);
+</ul>",
+            expectedCompressedHtml: @"
+<ul><li>Item1</li><li>Item2<ol><li>Item2_1</li><li>Item2_2</li></ol></li></ul>");
     }
 }

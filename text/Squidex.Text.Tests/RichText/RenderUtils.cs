@@ -5,15 +5,30 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Text;
 using Squidex.Text.RichText.Model;
+using Xunit;
 
 namespace Squidex.Text.RichText;
 
 internal static class RenderUtils
 {
-    public static (string Markdown, string Html) Render(INode node)
+    public static void AssertNode(INode node, string expectedMarkdown, string expectedFormattedHtml, string? expectedCompressedHtml)
     {
-        return (RenderMarkdown(node), RenderHtml(node));
+        var (markdown, htmlFormatted, htmlCompressed) = Render(node);
+
+        Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
+        Assert.Equal(expectedFormattedHtml.TrimExpected(), htmlFormatted);
+
+        if (expectedCompressedHtml != null)
+        {
+            Assert.Equal(expectedCompressedHtml.TrimExpected(), htmlCompressed);
+        }
+    }
+
+    public static (string Markdown, string Html, string CompressedHtml) Render(INode node)
+    {
+        return (RenderMarkdown(node), RenderHtml(node), RenderHtml(node, 0));
     }
 
     public static string TrimExpected(this string result)
@@ -25,21 +40,21 @@ internal static class RenderUtils
         return result;
     }
 
-    public static string RenderHtml(INode node)
+    public static string RenderHtml(INode node, int indentation = 4)
     {
-        var htmlString = new StringWriter();
+        var sb = new StringBuilder();
 
-        HtmlWriterVisitor.Render(node, htmlString);
+        HtmlWriterVisitor.Render(node, sb, new HtmlWriterOptions { Indentation = indentation });
 
-        return htmlString.ToString().TrimExpected();
+        return sb.ToString().TrimExpected();
     }
 
     public static string RenderMarkdown(INode node)
     {
-        var markdownString = new StringWriter();
+        var sb = new StringBuilder();
 
-        MarkdownVisitor.Render(node, markdownString);
+        MarkdownVisitor.Render(node, sb);
 
-        return markdownString.ToString().TrimExpected();
+        return sb.ToString().TrimExpected();
     }
 }

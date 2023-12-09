@@ -62,7 +62,8 @@ public abstract class Visitor
             case MarkType.Link:
                 VisitLink(mark, visitInner,
                     mark.GetStringAttr("href"),
-                    mark.GetStringAttr("target"));
+                    mark.GetStringAttr("target"),
+                    "noopener noreferrer nofollow");
                 break;
             case MarkType.Bold:
                 VisitBold(mark, visitInner);
@@ -97,7 +98,7 @@ public abstract class Visitor
         inner();
     }
 
-    protected virtual void VisitLink(IMark mark, Action inner, string? href, string? target)
+    protected virtual void VisitLink(IMark mark, Action inner, string? href, string? target, string rel)
     {
         inner();
     }
@@ -225,12 +226,12 @@ public abstract class Visitor
         var prevIsLastInContainer = IsLastInContainer;
         var prevIsFirstInContainer = IsFirstInContainer;
 
-        node.IterateContent((self: this, state, action), (child, _, isFirst, isLast) =>
+        node.IterateContent((self: this, state, action), static (child, s, isFirst, isLast) =>
         {
-            _.self.IsFirstInContainer = isFirst;
-            _.self.IsLastInContainer = isLast;
+            s.self.IsFirstInContainer = isFirst;
+            s.self.IsLastInContainer = isLast;
 
-            _.action(child, _.state);
+            s.action(child, s.state);
         });
 
         IsLastInContainer = prevIsLastInContainer;
@@ -239,7 +240,7 @@ public abstract class Visitor
 
     protected void VisitChildren(INode node)
     {
-        IterateChildren(node, this, (child, self) =>
+        IterateChildren(node, this, static (child, self) =>
         {
             self.Visit(child);
         });

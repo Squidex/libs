@@ -28,17 +28,13 @@ public class RichTextInlineTests
             ]
         };
 
-        var (markdown, html) = RenderUtils.Render(source);
-
-        var expectedMarkdown = @"
-**Text1**";
-
-        Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
-
-        var expectedHtml = @"
-<strong>Text1</strong>";
-
-        Assert.Equal(expectedHtml.TrimExpected(), html);
+        RenderUtils.AssertNode(source,
+            expectedMarkdown: @"
+**Text1**",
+            expectedFormattedHtml: @"
+<strong>Text1</strong>",
+            expectedCompressedHtml: @"
+<strong>Text1</strong>");
     }
 
     [Fact]
@@ -57,17 +53,13 @@ public class RichTextInlineTests
             ]
         };
 
-        var (markdown, html) = RenderUtils.Render(source);
-
-        var expectedMarkdown = @"
-*Text1*";
-
-        Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
-
-        var expectedHtml = @"
-<em>Text1</em>";
-
-        Assert.Equal(expectedHtml.TrimExpected(), html);
+        RenderUtils.AssertNode(source,
+            expectedMarkdown: @"
+*Text1*",
+            expectedFormattedHtml: @"
+<em>Text1</em>",
+            expectedCompressedHtml: @"
+<em>Text1</em>");
     }
 
     [Fact]
@@ -86,17 +78,13 @@ public class RichTextInlineTests
             ]
         };
 
-        var (markdown, html) = RenderUtils.Render(source);
-
-        var expectedMarkdown = @"
-Text1";
-
-        Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
-
-        var expectedHtml = @"
-<u>Text1</u>";
-
-        Assert.Equal(expectedHtml.TrimExpected(), html);
+        RenderUtils.AssertNode(source,
+            expectedMarkdown: @"
+Text1",
+            expectedFormattedHtml: @"
+<u>Text1</u>",
+            expectedCompressedHtml: @"
+<u>Text1</u>");
     }
 
     [Fact]
@@ -115,17 +103,13 @@ Text1";
             ]
         };
 
-        var (markdown, html) = RenderUtils.Render(source);
-
-        var expectedMarkdown = @"
-`Text1`";
-
-        Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
-
-        var expectedHtml = @"
-<code>Text1</code>";
-
-        Assert.Equal(expectedHtml.TrimExpected(), html);
+        RenderUtils.AssertNode(source,
+            expectedMarkdown: @"
+`Text1`",
+            expectedFormattedHtml: @"
+<code>Text1</code>",
+            expectedCompressedHtml: @"
+<code>Text1</code>");
     }
 
     [Fact]
@@ -156,16 +140,12 @@ Text1";
             ]
         };
 
-        var (markdown, html) = RenderUtils.Render(source);
-
-        var expectedMarkdown = @"
-***`Text1`***";
-
-        Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
-
-        var expectedHtml = @"
-<strong><u><em><code>Text1</code></em></u></strong>";
-
-        Assert.Equal(expectedHtml.TrimExpected(), html);
+        RenderUtils.AssertNode(source,
+            expectedMarkdown: @"
+***`Text1`***",
+            expectedFormattedHtml: @"
+<strong><u><em><code>Text1</code></em></u></strong>",
+            expectedCompressedHtml: @"
+<strong><u><em><code>Text1</code></em></u></strong>");
     }
 }
