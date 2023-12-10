@@ -65,6 +65,10 @@ public abstract class Visitor
                     mark.GetStringAttr("target"),
                     "noopener noreferrer nofollow");
                 break;
+            case MarkType.ClassName:
+                VisitClassName(mark, visitInner,
+                    mark.GetStringAttr("className"));
+                break;
             case MarkType.Bold:
                 VisitBold(mark, visitInner);
                 break;
@@ -84,6 +88,11 @@ public abstract class Visitor
     }
 
     protected virtual void VisitBold(IMark mark, Action inner)
+    {
+        inner();
+    }
+
+    protected virtual void VisitClassName(IMark mark, Action inner, string className)
     {
         inner();
     }

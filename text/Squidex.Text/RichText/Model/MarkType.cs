@@ -11,6 +11,7 @@ public enum MarkType
 {
     Undefined,
     Bold,
+    ClassName,
     Code,
     Italic,
     Link,

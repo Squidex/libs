@@ -113,6 +113,35 @@ Text1",
     }
 
     [Fact]
+    public void Should_render_class_name()
+    {
+        var source = new Node
+        {
+            Type = NodeType.Text,
+            Text = "Text1",
+            Marks =
+            [
+                new Mark
+                {
+                    Type = MarkType.ClassName,
+                    Attributes = new Attributes
+                    {
+                        ["className"] = "text-left"
+                    }
+                },
+            ]
+        };
+
+        RenderUtils.AssertNode(source,
+            expectedMarkdown: @"
+Text1",
+            expectedFormattedHtml: @"
+<span class=""__editor_text-left"">Text1</span>",
+            expectedCompressedHtml: @"
+<span class=""__editor_text-left"">Text1</span>");
+    }
+
+    [Fact]
     public void Should_render_nested()
     {
         var source = new Node
