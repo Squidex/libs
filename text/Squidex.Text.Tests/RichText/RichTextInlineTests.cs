@@ -29,11 +29,11 @@ public class RichTextInlineTests
         };
 
         RenderUtils.AssertNode(source,
-            expectedMarkdown: @"
+            markdown: @"
 **Text1**",
-            expectedFormattedHtml: @"
+            html: @"
 <strong>Text1</strong>",
-            expectedCompressedHtml: @"
+            minHtml: @"
 <strong>Text1</strong>");
     }
 
@@ -54,11 +54,11 @@ public class RichTextInlineTests
         };
 
         RenderUtils.AssertNode(source,
-            expectedMarkdown: @"
+            markdown: @"
 *Text1*",
-            expectedFormattedHtml: @"
+            html: @"
 <em>Text1</em>",
-            expectedCompressedHtml: @"
+            minHtml: @"
 <em>Text1</em>");
     }
 
@@ -79,11 +79,11 @@ public class RichTextInlineTests
         };
 
         RenderUtils.AssertNode(source,
-            expectedMarkdown: @"
+            markdown: @"
 Text1",
-            expectedFormattedHtml: @"
+            html: @"
 <u>Text1</u>",
-            expectedCompressedHtml: @"
+            minHtml: @"
 <u>Text1</u>");
     }
 
@@ -104,11 +104,11 @@ Text1",
         };
 
         RenderUtils.AssertNode(source,
-            expectedMarkdown: @"
+            markdown: @"
 `Text1`",
-            expectedFormattedHtml: @"
+            html: @"
 <code>Text1</code>",
-            expectedCompressedHtml: @"
+            minHtml: @"
 <code>Text1</code>");
     }
 
@@ -133,11 +133,11 @@ Text1",
         };
 
         RenderUtils.AssertNode(source,
-            expectedMarkdown: @"
+            markdown: @"
 Text1",
-            expectedFormattedHtml: @"
+            html: @"
 <span class=""__editor_text-left"">Text1</span>",
-            expectedCompressedHtml: @"
+            minHtml: @"
 <span class=""__editor_text-left"">Text1</span>");
     }
 
@@ -170,11 +170,11 @@ Text1",
         };
 
         RenderUtils.AssertNode(source,
-            expectedMarkdown: @"
+            markdown: @"
 ***`Text1`***",
-            expectedFormattedHtml: @"
+            html: @"
 <strong><u><em><code>Text1</code></em></u></strong>",
-            expectedCompressedHtml: @"
+            minHtml: @"
 <strong><u><em><code>Text1</code></em></u></strong>");
     }
 }

@@ -48,15 +48,15 @@ public class RichTextListTests
         };
 
         RenderUtils.AssertNode(source,
-            expectedMarkdown: @"
+            markdown: @"
 1. Item1
 2. Item2",
-            expectedFormattedHtml: @"
+            html: @"
 <ol>
     <li>Item1</li>
     <li>Item2</li>
 </ol>",
-            expectedCompressedHtml: @"
+            minHtml: @"
 <ol><li>Item1</li><li>Item2</li></ol>");
     }
 
@@ -97,15 +97,15 @@ public class RichTextListTests
         };
 
         RenderUtils.AssertNode(source,
-            expectedMarkdown: @"
+            markdown: @"
 * Item1
 * Item2",
-            expectedFormattedHtml: @"
+            html: @"
 <ul>
     <li>Item1</li>
     <li>Item2</li>
 </ul>",
-            expectedCompressedHtml: @"
+            minHtml: @"
 <ul><li>Item1</li><li>Item2</li></ul>");
     }
 
@@ -176,12 +176,12 @@ public class RichTextListTests
         };
 
         RenderUtils.AssertNode(source,
-            expectedMarkdown: @"
+            markdown: @"
 * Item1
 * Item2
   1. Item2_1
   2. Item2_2",
-            expectedFormattedHtml: @"
+            html: @"
 <ul>
     <li>Item1</li>
     <li>
@@ -192,7 +192,7 @@ public class RichTextListTests
         </ol>
     </li>
 </ul>",
-            expectedCompressedHtml: @"
+            minHtml: @"
 <ul><li>Item1</li><li>Item2<ol><li>Item2_1</li><li>Item2_2</li></ol></li></ul>");
     }
 }

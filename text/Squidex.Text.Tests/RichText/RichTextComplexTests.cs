@@ -101,14 +101,14 @@ public class RichTextComplexTests
         };
 
         RenderUtils.AssertNode(source,
-            expectedMarkdown: @"
+            markdown: @"
 Paragraph1
 
 Paragraph2
 * **Item1**
 * Item2
 * Item3",
-            expectedFormattedHtml: @"
+            html: @"
 <p>Paragraph1</p>
 <p>
     Paragraph2
@@ -118,7 +118,7 @@ Paragraph2
         <li>Item3</li>
     </ul>
 </p>",
-            expectedCompressedHtml: @"
+            minHtml: @"
 <p>Paragraph1</p><p>Paragraph2<ul><li><strong>Item1</strong></li><li>Item2</li><li>Item3</li></ul></p>");
     }
 
@@ -211,14 +211,14 @@ Paragraph2
         node.TryUse(source, false);
 
         RenderUtils.AssertNode(node,
-            expectedMarkdown: @"
+            markdown: @"
 Paragraph1
 
 Paragraph2
 * **Item1**
 * Item2
 * Item3",
-            expectedFormattedHtml: @"
+            html: @"
 <p>Paragraph1</p>
 <p>
     Paragraph2
@@ -228,7 +228,7 @@ Paragraph2
         <li>Item3</li>
     </ul>
 </p>",
-            expectedCompressedHtml: @"
+            minHtml: @"
 <p>Paragraph1</p><p>Paragraph2<ul><li><strong>Item1</strong></li><li>Item2</li><li>Item3</li></ul></p>");
     }
 

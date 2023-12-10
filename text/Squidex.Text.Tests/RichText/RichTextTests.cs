@@ -29,12 +29,14 @@ public class RichTextTests
         };
 
         RenderUtils.AssertNode(source,
-            expectedMarkdown: @"
+            markdown: @"
 Paragraph1",
-            expectedFormattedHtml: @"
+            html: @"
 <p>Paragraph1</p>",
-            expectedCompressedHtml: @"
-<p>Paragraph1</p>");
+            minHtml: @"
+<p>Paragraph1</p>",
+            text: @"
+Paragraph1");
     }
 
     [Fact]
@@ -73,15 +75,17 @@ Paragraph1",
         };
 
         RenderUtils.AssertNode(source,
-            expectedMarkdown: @"
+            markdown: @"
 Paragraph1
 
 Paragraph2",
-            expectedFormattedHtml: @"
+            html: @"
 <p>Paragraph1</p>
 <p>Paragraph2</p>",
-            expectedCompressedHtml: @"
-<p>Paragraph1</p><p>Paragraph2</p>");
+            minHtml: @"
+<p>Paragraph1</p><p>Paragraph2</p>",
+            text: @"
+Paragraph1 Paragraph2");
     }
 
     [Fact]
@@ -110,16 +114,16 @@ Paragraph2",
         };
 
         RenderUtils.AssertNode(source,
-            expectedMarkdown: @"
+            markdown: @"
 Paragraph1
 Paragraph2",
-            expectedFormattedHtml: @"
+            html: @"
 <p>
     Paragraph1
     <br>
     Paragraph2
 </p>",
-            expectedCompressedHtml: @"
+            minHtml: @"
 <p>Paragraph1<br>Paragraph2</p>");
     }
 
@@ -132,11 +136,11 @@ Paragraph2",
         };
 
         RenderUtils.AssertNode(source,
-            expectedMarkdown: @"
+            markdown: @"
 ---",
-            expectedFormattedHtml: @"
+            html: @"
 <hr>",
-            expectedCompressedHtml: @"
+            minHtml: @"
 <hr>");
     }
 
@@ -183,16 +187,16 @@ Paragraph2",
         };
 
         RenderUtils.AssertNode(source,
-            expectedMarkdown: @"
+            markdown: @"
 > Text1
 
 Text2",
-            expectedFormattedHtml: @"
+            html: @"
 <blockquote>
     <p>Text1</p>
 </blockquote>
 <p>Text2</p>",
-            expectedCompressedHtml: @"
+            minHtml: @"
 <blockquote><p>Text1</p></blockquote><p>Text2</p>");
     }
 
@@ -226,12 +230,12 @@ Text2",
         };
 
         RenderUtils.AssertNode(source,
-            expectedMarkdown: @"
+            markdown: @"
 ```html
 Paragraph1
 Paragraph2
 ```",
-            expectedFormattedHtml: @"
+            html: @"
 <pre class=""language-html"">
     <code data-code-block-language=""html"">
         Paragraph1
@@ -239,7 +243,7 @@ Paragraph2
         Paragraph2
     </code>
 </pre>",
-            expectedCompressedHtml: @"
+            minHtml: @"
 <pre class=""language-html""><code data-code-block-language=""html"">Paragraph1<br>Paragraph2</code></pre>");
     }
 
@@ -269,12 +273,12 @@ Paragraph2
         };
 
         RenderUtils.AssertNode(source,
-            expectedMarkdown: @"
+            markdown: @"
 ```
 Paragraph1
 Paragraph2
 ```",
-            expectedFormattedHtml: @"
+            html: @"
 <pre>
     <code>
         Paragraph1
@@ -282,7 +286,7 @@ Paragraph2
         Paragraph2
     </code>
 </pre>",
-            expectedCompressedHtml: @"
+            minHtml: @"
 <pre><code>Paragraph1<br>Paragraph2</code></pre>");
     }
 
@@ -308,11 +312,11 @@ Paragraph2
         };
 
         RenderUtils.AssertNode(source,
-            expectedMarkdown: @"
+            markdown: @"
 [Link Text](https://squidex.io)",
-            expectedFormattedHtml: @"
+            html: @"
 <a href=""https://squidex.io"" target=""_blank"" rel=""noopener noreferrer nofollow"">Link Text</a>",
-            expectedCompressedHtml: @"
+            minHtml: @"
 <a href=""https://squidex.io"" target=""_blank"" rel=""noopener noreferrer nofollow"">Link Text</a>");
     }
 
@@ -333,11 +337,11 @@ Paragraph2
         };
 
         RenderUtils.AssertNode(source,
-            expectedMarkdown: @"
+            markdown: @"
 Link Text",
-            expectedFormattedHtml: @"
+            html: @"
 <a rel=""noopener noreferrer nofollow"">Link Text</a>",
-            expectedCompressedHtml: @"
+            minHtml: @"
 <a rel=""noopener noreferrer nofollow"">Link Text</a>");
     }
 
@@ -356,11 +360,11 @@ Link Text",
         };
 
         RenderUtils.AssertNode(source,
-            expectedMarkdown: @"
+            markdown: @"
 ![Logo](https://squidex.io/logo.png ""Website Logo"")",
-            expectedFormattedHtml: @"
+            html: @"
 <img alt=""Logo"" src=""https://squidex.io/logo.png"" title=""Website Logo"">",
-            expectedCompressedHtml: @"
+            minHtml: @"
 <img alt=""Logo"" src=""https://squidex.io/logo.png"" title=""Website Logo"">");
     }
 
@@ -377,11 +381,25 @@ Link Text",
         };
 
         RenderUtils.AssertNode(source,
-            expectedMarkdown: @"
+            markdown: @"
 ![](https://squidex.io/logo.png)",
-            expectedFormattedHtml: @"
+            html: @"
 <img src=""https://squidex.io/logo.png"">",
-            expectedCompressedHtml: @"
+            minHtml: @"
 <img src=""https://squidex.io/logo.png"">");
+    }
+
+    [Fact]
+    public void Should_render_max_length()
+    {
+        var source = new Node
+        {
+            Type = NodeType.Text,
+            Text = "Paragraph1"
+        };
+
+        var actual = RenderUtils.RenderText(source, 4);
+
+        Assert.Equal("Para", actual);
     }
 }

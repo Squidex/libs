@@ -13,22 +13,32 @@ namespace Squidex.Text.RichText;
 
 internal static class RenderUtils
 {
-    public static void AssertNode(INode node, string expectedMarkdown, string expectedFormattedHtml, string? expectedCompressedHtml)
+    public static void AssertNode(INode node, string markdown, string html, string? minHtml = null, string? text = null)
     {
-        var (markdown, htmlFormatted, htmlCompressed) = Render(node);
+        var (actualMarkdown, actualHtmlFormatted) = Render(node);
 
-        Assert.Equal(expectedMarkdown.TrimExpected(), markdown);
-        Assert.Equal(expectedFormattedHtml.TrimExpected(), htmlFormatted);
+        Assert.Equal(markdown.TrimExpected(), actualMarkdown);
 
-        if (expectedCompressedHtml != null)
+        Assert.Equal(html.TrimExpected(), actualHtmlFormatted);
+
+        if (minHtml != null)
         {
-            Assert.Equal(expectedCompressedHtml.TrimExpected(), htmlCompressed);
+            var actualHtmlCompressed = RenderHtml(node, 0);
+
+            Assert.Equal(minHtml.TrimExpected(), actualHtmlCompressed);
+        }
+
+        if (text != null)
+        {
+            var actualPlain = RenderText(node);
+
+            Assert.Equal(text.TrimExpected(), actualPlain);
         }
     }
 
-    public static (string Markdown, string Html, string CompressedHtml) Render(INode node)
+    public static (string Markdown, string Html) Render(INode node)
     {
-        return (RenderMarkdown(node), RenderHtml(node), RenderHtml(node, 0));
+        return (RenderMarkdown(node), RenderHtml(node));
     }
 
     public static string TrimExpected(this string result)
@@ -54,6 +64,15 @@ internal static class RenderUtils
         var sb = new StringBuilder();
 
         MarkdownVisitor.Render(node, sb);
+
+        return sb.ToString().TrimExpected();
+    }
+
+    public static string RenderText(INode node, int maxLength = int.MaxValue)
+    {
+        var sb = new StringBuilder();
+
+        TextVisitor.Render(node, sb, maxLength);
 
         return sb.ToString().TrimExpected();
     }

@@ -247,7 +247,7 @@ public abstract class Visitor
         IsFirstInContainer = prevIsFirstInContainer;
     }
 
-    protected void VisitChildren(INode node)
+    protected virtual void VisitChildren(INode node)
     {
         IterateChildren(node, this, static (child, self) =>
         {
