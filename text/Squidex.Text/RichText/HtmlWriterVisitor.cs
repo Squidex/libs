@@ -130,6 +130,14 @@ public sealed class HtmlWriterVisitor : Visitor
             static s => s.self.VisitChildren(s.node));
     }
 
+    protected override void VisitClassName(IMark mark, Action inner, string className)
+    {
+        attributes.Add(("class", $"__editor_{className}"));
+
+        RenderInline(inner, "span",
+            static a => a());
+    }
+
     protected override void VisitBold(IMark mark, Action inner)
     {
         RenderInline(inner, "strong",
