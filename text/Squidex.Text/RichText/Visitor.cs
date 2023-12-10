@@ -31,7 +31,7 @@ public abstract class Visitor
         Visit(node);
     }
 
-    public virtual void Visit(INode node)
+    protected virtual void Visit(INode node)
     {
         currentNode = node;
         currentNode.Reset();

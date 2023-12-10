@@ -24,10 +24,10 @@ public sealed class TextVisitor : Visitor
 
     public static void Render(INode node, StringBuilder stringBuilder, int maxLength = int.MaxValue)
     {
-        new TextVisitor(stringBuilder, maxLength).Visit(node);
+        new TextVisitor(stringBuilder, maxLength).VisitRoot(node);
     }
 
-    public override void Visit(INode node)
+    protected override void Visit(INode node)
     {
         base.Visit(node);
         previousNodeType = node.Type;

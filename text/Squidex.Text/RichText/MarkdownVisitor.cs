@@ -27,7 +27,7 @@ public sealed class MarkdownVisitor : Visitor
     {
         var newWriter = new IndentedWriter(stringBuilder);
 
-        new MarkdownVisitor(newWriter).Visit(node);
+        new MarkdownVisitor(newWriter).VisitRoot(node);
     }
 
     protected override void VisitBlockquote(INode node)
@@ -102,9 +102,9 @@ public sealed class MarkdownVisitor : Visitor
 
     protected override void VisitHorizontalRule(INode node)
     {
-        writer.WriteLine("---");
+        writer.Write("---");
 
-        FinishBlock(false);
+        FinishBlock(true);
     }
 
     protected override void VisitHardBreak(INode node)

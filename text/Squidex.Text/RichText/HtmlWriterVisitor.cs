@@ -49,7 +49,7 @@ public sealed class HtmlWriterVisitor : Visitor
 
         IWriter newWriter = options.Indentation > 0 ? new IndentedWriter(stringBuilder) : new PlainWriter(stringBuilder);
 
-        new HtmlWriterVisitor(newWriter, newIndent).Visit(node);
+        new HtmlWriterVisitor(newWriter, newIndent).VisitRoot(node);
     }
 
     protected override void VisitImage(INode node, string? src, string? alt, string? title)
@@ -86,12 +86,22 @@ public sealed class HtmlWriterVisitor : Visitor
 
     protected override void VisitHardBreak(INode node)
     {
-        writer.EnsureLine().WriteLine("<br>");
+        writer.EnsureLine().Write("<br>");
+
+        if (!IsLastInContainer)
+        {
+            writer.WriteLine();
+        }
     }
 
     protected override void VisitHorizontalRule(INode node)
     {
-        writer.EnsureLine().WriteLine("<hr>");
+        writer.EnsureLine().Write("<hr>");
+
+        if (!IsLastInContainer)
+        {
+            writer.WriteLine();
+        }
     }
 
     protected override void VisitBlockquote(INode node)
@@ -223,7 +233,11 @@ public sealed class HtmlWriterVisitor : Visitor
         writer.Write("</");
         writer.Write(tag);
         writer.Write(">");
-        writer.WriteLine();
+
+        if (!IsLastInContainer)
+        {
+            writer.WriteLine();
+        }
     }
 
     private void WriteAttributes()

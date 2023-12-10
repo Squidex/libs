@@ -13,26 +13,34 @@ namespace Squidex.Text.RichText;
 
 internal static class RenderUtils
 {
-    public static void AssertNode(INode node, string markdown, string html, string? minHtml = null, string? text = null)
+    public static void AssertNode(INode node, string? markdown = null, string? html = null, string? minHtml = null, string? text = null)
     {
-        var (actualMarkdown, actualHtmlFormatted) = Render(node);
+        if (markdown != null)
+        {
+            var actual = RenderMarkdown(node);
 
-        Assert.Equal(markdown.TrimExpected(), actualMarkdown);
+            Assert.Equal(markdown.TrimExpected(), actual);
+        }
 
-        Assert.Equal(html.TrimExpected(), actualHtmlFormatted);
+        if (html != null)
+        {
+            var actual = RenderHtml(node, 4);
+
+            Assert.Equal(html.TrimExpected(), actual);
+        }
 
         if (minHtml != null)
         {
-            var actualHtmlCompressed = RenderHtml(node, 0);
+            var actual = RenderHtml(node, 0);
 
-            Assert.Equal(minHtml.TrimExpected(), actualHtmlCompressed);
+            Assert.Equal(minHtml.TrimExpected(), actual);
         }
 
         if (text != null)
         {
-            var actualPlain = RenderText(node);
+            var actual = RenderText(node);
 
-            Assert.Equal(text.TrimExpected(), actualPlain);
+            Assert.Equal(text.TrimExpected(), actual);
         }
     }
 
@@ -44,7 +52,6 @@ internal static class RenderUtils
     public static string TrimExpected(this string result)
     {
         result = result.TrimStart('\n', '\r');
-        result = result.TrimEnd();
         result = result.Replace("\r\n", "\n", StringComparison.Ordinal);
 
         return result;
