@@ -14,6 +14,7 @@ public sealed class TextVisitor : Visitor
 {
     private readonly StringBuilder stringBuilder;
     private readonly int maxLength;
+    private NodeType previousNodeType;
 
     public TextVisitor(StringBuilder stringBuilder, int maxLength)
     {
@@ -26,32 +27,33 @@ public sealed class TextVisitor : Visitor
         new TextVisitor(stringBuilder, maxLength).Visit(node);
     }
 
+    public override void Visit(INode node)
+    {
+        base.Visit(node);
+        previousNodeType = node.Type;
+    }
+
     protected override void VisitText(INode node)
     {
-        if (!string.IsNullOrWhiteSpace(node.Text))
+        if (string.IsNullOrWhiteSpace(node.Text))
         {
-            var span = node.Text.AsSpan().Trim();
-
-            var spaceLeft = maxLength - stringBuilder.Length;
-            if (spaceLeft > 0 && span.Length > spaceLeft)
-            {
-                span = span[..spaceLeft];
-            }
-
-            stringBuilder.Append(span);
+            return;
         }
-    }
 
-    protected override void VisitHardBreak(INode node)
-    {
-        base.VisitHardBreak(node);
-        stringBuilder.Append(' ');
-    }
+        if (stringBuilder.Length > 0 && previousNodeType != NodeType.Text)
+        {
+            stringBuilder.Append(' ');
+        }
 
-    protected override void VisitParagraph(INode node)
-    {
-        base.VisitParagraph(node);
-        stringBuilder.Append(' ');
+        var span = node.Text.AsSpan();
+
+        var spaceLeft = maxLength - stringBuilder.Length;
+        if (spaceLeft > 0 && span.Length > spaceLeft)
+        {
+            span = span[..spaceLeft];
+        }
+
+        stringBuilder.Append(span);
     }
 
     protected override void VisitChildren(INode node)

@@ -241,6 +241,7 @@ Paragraph2
         RenderUtils.AssertNode(inputNode,
             File.ReadAllText("RichText/ComplexText.md"),
             File.ReadAllText("RichText/ComplexText.html"),
-            File.ReadAllText("RichText/ComplexText.min.html"));
+            File.ReadAllText("RichText/ComplexText.min.html"),
+            File.ReadAllText("RichText/ComplexText.txt"));
     }
 }

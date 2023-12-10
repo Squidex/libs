@@ -43,6 +43,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="RichText\ComplexText.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="RichText\ComplexText.min.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

@@ -57,7 +57,7 @@
                 },
                 {
                     "type": "text",
-                    "text": " and "
+                    "text": ", "
                 },
                 {
                     "type": "text",
@@ -67,6 +67,22 @@
                         }
                     ],
                     "text": "code"
+                },
+                {
+                    "type": "text",
+                    "text": " and "
+                },
+                {
+                    "type": "text",
+                    "marks": [
+                        {
+                            "type": "className",
+                            "attrs": {
+                                "className": "text-left"
+                            }
+                        }
+                    ],
+                    "text": "a class"
                 },
                 {
                     "type": "text",
@@ -207,7 +223,7 @@
                         {
                             "type": "link",
                             "attrs": {
-                                "href": "Link Content",
+                                "href": "https://cloud.squidex.io",
                                 "target": null,
                                 "auto": false
                             }
