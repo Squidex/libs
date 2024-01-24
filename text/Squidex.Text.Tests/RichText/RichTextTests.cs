@@ -301,7 +301,7 @@ Paragraph2
                 new Mark
                 {
                     Type = MarkType.Link,
-                    Attributes = new Attributes()
+                    Attributes = new Attributes
                     {
                         ["href"] = "https://squidex.io",
                         ["target"] = "_blank"
@@ -351,7 +351,7 @@ Link Text",
         var source = new Node
         {
             Type = NodeType.Image,
-            Attributes = new Attributes()
+            Attributes = new Attributes
             {
                 ["src"] = "https://squidex.io/logo.png",
                 ["alt"] = "Logo",
@@ -374,7 +374,7 @@ Link Text",
         var source = new Node
         {
             Type = NodeType.Image,
-            Attributes = new Attributes()
+            Attributes = new Attributes
             {
                 ["src"] = "https://squidex.io/logo.png"
             }
@@ -387,6 +387,86 @@ Link Text",
 <img src=""https://squidex.io/logo.png"">",
             minHtml: @"
 <img src=""https://squidex.io/logo.png"">");
+    }
+
+    [Fact]
+    public void Should_render_heading()
+    {
+        var source = new Node
+        {
+            Type = NodeType.Heading,
+            Content = [
+                new Node
+                {
+                    Type = NodeType.Text,
+                    Text = "Heading 1",
+                },
+            ]
+        };
+
+        RenderUtils.AssertNode(source,
+            markdown: @"
+# Heading 1",
+            html: @"
+<h1>Heading 1</h1>",
+            minHtml: @"
+<h1>Heading 1</h1>");
+    }
+
+    [Fact]
+    public void Should_render_heading1()
+    {
+        var source = new Node
+        {
+            Type = NodeType.Heading,
+            Attributes = new Attributes
+            {
+                ["level"] = 1
+            },
+            Content = [
+                new Node
+                {
+                    Type = NodeType.Text,
+                    Text = "Heading 1",
+                },
+            ]
+        };
+
+        RenderUtils.AssertNode(source,
+            markdown: @"
+# Heading 1",
+            html: @"
+<h1>Heading 1</h1>",
+            minHtml: @"
+<h1>Heading 1</h1>");
+    }
+
+    [Fact]
+    public void Should_render_heading2()
+    {
+        var source = new Node
+        {
+            Type = NodeType.Heading,
+            Attributes = new Attributes
+            {
+                ["level"] = 2
+            },
+            Content = [
+                new Node
+                {
+                    Type = NodeType.Text,
+                    Text = "Heading 2",
+                },
+            ]
+        };
+
+        RenderUtils.AssertNode(source,
+            markdown: @"
+## Heading 2",
+            html: @"
+<h2>Heading 2</h2>",
+            minHtml: @"
+<h2>Heading 2</h2>");
     }
 
     [Fact]

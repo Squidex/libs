@@ -9,7 +9,6 @@ using System.Text.Json;
 using Squidex.RichText.Json;
 using Squidex.Text.RichText.Model;
 using Xunit;
-using static Google.Rpc.Context.AttributeContext.Types;
 
 namespace Squidex.Text.RichText;
 
@@ -235,13 +234,13 @@ Paragraph2
     [Fact]
     public void Should_render_from_files()
     {
-        var inputJson = File.ReadAllText("RichText/ComplexText.json");
+        var inputJson = File.ReadAllText("RichText/TestCases/ComplexText/ComplexText.json");
         var inputNode = JsonSerializer.Deserialize<Node>(inputJson)!;
 
         RenderUtils.AssertNode(inputNode,
-            File.ReadAllText("RichText/ComplexText.md"),
-            File.ReadAllText("RichText/ComplexText.html"),
-            File.ReadAllText("RichText/ComplexText.min.html"),
-            File.ReadAllText("RichText/ComplexText.txt"));
+            File.ReadAllText("RichText/TestCases/ComplexText/ComplexText.md"),
+            File.ReadAllText("RichText/TestCases/ComplexText/ComplexText.html"),
+            File.ReadAllText("RichText/TestCases/ComplexText/ComplexText.min.html"),
+            File.ReadAllText("RichText/TestCases/ComplexText/ComplexText.txt"));
     }
 }

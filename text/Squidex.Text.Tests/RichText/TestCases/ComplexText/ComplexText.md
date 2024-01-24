@@ -1,4 +1,8 @@
-# Header
+# Heading 1
+
+## Heading 2
+
+### Heading 3
 
 Content with **bold**, *italic*, underline, `code` and a class.
 

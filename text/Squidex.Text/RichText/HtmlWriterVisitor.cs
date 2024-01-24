@@ -267,13 +267,15 @@ public sealed class HtmlWriterVisitor : Visitor
 
     private static string GetHeading(int level)
     {
-        if (level < 0 || level >= Headings.Length)
+        var index = level - 1;
+
+        if (level < 0 || index >= Headings.Length)
         {
-            return Headings[^1];
+            return Headings[0];
         }
         else
         {
-            return Headings[0];
+            return Headings[index];
         }
     }
 }

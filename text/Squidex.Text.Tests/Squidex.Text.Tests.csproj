@@ -43,19 +43,25 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="RichText\ComplexText.txt">
+    <None Update="RichText\TestCases\ComplexText\ComplexText.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="RichText\ComplexText.min.html">
+    <None Update="RichText\TestCases\ComplexText\ComplexText.min.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="RichText\ComplexText.html">
+    <None Update="RichText\TestCases\ComplexText\ComplexText.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="RichText\ComplexText.json">
+    <None Update="RichText\TestCases\ComplexText\ComplexText.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="RichText\ComplexText.md">
+    <None Update="RichText\TestCases\ComplexText\ComplexText.md">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="RichText\TestCases\Repeated\Repeated.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="RichText\TestCases\Repeated\Repeated.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="TestFiles\SvgBase64Use.svg">
