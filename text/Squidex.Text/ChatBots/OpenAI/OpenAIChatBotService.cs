@@ -62,7 +62,7 @@ public sealed class OpenAIChatBotService : IChatBotService
 
         return new ChatBotResult
         {
-            Choices = response.Choices.Select(x => x.Message.Content).ToList(),
+            Choices = response.Choices.Select(x => x.Message.Content).Where(x => x != null).ToList()!,
             EstimatedCostsInEUR =
                 (numTokensInput * options.PricePerInputTokenInEUR) +
                 (numTokensOutput * options.PricePerOutputTokenInEUR)

@@ -22,7 +22,7 @@ public sealed class AmazonS3AssetStore : IAssetStore, IInitializable
     private const int BufferSize = 81920;
     private readonly AmazonS3AssetOptions options;
     private TransferUtility s3Transfer;
-    private IAmazonS3 s3Client;
+    private AmazonS3Client s3Client;
     private bool canCopy = true;
 
     public AmazonS3AssetStore(IOptions<AmazonS3AssetOptions> options)
@@ -158,7 +158,7 @@ public sealed class AmazonS3AssetStore : IAssetStore, IInitializable
                     BucketName = options.Bucket,
                     Key = keyTarget,
                     DisablePayloadSigning = options.DisablePayloadSigning,
-                    DisableMD5Stream = false,
+                    DisableDefaultChecksumValidation = false,
                     InputStream = teamStream
                 };
 
@@ -255,7 +255,7 @@ public sealed class AmazonS3AssetStore : IAssetStore, IInitializable
                 BucketName = options.Bucket,
                 Key = key,
                 DisablePayloadSigning = options.DisablePayloadSigning,
-                DisableMD5Stream = false
+                DisableDefaultChecksumValidation = false
             };
 
             if (stream.GetLengthOrZero() <= 0)

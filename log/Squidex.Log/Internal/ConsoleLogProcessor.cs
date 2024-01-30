@@ -22,7 +22,7 @@ public sealed class ConsoleLogProcessor : IDisposable
 
     public ConsoleLogProcessor()
     {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        if (OperatingSystem.IsWindows())
         {
             console = new WindowsLogConsole(true);
         }

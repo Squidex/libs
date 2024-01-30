@@ -7,7 +7,6 @@
 
 using HtmlPerformanceKit;
 using Squidex.Text.Svg;
-using System.Security.Principal;
 
 namespace Squidex.Text;
 
@@ -55,7 +54,6 @@ public static class SvgExtensions
                         else if (string.Equals(attributeName, "viewBox", StringComparison.OrdinalIgnoreCase))
                         {
                             viewBox = attributeValue.Trim();
-
                         }
                     }
                 }

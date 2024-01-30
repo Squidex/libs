@@ -5,8 +5,8 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Text;
-
 #pragma warning disable SA1313 // Parameter names should begin with lower-case letter
+
+namespace Squidex.Text;
 
 public record struct SvgMetadata(string Width, string Height, string ViewBox);
