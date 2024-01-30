@@ -7,19 +7,6 @@
 
 namespace Squidex.Text;
 
-public sealed class HtmlSvgError
-{
-    public int LineCount { get; }
+#pragma warning disable SA1313 // Parameter names should begin with lower-case letter
 
-    public int LinePosition { get; }
-
-    public string Error { get; }
-
-    public HtmlSvgError(string error, int lineCount = -1, int linePosition = -1)
-    {
-        Error = error;
-
-        LineCount = lineCount;
-        LinePosition = linePosition;
-    }
-}
+public record struct SvgMetadata(string Width, string Height, string ViewBox);

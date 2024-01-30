@@ -14,7 +14,7 @@
   <ItemGroup>
     <PackageReference Include="Betalgo.OpenAI" Version="7.4.3" />
     <PackageReference Include="Google.Cloud.Translate.V3" Version="3.3.0" />
-    <PackageReference Include="HtmlAgilityPack" Version="1.11.55" />
+    <PackageReference Include="HtmlPerformanceKit" Version="0.8.1" />
     <PackageReference Include="HtmlTextWriter" Version="2.1.1" />
     <PackageReference Include="Meziantou.Analyzer" Version="2.0.125">
       <PrivateAssets>all</PrivateAssets>

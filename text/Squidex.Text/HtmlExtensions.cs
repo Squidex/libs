@@ -6,85 +6,56 @@
 // ==========================================================================
 
 using System.Text;
-using HtmlAgilityPack;
+using HtmlPerformanceKit;
 
 namespace Squidex.Text;
 
 public static class HtmlExtensions
 {
+    private static readonly char[] TrimChars = [' ', '\n', '\r'];
+
     public static string Html2Text(this string html)
     {
-        var document = LoadHtml(html);
-
         var sb = new StringBuilder();
 
-        WriteTextTo(document.DocumentNode, sb);
-
-        return sb.ToString().Trim(' ', '\n', '\r');
-    }
-
-    private static HtmlDocument LoadHtml(string text)
-    {
-        var document = new HtmlDocument();
-
-        document.LoadHtml(text);
-
-        return document;
-    }
-
-    private static void WriteTextTo(HtmlNode node, StringBuilder sb)
-    {
-        switch (node.NodeType)
+        using (var reader = new HtmlReader(new StringReader(html)))
         {
-            case HtmlNodeType.Comment:
-                break;
-            case HtmlNodeType.Document:
-                WriteChildrenTextTo(node, sb);
-                break;
-            case HtmlNodeType.Text:
-                var html = ((HtmlTextNode)node).Text;
-
-                if (HtmlNode.IsOverlappedClosingElement(html))
-                {
-                    break;
-                }
-
-                if (!string.IsNullOrWhiteSpace(html))
-                {
-                    sb.Append(HtmlEntity.DeEntitize(html));
-                }
-
-                break;
-
-            case HtmlNodeType.Element:
-                switch (node.Name)
-                {
-                    case "p":
-                        sb.AppendLine();
-                        break;
-                    case "br":
-                        sb.AppendLine();
-                        break;
-                    case "style":
-                        return;
-                    case "script":
-                        return;
-                }
-
-                if (node.HasChildNodes)
-                {
-                    WriteChildrenTextTo(node, sb);
-                }
-
-                break;
+            WriteTextTo(reader, sb);
         }
+
+        return sb.ToString().Trim(TrimChars);
     }
 
-    private static void WriteChildrenTextTo(HtmlNode node, StringBuilder sb)
+    private static void WriteTextTo(HtmlReader reader, StringBuilder sb)
     {
-        foreach (var child in node.ChildNodes)
+        var readText = true;
+        while (reader.Read())
         {
-            WriteTextTo(child, sb);
+            switch (reader.TokenKind)
+            {
+                case HtmlTokenKind.Text when readText:
+                    var text = reader.Text;
+
+                    if (!string.IsNullOrWhiteSpace(text))
+                    {
+                        HtmlEntity.Decode(text, sb);
+                    }
+
+                    break;
+
+                case HtmlTokenKind.Tag:
+                    readText &= reader.Name != "script" && reader.Name != "style";
+                    break;
+
+                case HtmlTokenKind.EndTag:
+                    if (reader.Name == "p" || reader.Name == "br")
+                    {
+                        sb.AppendLine();
+                    }
+
+                    readText = true;
+                    break;
+            }
         }
     }
 }
