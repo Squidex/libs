@@ -12,9 +12,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="13.5.0" />
-    <PackageReference Include="Magick.NET.Core" Version="13.5.0" />
-    <PackageReference Include="Meziantou.Analyzer" Version="2.0.125">
+    <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="13.6.0" />
+    <PackageReference Include="Magick.NET.Core" Version="13.6.0" />
+    <PackageReference Include="Meziantou.Analyzer" Version="2.0.143">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

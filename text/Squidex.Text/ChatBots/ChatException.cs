@@ -5,8 +5,22 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-#pragma warning disable SA1313 // Parameter names should begin with lower-case letter
+namespace Squidex.Text.ChatBots;
 
-namespace Squidex.Text;
+[Serializable]
+public class ChatException : Exception
+{
+    public ChatException()
+    {
+    }
 
-public readonly record struct SvgMetadata(string Width, string Height, string ViewBox);
+    public ChatException(string message)
+        : base(message)
+    {
+    }
+
+    public ChatException(string message, Exception inner)
+        : base(message, inner)
+    {
+    }
+}

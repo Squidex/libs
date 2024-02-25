@@ -5,11 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Text.ChatBots;
+namespace Squidex.Text;
 
-public sealed class ChatBotResult
+public struct PromptArgs
 {
-    required public IReadOnlyList<string> Choices { get; init; }
-
-    public decimal EstimatedCostsInEUR { get; init; }
+    public string? ToolChoice { get; set; }
 }

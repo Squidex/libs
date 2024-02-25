@@ -72,7 +72,7 @@ public class HtmlExtensionsTests
     {
         var sb = new StringBuilder();
 
-        HtmlEntity.Decode(source, sb);
+        HtmlEntity.Decode(source.AsMemory(), sb);
 
         Assert.Equal(expected, sb.ToString());
     }

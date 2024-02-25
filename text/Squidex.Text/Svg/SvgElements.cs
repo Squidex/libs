@@ -9,7 +9,7 @@ namespace Squidex.Text.Svg;
 
 public static class SvgElements
 {
-    public static readonly HashSet<string> Allowed = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    public static readonly HashSet<ReadOnlyMemory<char>> Allowed = new string[]
     {
         "altGlyph",
         "altGlyphDef",
@@ -79,5 +79,5 @@ public static class SvgElements
         "use",
         "view",
         "vkern",
-    };
+    }.Select(x => x.AsMemory()).ToHashSet(ReadOnlyMemoryCharComparer.OrdinalIgnoreCase);
 }

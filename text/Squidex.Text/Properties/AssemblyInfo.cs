@@ -5,8 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-#pragma warning disable SA1313 // Parameter names should begin with lower-case letter
+using System.Runtime.CompilerServices;
 
-namespace Squidex.Text;
-
-public readonly record struct SvgMetadata(string Width, string Height, string ViewBox);
+[assembly: InternalsVisibleTo("Squidex.Text.Tests")]

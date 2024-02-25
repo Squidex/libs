@@ -7,10 +7,13 @@
 
 namespace Squidex.Text.ChatBots;
 
-public interface IChatBot
+public interface IChatAgent
 {
     bool IsConfigured { get; }
 
-    Task<ChatBotResult> AskQuestionAsync(string prompt,
+    Task StopConversationAsync(string conversationId,
+        CancellationToken ct = default);
+
+    Task<ChatBotResponse> PromptAsync(string conversationId, string prompt,
         CancellationToken ct = default);
 }

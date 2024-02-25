@@ -16,14 +16,12 @@ public static class HtmlExtensions
 
     public static string Html2Text(this string html)
     {
-        var sb = new StringBuilder();
+        var htmlWriter = new StringBuilder();
+        var htmlReader = new HtmlReader(new StringReader(html));
 
-        using (var reader = new HtmlReader(new StringReader(html)))
-        {
-            WriteTextTo(reader, sb);
-        }
+        WriteTextTo(htmlReader, htmlWriter);
 
-        return sb.ToString().Trim(TrimChars);
+        return htmlWriter.ToString().Trim(TrimChars);
     }
 
     private static void WriteTextTo(HtmlReader reader, StringBuilder sb)
@@ -34,9 +32,9 @@ public static class HtmlExtensions
             switch (reader.TokenKind)
             {
                 case HtmlTokenKind.Text when readText:
-                    var text = reader.Text;
+                    var text = reader.TextAsMemory.Trim();
 
-                    if (!string.IsNullOrWhiteSpace(text))
+                    if (text.Length > 0)
                     {
                         HtmlEntity.Decode(text, sb);
                     }
@@ -44,11 +42,15 @@ public static class HtmlExtensions
                     break;
 
                 case HtmlTokenKind.Tag:
-                    readText &= reader.Name != "script" && reader.Name != "style";
+                    var tag = reader.NameAsMemory.Span;
+
+                    readText &= !tag.Equals("script", StringComparison.OrdinalIgnoreCase) && !tag.Equals("style", StringComparison.OrdinalIgnoreCase);
                     break;
 
                 case HtmlTokenKind.EndTag:
-                    if (reader.Name == "p" || reader.Name == "br")
+                    var endTag = reader.NameAsMemory.Span;
+
+                    if (endTag.Equals("p", StringComparison.OrdinalIgnoreCase) || endTag.Equals("br", StringComparison.OrdinalIgnoreCase))
                     {
                         sb.AppendLine();
                     }

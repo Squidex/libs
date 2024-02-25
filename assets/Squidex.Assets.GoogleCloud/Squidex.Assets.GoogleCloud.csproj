@@ -13,8 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Google.Cloud.Storage.V1" Version="4.7.0" />
-    <PackageReference Include="Meziantou.Analyzer" Version="2.0.125">
+    <PackageReference Include="Google.Cloud.Storage.V1" Version="4.8.0" />
+    <PackageReference Include="Meziantou.Analyzer" Version="2.0.143">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

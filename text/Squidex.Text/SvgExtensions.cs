@@ -25,54 +25,58 @@ public static class SvgExtensions
 
     public static SvgMetadata GetSvgMetadata(this string html)
     {
-        string width = string.Empty, height = string.Empty, viewBox = string.Empty;
+        var viewBox = string.Empty;
+        var viewWidth = string.Empty;
+        var viewHeight = string.Empty;
 
-        using (var reader = new HtmlReader(new StringReader(html)))
+        var reader = new HtmlReader(new StringReader(html));
+
+        while (reader.Read())
         {
-            while (reader.Read())
+            if (reader.TokenKind != HtmlTokenKind.Tag || !reader.NameAsMemory.Span.Equals("svg", StringComparison.OrdinalIgnoreCase))
             {
-                if (reader.TokenKind == HtmlTokenKind.Tag && reader.Name == "svg")
+                continue;
+            }
+
+            for (var i = 0; i < reader.AttributeCount; i++)
+            {
+                var attributeValue = reader.GetAttributeAsMemory(i).Span.Trim();
+
+                if (attributeValue.Length == 0)
                 {
-                    for (var i = 0; i < reader.AttributeCount; i++)
-                    {
-                        var attributeName = reader.GetAttributeName(i);
-                        var attributeValue = reader.GetAttribute(i);
+                    continue;
+                }
 
-                        if (string.IsNullOrWhiteSpace(attributeValue))
-                        {
-                            continue;
-                        }
+                var attributeName = reader.GetAttributeNameAsMemory(i).Span;
 
-                        if (string.Equals(attributeName, "width", StringComparison.OrdinalIgnoreCase))
-                        {
-                            width = attributeValue.Trim();
-                        }
-                        else if (string.Equals(attributeName, "height", StringComparison.OrdinalIgnoreCase))
-                        {
-                            height = attributeValue.Trim();
-                        }
-                        else if (string.Equals(attributeName, "viewBox", StringComparison.OrdinalIgnoreCase))
-                        {
-                            viewBox = attributeValue.Trim();
-                        }
-                    }
+                if (attributeName.Equals("width", StringComparison.OrdinalIgnoreCase))
+                {
+                    viewWidth = new string(attributeValue);
+                }
+                else if (attributeName.Equals("height", StringComparison.OrdinalIgnoreCase))
+                {
+                    viewHeight = new string(attributeValue);
+                }
+                else if (attributeName.Equals("viewbox", StringComparison.OrdinalIgnoreCase))
+                {
+                    viewBox = new string(attributeValue);
                 }
             }
+
+            break;
         }
 
-        return new SvgMetadata(width, height, viewBox);
+        return new SvgMetadata(viewWidth, viewHeight, viewBox);
     }
 
     public static List<SvgError> GetSvgErrors(this string html)
     {
-        var errors = new List<SvgError>();
+        var htmlErrors = new List<SvgError>();
+        var htmlReader = new HtmlReader(new StringReader(html));
 
-        using (var reader = new HtmlReader(new StringReader(html)))
-        {
-            AddErrors(reader, errors);
-        }
+        AddErrors(htmlReader, htmlErrors);
 
-        return errors;
+        return htmlErrors;
     }
 
     private static void AddErrors(HtmlReader reader, List<SvgError> errors)
@@ -84,17 +88,19 @@ public static class SvgExtensions
                 continue;
             }
 
-            if (!SvgElements.Allowed.Contains(reader.Name))
+            var name = reader.NameAsMemory;
+
+            if (!SvgElements.Allowed.Contains(name))
             {
                 errors.Add(new SvgError($"Invalid element '{reader.Name}'",
                     reader.LineNumber,
                     reader.LinePosition));
+                continue;
             }
 
             for (var i = 0; i < reader.AttributeCount; i++)
             {
-                var attributeName = reader.GetAttributeName(i);
-                var attributeValue = reader.GetAttribute(i);
+                var attributeName = reader.GetAttributeNameAsMemory(i);
 
                 if (!SvgAttributes.Allowed.Contains(attributeName))
                 {
@@ -104,6 +110,8 @@ public static class SvgExtensions
                 }
                 else if (SvgAttributes.Urls.Contains(attributeName))
                 {
+                    var attributeValue = reader.GetAttribute(i);
+
                     if (!Uri.TryCreate(attributeValue, UriKind.RelativeOrAbsolute, out var uri))
                     {
                         errors.Add(new SvgError($"Invalid URL for attribute '{attributeName}'",

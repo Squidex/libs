@@ -12,24 +12,23 @@
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="Betalgo.OpenAI" Version="7.4.3" />
-    <PackageReference Include="Google.Cloud.Translate.V3" Version="3.3.0" />
-    <PackageReference Include="HtmlPerformanceKit" Version="0.8.1" />
-    <PackageReference Include="HtmlTextWriter" Version="2.1.1" />
-    <PackageReference Include="Meziantou.Analyzer" Version="2.0.125">
+    <PackageReference Include="Betalgo.OpenAI" Version="7.4.6" />
+    <PackageReference Include="Google.Cloud.Translate.V3" Version="3.4.0" />
+    <PackageReference Include="HtmlPerformanceKit" Version="1.0.0" />
+    <PackageReference Include="Meziantou.Analyzer" Version="2.0.143">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.2" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Markdig" Version="0.34.0" />
-    <PackageReference Include="NodaTime" Version="3.1.9" />
+    <PackageReference Include="Markdig" Version="0.35.0" />
+    <PackageReference Include="NodaTime" Version="3.1.11" />
     <PackageReference Include="RefactoringEssentials" Version="5.6.0" PrivateAssets="all" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" PrivateAssets="all" />
-    <PackageReference Include="System.Text.Json" Version="8.0.0" />
+    <PackageReference Include="System.Text.Json" Version="8.0.2" />
   </ItemGroup>
 
   <ItemGroup>

@@ -5,17 +5,16 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Squidex.Text.ChatBots;
+namespace Squidex.Text.ChatBots;
 
-namespace Microsoft.Extensions.DependencyInjection;
-
-public static class ChatBotServiceExtensions
+public interface IChatStore
 {
-    public static IServiceCollection AddChatBot(this IServiceCollection services)
-    {
-        services.TryAddSingleton<IChatBot, ChatBot>();
+    Task ClearAsync(string conversationId,
+        CancellationToken ct);
 
-        return services;
-    }
+    Task StoreAsync(string conversationId, string value,
+        CancellationToken ct);
+
+    Task<string?> GetAsync(string conversationId,
+        CancellationToken ct);
 }

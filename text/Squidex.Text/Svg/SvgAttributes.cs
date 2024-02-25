@@ -9,7 +9,7 @@ namespace Squidex.Text.Svg;
 
 public static class SvgAttributes
 {
-    public static readonly HashSet<string> Allowed = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    public static readonly HashSet<ReadOnlyMemory<char>> Allowed = new string[]
     {
         "accent-height",
         "accumulate",
@@ -216,11 +216,11 @@ public static class SvgAttributes
         "yChannelSelector",
         "z",
         "zoomAndPan"
-    };
+    }.Select(x => x.AsMemory()).ToHashSet(ReadOnlyMemoryCharComparer.OrdinalIgnoreCase);
 
-    public static readonly HashSet<string> Urls = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    public static readonly HashSet<ReadOnlyMemory<char>> Urls = new string[]
     {
         "href",
         "src"
-    };
+    }.Select(x => x.AsMemory()).ToHashSet(ReadOnlyMemoryCharComparer.OrdinalIgnoreCase);
 }

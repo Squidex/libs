@@ -5,7 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 
@@ -13,287 +12,264 @@ namespace Squidex.Text;
 
 public static class HtmlEntity
 {
-    private static readonly Dictionary<ReadOnlyMemory<char>, int> HtmlEntityNames = new Dictionary<ReadOnlyMemory<char>, int>(ReadOnlyMemoryComparer.Instance);
-    private static readonly int MaxEntityLength;
-
-    private class ReadOnlyMemoryComparer : IEqualityComparer<ReadOnlyMemory<char>>
+    private static readonly Dictionary<ReadOnlyMemory<char>, int> HtmlEntityNames = new (string Name, int Code)[]
     {
-        public static readonly ReadOnlyMemoryComparer Instance = new ReadOnlyMemoryComparer();
+        ("Aacute", 193),
+        ("aacute", 225),
+        ("Acirc", 194),
+        ("acirc", 226),
+        ("acute", 180),
+        ("AElig", 198),
+        ("aelig", 230),
+        ("Agrave", 192),
+        ("agrave", 224),
+        ("alefsym", 8501),
+        ("Alpha", 913),
+        ("alpha", 945),
+        ("amp", 38),
+        ("and", 8743),
+        ("ang", 8736),
+        ("apos", 39),
+        ("Aring", 197),
+        ("aring", 229),
+        ("asymp", 8776),
+        ("Atilde", 195),
+        ("atilde", 227),
+        ("Auml", 196),
+        ("auml", 228),
+        ("bdquo", 8222),
+        ("Beta", 914),
+        ("beta", 946),
+        ("brvbar", 166),
+        ("bull", 8226),
+        ("cap", 8745),
+        ("Ccedil", 199),
+        ("ccedil", 231),
+        ("cedil", 184),
+        ("cent", 162),
+        ("Chi", 935),
+        ("chi", 967),
+        ("circ", 710),
+        ("clubs", 9827),
+        ("cong", 8773),
+        ("copy", 169),
+        ("crarr", 8629),
+        ("cup", 8746),
+        ("curren", 164),
+        ("dagger", 8224),
+        ("Dagger", 8225),
+        ("darr", 8595),
+        ("dArr", 8659),
+        ("deg", 176),
+        ("Delta", 916),
+        ("delta", 948),
+        ("diams", 9830),
+        ("divide", 247),
+        ("Eacute", 201),
+        ("eacute", 233),
+        ("Ecirc", 202),
+        ("ecirc", 234),
+        ("Egrave", 200),
+        ("egrave", 232),
+        ("empty", 8709),
+        ("emsp", 8195),
+        ("ensp", 8194),
+        ("Epsilon", 917),
+        ("epsilon", 949),
+        ("equiv", 8801),
+        ("Eta", 919),
+        ("eta", 951),
+        ("ETH", 208),
+        ("eth", 240),
+        ("Euml", 203),
+        ("euml", 235),
+        ("euro", 8364),
+        ("exist", 8707),
+        ("fnof", 402),
+        ("forall", 8704),
+        ("frac12", 189),
+        ("frac14", 188),
+        ("frac34", 190),
+        ("frasl", 8260),
+        ("Gamma", 915),
+        ("gamma", 947),
+        ("ge", 8805),
+        ("gt", 62),
+        ("harr", 8596),
+        ("hArr", 8660),
+        ("hearts", 9829),
+        ("hellip", 8230),
+        ("Iacute", 205),
+        ("iacute", 237),
+        ("Icirc", 206),
+        ("icirc", 238),
+        ("iexcl", 161),
+        ("Igrave", 204),
+        ("igrave", 236),
+        ("image", 8465),
+        ("infin", 8734),
+        ("int", 8747),
+        ("Iota", 921),
+        ("iota", 953),
+        ("iquest", 191),
+        ("isin", 8712),
+        ("Iuml", 207),
+        ("iuml", 239),
+        ("Kappa", 922),
+        ("kappa", 954),
+        ("Lambda", 923),
+        ("lambda", 955),
+        ("lang", 9001),
+        ("laquo", 171),
+        ("larr", 8592),
+        ("lArr", 8656),
+        ("lceil", 8968),
+        ("ldquo", 8220),
+        ("le", 8804),
+        ("lfloor", 8970),
+        ("lowast", 8727),
+        ("loz", 9674),
+        ("lrm", 8206),
+        ("lsaquo", 8249),
+        ("lsquo", 8216),
+        ("lt", 60),
+        ("macr", 175),
+        ("mdash", 8212),
+        ("micro", 181),
+        ("middot", 183),
+        ("minus", 8722),
+        ("Mu", 924),
+        ("mu", 956),
+        ("nabla", 8711),
+        ("nbsp", 160),
+        ("ndash", 8211),
+        ("ne", 8800),
+        ("ni", 8715),
+        ("not", 172),
+        ("notin", 8713),
+        ("nsub", 8836),
+        ("Ntilde", 209),
+        ("ntilde", 241),
+        ("Nu", 925),
+        ("nu", 957),
+        ("Oacute", 211),
+        ("oacute", 243),
+        ("Ocirc", 212),
+        ("ocirc", 244),
+        ("OElig", 338),
+        ("oelig", 339),
+        ("Ograve", 210),
+        ("ograve", 242),
+        ("oline", 8254),
+        ("Omega", 937),
+        ("omega", 969),
+        ("Omicron", 927),
+        ("omicron", 959),
+        ("oplus", 8853),
+        ("or", 8744),
+        ("ordf", 170),
+        ("ordm", 186),
+        ("Oslash", 216),
+        ("oslash", 248),
+        ("Otilde", 213),
+        ("otilde", 245),
+        ("otimes", 8855),
+        ("Ouml", 214),
+        ("ouml", 246),
+        ("para", 182),
+        ("part", 8706),
+        ("permil", 8240),
+        ("perp", 8869),
+        ("Phi", 934),
+        ("phi", 966),
+        ("Pi", 928),
+        ("pi", 960),
+        ("piv", 982),
+        ("plusmn", 177),
+        ("pound", 163),
+        ("prime", 8242),
+        ("Prime", 8243),
+        ("prod", 8719),
+        ("prop", 8733),
+        ("Psi", 936),
+        ("psi", 968),
+        ("quot", 34),
+        ("radic", 8730),
+        ("rang", 9002),
+        ("raquo", 187),
+        ("rarr", 8594),
+        ("rArr", 8658),
+        ("rceil", 8969),
+        ("rdquo", 8221),
+        ("real", 8476),
+        ("reg", 174),
+        ("rfloor", 8971),
+        ("Rho", 929),
+        ("rho", 961),
+        ("rlm", 8207),
+        ("rsaquo", 8250),
+        ("rsquo", 8217),
+        ("sbquo", 8218),
+        ("Scaron", 352),
+        ("scaron", 353),
+        ("sdot", 8901),
+        ("sect", 167),
+        ("shy", 173),
+        ("Sigma", 931),
+        ("sigma", 963),
+        ("sigmaf", 962),
+        ("sim", 8764),
+        ("spades", 9824),
+        ("sub", 8834),
+        ("sube", 8838),
+        ("sum", 8721),
+        ("sup", 8835),
+        ("sup1", 185),
+        ("sup2", 178),
+        ("sup3", 179),
+        ("supe", 8839),
+        ("szlig", 223),
+        ("Tau", 932),
+        ("tau", 964),
+        ("there4", 8756),
+        ("Theta", 920),
+        ("theta", 952),
+        ("thetasym", 977),
+        ("thinsp", 8201),
+        ("THORN", 222),
+        ("thorn", 254),
+        ("tilde", 732),
+        ("times", 215),
+        ("trade", 8482),
+        ("Uacute", 218),
+        ("uacute", 250),
+        ("uarr", 8593),
+        ("uArr", 8657),
+        ("Ucirc", 219),
+        ("ucirc", 251),
+        ("Ugrave", 217),
+        ("ugrave", 249),
+        ("uml", 168),
+        ("upsih", 978),
+        ("Upsilon", 933),
+        ("upsilon", 965),
+        ("Uuml", 220),
+        ("uuml", 252),
+        ("weierp", 8472),
+        ("Xi", 926),
+        ("xi", 958),
+        ("Yacute", 221),
+        ("yacute", 253),
+        ("yen", 165),
+        ("yuml", 255),
+        ("Yuml", 376),
+        ("Zeta", 918),
+        ("zeta", 950),
+        ("zwj", 8205),
+        ("zwnj", 8204),
+    }.ToDictionary(x => x.Name.AsMemory(), x => x.Code, ReadOnlyMemoryCharComparer.Ordinal);
 
-        public bool Equals(ReadOnlyMemory<char> x, ReadOnlyMemory<char> y)
-        {
-            return x.Span.Equals(y.Span, StringComparison.Ordinal);
-        }
-
-        public int GetHashCode([DisallowNull] ReadOnlyMemory<char> obj)
-        {
-            return string.GetHashCode(obj.Span, StringComparison.Ordinal);
-        }
-    }
-
-    static HtmlEntity()
-    {
-        static void Add(string entity, int code)
-        {
-            HtmlEntityNames.Add(entity.AsMemory(), code);
-        }
-
-        Add("Aacute", 193);
-        Add("aacute", 225);
-        Add("Acirc", 194);
-        Add("acirc", 226);
-        Add("acute", 180);
-        Add("AElig", 198);
-        Add("aelig", 230);
-        Add("Agrave", 192);
-        Add("agrave", 224);
-        Add("alefsym", 8501);
-        Add("Alpha", 913);
-        Add("alpha", 945);
-        Add("amp", 38);
-        Add("and", 8743);
-        Add("ang", 8736);
-        Add("apos", 39);
-        Add("Aring", 197);
-        Add("aring", 229);
-        Add("asymp", 8776);
-        Add("Atilde", 195);
-        Add("atilde", 227);
-        Add("Auml", 196);
-        Add("auml", 228);
-        Add("bdquo", 8222);
-        Add("Beta", 914);
-        Add("beta", 946);
-        Add("brvbar", 166);
-        Add("bull", 8226);
-        Add("cap", 8745);
-        Add("Ccedil", 199);
-        Add("ccedil", 231);
-        Add("cedil", 184);
-        Add("cent", 162);
-        Add("Chi", 935);
-        Add("chi", 967);
-        Add("circ", 710);
-        Add("clubs", 9827);
-        Add("cong", 8773);
-        Add("copy", 169);
-        Add("crarr", 8629);
-        Add("cup", 8746);
-        Add("curren", 164);
-        Add("dagger", 8224);
-        Add("Dagger", 8225);
-        Add("darr", 8595);
-        Add("dArr", 8659);
-        Add("deg", 176);
-        Add("Delta", 916);
-        Add("delta", 948);
-        Add("diams", 9830);
-        Add("divide", 247);
-        Add("Eacute", 201);
-        Add("eacute", 233);
-        Add("Ecirc", 202);
-        Add("ecirc", 234);
-        Add("Egrave", 200);
-        Add("egrave", 232);
-        Add("empty", 8709);
-        Add("emsp", 8195);
-        Add("ensp", 8194);
-        Add("Epsilon", 917);
-        Add("epsilon", 949);
-        Add("equiv", 8801);
-        Add("Eta", 919);
-        Add("eta", 951);
-        Add("ETH", 208);
-        Add("eth", 240);
-        Add("Euml", 203);
-        Add("euml", 235);
-        Add("euro", 8364);
-        Add("exist", 8707);
-        Add("fnof", 402);
-        Add("forall", 8704);
-        Add("frac12", 189);
-        Add("frac14", 188);
-        Add("frac34", 190);
-        Add("frasl", 8260);
-        Add("Gamma", 915);
-        Add("gamma", 947);
-        Add("ge", 8805);
-        Add("gt", 62);
-        Add("harr", 8596);
-        Add("hArr", 8660);
-        Add("hearts", 9829);
-        Add("hellip", 8230);
-        Add("Iacute", 205);
-        Add("iacute", 237);
-        Add("Icirc", 206);
-        Add("icirc", 238);
-        Add("iexcl", 161);
-        Add("Igrave", 204);
-        Add("igrave", 236);
-        Add("image", 8465);
-        Add("infin", 8734);
-        Add("int", 8747);
-        Add("Iota", 921);
-        Add("iota", 953);
-        Add("iquest", 191);
-        Add("isin", 8712);
-        Add("Iuml", 207);
-        Add("iuml", 239);
-        Add("Kappa", 922);
-        Add("kappa", 954);
-        Add("Lambda", 923);
-        Add("lambda", 955);
-        Add("lang", 9001);
-        Add("laquo", 171);
-        Add("larr", 8592);
-        Add("lArr", 8656);
-        Add("lceil", 8968);
-        Add("ldquo", 8220);
-        Add("le", 8804);
-        Add("lfloor", 8970);
-        Add("lowast", 8727);
-        Add("loz", 9674);
-        Add("lrm", 8206);
-        Add("lsaquo", 8249);
-        Add("lsquo", 8216);
-        Add("lt", 60);
-        Add("macr", 175);
-        Add("mdash", 8212);
-        Add("micro", 181);
-        Add("middot", 183);
-        Add("minus", 8722);
-        Add("Mu", 924);
-        Add("mu", 956);
-        Add("nabla", 8711);
-        Add("nbsp", 160);
-        Add("ndash", 8211);
-        Add("ne", 8800);
-        Add("ni", 8715);
-        Add("not", 172);
-        Add("notin", 8713);
-        Add("nsub", 8836);
-        Add("Ntilde", 209);
-        Add("ntilde", 241);
-        Add("Nu", 925);
-        Add("nu", 957);
-        Add("Oacute", 211);
-        Add("oacute", 243);
-        Add("Ocirc", 212);
-        Add("ocirc", 244);
-        Add("OElig", 338);
-        Add("oelig", 339);
-        Add("Ograve", 210);
-        Add("ograve", 242);
-        Add("oline", 8254);
-        Add("Omega", 937);
-        Add("omega", 969);
-        Add("Omicron", 927);
-        Add("omicron", 959);
-        Add("oplus", 8853);
-        Add("or", 8744);
-        Add("ordf", 170);
-        Add("ordm", 186);
-        Add("Oslash", 216);
-        Add("oslash", 248);
-        Add("Otilde", 213);
-        Add("otilde", 245);
-        Add("otimes", 8855);
-        Add("Ouml", 214);
-        Add("ouml", 246);
-        Add("para", 182);
-        Add("part", 8706);
-        Add("permil", 8240);
-        Add("perp", 8869);
-        Add("Phi", 934);
-        Add("phi", 966);
-        Add("Pi", 928);
-        Add("pi", 960);
-        Add("piv", 982);
-        Add("plusmn", 177);
-        Add("pound", 163);
-        Add("prime", 8242);
-        Add("Prime", 8243);
-        Add("prod", 8719);
-        Add("prop", 8733);
-        Add("Psi", 936);
-        Add("psi", 968);
-        Add("quot", 34);
-        Add("radic", 8730);
-        Add("rang", 9002);
-        Add("raquo", 187);
-        Add("rarr", 8594);
-        Add("rArr", 8658);
-        Add("rceil", 8969);
-        Add("rdquo", 8221);
-        Add("real", 8476);
-        Add("reg", 174);
-        Add("rfloor", 8971);
-        Add("Rho", 929);
-        Add("rho", 961);
-        Add("rlm", 8207);
-        Add("rsaquo", 8250);
-        Add("rsquo", 8217);
-        Add("sbquo", 8218);
-        Add("Scaron", 352);
-        Add("scaron", 353);
-        Add("sdot", 8901);
-        Add("sect", 167);
-        Add("shy", 173);
-        Add("Sigma", 931);
-        Add("sigma", 963);
-        Add("sigmaf", 962);
-        Add("sim", 8764);
-        Add("spades", 9824);
-        Add("sub", 8834);
-        Add("sube", 8838);
-        Add("sum", 8721);
-        Add("sup", 8835);
-        Add("sup1", 185);
-        Add("sup2", 178);
-        Add("sup3", 179);
-        Add("supe", 8839);
-        Add("szlig", 223);
-        Add("Tau", 932);
-        Add("tau", 964);
-        Add("there4", 8756);
-        Add("Theta", 920);
-        Add("theta", 952);
-        Add("thetasym", 977);
-        Add("thinsp", 8201);
-        Add("THORN", 222);
-        Add("thorn", 254);
-        Add("tilde", 732);
-        Add("times", 215);
-        Add("trade", 8482);
-        Add("Uacute", 218);
-        Add("uacute", 250);
-        Add("uarr", 8593);
-        Add("uArr", 8657);
-        Add("Ucirc", 219);
-        Add("ucirc", 251);
-        Add("Ugrave", 217);
-        Add("ugrave", 249);
-        Add("uml", 168);
-        Add("upsih", 978);
-        Add("Upsilon", 933);
-        Add("upsilon", 965);
-        Add("Uuml", 220);
-        Add("uuml", 252);
-        Add("weierp", 8472);
-        Add("Xi", 926);
-        Add("xi", 958);
-        Add("Yacute", 221);
-        Add("yacute", 253);
-        Add("yen", 165);
-        Add("yuml", 255);
-        Add("Yuml", 376);
-        Add("Zeta", 918);
-        Add("zeta", 950);
-        Add("zwj", 8205);
-        Add("zwnj", 8204);
-
-        MaxEntityLength = HtmlEntityNames.Keys.Max(x => x.Length);
-    }
+    private static readonly int MaxEntityLength = HtmlEntityNames.Keys.Max(x => x.Length);
 
     private enum ParserState
     {
@@ -301,17 +277,15 @@ public static class HtmlEntity
         EntityStart
     }
 
-    public static void Decode(string source, StringBuilder target)
+    public static void Decode(ReadOnlyMemory<char> source, StringBuilder target)
     {
-        var memory = source.AsMemory();
-
         target.EnsureCapacity(target.Length + source.Length);
 
         var entityStart = -1;
 
         for (var i = 0; i < source.Length; i++)
         {
-            var c = source[i];
+            var c = source.Span[i];
 
             if (entityStart < 0)
             {
@@ -326,7 +300,7 @@ public static class HtmlEntity
             }
             else if (c == ';')
             {
-                var entity = memory[entityStart.. (i + 1)];
+                var entity = source[entityStart.. (i + 1)];
 
                 if (entity.Length > MaxEntityLength || entity.Length < 2)
                 {
