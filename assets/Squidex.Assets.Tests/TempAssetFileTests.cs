@@ -15,11 +15,11 @@ public class TempAssetFileTests
     [Fact]
     public void Should_construct()
     {
-        using (var result = new TempAssetFile("fileName", "file/type", 1024))
+        using (var result = new TempAssetFile("fileName", "file/type"))
         {
             Assert.Equal("fileName", result.FileName);
             Assert.Equal("file/type", result.MimeType);
-            Assert.Equal(1024, result.FileSize);
+            Assert.Equal(0, result.FileSize);
         }
     }
 
@@ -32,14 +32,14 @@ public class TempAssetFileTests
         {
             Assert.Equal("fileName", result.FileName);
             Assert.Equal("file/type", result.MimeType);
-            Assert.Equal(1024, result.FileSize);
+            Assert.Equal(0, result.FileSize);
         }
     }
 
     [Fact]
     public void Should_be_serializable_to_json()
     {
-        var source = new TempAssetFile("fileName", "file/type", 1024);
+        var source = new TempAssetFile("fileName", "file/type");
 
         var deserialized = JsonConvert.DeserializeObject<TempAssetFile>(JsonConvert.SerializeObject(source));
 
@@ -49,7 +49,7 @@ public class TempAssetFileTests
     [Fact]
     public void Should_allow_multiple_reads_and_writes()
     {
-        using (var result = new TempAssetFile("fileName", "file/type", 1024))
+        using (var result = new TempAssetFile("fileName", "file/type"))
         {
             var buffer = new byte[] { 1, 2, 3, 4 };
 

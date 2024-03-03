@@ -15,11 +15,11 @@ public sealed class TempAssetFile : AssetFile
 
     public static TempAssetFile Create(AssetFile source)
     {
-        return new TempAssetFile(source.FileName, source.MimeType, source.FileSize);
+        return new TempAssetFile(source.FileName, source.MimeType);
     }
 
-    public TempAssetFile(string fileName, string mimeType, long fileSize)
-        : base(fileName, mimeType, fileSize)
+    public TempAssetFile(string fileName, string mimeType)
+        : base(fileName, mimeType, 0)
     {
         stream = TempHelper.GetTempStream();
     }
