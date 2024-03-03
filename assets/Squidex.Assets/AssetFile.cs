@@ -11,11 +11,15 @@ namespace Squidex.Assets;
 
 public abstract class AssetFile : IDisposable, IAsyncDisposable
 {
-    public string FileName { get; }
+    private readonly string fileName;
+    private readonly string mimeType;
+    private readonly long fileSize;
 
-    public string MimeType { get; }
+    public virtual string FileName => fileName;
 
-    public long FileSize { get; }
+    public virtual string MimeType => mimeType;
+
+    public virtual long FileSize => fileSize;
 
     protected AssetFile(string fileName, string mimeType, long fileSize)
     {
@@ -23,10 +27,9 @@ public abstract class AssetFile : IDisposable, IAsyncDisposable
         Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
         Guard.GreaterEquals(fileSize, 0, nameof(fileSize));
 
-        FileName = fileName;
-        FileSize = fileSize;
-
-        MimeType = mimeType;
+        this.fileName = fileName;
+        this.fileSize = fileSize;
+        this.mimeType = mimeType;
     }
 
     public virtual void Dispose()
