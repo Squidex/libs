@@ -14,6 +14,4 @@ public sealed class SubscriptionOptions
     public TimeSpan SubscriptionUpdateTime { get; set; } = TimeSpan.FromMinutes(5);
 
     public string GroupName { get; set; } = "__subscriptions";
-
-    public bool SendMessagesToSelf { get; set; }
 }

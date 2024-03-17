@@ -19,20 +19,20 @@ public sealed class DelegatingProducer : IInternalMessageProducer
     private readonly IMessagingTransports messagingTransports;
     private readonly IMessagingSerializer messagingSerializer;
     private readonly IOptionsMonitor<ChannelOptions> channelOptions;
-    private readonly IClock clock;
+    private readonly TimeProvider timeProvider;
 
     public DelegatingProducer(
         IInstanceNameProvider instanceName,
         IMessagingTransports messagingTransports,
         IMessagingSerializer messagingSerializer,
         IOptionsMonitor<ChannelOptions> channelOptions,
-        IClock clock)
+        TimeProvider timeProvider)
     {
         this.channelOptions = channelOptions;
         this.instanceName = instanceName.Name;
         this.messagingTransports = messagingTransports;
         this.messagingSerializer = messagingSerializer;
-        this.clock = clock;
+        this.timeProvider = timeProvider;
     }
 
     public async Task ProduceAsync(ChannelName channel, object message, string? key = null,
@@ -75,7 +75,7 @@ public sealed class DelegatingProducer : IInternalMessageProducer
                 .Set(HeaderNames.Format, format)
                 .Set(HeaderNames.TimeExpires, options.Expires)
                 .Set(HeaderNames.TimeTimeout, options.Timeout)
-                .Set(HeaderNames.TimeCreated, clock.UtcNow);
+                .Set(HeaderNames.TimeCreated, timeProvider.GetUtcNow().UtcDateTime);
 
             var transportMessage = new TransportMessage(data, key, headers);
 

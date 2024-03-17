@@ -5,32 +5,21 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Squidex.Messaging.Internal;
+using Squidex.Messaging.Subscriptions.Implementation;
+
 namespace Squidex.Messaging.Subscriptions.Internal;
 
 internal sealed class LocalSubscription<T> : IObservable<T>, IUntypedLocalSubscription, IDisposable
 {
     private readonly SubscriptionService subscriptions;
-    private readonly ISubscription subscription;
     private IObserver<T>? currentObserver;
 
-    public Guid Id { get; } = Guid.NewGuid();
+    public string Id { get; } = Guid.NewGuid().ToString();
 
-    public LocalSubscription(SubscriptionService subscriptions, ISubscription subscription)
+    public LocalSubscription(SubscriptionService subscriptions)
     {
         this.subscriptions = subscriptions;
-        this.subscription = subscription;
-    }
-
-    private void SubscribeCore(IObserver<T> observer)
-    {
-        if (currentObserver != null)
-        {
-            throw new InvalidOperationException("Can only have one observer.");
-        }
-
-        subscriptions.SubscribeCore(Id, this, subscription);
-
-        currentObserver = observer;
     }
 
     void IDisposable.Dispose()
@@ -40,15 +29,13 @@ internal sealed class LocalSubscription<T> : IObservable<T>, IUntypedLocalSubscr
             return;
         }
 
-        subscriptions.UnsubscribeCore(Id);
-
+        subscriptions.UnsubscribeAsync<T>(Id).Forget();
         currentObserver = null;
     }
 
     public IDisposable Subscribe(IObserver<T> observer)
     {
-        SubscribeCore(observer);
-
+        currentObserver = observer;
         return this;
     }
 

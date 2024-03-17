@@ -24,6 +24,7 @@ public class MongoMessagingTests : MessagingTestsBase, IClassFixture<MongoFixtur
     {
         services
             .AddSingleton(_.Database)
+            .AddMongoMessagingData(TestHelpers.Configuration)
             .AddMongoTransport(TestHelpers.Configuration, options =>
             {
                 options.Prefetch = 0;

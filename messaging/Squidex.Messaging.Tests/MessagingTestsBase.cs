@@ -10,7 +10,6 @@ using System.Globalization;
 using FakeItEasy;
 using Squidex.Hosting;
 using Squidex.Messaging.Implementation;
-using Squidex.Messaging.Internal;
 using Xunit;
 
 namespace Squidex.Messaging;
@@ -71,10 +70,10 @@ public abstract class MessagingTestsBase
     private async Task<(IAsyncDisposable, IMessageBus)> CreateMessagingAsync(ChannelName channel, IMessageHandler? handler, DateTime now,
         Action<MessagingOptions>? configure = null)
     {
-        var clock = A.Fake<IClock>();
+        var clock = A.Fake<TimeProvider>();
 
-        A.CallTo(() => clock.UtcNow)
-            .Returns(now);
+        A.CallTo(() => clock.GetUtcNow())
+            .Returns(new DateTimeOffset(now, default));
 
         var serviceCollection =
             new ServiceCollection()
@@ -83,6 +82,7 @@ public abstract class MessagingTestsBase
                     options.AddDebug();
                     options.AddConsole();
                 })
+                .AddMessagingSubscriptions()
                 .AddSingleton(clock)
                 .AddSingleton<IInstanceNameProvider, RandomInstanceNameProvider>()
                 .AddMessaging(options =>
@@ -188,9 +188,10 @@ public abstract class MessagingTestsBase
         {
             foreach (var message in testMessages)
             {
-                var key = message.ToString(CultureInfo.InvariantCulture);
+                var messageKey = message.ToString(CultureInfo.InvariantCulture);
+                var messageData = new TestTypes.Message(testIdentifier, message) as TestTypes.BaseMessage;
 
-                await bus.PublishAsync((TestTypes.BaseMessage)new TestTypes.Message(testIdentifier, message), key);
+                await bus.PublishAsync(messageData, messageKey);
             }
 
             await testHandler.Completion;
@@ -221,9 +222,10 @@ public abstract class MessagingTestsBase
 
             foreach (var message in testMessages)
             {
-                var key = message.ToString(CultureInfo.InvariantCulture);
+                var messageKey = message.ToString(CultureInfo.InvariantCulture);
+                var messageData = new TestTypes.Message(testIdentifier, message);
 
-                await bus.PublishAsync(new TestTypes.Message(testIdentifier, message), key);
+                await bus.PublishAsync(messageData, messageKey);
             }
 
             await testHandler.Completion;
@@ -260,9 +262,10 @@ public abstract class MessagingTestsBase
         {
             foreach (var message in testMessages)
             {
-                var key = message.ToString(CultureInfo.InvariantCulture);
+                var messageKey = message.ToString(CultureInfo.InvariantCulture);
+                var messageData = new TestTypes.Message(testIdentifier, message);
 
-                await bus1.PublishAsync(new TestTypes.Message(testIdentifier, message), key);
+                await bus1.PublishAsync(messageData, messageKey);
             }
         }
 
@@ -303,9 +306,10 @@ public abstract class MessagingTestsBase
         {
             foreach (var message in testMessages)
             {
-                var key = message.ToString(CultureInfo.InvariantCulture);
+                var messageKey = message.ToString(CultureInfo.InvariantCulture);
+                var messageData = new TestTypes.Message(testIdentifier, message);
 
-                await bus1.PublishAsync(new TestTypes.Message(testIdentifier, message), key);
+                await bus1.PublishAsync(messageData, messageKey);
             }
 
             await testHandler1.Completion;

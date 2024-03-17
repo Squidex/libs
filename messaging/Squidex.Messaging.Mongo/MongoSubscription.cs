@@ -19,20 +19,24 @@ internal sealed class MongoSubscription : IAsyncDisposable, IMessageAck
     private readonly string? queueFilter;
     private readonly IMongoCollection<MongoMessage> collection;
     private readonly MongoTransportOptions options;
-    private readonly IClock clock;
-    private readonly ILogger log;
+    private readonly TimeProvider timeProvider;
     private readonly SimpleTimer timer;
+    private readonly ILogger log;
 
-    public MongoSubscription(MessageTransportCallback callback, IMongoCollection<MongoMessage> collection,
+    public MongoSubscription(
+        MessageTransportCallback callback,
+        IMongoCollection<MongoMessage> collection,
         string? collectionName,
         string? queueFilter,
-        MongoTransportOptions options, IClock clock, ILogger log)
+        MongoTransportOptions options,
+        TimeProvider timeProvider,
+        ILogger log)
     {
         this.queueFilter = queueFilter;
         this.collectionName = collectionName;
         this.collection = collection;
         this.options = options;
-        this.clock = clock;
+        this.timeProvider = timeProvider;
         this.log = log;
 
         timer = new SimpleTimer(async ct =>
@@ -60,7 +64,7 @@ internal sealed class MongoSubscription : IAsyncDisposable, IMessageAck
     private async Task<bool> PollNormalAsync(MessageTransportCallback callback,
         CancellationToken ct)
     {
-        var now = clock.UtcNow;
+        var now = timeProvider.GetUtcNow().UtcDateTime;
 
         // We can fetch an document in one go with this operation.
         var mongoMessage =
@@ -81,7 +85,7 @@ internal sealed class MongoSubscription : IAsyncDisposable, IMessageAck
     private async Task<bool> PollPrefetchAsync(MessageTransportCallback callback,
         CancellationToken ct)
     {
-        var now = clock.UtcNow;
+        var now = timeProvider.GetUtcNow().UtcDateTime;
 
         // There is no way to limit the updates, therefore we have to query candidates first.
         var candidates =

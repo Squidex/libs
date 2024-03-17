@@ -8,21 +8,18 @@
 #pragma warning disable MA0048 // File name must match type name
 #pragma warning disable SA1313 // Parameter names should begin with lower-case letter
 
-namespace Squidex.Messaging;
+namespace Squidex.Messaging.Subscriptions;
 
-public record struct SubscribeRequest(string Group, string Key, SerializedObject Value, DateTime Expiration);
+public record struct Entry(string Group, string Key, SerializedObject Value, DateTime Expiration);
 
-public interface IMessagingSubscriptionStore
+public interface IMessagingDataStore
 {
-    Task<IReadOnlyList<(string Key, SerializedObject Value, DateTime Expiration)>> GetSubscriptionsAsync(string group,
+    Task<IReadOnlyList<Entry>> GetEntriesAsync(string group,
         CancellationToken ct);
 
-    Task SubscribeManyAsync(SubscribeRequest[] requests,
+    Task StoreManyAsync(Entry[] entries,
         CancellationToken ct);
 
-    Task UnsubscribeAsync(string group, string key,
-        CancellationToken ct);
-
-    Task CleanupAsync(DateTime now,
+    Task DeleteAsync(string group, string key,
         CancellationToken ct);
 }

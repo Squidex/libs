@@ -18,17 +18,21 @@ public sealed class MongoTransport : IMessagingTransport
     private readonly Dictionary<string, Task<IMongoCollection<MongoMessage>>> collections = [];
     private readonly MongoTransportOptions options;
     private readonly IMongoDatabase database;
-    private readonly IMessagingSubscriptions subscriptions;
-    private readonly IClock clock;
+    private readonly IMessagingDataProvider messagingDataProvider;
+    private readonly TimeProvider timeProvider;
     private readonly ILogger<MongoTransport> log;
 
-    public MongoTransport(IMongoDatabase database, IMessagingSubscriptions subscriptions,
-        IOptions<MongoTransportOptions> options, IClock clock, ILogger<MongoTransport> log)
+    public MongoTransport(
+        IMongoDatabase database,
+        IMessagingDataProvider messagingDataProvider,
+        IOptions<MongoTransportOptions> options,
+        TimeProvider timeProvider,
+        ILogger<MongoTransport> log)
     {
         this.options = options.Value;
         this.database = database;
-        this.subscriptions = subscriptions;
-        this.clock = clock;
+        this.messagingDataProvider = messagingDataProvider;
+        this.timeProvider = timeProvider;
         this.log = log;
     }
 
@@ -66,13 +70,15 @@ public sealed class MongoTransport : IMessagingTransport
                 InstanceName = instanceName
             };
 
-            subscription = await subscriptions.SubscribeAsync(channel.Name, instanceName, value, this.options.SubscriptionExpiration, ct);
+            subscription = await messagingDataProvider.StoreAsync(channel.Name, instanceName, value, this.options.SubscriptionExpiration, ct);
         }
 
         IAsyncDisposable result = new MongoTransportCleaner(collectionInstance, collectionName,
             options.Timeout,
             options.Expires,
-            this.options.UpdateInterval, log, clock);
+            this.options.UpdateInterval,
+            log,
+            timeProvider);
 
         if (subscription != null)
         {
@@ -93,7 +99,7 @@ public sealed class MongoTransport : IMessagingTransport
         }
         else
         {
-            var subscribed = await subscriptions.GetSubscriptionsAsync<MongoSubscriptionValue>(channel.Name, ct);
+            var subscribed = await messagingDataProvider.GetEntriesAsync<MongoSubscriptionValue>(channel.Name, ct);
 
             queues = subscribed.Select(x => x.Value.InstanceName).ToList();
         }
@@ -129,7 +135,7 @@ public sealed class MongoTransport : IMessagingTransport
 
         var queueFilter = channel.Type == ChannelType.Topic ? instanceName : null;
 
-        return new MongoSubscription(callback, collectionInstance, collectionName, queueFilter, options, clock, log);
+        return new MongoSubscription(callback, collectionInstance, collectionName, queueFilter, options, timeProvider, log);
     }
 
     private async Task<IMongoCollection<MongoMessage>> GetCollectionAsync(string name)
@@ -181,6 +187,6 @@ public sealed class MongoTransport : IMessagingTransport
             time = expires;
         }
 
-        return clock.UtcNow + time;
+        return timeProvider.GetUtcNow().UtcDateTime + time;
     }
 }

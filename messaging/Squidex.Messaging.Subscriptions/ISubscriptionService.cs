@@ -9,11 +9,18 @@ namespace Squidex.Messaging.Subscriptions;
 
 public interface ISubscriptionService
 {
-    bool HasSubscriptions { get; }
+    Task<bool> HasSubscriptionsAsync<T>(
+        CancellationToken ct = default) where T : notnull;
 
-    Task PublishAsync(object message);
+    Task PublishAsync<T>(T message,
+        CancellationToken ct = default) where T : notnull;
 
-    IObservable<T> Subscribe<T>(ISubscription subscription);
+    Task PublishWrapperAsync<T>(IPayloadWrapper<T> message,
+        CancellationToken ct = default) where T : notnull;
 
-    IObservable<T> Subscribe<T>();
+    Task<IObservable<T>> SubscribeAsync<T>(
+        CancellationToken ct = default) where T : notnull;
+
+    Task<IObservable<T>> SubscribeAsync<T>(ISubscription<T> subscription,
+        CancellationToken ct = default) where T : notnull;
 }
