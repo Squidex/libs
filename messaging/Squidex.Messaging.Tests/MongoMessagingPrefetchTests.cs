@@ -30,7 +30,7 @@ public class MongoMessagingPrefetchTests : MessagingTestsBase, IClassFixture<Mon
                 options.PollingInterval = TimeSpan.FromSeconds(0.1);
                 options.UpdateInterval = TimeSpan.FromSeconds(0.1);
 
-                _.CleanCollections(x => x.StartsWith(options.CollectionName, StringComparison.OrdinalIgnoreCase));
+                // _.CleanCollections(x => x.StartsWith(options.CollectionName, StringComparison.OrdinalIgnoreCase));
             })
             .AddMessaging(channel, consume, options =>
             {

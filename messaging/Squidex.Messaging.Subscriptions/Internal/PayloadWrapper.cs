@@ -5,9 +5,14 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Messaging.Subscriptions.Messages;
+namespace Squidex.Messaging.Subscriptions.Internal;
 
-public sealed record SubscriptionsAliveMessage : SubscriptionsMessageBase
+internal sealed class PayloadWrapper<T>(T message) : IPayloadWrapper<T> where T : notnull
 {
-    public List<Guid> SubscriptionIds { get; init; } = null!;
+    public T Message => message;
+
+    public ValueTask<object> CreatePayloadAsync()
+    {
+        return new ValueTask<object>(message);
+    }
 }

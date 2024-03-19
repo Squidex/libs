@@ -36,7 +36,7 @@ public sealed class MongoFixture : IDisposable
 
         foreach (var collectionName in collections.Where(x => collectionsToClean.Exists(p => p(x))))
         {
-            Database.DropCollection(collectionName);
+            // Database.DropCollection(collectionName);
         }
     }
 }

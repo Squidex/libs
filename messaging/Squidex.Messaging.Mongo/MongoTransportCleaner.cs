@@ -8,6 +8,7 @@
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using Squidex.Messaging.Internal;
+using System.Diagnostics;
 
 namespace Squidex.Messaging.Mongo;
 
@@ -19,13 +20,21 @@ internal sealed class MongoTransportCleaner : IAsyncDisposable
         TimeSpan timeout,
         TimeSpan expires,
         TimeSpan updateInterval,
-        ILogger log, IClock clock)
+        ILogger log,
+        TimeProvider timeProvider)
     {
         timer = new SimpleTimer(async ct =>
         {
-            var now = clock.UtcNow;
+            var now = timeProvider.GetUtcNow().UtcDateTime;
 
             var timedout = now - timeout;
+
+            var x = await collection.Find(x => x.TimeHandled != null && x.TimeHandled < timedout).ToListAsync();
+
+            if (x.Count > 0)
+            {
+                Debugger.Break();
+            }
 
             var update = await collection.UpdateManyAsync(x => x.TimeHandled != null && x.TimeHandled < timedout,
                 Builders<MongoMessage>.Update

@@ -9,7 +9,7 @@ using Squidex.Hosting.Configuration;
 
 namespace Squidex.Messaging.Mongo;
 
-public sealed class MongoSubscriptionStoreOptions : IValidatableOptions
+public sealed class MongoMessagingDataOptions : IValidatableOptions
 {
     public string CollectionName { get; set; } = "Subscriptions";
 

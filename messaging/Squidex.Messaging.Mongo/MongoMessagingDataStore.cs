@@ -8,10 +8,11 @@
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using Squidex.Hosting;
+using Squidex.Messaging.Subscriptions;
 
 namespace Squidex.Messaging.Mongo;
 
-public sealed class MongoSubscriptionStore : IMessagingSubscriptionStore, IInitializable
+public sealed class MongoMessagingDataStore : IMessagingDataStore, IInitializable
 {
     private readonly IMongoCollection<Entity> collection;
 
@@ -32,7 +33,7 @@ public sealed class MongoSubscriptionStore : IMessagingSubscriptionStore, IIniti
         public DateTime Expiration { get; set; }
     }
 
-    public MongoSubscriptionStore(IMongoDatabase database, IOptions<MongoSubscriptionStoreOptions> options)
+    public MongoMessagingDataStore(IMongoDatabase database, IOptions<MongoMessagingDataOptions> options)
     {
         collection = database.GetCollection<Entity>(options.Value.CollectionName);
     }
@@ -57,10 +58,10 @@ public sealed class MongoSubscriptionStore : IMessagingSubscriptionStore, IIniti
             }, ct);
     }
 
-    public async Task<IReadOnlyList<(string Key, SerializedObject Value, DateTime Expiration)>> GetSubscriptionsAsync(string group,
+    public async Task<IReadOnlyList<Entry>> GetEntriesAsync(string group,
         CancellationToken ct)
     {
-        var result = new List<(string Key, SerializedObject Value, DateTime Expiration)>();
+        var result = new List<Entry>();
 
         var cursor = await collection.Find(x => x.Group == group).ToCursorAsync(ct);
 
@@ -70,14 +71,14 @@ public sealed class MongoSubscriptionStore : IMessagingSubscriptionStore, IIniti
             {
                 var value = new SerializedObject(item.ValueData, item.ValueType, item.ValueFormat);
 
-                result.Add((item.Key, value, item.Expiration));
+                result.Add(new Entry(group, item.Key, value, item.Expiration));
             }
         }
 
         return result;
     }
 
-    public async Task SubscribeManyAsync(SubscribeRequest[] requests,
+    public async Task StoreManyAsync(Entry[] requests,
         CancellationToken ct)
     {
         List<WriteModel<Entity>>? updates = null;
@@ -105,18 +106,12 @@ public sealed class MongoSubscriptionStore : IMessagingSubscriptionStore, IIniti
         }
     }
 
-    public Task UnsubscribeAsync(string group, string key,
+    public Task DeleteAsync(string group, string key,
         CancellationToken ct)
     {
         string id = GetId(group, key);
 
         return collection.DeleteOneAsync(x => x.Id == id, ct);
-    }
-
-    public Task CleanupAsync(DateTime now,
-        CancellationToken ct)
-    {
-        return Task.CompletedTask;
     }
 
     private static string GetId(string group, string key)

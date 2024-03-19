@@ -27,16 +27,11 @@ public static class CachingServiceExtensions
         return services;
     }
 
-    public static IServiceCollection AddReplicatedCache(this IServiceCollection services, Action<ReplicatedCacheOptions>? configureOptions = null)
+    public static IServiceCollection AddReplicatedCache(this IServiceCollection services)
     {
-        services.ConfigureOptional(configureOptions!);
-        services.AddSingleton<ReplicatedCache>();
-
-        services.TryAddSingleton<IReplicatedCache>(
-            c => c.GetRequiredService<ReplicatedCache>());
-
-        services.TryAddSingleton<IMessageHandler<CacheInvalidateMessage>>(
-            c => c.GetRequiredService<ReplicatedCache>());
+        services.AddMemoryCache();
+        services.AddSingletonAs<ReplicatedCache>()
+            .As<IReplicatedCache>().As<IMessageHandler<CacheInvalidateMessage>>();
 
         return services;
     }

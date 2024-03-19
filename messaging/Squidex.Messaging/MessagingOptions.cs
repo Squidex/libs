@@ -13,6 +13,8 @@ public sealed class MessagingOptions
 
     public RoutingCollection Topics { get; set; } = [];
 
+    public TimeSpan SubscriptionCacheDuration { get; set; } = TimeSpan.FromSeconds(30);
+
     public TimeSpan SubscriptionUpdateInterval { get; set; } = TimeSpan.FromSeconds(30);
 
     public TimeSpan SubscriptionCleanupInterval { get; set; } = TimeSpan.FromSeconds(60);
