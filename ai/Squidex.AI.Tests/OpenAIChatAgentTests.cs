@@ -14,30 +14,6 @@ namespace Squidex.AI;
 
 public class OpenAIChatAgentTests
 {
-    private readonly IChatAgent sut;
-
-    public OpenAIChatAgentTests()
-    {
-        var services =
-            new ServiceCollection()
-                .AddKernel()
-                .AddTool<MathTool>()
-                .AddTool<WheatherTool>()
-                .AddOpenAIChatCompletion("gpt-3.5-turbo-0125", TestHelpers.Configuration["chatBot:openai:apiKey"]!).Services
-                .AddOpenAIChatAgent(TestHelpers.Configuration, options =>
-                {
-                    options.SystemMessages =
-                    [
-                        "You are a fiendly agent. Always use the result from the tool if you have called one.",
-                        "Say hello to the user."
-                    ];
-                    options.Temperature = 0;
-                })
-                .BuildServiceProvider();
-
-        sut = services.GetRequiredService<IChatAgent>();
-    }
-
     public sealed class MathTool
     {
 #pragma warning disable
@@ -78,34 +54,36 @@ public class OpenAIChatAgentTests
     [Fact]
     public void Should_not_be_configured_if_open_ai_is_not_added()
     {
-        var sut2 =
+        var sut =
             new ServiceCollection()
                 .AddKernel().Services
                 .AddOpenAIChatAgent(TestHelpers.Configuration)
                 .BuildServiceProvider()
                 .GetRequiredService<IChatAgent>();
 
-        Assert.False(sut2.IsConfigured);
+        Assert.False(sut.IsConfigured);
     }
 
     [Fact]
     public void Should_be_configured_if_open_ai_is_added()
     {
-        var sut2 =
+        var sut =
             new ServiceCollection()
                 .AddKernel()
-                .AddOpenAIChatCompletion("gpt-3.5-turbo-0125", TestHelpers.Configuration["chatBot:openai:apiKey"]!).Services
+                .AddOpenAIChatCompletion("gpt-3.5-turbo-0125", "apiKey").Services
                 .AddOpenAIChatAgent(TestHelpers.Configuration)
                 .BuildServiceProvider()
                 .GetRequiredService<IChatAgent>();
 
-        Assert.True(sut2.IsConfigured);
+        Assert.True(sut.IsConfigured);
     }
 
     [Fact]
     [Trait("Category", "Dependencies")]
     public async Task Should_ask_questions()
     {
+        var sut = CreateSut();
+
         var conversation = Guid.NewGuid().ToString();
 
         try
@@ -126,6 +104,8 @@ public class OpenAIChatAgentTests
     [Trait("Category", "Dependencies")]
     public async Task Should_ask_question_with_tool()
     {
+        var sut = CreateSut();
+
         var conversation = Guid.NewGuid().ToString();
         try
         {
@@ -145,6 +125,8 @@ public class OpenAIChatAgentTests
     [Trait("Category", "Dependencies")]
     public async Task Should_ask_question_with_tool2()
     {
+        var sut = CreateSut();
+
         var conversation = Guid.NewGuid().ToString();
         try
         {
@@ -164,6 +146,8 @@ public class OpenAIChatAgentTests
     [Trait("Category", "Dependencies")]
     public async Task Should_ask_multiple_question_with_tools()
     {
+        var sut = CreateSut();
+
         var conversation = Guid.NewGuid().ToString();
         try
         {
@@ -183,6 +167,8 @@ public class OpenAIChatAgentTests
     [Trait("Category", "Dependencies")]
     public async Task Should_ask_multiple_question_with_tools2()
     {
+        var sut = CreateSut();
+
         var conversation = Guid.NewGuid().ToString();
         try
         {
@@ -196,6 +182,28 @@ public class OpenAIChatAgentTests
         {
             await sut.StopConversationAsync(conversation);
         }
+    }
+
+    private static IChatAgent CreateSut()
+    {
+        var services =
+            new ServiceCollection()
+                .AddKernel()
+                .AddTool<MathTool>()
+                .AddTool<WheatherTool>()
+                .AddOpenAIChatCompletion("gpt-3.5-turbo-0125", TestHelpers.Configuration["chatBot:openai:apiKey"]!).Services
+                .AddOpenAIChatAgent(TestHelpers.Configuration, options =>
+                {
+                    options.SystemMessages =
+                    [
+                        "You are a fiendly agent. Always use the result from the tool if you have called one.",
+                        "Say hello to the user."
+                    ];
+                    options.Temperature = 0;
+                })
+                .BuildServiceProvider();
+
+        return services.GetRequiredService<IChatAgent>();
     }
 
     private static void AssertMessage(string text, ChatBotResponse message)
