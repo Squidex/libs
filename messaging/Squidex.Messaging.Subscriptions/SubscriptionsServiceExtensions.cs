@@ -6,8 +6,12 @@
 // ==========================================================================
 
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
+using Squidex.Caching;
 using Squidex.Messaging;
+using Squidex.Messaging.Implementation;
 using Squidex.Messaging.Subscriptions;
+using Squidex.Messaging.Subscriptions.Implementation;
 using Squidex.Messaging.Subscriptions.Messages;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -18,17 +22,24 @@ public static class SubscriptionsServiceExtensions
     {
         var channel = new ChannelName(channelName, ChannelType.Topic);
 
+        services.AddReplicatedCache();
+        services.AddMessaging(channel, consume, configure);
+
         services.AddSingletonAs<SubscriptionService>()
             .As<ISubscriptionService>().As<IMessageHandler>();
 
-        services.TryAddSingleton<IMessageEvaluator,
-            DefaultMessageEvaluator>();
+        services.AddSingletonAs<MessagingDataProvider>()
+            .AsSelf();
 
-        services.AddMessaging(channel, consume, configure);
+        services.AddSingletonAs<MessagingDataProvider>()
+            .As<IMessagingDataProvider>();
+
+        services.TryAddSingleton<IMessagingDataStore,
+            InMemoryMessagingDataStore>();
 
         services.Configure<MessagingOptions>(options =>
         {
-            options.Routing.Add(x => x is SubscriptionsMessageBase, channel);
+            options.Routing.Add(x => x is PayloadMessageBase, channel);
         });
 
         return services;

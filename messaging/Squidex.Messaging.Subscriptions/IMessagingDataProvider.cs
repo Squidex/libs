@@ -7,14 +7,14 @@
 
 namespace Squidex.Messaging.Implementation;
 
-public interface IMessagingSubscriptions
+public interface IMessagingDataProvider
 {
-    Task<IReadOnlyDictionary<string, T>> GetSubscriptionsAsync<T>(string group,
+    Task<IReadOnlyDictionary<string, T>> GetEntriesAsync<T>(string group,
         CancellationToken ct = default) where T : notnull;
 
-    Task<IAsyncDisposable> SubscribeAsync<T>(string group, string key, T value, TimeSpan expiresAfter,
+    Task<IAsyncDisposable> StoreAsync<T>(string group, string key, T entry, TimeSpan expiresAfter,
         CancellationToken ct = default) where T : notnull;
 
-    Task UnsubscribeAsync(string group, string key,
+    Task DeleteAsync(string group, string key,
         CancellationToken ct = default);
 }

@@ -7,6 +7,7 @@
 
 using Microsoft.Extensions.Options;
 using Squidex.Messaging.Mongo;
+using Squidex.Messaging.Subscriptions;
 using Xunit;
 
 #pragma warning disable SA1300 // Element should begin with upper-case letter
@@ -23,13 +24,13 @@ public class MongoSubscriptionStoreTests : SubscriptionStoreTestsBase, IClassFix
         _ = fixture;
     }
 
-    public async override Task<IMessagingSubscriptionStore> CreateSubscriptionStoreAsync()
+    public async override Task<IMessagingDataStore> CreateSubscriptionStoreAsync()
     {
-        var options = Options.Create(new MongoSubscriptionStoreOptions());
+        var options = Options.Create(new MongoMessagingDataOptions());
 
         _.CleanCollections(x => x == options.Value.CollectionName);
 
-        var sut = new MongoSubscriptionStore(_.Database, options);
+        var sut = new MongoMessagingDataStore(_.Database, options);
 
         await sut.InitializeAsync(default);
 

@@ -19,11 +19,12 @@ internal sealed class MongoTransportCleaner : IAsyncDisposable
         TimeSpan timeout,
         TimeSpan expires,
         TimeSpan updateInterval,
-        ILogger log, IClock clock)
+        ILogger log,
+        TimeProvider timeProvider)
     {
         timer = new SimpleTimer(async ct =>
         {
-            var now = clock.UtcNow;
+            var now = timeProvider.GetUtcNow().UtcDateTime;
 
             var timedout = now - timeout;
 

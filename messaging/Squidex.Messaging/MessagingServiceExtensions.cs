@@ -9,9 +9,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Squidex.Hosting;
 using Squidex.Messaging;
 using Squidex.Messaging.Implementation;
-using Squidex.Messaging.Implementation.InMemory;
 using Squidex.Messaging.Implementation.Null;
-using Squidex.Messaging.Internal;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -27,26 +25,20 @@ public static class MessagingServiceExtensions
         services.TryAddSingleton<IMessageBus,
             DefaultMessageBus>();
 
-        services.TryAddSingleton<IMessagingSubscriptionStore,
-            InMemorySubscriptionStore>();
-
         services.TryAddSingleton<IMessagingTransport,
             NullTransport>();
 
         services.TryAddSingleton<IInstanceNameProvider,
             HostNameInstanceNameProvider>();
 
-        services.TryAddSingleton<IClock,
-            DefaultClock>();
+        services.TryAddSingleton(
+            TimeProvider.System);
 
         services.TryAddSingleton<
             HandlerPipeline>();
 
         services.AddSingleton<IInternalMessageProducer,
             DelegatingProducer>();
-
-        services.AddSingletonAs<DefaultMessagingSubscriptions>()
-            .As<IMessagingSubscriptions>();
 
         return services;
     }

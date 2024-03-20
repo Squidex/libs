@@ -29,6 +29,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\caching\Squidex.Caching\Squidex.Caching.csproj" />
+    <ProjectReference Include="..\..\text\Squidex.Text\Squidex.Text.csproj" />
     <ProjectReference Include="..\Squidex.Messaging\Squidex.Messaging.csproj" />
   </ItemGroup>
 

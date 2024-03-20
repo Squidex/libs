@@ -5,14 +5,15 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Squidex.Messaging.Implementation.InMemory;
+using Squidex.Messaging.Subscriptions;
+using Squidex.Messaging.Subscriptions.Implementation;
 
 namespace Squidex.Messaging;
 
 public class InMemorySubscriptionStoreTests : SubscriptionStoreTestsBase
 {
-    public override Task<IMessagingSubscriptionStore> CreateSubscriptionStoreAsync()
+    public override Task<IMessagingDataStore> CreateSubscriptionStoreAsync()
     {
-        return Task.FromResult<IMessagingSubscriptionStore>(new InMemorySubscriptionStore());
+        return Task.FromResult<IMessagingDataStore>(new InMemoryMessagingDataStore());
     }
 }

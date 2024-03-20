@@ -7,9 +7,9 @@
 
 namespace Squidex.Messaging.Subscriptions;
 
-public interface IPayloadWrapper
+public interface IPayloadWrapper<T> where T : notnull
 {
-    object Message { get; }
+    T Message { get; }
 
     ValueTask<object> CreatePayloadAsync();
 }

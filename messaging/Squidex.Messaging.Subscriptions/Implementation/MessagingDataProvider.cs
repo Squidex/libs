@@ -8,47 +8,40 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Squidex.Hosting;
+using Squidex.Messaging.Implementation;
 using Squidex.Messaging.Internal;
 
-namespace Squidex.Messaging.Implementation;
+namespace Squidex.Messaging.Subscriptions.Implementation;
 
-public sealed class DefaultMessagingSubscriptions : IMessagingSubscriptions, IBackgroundProcess
+public sealed class MessagingDataProvider : IMessagingDataProvider, IBackgroundProcess
 {
     private readonly Dictionary<(string Group, string Key), (SerializedObject Value, TimeSpan Expires)> localSubscriptions = [];
     private readonly MessagingOptions options;
-    private readonly IMessagingSubscriptionStore messagingSubscriptionStore;
+    private readonly IMessagingDataStore messagingDataStore;
     private readonly IMessagingSerializer messagingSerializer;
-    private readonly ILogger<DefaultMessagingSubscriptions> log;
-    private readonly IClock clock;
+    private readonly ILogger<MessagingDataProvider> log;
+    private readonly TimeProvider timeProvider;
     private SimpleTimer? updateTimer;
-    private SimpleTimer? cleanupTimer;
 
-    public DefaultMessagingSubscriptions(
-        IMessagingSubscriptionStore messagingSubscriptionStore,
+    public MessagingDataProvider(
+        IMessagingDataStore messagingDataStore,
         IMessagingSerializer messagingSerializer,
         IOptions<MessagingOptions> options,
-        ILogger<DefaultMessagingSubscriptions> log, IClock clock)
+        TimeProvider timeProvider,
+        ILogger<MessagingDataProvider> log)
     {
         this.options = options.Value;
+        this.messagingDataStore = messagingDataStore;
         this.messagingSerializer = messagingSerializer;
-        this.messagingSubscriptionStore = messagingSubscriptionStore;
-        this.clock = clock;
+        this.timeProvider = timeProvider;
         this.log = log;
     }
 
     public Task StartAsync(
         CancellationToken ct)
     {
-        // The timer will do the logging anyway, so there is no need to handle exceptions here.
-        updateTimer ??= new SimpleTimer(async ct =>
-        {
-            await UpdateAliveAsync(ct);
-        }, options.SubscriptionUpdateInterval, log);
-
-        cleanupTimer ??= new SimpleTimer(async ct =>
-        {
-            await CleanupAsync(ct);
-        }, options.SubscriptionUpdateInterval, log);
+        // Just a guard when this method is called twice.
+        updateTimer ??= new SimpleTimer(UpdateAliveAsync, options.SubscriptionUpdateInterval, log);
 
         return Task.CompletedTask;
     }
@@ -68,25 +61,19 @@ public sealed class DefaultMessagingSubscriptions : IMessagingSubscriptions, IBa
             return Task.CompletedTask;
         }
 
-        var now = clock.UtcNow;
+        var now = timeProvider.GetUtcNow().UtcDateTime;
 
         var requests =
             subscriptions
                 .Select(x =>
-                    new SubscribeRequest(
+                    new Entry(
                         x.Key.Group,
                         x.Key.Key,
                         x.Value.Value,
                         CalculateExpiration(now, x.Value.Expires)))
                     .ToArray();
 
-        return messagingSubscriptionStore.SubscribeManyAsync(requests, ct);
-    }
-
-    public Task CleanupAsync(
-        CancellationToken ct)
-    {
-        return messagingSubscriptionStore.CleanupAsync(clock.UtcNow, ct);
+        return messagingDataStore.StoreManyAsync(requests, ct);
     }
 
     public async Task StopAsync(
@@ -98,41 +85,35 @@ public sealed class DefaultMessagingSubscriptions : IMessagingSubscriptions, IBa
 
             updateTimer = null;
         }
-
-        if (cleanupTimer != null)
-        {
-            await cleanupTimer.DisposeAsync();
-
-            cleanupTimer = null;
-        }
     }
 
-    public async Task<IReadOnlyDictionary<string, T>> GetSubscriptionsAsync<T>(string group,
+    public async Task<IReadOnlyDictionary<string, T>> GetEntriesAsync<T>(string group,
         CancellationToken ct = default) where T : notnull
     {
         var result = new Dictionary<string, T>();
 
-        var now = clock.UtcNow;
+        var now = timeProvider.GetUtcNow().UtcDateTime;
 
-        foreach (var (key, value, expiration) in await messagingSubscriptionStore.GetSubscriptionsAsync(group, ct))
+        foreach (var subscription in await messagingDataStore.GetEntriesAsync(group, ct))
         {
-            if (expiration < now)
+            if (subscription.Expiration < now)
             {
+                await messagingDataStore.DeleteAsync(group, subscription.Key, ct);
                 continue;
             }
 
-            var deserialized = messagingSerializer.Deserialize(value);
+            var deserialized = messagingSerializer.Deserialize(subscription.Value);
 
             if (deserialized.Message is T typed)
             {
-                result[key] = typed;
+                result[subscription.Key] = typed;
             }
         }
 
         return result;
     }
 
-    public async Task<IAsyncDisposable> SubscribeAsync<T>(string group, string key, T value, TimeSpan expiresAfter,
+    public async Task<IAsyncDisposable> StoreAsync<T>(string group, string key, T value, TimeSpan expiresAfter,
         CancellationToken ct = default) where T : notnull
     {
         var serialized = messagingSerializer.Serialize(value);
@@ -143,17 +124,19 @@ public sealed class DefaultMessagingSubscriptions : IMessagingSubscriptions, IBa
             localSubscriptions[(group, key)] = (serialized, expiresAfter);
         }
 
-        var request = new SubscribeRequest(group, key, serialized, CalculateExpiration(clock.UtcNow, expiresAfter));
+        var now = timeProvider.GetUtcNow().UtcDateTime;
 
-        await messagingSubscriptionStore.SubscribeManyAsync([request], ct);
+        var subscription = new Entry(group, key, serialized, CalculateExpiration(now, expiresAfter));
 
-        return new DelegateAsyncDisposable(() =>
+        await messagingDataStore.StoreManyAsync([subscription], ct);
+
+        return new DelegateAsyncDisposable(async () =>
         {
-            return new ValueTask(UnsubscribeAsync(group, key, default));
+            await DeleteAsync(group, key, ct);
         });
     }
 
-    public Task UnsubscribeAsync(string group, string key,
+    public Task DeleteAsync(string group, string key,
         CancellationToken ct = default)
     {
         lock (localSubscriptions)
@@ -161,7 +144,7 @@ public sealed class DefaultMessagingSubscriptions : IMessagingSubscriptions, IBa
             localSubscriptions.Remove((group, key));
         }
 
-        return messagingSubscriptionStore.UnsubscribeAsync(group, key, ct);
+        return messagingDataStore.DeleteAsync(group, key, ct);
     }
 
     private static DateTime CalculateExpiration(DateTime now, TimeSpan expires)
