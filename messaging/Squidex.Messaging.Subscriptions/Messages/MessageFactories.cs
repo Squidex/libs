@@ -12,7 +12,7 @@ namespace Squidex.Messaging.Subscriptions.Messages;
 
 internal static class MessageFactories
 {
-    private static readonly ConcurrentDictionary<Type, Func<List<string>, string?, object, PayloadMessageBase>> PayloadFactories = new ();
+    private static readonly ConcurrentDictionary<Type, Func<List<string>, string?, object, PayloadMessageBase>> PayloadFactories = [];
 
     private static readonly MethodInfo BuildPayloadFactoryMethod =
         typeof(MessageFactories).GetMethod(nameof(BuildPayloadFactory), BindingFlags.NonPublic | BindingFlags.Static)!;

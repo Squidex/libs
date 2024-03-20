@@ -10,7 +10,6 @@ using Squidex.Hosting;
 using Squidex.Messaging.Implementation;
 using Squidex.Messaging.Subscriptions;
 using Squidex.Messaging.Subscriptions.Implementation;
-using Squidex.Text.ChatBots;
 using Xunit;
 
 #pragma warning disable SA1300 // Element should begin with upper-case letter

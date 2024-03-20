@@ -67,7 +67,6 @@ public class TusServerFixture
                 });
 
                 app.UseRouting();
-
                 app.UseEndpoints(builder =>
                 {
                     builder.MapControllers();

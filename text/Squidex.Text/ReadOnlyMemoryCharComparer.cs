@@ -9,7 +9,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Squidex.Text;
 
-internal class ReadOnlyMemoryCharComparer : IEqualityComparer<ReadOnlyMemory<char>>
+internal sealed class ReadOnlyMemoryCharComparer : IEqualityComparer<ReadOnlyMemory<char>>
 {
     public static readonly ReadOnlyMemoryCharComparer Ordinal
         = new ReadOnlyMemoryCharComparer(StringComparison.Ordinal);

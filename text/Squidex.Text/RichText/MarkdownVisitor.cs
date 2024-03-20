@@ -7,7 +7,6 @@
 
 using System.Globalization;
 using System.Text;
-using Markdig.Renderers.Normalize;
 using Squidex.Text.RichText.Model;
 using Squidex.Text.RichText.Writer;
 

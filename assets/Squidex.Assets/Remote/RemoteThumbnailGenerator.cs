@@ -41,68 +41,62 @@ public sealed class RemoteThumbnailGenerator : AssetThumbnailGeneratorBase
     protected override async Task<string?> ComputeBlurHashCoreAsync(Stream source, string mimeType, BlurOptions options,
         CancellationToken ct = default)
     {
-        using (var httpClient = httpClientFactory.CreateClient("Resize"))
+        using var httpClient = httpClientFactory.CreateClient("Resize");
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"/blur?{BuildQueryString(options)}")
         {
-            var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"/blur?{BuildQueryString(options)}")
-            {
-                Content = new StreamContent(source)
-            };
+            Content = new StreamContent(source)
+        };
 
-            requestMessage.Content.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
+        httpRequest.Content.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
 
-            var response = await httpClient.SendAsync(requestMessage, ct);
+        using var httpResponse = await httpClient.SendAsync(httpRequest, ct);
 
-            response.EnsureSuccessStatusCode();
+        httpResponse.EnsureSuccessStatusCode();
 
-            var result = await response.Content.ReadAsStringAsync(ct);
+        var result = await httpResponse.Content.ReadAsStringAsync(ct);
 
-            if (string.IsNullOrWhiteSpace(result))
-            {
-                result = null;
-            }
-
-            return result;
+        if (string.IsNullOrWhiteSpace(result))
+        {
+            result = null;
         }
+
+        return result;
     }
 
     protected override async Task CreateThumbnailCoreAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,
         CancellationToken ct = default)
     {
-        using (var httpClient = httpClientFactory.CreateClient("Resize"))
+        using var httpClient = httpClientFactory.CreateClient("Resize");
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"/resize{BuildQueryString(options)}")
         {
-            var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"/resize{BuildQueryString(options)}")
-            {
-                Content = new StreamContent(source)
-            };
+            Content = new StreamContent(source)
+        };
 
-            requestMessage.Content.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
+        httpRequest.Content.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
 
-            var response = await httpClient.SendAsync(requestMessage, ct);
+        using var httpResonse = await httpClient.SendAsync(httpRequest, ct);
 
-            response.EnsureSuccessStatusCode();
+        httpResonse.EnsureSuccessStatusCode();
 
-            await response.Content.CopyToAsync(destination, ct);
-        }
+        await httpResonse.Content.CopyToAsync(destination, ct);
     }
 
     protected override async Task FixCoreAsync(Stream source, string mimeType, Stream destination,
         CancellationToken ct = default)
     {
-        using (var httpClient = httpClientFactory.CreateClient("Resize"))
+        using var httpClient = httpClientFactory.CreateClient("Resize");
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/orient")
         {
-            var requestMessage = new HttpRequestMessage(HttpMethod.Post, "/orient")
-            {
-                Content = new StreamContent(source)
-            };
+            Content = new StreamContent(source)
+        };
 
-            requestMessage.Content.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
+        httpRequest.Content.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
 
-            var response = await httpClient.SendAsync(requestMessage, ct);
+        var httpResponse = await httpClient.SendAsync(httpRequest, ct);
 
-            response.EnsureSuccessStatusCode();
+        httpResponse.EnsureSuccessStatusCode();
 
-            await response.Content.CopyToAsync(destination, ct);
-        }
+        await httpResponse.Content.CopyToAsync(destination, ct);
     }
 
     protected override Task<ImageInfo?> GetImageInfoCoreAsync(Stream source, string mimeType,

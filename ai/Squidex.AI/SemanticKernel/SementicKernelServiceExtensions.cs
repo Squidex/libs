@@ -7,18 +7,26 @@
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Squidex.Text.ChatBots;
-using Squidex.Text.ChatBots.OpenAI;
+using Microsoft.SemanticKernel;
+using Squidex.AI;
+using Squidex.AI.SemanticKernel;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
-public static class OpenAIChatBotServiceExtensions
+public static class SementicKernelServiceExtensions
 {
+    public static IKernelBuilder AddTool<T>(this IKernelBuilder builder)
+    {
+        builder.Plugins.AddFromType<T>();
+        return builder;
+    }
+
     public static IServiceCollection AddOpenAIChatAgent(this IServiceCollection services, IConfiguration config, Action<OpenAIChatBotOptions>? configure = null,
         string configPath = "chatbot:openai")
     {
         services.Configure(config, configPath, configure);
 
+        services.TryAddSingleton(TimeProvider.System);
         services.TryAddSingleton<IChatStore, InMemoryChatStore>();
         services.AddSingletonAs<OpenAIChatAgent>()
             .As<IChatAgent>().AsSelf();

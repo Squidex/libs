@@ -5,22 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Text.ChatBots;
+namespace Squidex.AI.SemanticKernel;
 
-[Serializable]
-public class ChatException : Exception
+public sealed class CohereRerankOptions
 {
-    public ChatException()
-    {
-    }
-
-    public ChatException(string message)
-        : base(message)
-    {
-    }
-
-    public ChatException(string message, Exception inner)
-        : base(message, inner)
-    {
-    }
+    required public string ApiKey { get; set; }
 }

@@ -5,15 +5,10 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using OpenAI;
-using OpenAI.ObjectModels;
+namespace Squidex.AI.SemanticKernel;
 
-namespace Squidex.Text.ChatBots.OpenAI;
-
-public sealed class OpenAIChatBotOptions : OpenAiOptions
+public sealed class OpenAIChatBotOptions
 {
-    public string Model { get; set; } = Models.Gpt_3_5_Turbo;
-
     public string[]? SystemMessages { get; set; }
 
     public int? MaxAnswerTokens { get; set; }
@@ -22,9 +17,11 @@ public sealed class OpenAIChatBotOptions : OpenAiOptions
 
     public int CharactersPerToken { get; set; } = 5;
 
-    public float? Temperature { get; set; }
+    public double? Temperature { get; set; }
 
     public decimal PricePerInputTokenInEUR { get; set; } = 0.003m / 1000;
 
     public decimal PricePerOutputTokenInEUR { get; set; } = 0.004m / 1000;
+
+    public TimeSpan ConversationLifetime { get; set; } = TimeSpan.FromDays(3);
 }

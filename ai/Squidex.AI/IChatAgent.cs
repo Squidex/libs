@@ -5,12 +5,15 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Text.ChatBots;
+namespace Squidex.AI;
 
-public interface IChatTool
+public interface IChatAgent
 {
-    ToolSpec Spec { get; }
+    bool IsConfigured { get; }
 
-    Task<string> ExecuteAsync(Dictionary<string, ToolValue> arguments,
-        CancellationToken ct);
+    Task StopConversationAsync(string conversationId,
+        CancellationToken ct = default);
+
+    Task<ChatBotResponse> PromptAsync(string conversationId, string prompt,
+        CancellationToken ct = default);
 }

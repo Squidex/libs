@@ -8,7 +8,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.InteropServices;
 
 namespace Squidex.Log.Internal;
 
@@ -33,7 +32,8 @@ public sealed class ConsoleLogProcessor : IDisposable
 
         outputThread = new Thread(ProcessLogQueue)
         {
-            IsBackground = true, Name = "Logging"
+            IsBackground = true,
+            Name = "Logging"
         };
 
         outputThread.Start();

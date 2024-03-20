@@ -9,7 +9,7 @@ using Squidex.Text.RichText.Model;
 
 namespace Squidex.RichText.Json;
 
-internal class JsonNode : INode
+internal sealed class JsonNode : INode
 {
     private readonly JsonMark mark = new JsonMark();
     private State currentState;

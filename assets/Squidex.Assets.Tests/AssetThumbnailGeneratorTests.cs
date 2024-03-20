@@ -17,8 +17,10 @@ public abstract class AssetThumbnailGeneratorTests
     protected readonly IAssetThumbnailGenerator sut;
 #pragma warning restore SA1401 // Fields should be private
 
-    public static IEnumerable<object[]> GetConversions()
+    public static TheoryData<ImageFormat, ImageFormat> GetConversions()
     {
+        var result = new TheoryData<ImageFormat, ImageFormat>();
+
         var allFormats = Enum.GetValues(typeof(ImageFormat)).OfType<ImageFormat>();
 
         foreach (var source in allFormats)
@@ -27,10 +29,12 @@ public abstract class AssetThumbnailGeneratorTests
             {
                 if (!Equals(target, source))
                 {
-                    yield return new object[] { target, source };
+                    result.Add(target, source);
                 }
             }
         }
+
+        return result;
     }
 
     protected AssetThumbnailGeneratorTests()
@@ -165,7 +169,8 @@ public abstract class AssetThumbnailGeneratorTests
         {
             await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
             {
-                Quality = 10, Format = ImageFormat.JPEG
+                Quality = 10,
+                Format = ImageFormat.JPEG
             });
 
             Assert.True(target.Length < source.Length);

@@ -28,25 +28,14 @@ public static class SubscriptionsServiceExtensions
         services.AddSingletonAs<SubscriptionService>()
             .As<ISubscriptionService>().As<IMessageHandler>();
 
-        // services.AddSingletonAs<MessagingDataProvider>()
-         //   .AsSelf();
+        services.AddSingletonAs<MessagingDataProvider>()
+            .AsSelf();
 
         services.AddSingletonAs<MessagingDataProvider>()
             .As<IMessagingDataProvider>();
 
         services.TryAddSingleton<IMessagingDataStore,
             InMemoryMessagingDataStore>();
-
-        /*
-        services.AddSingleton((Func<IServiceProvider, IMessagingDataProvider>)(c =>
-        {
-            var foo = c.GetRequiredService<MessagingDataProvider>();
-
-            return new CachingMessagingDataProvider(
-                foo,
-                c.GetRequiredService<IReplicatedCache>(),
-                c.GetRequiredService<IOptions<MessagingOptions>>());
-        }));*/
 
         services.Configure<MessagingOptions>(options =>
         {
