@@ -38,7 +38,7 @@ public sealed class DeepLTranslationService : ITranslationService
 
     public bool IsConfigured { get; }
 
-    public DeepLTranslationService(IOptions<DeepLTranslationOptions> options, IHttpClientFactory httpClientFactory)
+    public DeepLTranslationService(IHttpClientFactory httpClientFactory, IOptions<DeepLTranslationOptions> options)
     {
         this.options = options.Value;
         this.httpClientFactory = httpClientFactory;
@@ -88,46 +88,44 @@ public sealed class DeepLTranslationService : ITranslationService
             UrlFree :
             UrlPaid;
 
-        var requestMessage = new HttpRequestMessage(HttpMethod.Post, url);
-
-        requestMessage.Headers.Add("Authorization", $"DeepL-Auth-Key {options.AuthKey}");
-        requestMessage.Content = new FormUrlEncodedContent(parameters!);
-
-        var httpClient = httpClientFactory.CreateClient("DeepL");
-
-        using (var response = await httpClient.SendAsync(requestMessage, ct))
+        using var httpClient = CreateClient();
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, url)
         {
-            try
-            {
-                response.EnsureSuccessStatusCode();
+             Content = new FormUrlEncodedContent(parameters!)
+        };
 
-                var jsonString = await response.Content.ReadAsStringAsync(ct);
-                var jsonResponse = JsonSerializer.Deserialize<TranslationsDto>(jsonString)!;
+        using var httpResponse = await httpClient.SendAsync(httpRequest, ct);
 
-                var index = 0;
-                foreach (var translation in jsonResponse.Translations)
-                {
-                    var estimationSource = textsArray[index];
-                    var estimatedCosts = estimationSource.Length * options.CostsPerCharacterInEUR;
+        try
+        {
+            httpResponse.EnsureSuccessStatusCode();
 
-                    var language = GetSourceLanguage(translation.DetectedSourceLanguage, sourceLanguage);
+            var jsonString = await httpResponse.Content.ReadAsStringAsync(ct);
+            var jsonResponse = JsonSerializer.Deserialize<TranslationsDto>(jsonString)!;
 
-                    results.Add(TranslationResult.Success(translation.Text, language, estimatedCosts));
-                    index++;
-                }
-            }
-            catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.BadRequest)
+            var index = 0;
+            foreach (var translation in jsonResponse.Translations)
             {
-                AddError(TranslationResult.LanguageNotSupported);
+                var estimationSource = textsArray[index];
+                var estimatedCosts = estimationSource.Length * options.CostsPerCharacterInEUR;
+
+                var language = GetSourceLanguage(translation.DetectedSourceLanguage, sourceLanguage);
+
+                results.Add(TranslationResult.Success(translation.Text, language, estimatedCosts));
+                index++;
             }
-            catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
-            {
-                AddError(TranslationResult.Unauthorized);
-            }
-            catch (Exception ex)
-            {
-                AddError(TranslationResult.Failed(ex));
-            }
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.BadRequest)
+        {
+            AddError(TranslationResult.LanguageNotSupported);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+        {
+            AddError(TranslationResult.Unauthorized);
+        }
+        catch (Exception ex)
+        {
+            AddError(TranslationResult.Failed(ex));
         }
 
         return results;
@@ -139,6 +137,15 @@ public sealed class DeepLTranslationService : ITranslationService
                 results.Add(result);
             }
         }
+    }
+
+    private HttpClient CreateClient()
+    {
+        var httpClient = httpClientFactory.CreateClient("DeepL");
+
+        httpClient.DefaultRequestHeaders.Add("Authorization", $"DeepL-Auth-Key {options.AuthKey}");
+
+        return httpClient;
     }
 
     private static string GetSourceLanguage(string language, string? fallback)

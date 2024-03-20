@@ -47,6 +47,6 @@ internal sealed class DefaultMessageBus : IMessageBus
     {
         Guard.NotNull(message, nameof(message));
 
-        return internalProducer.ProduceAsync(channel,  message, key, ct);
+        return internalProducer.ProduceAsync(channel, message, key, ct);
     }
 }

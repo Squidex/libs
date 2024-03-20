@@ -182,3 +182,9 @@ dotnet_diagnostic.SA1615.severity = none
 
 # SA1623: Property summary documentation should match accessors
 dotnet_diagnostic.SA1623.severity = none
+
+# SKEXP0001: Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+dotnet_diagnostic.SKEXP0001.severity = none
+
+# SKEXP0003: Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+dotnet_diagnostic.SKEXP0003.severity = none

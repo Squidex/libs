@@ -7,7 +7,7 @@
 
 using System.Collections.Concurrent;
 
-namespace Squidex.Text.ChatBots;
+namespace Squidex.AI.SemanticKernel;
 
 public sealed class InMemoryChatStore : IChatStore
 {
@@ -27,7 +27,7 @@ public sealed class InMemoryChatStore : IChatStore
         return Task.FromResult(result);
     }
 
-    public Task StoreAsync(string conversationId, string value,
+    public Task StoreAsync(string conversationId, string value, DateTime expires,
         CancellationToken ct)
     {
         values[conversationId] = value;

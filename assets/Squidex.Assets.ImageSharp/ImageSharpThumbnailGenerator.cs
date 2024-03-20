@@ -109,7 +109,7 @@ public sealed class ImageSharpThumbnailGenerator : AssetThumbnailGeneratorBase
 
                     if (options.Background != null && Color.TryParse(options.Background, out var color))
                     {
-                         operation.BackgroundColor(color);
+                        operation.BackgroundColor(color);
                     }
                     else
                     {

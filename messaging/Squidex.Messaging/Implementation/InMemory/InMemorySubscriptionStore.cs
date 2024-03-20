@@ -14,7 +14,7 @@ namespace Squidex.Messaging.Implementation.InMemory;
 
 public class InMemorySubscriptionStore : IMessagingSubscriptionStore
 {
-    private readonly ConcurrentDictionary<(string Group, string Key), Subscription> subscriptions = new ();
+    private readonly ConcurrentDictionary<(string Group, string Key), Subscription> subscriptions = [];
 
     private sealed record Subscription(SerializedObject Value, DateTime Expiration);
 
@@ -25,7 +25,7 @@ public class InMemorySubscriptionStore : IMessagingSubscriptionStore
 
         foreach (var (key, subscription) in subscriptions.Where(x => x.Key.Group == group))
         {
-             result.Add((key.Key, subscription.Value, subscription.Expiration));
+            result.Add((key.Key, subscription.Value, subscription.Expiration));
         }
 
         return Task.FromResult<IReadOnlyList<(string Key, SerializedObject Value, DateTime Expiration)>>(result);

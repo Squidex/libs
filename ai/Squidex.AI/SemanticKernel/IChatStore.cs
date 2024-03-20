@@ -5,15 +5,16 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Text.ChatBots;
+namespace Squidex.AI.SemanticKernel;
 
-public interface IChatAgent
+public interface IChatStore
 {
-    bool IsConfigured { get; }
+    Task ClearAsync(string conversationId,
+        CancellationToken ct);
 
-    Task StopConversationAsync(string conversationId,
-        CancellationToken ct = default);
+    Task StoreAsync(string conversationId, string value, DateTime expires,
+        CancellationToken ct);
 
-    Task<ChatBotResponse> PromptAsync(string conversationId, string prompt,
-        CancellationToken ct = default);
+    Task<string?> GetAsync(string conversationId,
+        CancellationToken ct);
 }

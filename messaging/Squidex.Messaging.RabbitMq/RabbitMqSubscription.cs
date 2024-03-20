@@ -31,24 +31,31 @@ internal sealed class RabbitMqSubscription : IMessageAck, IAsyncDisposable
 
         eventConsumer.Received += async (_, @event) =>
         {
-            var headers = new TransportHeaders();
-
-            foreach (var (key, value) in @event.BasicProperties.Headers)
+            try
             {
-                if (value is byte[] bytes)
+                var headers = new TransportHeaders();
+
+                foreach (var (key, value) in @event.BasicProperties.Headers)
                 {
-                    headers[key] = Encoding.UTF8.GetString(bytes);
+                    if (value is byte[] bytes)
+                    {
+                        headers[key] = Encoding.UTF8.GetString(bytes);
+                    }
+                    else if (value is string text)
+                    {
+                        headers[key] = text;
+                    }
                 }
-                else if (value is string text)
-                {
-                    headers[key] = text;
-                }
+
+                var transportMessage = new TransportMessage(@event.Body.ToArray(), @event.RoutingKey, headers);
+                var transportResult = new TransportResult(transportMessage, @event.DeliveryTag);
+
+                await callback(transportResult, this, stopToken.Token);
             }
-
-            var transportMessage = new TransportMessage(@event.Body.ToArray(), @event.RoutingKey, headers);
-            var transportResult = new TransportResult(transportMessage, @event.DeliveryTag);
-
-            await callback(transportResult, this, stopToken.Token);
+            catch (Exception ex)
+            {
+                log.LogError(ex, "Failed to handle message from queue {queue}.", queueName);
+            }
         };
 
         consumerTag = model.BasicConsume(queueName, false, eventConsumer);

@@ -28,7 +28,8 @@ public sealed class FileLogProcessor : IDisposable
 
         outputThread = new Thread(ProcessLogQueue)
         {
-            IsBackground = true, Name = "Logging"
+            IsBackground = true,
+            Name = "Logging"
         };
     }
 
