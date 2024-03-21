@@ -44,7 +44,7 @@ public static class Guard
 
     [DebuggerStepThrough]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void NotNullOrEmpty(string? target, string parameterName)
+    public static void NotEmpty(string? target, string parameterName)
     {
         NotNull(target, parameterName);
 

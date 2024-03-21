@@ -9,7 +9,6 @@ using System.Reactive.Linq;
 using Squidex.Hosting;
 using Squidex.Messaging.Implementation;
 using Squidex.Messaging.Subscriptions;
-using Squidex.Messaging.Subscriptions.Implementation;
 using Xunit;
 
 #pragma warning disable SA1300 // Element should begin with upper-case letter
@@ -35,9 +34,9 @@ public class SubscriptionServiceTests : IClassFixture<MongoFixture>
     {
         var sut = await CreateSubscriptionServiceAsync();
 
-        await sut.SubscribeAsync<TestTypes.Message>(key);
+        await sut.SubscribeAsync(key);
 
-        Assert.True(await sut.HasSubscriptionsAsync<TestTypes.Message>(key));
+        Assert.True(await sut.HasSubscriptionsAsync(key));
     }
 
     [Fact]
@@ -45,9 +44,9 @@ public class SubscriptionServiceTests : IClassFixture<MongoFixture>
     {
         var sut = await CreateSubscriptionServiceAsync();
 
-        (await sut.SubscribeAsync<TestTypes.Message>(key)).Subscribe();
+        (await sut.SubscribeAsync(key)).Subscribe();
 
-        Assert.True(await sut.HasSubscriptionsAsync<TestTypes.Message>(key));
+        Assert.True(await sut.HasSubscriptionsAsync(key));
     }
 
     [Fact]
@@ -55,7 +54,7 @@ public class SubscriptionServiceTests : IClassFixture<MongoFixture>
     {
         var sut = await CreateSubscriptionServiceAsync();
 
-        using ((await sut.SubscribeAsync<TestTypes.Message>(key)).Subscribe())
+        using ((await sut.SubscribeAsync(key)).Subscribe())
         {
             Assert.True(await WaitForSubscriptions(sut, true));
         }
@@ -68,11 +67,11 @@ public class SubscriptionServiceTests : IClassFixture<MongoFixture>
     {
         var sut1 = await CreateSubscriptionServiceAsync();
 
-        using ((await sut1.SubscribeAsync<TestTypes.Message>(key)).Subscribe())
+        using ((await sut1.SubscribeAsync(key)).Subscribe())
         {
             var sut2 = await CreateSubscriptionServiceAsync();
 
-            Assert.True(await sut2.HasSubscriptionsAsync<TestTypes.Message>(key));
+            Assert.True(await sut2.HasSubscriptionsAsync(key));
         }
     }
 
@@ -82,7 +81,7 @@ public class SubscriptionServiceTests : IClassFixture<MongoFixture>
         var sut1 = await CreateSubscriptionServiceAsync();
         var sut2 = await CreateSubscriptionServiceAsync();
 
-        using ((await sut1.SubscribeAsync<TestTypes.Message>(key)).Subscribe())
+        using ((await sut1.SubscribeAsync(key)).Subscribe())
         {
             Assert.True(await WaitForSubscriptions(sut1, true));
             Assert.True(await WaitForSubscriptions(sut2, true));
@@ -99,14 +98,14 @@ public class SubscriptionServiceTests : IClassFixture<MongoFixture>
     {
         var sut = await CreateSubscriptionServiceAsync();
 
-        using ((await sut.SubscribeAsync<TestTypes.Message>(key)).Subscribe())
+        using ((await sut.SubscribeAsync(key)).Subscribe())
         {
-            Assert.True(await sut.HasSubscriptionsAsync<TestTypes.Message>(key));
+            Assert.True(await sut.HasSubscriptionsAsync(key));
         }
 
         await Task.Delay(200);
 
-        Assert.False(await sut.HasSubscriptionsAsync<TestTypes.Message>(key));
+        Assert.False(await sut.HasSubscriptionsAsync(key));
     }
 
     [Fact]
@@ -116,7 +115,7 @@ public class SubscriptionServiceTests : IClassFixture<MongoFixture>
 
         var received = Completion();
 
-        using ((await sut.SubscribeAsync<TestTypes.Message>(key)).Subscribe(x =>
+        using ((await sut.SubscribeAsync(key)).Subscribe(x =>
         {
             received.TrySetResult(x);
         }))
@@ -128,7 +127,7 @@ public class SubscriptionServiceTests : IClassFixture<MongoFixture>
             }
         }
 
-        Assert.Equal(42, (await received.Task).Value);
+        Assert.Equal(42, (await received.Task as TestTypes.Message)?.Value);
     }
 
     [Fact]
@@ -139,7 +138,7 @@ public class SubscriptionServiceTests : IClassFixture<MongoFixture>
 
         var received = Completion();
 
-        using ((await sut1.SubscribeAsync<TestTypes.Message>(key)).Subscribe(x =>
+        using ((await sut1.SubscribeAsync(key)).Subscribe(x =>
         {
             received.TrySetResult(x);
         }))
@@ -151,7 +150,7 @@ public class SubscriptionServiceTests : IClassFixture<MongoFixture>
             }
         }
 
-        Assert.Equal(42, (await received.Task).Value);
+        Assert.Equal(42, (await received.Task as TestTypes.Message)?.Value);
     }
 
     [Fact]
@@ -162,24 +161,24 @@ public class SubscriptionServiceTests : IClassFixture<MongoFixture>
 
         var received = Completion();
 
-        using ((await sut1.SubscribeAsync<TestTypes.Message>(key)).Subscribe(x =>
+        using ((await sut1.SubscribeAsync(key)).Subscribe(x =>
         {
             received.TrySetResult(x);
         }))
         {
             while (received.Task.Status is not TaskStatus.Faulted and not TaskStatus.RanToCompletion)
             {
-                await sut2.PublishWrapperAsync(key, new Wrapper());
+                await sut2.PublishAsync(key, new Wrapper());
                 await Task.Delay(100);
             }
         }
 
-        Assert.Equal(42, (await received.Task).Value);
+        Assert.Equal(42, (await received.Task as TestTypes.Message)?.Value);
     }
 
-    private sealed class Wrapper : IPayloadWrapper<TestTypes.Message>
+    private sealed class Wrapper : IPayloadWrapper
     {
-        public TestTypes.Message Message { get; } = new TestTypes.Message(Guid.NewGuid(), 42);
+        public object Message { get; } = new TestTypes.Message(Guid.NewGuid(), 42);
 
         public ValueTask<object> CreatePayloadAsync()
         {
@@ -193,7 +192,7 @@ public class SubscriptionServiceTests : IClassFixture<MongoFixture>
 
         while (!cts.IsCancellationRequested)
         {
-            if ((await sut.HasSubscriptionsAsync<TestTypes.Message>(key)) == expected)
+            if ((await sut.HasSubscriptionsAsync(key)) == expected)
             {
                 return expected;
             }
@@ -204,9 +203,9 @@ public class SubscriptionServiceTests : IClassFixture<MongoFixture>
         return !expected;
     }
 
-    private static TaskCompletionSource<TestTypes.Message> Completion()
+    private static TaskCompletionSource<object> Completion()
     {
-        var completion = new TaskCompletionSource<TestTypes.Message>();
+        var completion = new TaskCompletionSource<object>();
         var cancelled = new CancellationTokenSource(30_000);
 
         var registration = cancelled.Token.Register(() =>

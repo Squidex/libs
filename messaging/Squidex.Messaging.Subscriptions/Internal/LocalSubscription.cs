@@ -10,10 +10,10 @@ using Squidex.Messaging.Subscriptions.Implementation;
 
 namespace Squidex.Messaging.Subscriptions.Internal;
 
-internal sealed class LocalSubscription<T> : IObservable<T>, IUntypedLocalSubscription, IDisposable
+internal sealed class LocalSubscription : IObservable<object>, IDisposable
 {
     private readonly Action unsubscribe;
-    private IObserver<T>? currentObserver;
+    private IObserver<object>? currentObserver;
 
     public string Id { get; } = Guid.NewGuid().ToString();
 
@@ -21,7 +21,7 @@ internal sealed class LocalSubscription<T> : IObservable<T>, IUntypedLocalSubscr
     {
         unsubscribe = () =>
         {
-            subscriptions.UnsubscribeAsync<T>(Id, key).Forget();
+            subscriptions.UnsubscribeAsync(Id, key).Forget();
         };
     }
 
@@ -42,7 +42,7 @@ internal sealed class LocalSubscription<T> : IObservable<T>, IUntypedLocalSubscr
         }
     }
 
-    public IDisposable Subscribe(IObserver<T> observer)
+    public IDisposable Subscribe(IObserver<object> observer)
     {
         currentObserver = observer;
         return this;
@@ -58,9 +58,9 @@ internal sealed class LocalSubscription<T> : IObservable<T>, IUntypedLocalSubscr
 
     public void OnNext(object? value)
     {
-        if (value is T typed)
+        if (value != null)
         {
-            currentObserver?.OnNext(typed);
+            currentObserver?.OnNext(value);
         }
     }
 }

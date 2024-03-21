@@ -7,9 +7,9 @@
 
 namespace Squidex.Messaging.Subscriptions.Internal;
 
-internal sealed class PayloadWrapper<T>(T message) : IPayloadWrapper<T> where T : notnull
+internal sealed class PayloadWrapper(object message) : IPayloadWrapper
 {
-    public T Message => message;
+    public object Message => message;
 
     public ValueTask<object> CreatePayloadAsync()
     {

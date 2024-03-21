@@ -7,9 +7,6 @@
 
 using FakeItEasy;
 using Squidex.Messaging.Implementation;
-using Squidex.Messaging.Internal;
-using Squidex.Messaging.Subscriptions;
-using Squidex.Messaging.Subscriptions.Implementation;
 using Xunit;
 
 namespace Squidex.Messaging;

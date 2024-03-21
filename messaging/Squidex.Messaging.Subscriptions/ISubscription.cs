@@ -7,7 +7,7 @@
 
 namespace Squidex.Messaging.Subscriptions;
 
-public interface ISubscription<T>
+public interface ISubscription
 {
-    ValueTask<bool> ShouldHandle(T message);
+    ValueTask<bool> ShouldHandle(object message);
 }

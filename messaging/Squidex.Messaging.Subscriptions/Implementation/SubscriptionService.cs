@@ -12,13 +12,12 @@ using Squidex.Messaging.Implementation;
 using Squidex.Messaging.Internal;
 using Squidex.Messaging.Subscriptions.Internal;
 using Squidex.Messaging.Subscriptions.Messages;
-using Squidex.Text;
 
 namespace Squidex.Messaging.Subscriptions.Implementation;
 
 public sealed class SubscriptionService : ISubscriptionService, IMessageHandler<PayloadMessageBase>
 {
-    private readonly ConcurrentDictionary<string, IUntypedLocalSubscription> localSubscriptions = [];
+    private readonly ConcurrentDictionary<string, LocalSubscription> localSubscriptions = [];
     private readonly SubscriptionOptions options;
     private readonly string instanceName;
     private readonly IMessageBus messageBus;
@@ -39,13 +38,13 @@ public sealed class SubscriptionService : ISubscriptionService, IMessageHandler<
         this.log = log;
     }
 
-    public async Task<bool> HasSubscriptionsAsync<T>(string key,
-        CancellationToken ct = default) where T : notnull
+    public async Task<bool> HasSubscriptionsAsync(string key,
+        CancellationToken ct = default)
     {
-        Guard.NotNullOrEmpty(key, nameof(key));
+        Guard.NotEmpty(key, nameof(key));
 
         // This is usually cached, so it is relatively fast.
-        var subscriptions = await messagingDataProvider.GetEntriesAsync<ISubscription<T>>(GroupName<T>(key), ct);
+        var subscriptions = await GetSubscriptionsAsync(key, ct);
 
         return subscriptions.Count > 0;
     }
@@ -71,46 +70,45 @@ public sealed class SubscriptionService : ISubscriptionService, IMessageHandler<
         return Task.CompletedTask;
     }
 
-    public Task<IObservable<T>> SubscribeAsync<T>(string key,
-        CancellationToken ct = default) where T : notnull
+    public Task<IObservable<object>> SubscribeAsync(string key,
+        CancellationToken ct = default)
     {
-        Guard.NotNullOrEmpty(key, nameof(key));
+        Guard.NotEmpty(key, nameof(key));
 
-        return SubscribeAsync(key, new Subscription<T>(), ct);
+        return SubscribeAsync(key, new Subscription(), ct);
     }
 
-    public async Task<IObservable<T>> SubscribeAsync<T>(string key, ISubscription<T> subscription,
-        CancellationToken ct = default) where T : notnull
+    public async Task<IObservable<object>> SubscribeAsync(string key, ISubscription subscription,
+        CancellationToken ct = default)
     {
-        Guard.NotNullOrEmpty(key, nameof(key));
+        Guard.NotEmpty(key, nameof(key));
         Guard.NotNull(subscription, nameof(subscription));
 
-        var local = new LocalSubscription<T>(this, key);
+        var local = new LocalSubscription(this, key);
 
         await SubscribeCore(local.Id, key, local, subscription);
 
         return local;
     }
 
-    public Task PublishAsync<T>(string key, T message,
-        CancellationToken ct = default) where T : notnull
+    public Task PublishAsync(string key, object message,
+        CancellationToken ct = default)
     {
-        Guard.NotNullOrEmpty(key, nameof(key));
+        Guard.NotEmpty(key, nameof(key));
         Guard.NotNull(message, nameof(message));
 
-        return PublishWrapperAsync(key, new PayloadWrapper<T>(message), ct);
+        var wrapper = message as IPayloadWrapper ?? new PayloadWrapper(message);
+
+        return PublishCoreAsync(key, wrapper, ct);
     }
 
-    public async Task PublishWrapperAsync<T>(string key, IPayloadWrapper<T> wrapper,
-        CancellationToken ct = default) where T : notnull
+    private async Task PublishCoreAsync(string key, IPayloadWrapper wrapper,
+        CancellationToken ct = default)
     {
-        Guard.NotNullOrEmpty(key, nameof(key));
-        Guard.NotNull(wrapper, nameof(wrapper));
-
         List<string>? remoteSubscriptionIds = null;
 
         // This is usually cached, so it is relatively fast.
-        var subscriptions = await messagingDataProvider.GetEntriesAsync<ISubscription<T>>(GroupName<T>(key), ct);
+        IReadOnlyDictionary<string, ISubscription> subscriptions = await GetSubscriptionsAsync(key, ct);
 
         // Ensure that we only create the payload on demand.
         var payload = (object)null!;
@@ -148,24 +146,29 @@ public sealed class SubscriptionService : ISubscriptionService, IMessageHandler<
         await messageBus.PublishAsync(MessageFactories.Payload(remoteSubscriptionIds, payload, instanceName), ct: ct);
     }
 
-    internal async Task SubscribeCore<T>(string id, string key, IUntypedLocalSubscription local, ISubscription<T> subscription)
+    private async Task<IReadOnlyDictionary<string, ISubscription>> GetSubscriptionsAsync(string key, CancellationToken ct)
+    {
+        return await messagingDataProvider.GetEntriesAsync<ISubscription>(GroupName(key), ct);
+    }
+
+    internal async Task SubscribeCore(string id, string key, LocalSubscription local, ISubscription subscription)
     {
         localSubscriptions[id] = local;
 
         // Saves the subscription in the store.
-        await messagingDataProvider.StoreAsync(GroupName<T>(key), id, subscription, options.ExpirationTime);
+        await messagingDataProvider.StoreAsync(GroupName(key), id, subscription, options.ExpirationTime);
     }
 
-    internal async Task UnsubscribeAsync<T>(string id, string key)
+    internal async Task UnsubscribeAsync(string id, string key)
     {
         localSubscriptions.TryRemove(id, out _);
 
         // Also remove the subscription from the store, so it does not get restored.
-        await messagingDataProvider.DeleteAsync(GroupName<T>(key), id);
+        await messagingDataProvider.DeleteAsync(GroupName(key), id);
     }
 
-    private string GroupName<T>(string key)
+    private string GroupName(string key)
     {
-        return $"{options.GroupName}_{typeof(T).Name.Slugify()}";
+        return $"{options.GroupName}_{key}";
     }
 }

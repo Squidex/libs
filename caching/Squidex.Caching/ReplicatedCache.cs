@@ -6,7 +6,6 @@
 // ==========================================================================
 
 using Microsoft.Extensions.Caching.Memory;
-using Squidex.Caching;
 using Squidex.Messaging;
 
 namespace Squidex.Caching;

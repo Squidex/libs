@@ -7,9 +7,9 @@
 
 namespace Squidex.Messaging.Subscriptions;
 
-public class Subscription<T> : ISubscription<T>
+public class Subscription : ISubscription
 {
-    public virtual ValueTask<bool> ShouldHandle(T message)
+    public virtual ValueTask<bool> ShouldHandle(object message)
     {
         return new ValueTask<bool>(true);
     }
