@@ -20,15 +20,13 @@ namespace Squidex.Messaging;
 [Trait("Category", "Dependencies")]
 public class SubscriptionServiceTests : IClassFixture<MongoFixture>
 {
-    private readonly IMessagingDataStore sharedStore;
     private readonly string groupName = $"group-{Guid.NewGuid()}";
+    private readonly string key = $"key-{Guid.NewGuid()}";
 
     public MongoFixture _ { get; }
 
     public SubscriptionServiceTests(MongoFixture fixture)
     {
-        sharedStore = new InMemoryMessagingDataStore();
-
         _ = fixture;
     }
 
@@ -37,9 +35,9 @@ public class SubscriptionServiceTests : IClassFixture<MongoFixture>
     {
         var sut = await CreateSubscriptionServiceAsync();
 
-        await sut.SubscribeAsync<TestTypes.Message>();
+        await sut.SubscribeAsync<TestTypes.Message>(key);
 
-        Assert.True(await sut.HasSubscriptionsAsync<TestTypes.Message>());
+        Assert.True(await sut.HasSubscriptionsAsync<TestTypes.Message>(key));
     }
 
     [Fact]
@@ -47,9 +45,9 @@ public class SubscriptionServiceTests : IClassFixture<MongoFixture>
     {
         var sut = await CreateSubscriptionServiceAsync();
 
-        (await sut.SubscribeAsync<TestTypes.Message>()).Subscribe();
+        (await sut.SubscribeAsync<TestTypes.Message>(key)).Subscribe();
 
-        Assert.True(await sut.HasSubscriptionsAsync<TestTypes.Message>());
+        Assert.True(await sut.HasSubscriptionsAsync<TestTypes.Message>(key));
     }
 
     [Fact]
@@ -57,7 +55,7 @@ public class SubscriptionServiceTests : IClassFixture<MongoFixture>
     {
         var sut = await CreateSubscriptionServiceAsync();
 
-        using ((await sut.SubscribeAsync<TestTypes.Message>()).Subscribe())
+        using ((await sut.SubscribeAsync<TestTypes.Message>(key)).Subscribe())
         {
             Assert.True(await WaitForSubscriptions(sut, true));
         }
@@ -70,11 +68,11 @@ public class SubscriptionServiceTests : IClassFixture<MongoFixture>
     {
         var sut1 = await CreateSubscriptionServiceAsync();
 
-        using ((await sut1.SubscribeAsync<TestTypes.Message>()).Subscribe())
+        using ((await sut1.SubscribeAsync<TestTypes.Message>(key)).Subscribe())
         {
             var sut2 = await CreateSubscriptionServiceAsync();
 
-            Assert.True(await sut2.HasSubscriptionsAsync<TestTypes.Message>());
+            Assert.True(await sut2.HasSubscriptionsAsync<TestTypes.Message>(key));
         }
     }
 
@@ -84,11 +82,13 @@ public class SubscriptionServiceTests : IClassFixture<MongoFixture>
         var sut1 = await CreateSubscriptionServiceAsync();
         var sut2 = await CreateSubscriptionServiceAsync();
 
-        using ((await sut1.SubscribeAsync<TestTypes.Message>()).Subscribe())
+        using ((await sut1.SubscribeAsync<TestTypes.Message>(key)).Subscribe())
         {
             Assert.True(await WaitForSubscriptions(sut1, true));
             Assert.True(await WaitForSubscriptions(sut2, true));
         }
+
+        await Task.Delay(200);
 
         Assert.False(await WaitForSubscriptions(sut1, false));
         Assert.False(await WaitForSubscriptions(sut2, false));
@@ -99,12 +99,14 @@ public class SubscriptionServiceTests : IClassFixture<MongoFixture>
     {
         var sut = await CreateSubscriptionServiceAsync();
 
-        using ((await sut.SubscribeAsync<TestTypes.Message>()).Subscribe())
+        using ((await sut.SubscribeAsync<TestTypes.Message>(key)).Subscribe())
         {
-            Assert.True(await sut.HasSubscriptionsAsync<TestTypes.Message>());
+            Assert.True(await sut.HasSubscriptionsAsync<TestTypes.Message>(key));
         }
 
-        Assert.False(await sut.HasSubscriptionsAsync<TestTypes.Message>());
+        await Task.Delay(200);
+
+        Assert.False(await sut.HasSubscriptionsAsync<TestTypes.Message>(key));
     }
 
     [Fact]
@@ -114,14 +116,14 @@ public class SubscriptionServiceTests : IClassFixture<MongoFixture>
 
         var received = Completion();
 
-        using ((await sut.SubscribeAsync<TestTypes.Message>()).Subscribe(x =>
+        using ((await sut.SubscribeAsync<TestTypes.Message>(key)).Subscribe(x =>
         {
             received.TrySetResult(x);
         }))
         {
             while (received.Task.Status is not TaskStatus.Faulted and not TaskStatus.RanToCompletion)
             {
-                await sut.PublishAsync(new TestTypes.Message(Guid.NewGuid(), 42));
+                await sut.PublishAsync(key, new TestTypes.Message(Guid.NewGuid(), 42));
                 await Task.Delay(100);
             }
         }
@@ -137,14 +139,14 @@ public class SubscriptionServiceTests : IClassFixture<MongoFixture>
 
         var received = Completion();
 
-        using ((await sut1.SubscribeAsync<TestTypes.Message>()).Subscribe(x =>
+        using ((await sut1.SubscribeAsync<TestTypes.Message>(key)).Subscribe(x =>
         {
             received.TrySetResult(x);
         }))
         {
             while (received.Task.Status is not TaskStatus.Faulted and not TaskStatus.RanToCompletion)
             {
-                await sut2.PublishAsync(new TestTypes.Message(Guid.NewGuid(), 42));
+                await sut2.PublishAsync(key, new TestTypes.Message(Guid.NewGuid(), 42));
                 await Task.Delay(100);
             }
         }
@@ -160,14 +162,14 @@ public class SubscriptionServiceTests : IClassFixture<MongoFixture>
 
         var received = Completion();
 
-        using ((await sut1.SubscribeAsync<TestTypes.Message>()).Subscribe(x =>
+        using ((await sut1.SubscribeAsync<TestTypes.Message>(key)).Subscribe(x =>
         {
             received.TrySetResult(x);
         }))
         {
             while (received.Task.Status is not TaskStatus.Faulted and not TaskStatus.RanToCompletion)
             {
-                await sut2.PublishWrapperAsync(new Wrapper());
+                await sut2.PublishWrapperAsync(key, new Wrapper());
                 await Task.Delay(100);
             }
         }
@@ -185,13 +187,13 @@ public class SubscriptionServiceTests : IClassFixture<MongoFixture>
         }
     }
 
-    private static async Task<bool> WaitForSubscriptions(ISubscriptionService sut, bool expected)
+    private async Task<bool> WaitForSubscriptions(ISubscriptionService sut, bool expected)
     {
         using var cts = new CancellationTokenSource(30_000);
 
         while (!cts.IsCancellationRequested)
         {
-            if ((await sut.HasSubscriptionsAsync<TestTypes.Message>()) == expected)
+            if ((await sut.HasSubscriptionsAsync<TestTypes.Message>(key)) == expected)
             {
                 return expected;
             }
@@ -228,11 +230,16 @@ public class SubscriptionServiceTests : IClassFixture<MongoFixture>
                 .AddLogging()
                 .AddSingleton(_.Database)
                 .AddReplicatedCache()
+                .AddReplicatedCacheMessaging()
                 .AddMessaging()
                 .AddMessagingSubscriptions()
+                .AddMongoMessagingDataStore(TestHelpers.Configuration)
                 .AddMongoTransport(TestHelpers.Configuration)
-                .AddSingleton(sharedStore)
                 .AddSingleton<IInstanceNameProvider, RandomInstanceNameProvider>()
+                .Configure<MessagingOptions>(options =>
+                {
+                    options.DataCacheDuration = TimeSpan.Zero;
+                })
                 .Configure<SubscriptionOptions>(options =>
                 {
                     options.GroupName = groupName;

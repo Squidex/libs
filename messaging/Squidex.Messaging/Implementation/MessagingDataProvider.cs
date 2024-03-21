@@ -8,14 +8,13 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Squidex.Hosting;
-using Squidex.Messaging.Implementation;
 using Squidex.Messaging.Internal;
 
-namespace Squidex.Messaging.Subscriptions.Implementation;
+namespace Squidex.Messaging.Implementation;
 
 public sealed class MessagingDataProvider : IMessagingDataProvider, IBackgroundProcess
 {
-    private readonly Dictionary<(string Group, string Key), (SerializedObject Value, TimeSpan Expires)> localSubscriptions = [];
+    private readonly Dictionary<(string Group, string Key), (SerializedObject Value, TimeSpan Expires)> localData = [];
     private readonly MessagingOptions options;
     private readonly IMessagingDataStore messagingDataStore;
     private readonly IMessagingSerializer messagingSerializer;
@@ -41,7 +40,7 @@ public sealed class MessagingDataProvider : IMessagingDataProvider, IBackgroundP
         CancellationToken ct)
     {
         // Just a guard when this method is called twice.
-        updateTimer ??= new SimpleTimer(UpdateAliveAsync, options.SubscriptionUpdateInterval, log);
+        updateTimer ??= new SimpleTimer(UpdateAliveAsync, options.DataAliveUpdateInterval, log);
 
         return Task.CompletedTask;
     }
@@ -49,14 +48,14 @@ public sealed class MessagingDataProvider : IMessagingDataProvider, IBackgroundP
     public Task UpdateAliveAsync(
         CancellationToken ct)
     {
-        KeyValuePair<(string Group, string Key), (SerializedObject Value, TimeSpan Expires)>[] subscriptions;
+        KeyValuePair<(string Group, string Key), (SerializedObject Value, TimeSpan Expires)>[] localEntries;
 
-        lock (localSubscriptions)
+        lock (localData)
         {
-            subscriptions = localSubscriptions.ToArray();
+            localEntries = localData.ToArray();
         }
 
-        if (subscriptions.Length == 0)
+        if (localEntries.Length == 0)
         {
             return Task.CompletedTask;
         }
@@ -64,7 +63,7 @@ public sealed class MessagingDataProvider : IMessagingDataProvider, IBackgroundP
         var now = timeProvider.GetUtcNow().UtcDateTime;
 
         var requests =
-            subscriptions
+            localEntries
                 .Select(x =>
                     new Entry(
                         x.Key.Group,
@@ -94,19 +93,21 @@ public sealed class MessagingDataProvider : IMessagingDataProvider, IBackgroundP
 
         var now = timeProvider.GetUtcNow().UtcDateTime;
 
-        foreach (var subscription in await messagingDataStore.GetEntriesAsync(group, ct))
+        foreach (var entry in await messagingDataStore.GetEntriesAsync(group, ct))
         {
-            if (subscription.Expiration < now)
+            // Check for expiration again.
+            if (entry.Expiration < now)
             {
-                await messagingDataStore.DeleteAsync(group, subscription.Key, ct);
+                await messagingDataStore.DeleteAsync(group, entry.Key, ct);
                 continue;
             }
 
-            var deserialized = messagingSerializer.Deserialize(subscription.Value);
+            var deserialized = messagingSerializer.Deserialize(entry.Value);
 
+            // Ignore the message if the type does not match to the expected type.
             if (deserialized.Message is T typed)
             {
-                result[subscription.Key] = typed;
+                result[entry.Key] = typed;
             }
         }
 
@@ -118,17 +119,18 @@ public sealed class MessagingDataProvider : IMessagingDataProvider, IBackgroundP
     {
         var serialized = messagingSerializer.Serialize(value);
 
-        lock (localSubscriptions)
+        lock (localData)
         {
             // Store complete subscriptions as local copy to update them periodically. Otherwise we could loose information in race conditions.
-            localSubscriptions[(group, key)] = (serialized, expiresAfter);
+            localData[(group, key)] = (serialized, expiresAfter);
         }
 
         var now = timeProvider.GetUtcNow().UtcDateTime;
 
-        var subscription = new Entry(group, key, serialized, CalculateExpiration(now, expiresAfter));
+        // The entry is already serialized, so the store can be dump.
+        var entry = new Entry(group, key, serialized, CalculateExpiration(now, expiresAfter));
 
-        await messagingDataStore.StoreManyAsync([subscription], ct);
+        await messagingDataStore.StoreManyAsync([entry], ct);
 
         return new DelegateAsyncDisposable(async () =>
         {
@@ -139,9 +141,9 @@ public sealed class MessagingDataProvider : IMessagingDataProvider, IBackgroundP
     public Task DeleteAsync(string group, string key,
         CancellationToken ct = default)
     {
-        lock (localSubscriptions)
+        lock (localData)
         {
-            localSubscriptions.Remove((group, key));
+            localData.Remove((group, key));
         }
 
         return messagingDataStore.DeleteAsync(group, key, ct);

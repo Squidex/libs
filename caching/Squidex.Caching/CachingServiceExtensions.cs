@@ -41,7 +41,6 @@ public static class CachingServiceExtensions
         var channel = new ChannelName(channelName, ChannelType.Topic);
 
         services.AddMessaging(channel, consume, configure);
-
         services.Configure<MessagingOptions>(options =>
         {
             options.Routing.Add(x => x is CacheInvalidateMessage, channel);

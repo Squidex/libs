@@ -5,23 +5,22 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
-using Squidex.Caching;
-using Squidex.Messaging.Implementation;
 
-namespace Squidex.Messaging.Subscriptions.Implementation;
+namespace Squidex.Messaging.Implementation;
 
 public sealed class CachingMessagingDataProvider : IMessagingDataProvider
 {
     private readonly IMessagingDataProvider inner;
-    private readonly IReplicatedCache cache;
+    private readonly IMemoryCache cache;
     private readonly MessagingOptions options;
 
-    public CachingMessagingDataProvider(IMessagingDataProvider inner, IReplicatedCache cache, IOptions<MessagingOptions> options)
+    public CachingMessagingDataProvider(IMemoryCache cache, IMessagingDataProvider inner, IOptions<MessagingOptions> options)
     {
-        this.inner = inner;
-        this.cache = cache;
         this.options = options.Value;
+        this.cache = cache;
+        this.inner = inner;
     }
 
     public async Task<IReadOnlyDictionary<string, T>> GetEntriesAsync<T>(string group,
@@ -29,15 +28,12 @@ public sealed class CachingMessagingDataProvider : IMessagingDataProvider
     {
         var cacheKey = CacheKey(group);
 
-        if (options.SubscriptionCacheDuration > TimeSpan.Zero && cache.TryGetValue(cacheKey, out var c) && c is IReadOnlyDictionary<string, T> result)
+        return await cache.GetOrCreateAsync(cacheKey, entry =>
         {
-            return result;
-        }
+            entry.AbsoluteExpirationRelativeToNow = options.DataCacheDuration;
 
-        result = await inner.GetEntriesAsync<T>(group, ct);
-
-        await cache.AddAsync(cacheKey, result, options.SubscriptionCacheDuration, ct);
-        return result;
+            return inner.GetEntriesAsync<T>(group, ct);
+        }) ?? throw new InvalidOperationException("Getting null result from cache.");
     }
 
     public async Task<IAsyncDisposable> StoreAsync<T>(string group, string key, T entry, TimeSpan expiresAfter,
@@ -45,11 +41,7 @@ public sealed class CachingMessagingDataProvider : IMessagingDataProvider
     {
         var result = await inner.StoreAsync(group, key, entry, expiresAfter, ct);
 
-        if (options.SubscriptionCacheDuration > TimeSpan.Zero)
-        {
-            await cache.RemoveAsync(CacheKey(group), default);
-        }
-
+        cache.Remove(CacheKey(group));
         return result;
     }
 
@@ -58,10 +50,7 @@ public sealed class CachingMessagingDataProvider : IMessagingDataProvider
     {
         await inner.DeleteAsync(group, key, ct);
 
-        if (options.SubscriptionCacheDuration > TimeSpan.Zero)
-        {
-            await cache.RemoveAsync(CacheKey(group), default);
-        }
+        cache.Remove(CacheKey(group));
     }
 
     private static string CacheKey(string group)

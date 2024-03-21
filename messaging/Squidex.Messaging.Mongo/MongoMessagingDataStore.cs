@@ -8,7 +8,6 @@
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using Squidex.Hosting;
-using Squidex.Messaging.Subscriptions;
 
 namespace Squidex.Messaging.Mongo;
 

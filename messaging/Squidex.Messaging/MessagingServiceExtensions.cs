@@ -6,9 +6,11 @@
 // ==========================================================================
 
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using Squidex.Hosting;
 using Squidex.Messaging;
 using Squidex.Messaging.Implementation;
+using Squidex.Messaging.Implementation.InMemory;
 using Squidex.Messaging.Implementation.Null;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -39,6 +41,25 @@ public static class MessagingServiceExtensions
 
         services.AddSingleton<IInternalMessageProducer,
             DelegatingProducer>();
+
+        services.AddSingletonAs<MessagingDataProvider>()
+            .AsSelf();
+
+        services.AddSingletonAs<IMessagingDataProvider>(c =>
+            {
+                var inner = c.GetRequiredService<MessagingDataProvider>();
+
+                if (c.GetRequiredService<IOptions<MessagingOptions>>().Value.DataCacheDuration > TimeSpan.Zero)
+                {
+                    return ActivatorUtilities.CreateInstance<CachingMessagingDataProvider>(c, inner);
+                }
+
+                return inner;
+            })
+            .As<IMessagingDataProvider>();
+
+        services.TryAddSingleton<IMessagingDataStore,
+            InMemoryMessagingDataStore>();
 
         return services;
     }

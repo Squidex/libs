@@ -7,7 +7,7 @@
 
 using System.Collections.Concurrent;
 
-namespace Squidex.Messaging.Subscriptions.Implementation;
+namespace Squidex.Messaging.Implementation.InMemory;
 
 public class InMemoryMessagingDataStore : IMessagingDataStore
 {

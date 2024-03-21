@@ -30,7 +30,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Squidex.Messaging.Subscriptions\Squidex.Messaging.Subscriptions.csproj" />
     <ProjectReference Include="..\Squidex.Messaging\Squidex.Messaging.csproj" />
   </ItemGroup>
 

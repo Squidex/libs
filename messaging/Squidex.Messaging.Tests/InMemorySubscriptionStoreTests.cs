@@ -5,8 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Squidex.Messaging.Subscriptions;
-using Squidex.Messaging.Subscriptions.Implementation;
+using Squidex.Messaging.Implementation.InMemory;
 
 namespace Squidex.Messaging;
 

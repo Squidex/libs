@@ -12,14 +12,17 @@ namespace Squidex.Messaging.Subscriptions.Internal;
 
 internal sealed class LocalSubscription<T> : IObservable<T>, IUntypedLocalSubscription, IDisposable
 {
-    private readonly SubscriptionService subscriptions;
+    private readonly Action unsubscribe;
     private IObserver<T>? currentObserver;
 
     public string Id { get; } = Guid.NewGuid().ToString();
 
-    public LocalSubscription(SubscriptionService subscriptions)
+    public LocalSubscription(SubscriptionService subscriptions, string key)
     {
-        this.subscriptions = subscriptions;
+        unsubscribe = () =>
+        {
+            subscriptions.UnsubscribeAsync<T>(Id, key).Forget();
+        };
     }
 
     void IDisposable.Dispose()
@@ -29,8 +32,14 @@ internal sealed class LocalSubscription<T> : IObservable<T>, IUntypedLocalSubscr
             return;
         }
 
-        subscriptions.UnsubscribeAsync<T>(Id).Forget();
-        currentObserver = null;
+        try
+        {
+            unsubscribe();
+        }
+        finally
+        {
+            currentObserver = null;
+        }
     }
 
     public IDisposable Subscribe(IObserver<T> observer)

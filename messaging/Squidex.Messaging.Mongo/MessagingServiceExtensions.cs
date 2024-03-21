@@ -8,7 +8,6 @@
 using Microsoft.Extensions.Configuration;
 using Squidex.Messaging;
 using Squidex.Messaging.Mongo;
-using Squidex.Messaging.Subscriptions;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -25,7 +24,7 @@ public static class MessagingServiceExtensions
         return services;
     }
 
-    public static IServiceCollection AddMongoMessagingData(this IServiceCollection services, IConfiguration config, Action<MongoMessagingDataOptions>? configure = null,
+    public static IServiceCollection AddMongoMessagingDataStore(this IServiceCollection services, IConfiguration config, Action<MongoMessagingDataOptions>? configure = null,
         string configPath = "messaging:mongoDb:subscriptions")
     {
         services.ConfigureAndValidate(config, configPath, configure);
