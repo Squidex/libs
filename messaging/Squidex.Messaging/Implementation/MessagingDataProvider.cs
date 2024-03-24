@@ -46,7 +46,7 @@ public sealed class MessagingDataProvider : IMessagingDataProvider, IBackgroundP
     }
 
     public Task UpdateAliveAsync(
-        CancellationToken ct)
+        CancellationToken ct = default)
     {
         KeyValuePair<(string Group, string Key), (SerializedObject Value, TimeSpan Expires)>[] localEntries;
 
