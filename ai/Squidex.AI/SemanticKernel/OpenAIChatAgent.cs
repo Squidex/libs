@@ -33,7 +33,7 @@ internal sealed class OpenAIChatAgent : IChatAgent
         this.options = options.Value;
     }
 
-    public async Task<ChatBotResponse> PromptAsync(string conversationId, string prompt,
+    public async Task<ChatBotResponse> PromptAsync(string prompt, string? conversationId = null,
         CancellationToken ct = default)
     {
         if (kernel == null)
@@ -65,10 +65,14 @@ internal sealed class OpenAIChatAgent : IChatAgent
                 ct);
 
         history.AddRange(result);
-        await StoreHistoryAsync(history, conversationId, ct);
+
+        if (!string.IsNullOrWhiteSpace(conversationId))
+        {
+            await StoreHistoryAsync(history, conversationId, ct);
+        }
 
         var content = result[0].Content ??
-            throw new ChatException($"Chat does not return a result for ID '{conversationId}'.");
+            throw new ChatException($"Chat does not return a result for ID '{conversationId ?? "none"}'.");
 
         return ChatBotResponse.Success(content) with
         {
@@ -89,18 +93,22 @@ internal sealed class OpenAIChatAgent : IChatAgent
         return costs;
     }
 
-    private async Task<ChatHistory> LoadHistoryAsync(string conversationId,
+    private async Task<ChatHistory> LoadHistoryAsync(string? conversationId,
         CancellationToken ct)
     {
         ChatHistory history;
 
-        var stored = await store.GetAsync(conversationId, ct);
-        if (stored != null)
+        if (!string.IsNullOrWhiteSpace(conversationId))
         {
-            history = JsonSerializer.Deserialize<ChatHistory>(stored) ??
-                throw new ChatException($"Cannot deserialize conversion with ID '{conversationId}'.");
+            var stored = await store.GetAsync(conversationId, ct);
 
-            return history;
+            if (stored != null)
+            {
+                history = JsonSerializer.Deserialize<ChatHistory>(stored) ??
+                    throw new ChatException($"Cannot deserialize conversion with ID '{conversationId}'.");
+
+                return history;
+            }
         }
 
         history = [];

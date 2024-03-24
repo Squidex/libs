@@ -14,6 +14,6 @@ public interface IChatAgent
     Task StopConversationAsync(string conversationId,
         CancellationToken ct = default);
 
-    Task<ChatBotResponse> PromptAsync(string conversationId, string prompt,
+    Task<ChatBotResponse> PromptAsync(string prompt, string? conversationId = null,
         CancellationToken ct = default);
 }

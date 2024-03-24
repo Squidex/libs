@@ -80,23 +80,32 @@ public class OpenAIChatAgentTests
 
     [Fact]
     [Trait("Category", "Dependencies")]
+    public async Task Should_ask_questions_without_conversation()
+    {
+        var sut = CreateSut();
+
+        var message1 = await sut.PromptAsync("Write an interesting article about Paris in 5 words.");
+        AssertMessage("Paris: City of Love and Lights", message1);
+    }
+
+    [Fact]
+    [Trait("Category", "Dependencies")]
     public async Task Should_ask_questions()
     {
         var sut = CreateSut();
 
-        var conversation = Guid.NewGuid().ToString();
-
+        var conversationId = Guid.NewGuid().ToString();
         try
         {
-            var message1 = await sut.PromptAsync(conversation, string.Empty);
+            var message1 = await sut.PromptAsync(string.Empty, conversationId);
             AssertMessage("Hello! How can I assist you today?", message1);
 
-            var message2 = await sut.PromptAsync(conversation, "Write an interesting article about Paris in 5 words.");
+            var message2 = await sut.PromptAsync("Write an interesting article about Paris in 5 words.", conversationId);
             AssertMessage("Paris: City of Love and Lights", message2);
         }
         finally
         {
-            await sut.StopConversationAsync(conversation);
+            await sut.StopConversationAsync(conversationId);
         }
     }
 
@@ -106,18 +115,18 @@ public class OpenAIChatAgentTests
     {
         var sut = CreateSut();
 
-        var conversation = Guid.NewGuid().ToString();
+        var conversationId = Guid.NewGuid().ToString();
         try
         {
-            var message1 = await sut.PromptAsync(conversation, string.Empty);
+            var message1 = await sut.PromptAsync(string.Empty, conversationId);
             AssertMessage("Hello! How can I assist you today?", message1);
 
-            var message2 = await sut.PromptAsync(conversation, "What is 10 multiplied with 42?");
+            var message2 = await sut.PromptAsync("What is 10 multiplied with 42?", conversationId);
             AssertMessage("The result of multiplying 10 with 42 is 462.", message2);
         }
         finally
         {
-            await sut.StopConversationAsync(conversation);
+            await sut.StopConversationAsync(conversationId);
         }
     }
 
@@ -127,18 +136,18 @@ public class OpenAIChatAgentTests
     {
         var sut = CreateSut();
 
-        var conversation = Guid.NewGuid().ToString();
+        var conversationId = Guid.NewGuid().ToString();
         try
         {
-            var message1 = await sut.PromptAsync(conversation, string.Empty);
+            var message1 = await sut.PromptAsync(string.Empty, conversationId);
             AssertMessage("Hello! How can I assist you today?", message1);
 
-            var message2 = await sut.PromptAsync(conversation, "What is the temperature in Berlin?");
+            var message2 = await sut.PromptAsync("What is the temperature in Berlin?", conversationId);
             AssertMessage("The current temperature in Berlin is 22.42°C.", message2);
         }
         finally
         {
-            await sut.StopConversationAsync(conversation);
+            await sut.StopConversationAsync(conversationId);
         }
     }
 
@@ -148,18 +157,18 @@ public class OpenAIChatAgentTests
     {
         var sut = CreateSut();
 
-        var conversation = Guid.NewGuid().ToString();
+        var conversationId = Guid.NewGuid().ToString();
         try
         {
-            var message1 = await sut.PromptAsync(conversation, string.Empty);
+            var message1 = await sut.PromptAsync(string.Empty, conversationId);
             AssertMessage("Hello! How can I assist you today?", message1);
 
-            var message2 = await sut.PromptAsync(conversation, "What is 10 plus 42 and 4 + 8 using the tool.");
+            var message2 = await sut.PromptAsync("What is 10 plus 42 and 4 + 8 using the tool.", conversationId);
             AssertMessage("The sum of 10 plus 42 is 62, and the sum of 4 plus 8 is 22.", message2);
         }
         finally
         {
-            await sut.StopConversationAsync(conversation);
+            await sut.StopConversationAsync(conversationId);
         }
     }
 
@@ -169,18 +178,18 @@ public class OpenAIChatAgentTests
     {
         var sut = CreateSut();
 
-        var conversation = Guid.NewGuid().ToString();
+        var conversationId = Guid.NewGuid().ToString();
         try
         {
-            var message1 = await sut.PromptAsync(conversation, string.Empty);
+            var message1 = await sut.PromptAsync(string.Empty, conversationId);
             AssertMessage("Hello! How can I assist you today?", message1);
 
-            var message2 = await sut.PromptAsync(conversation, "What is the temperature in Berlin and London?");
+            var message2 = await sut.PromptAsync("What is the temperature in Berlin and London?", conversationId);
             AssertMessage("The current temperature in Berlin is 22.42°C and in London is -44.13°C.", message2);
         }
         finally
         {
-            await sut.StopConversationAsync(conversation);
+            await sut.StopConversationAsync(conversationId);
         }
     }
 
