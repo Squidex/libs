@@ -13,7 +13,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class MessagingServiceExtensions
 {
-    public static MessagingBuilder AddMessagingTransport(this MessagingBuilder builder, IConfiguration config)
+    public static MessagingBuilder AddTransport(this MessagingBuilder builder, IConfiguration config)
     {
         config.ConfigureByOption("messaging:type", new Alternatives
         {
