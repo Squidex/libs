@@ -53,6 +53,12 @@ public sealed class CachingMessagingDataProvider : IMessagingDataProvider
         cache.Remove(CacheKey(group));
     }
 
+    public Task UpdateAliveAsync(
+        CancellationToken ct = default)
+    {
+        return inner.UpdateAliveAsync(ct);
+    }
+
     private static string CacheKey(string group)
     {
         return $"Squidex.Messaging.Subcriptions_{group}";

@@ -20,21 +20,18 @@ public class MongoMessagingPrefetchTests : MessagingTestsBase, IClassFixture<Mon
         _ = fixture;
     }
 
-    protected override void ConfigureServices(IServiceCollection services, ChannelName channel, bool consume)
+    protected override void Configure(MessagingBuilder builder)
     {
-        services
-            .AddSingleton(_.Database)
-            .AddMongoTransport(TestHelpers.Configuration, options =>
-            {
-                options.Prefetch = 5;
-                options.PollingInterval = TimeSpan.FromSeconds(0.1);
-                options.UpdateInterval = TimeSpan.FromSeconds(0.1);
+        builder.Services.AddSingleton(_.Database);
 
-                // _.CleanCollections(x => x.StartsWith(options.CollectionName, StringComparison.OrdinalIgnoreCase));
-            })
-            .AddMessaging(channel, consume, options =>
-            {
-                options.Expires = TimeSpan.FromDays(1);
-            });
+        builder.AddMongoDataStore(TestHelpers.Configuration);
+        builder.AddMongoTransport(TestHelpers.Configuration, options =>
+        {
+            options.Prefetch = 5;
+            options.PollingInterval = TimeSpan.FromSeconds(0.1);
+            options.UpdateInterval = TimeSpan.FromSeconds(0.1);
+
+            _.CleanCollections(x => x.StartsWith(options.CollectionName, StringComparison.OrdinalIgnoreCase));
+        });
     }
 }

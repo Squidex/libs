@@ -11,13 +11,8 @@ public class KafkaTests : MessagingTestsBase
 {
     protected override string TopicOrQueueName => "dev";
 
-    protected override void ConfigureServices(IServiceCollection services, ChannelName channel, bool consume)
+    protected override void Configure(MessagingBuilder builder)
     {
-        services
-            .AddKafkaTransport(TestHelpers.Configuration)
-            .AddMessaging(channel, consume, options =>
-            {
-                options.Expires = TimeSpan.FromDays(1);
-            });
+        builder.AddKafkaTransport(TestHelpers.Configuration);
     }
 }

@@ -13,13 +13,8 @@ public class GoogleCloudTests : MessagingTestsBase
 
     protected override bool CanHandleAndSimulateTimeout => false;
 
-    protected override void ConfigureServices(IServiceCollection services, ChannelName channel, bool consume)
+    protected override void Configure(MessagingBuilder builder)
     {
-        services
-            .AddGooglePubSubTransport(TestHelpers.Configuration)
-            .AddMessaging(channel, consume, options =>
-            {
-                options.Expires = TimeSpan.FromDays(1);
-            });
+        builder.AddGooglePubSubTransport(TestHelpers.Configuration);
     }
 }

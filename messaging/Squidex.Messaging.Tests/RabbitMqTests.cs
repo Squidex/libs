@@ -13,13 +13,8 @@ public class RabbitMqTests : MessagingTestsBase
 
     protected override bool CanHandleAndSimulateTimeout => false;
 
-    protected override void ConfigureServices(IServiceCollection services, ChannelName channel, bool consume)
+    protected override void Configure(MessagingBuilder builder)
     {
-        services
-            .AddRabbitMqTransport(TestHelpers.Configuration)
-            .AddMessaging(channel, consume, options =>
-            {
-                options.Expires = TimeSpan.FromDays(1);
-            });
+        builder.AddRabbitMqTransport(TestHelpers.Configuration);
     }
 }

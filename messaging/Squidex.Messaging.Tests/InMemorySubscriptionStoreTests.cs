@@ -11,8 +11,7 @@ namespace Squidex.Messaging;
 
 public class InMemorySubscriptionStoreTests : SubscriptionStoreTestsBase
 {
-    public override Task<IMessagingDataStore> CreateSubscriptionStoreAsync()
+    protected override void Configure(MessagingBuilder builder)
     {
-        return Task.FromResult<IMessagingDataStore>(new InMemoryMessagingDataStore());
     }
 }

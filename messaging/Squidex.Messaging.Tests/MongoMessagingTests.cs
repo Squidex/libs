@@ -20,22 +20,18 @@ public class MongoMessagingTests : MessagingTestsBase, IClassFixture<MongoFixtur
         _ = fixture;
     }
 
-    protected override void ConfigureServices(IServiceCollection services, ChannelName channel, bool consume)
+    protected override void Configure(MessagingBuilder builder)
     {
-        services
-            .AddSingleton(_.Database)
-            .AddMongoMessagingDataStore(TestHelpers.Configuration)
-            .AddMongoTransport(TestHelpers.Configuration, options =>
-            {
-                options.Prefetch = 0;
-                options.PollingInterval = TimeSpan.FromSeconds(0.1);
-                options.UpdateInterval = TimeSpan.FromSeconds(0.1);
+        builder.Services.AddSingleton(_.Database);
 
-                _.CleanCollections(x => x.StartsWith(options.CollectionName, StringComparison.OrdinalIgnoreCase));
-            })
-            .AddMessaging(channel, true, options =>
-            {
-                options.Expires = TimeSpan.FromDays(1);
-            });
+        builder.AddMongoDataStore(TestHelpers.Configuration);
+        builder.AddMongoTransport(TestHelpers.Configuration, options =>
+        {
+            options.Prefetch = 0;
+            options.PollingInterval = TimeSpan.FromSeconds(0.1);
+            options.UpdateInterval = TimeSpan.FromSeconds(0.1);
+
+            _.CleanCollections(x => x.StartsWith(options.CollectionName, StringComparison.OrdinalIgnoreCase));
+        });
     }
 }

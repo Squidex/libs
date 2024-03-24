@@ -23,21 +23,16 @@ public class RedisMessagingTests : MessagingTestsBase, IClassFixture<RedisFixtur
         _ = fixture;
     }
 
-    protected override void ConfigureServices(IServiceCollection services, ChannelName channel, bool consume)
+    protected override void Configure(MessagingBuilder builder)
     {
-        services
-            .AddRedisTransport(TestHelpers.Configuration, options =>
-            {
-                options.PollingInterval = TimeSpan.FromSeconds(0.1);
+        builder.AddRedisTransport(TestHelpers.Configuration, options =>
+        {
+            options.PollingInterval = TimeSpan.FromSeconds(0.1);
 
-                options.ConnectionFactory = log =>
-                {
-                    return Task.FromResult<IConnectionMultiplexer>(_.Connection);
-                };
-            })
-            .AddMessaging(channel, consume, options =>
+            options.ConnectionFactory = log =>
             {
-                options.Expires = TimeSpan.FromDays(1);
-            });
+                return Task.FromResult<IConnectionMultiplexer>(_.Connection);
+            };
+        });
     }
 }

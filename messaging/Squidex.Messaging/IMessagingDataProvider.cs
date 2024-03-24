@@ -17,4 +17,7 @@ public interface IMessagingDataProvider
 
     Task DeleteAsync(string group, string key,
         CancellationToken ct = default);
+
+    Task UpdateAliveAsync(
+        CancellationToken ct = default);
 }

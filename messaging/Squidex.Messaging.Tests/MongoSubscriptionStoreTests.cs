@@ -5,8 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Microsoft.Extensions.Options;
-using Squidex.Messaging.Mongo;
 using Xunit;
 
 #pragma warning disable SA1300 // Element should begin with upper-case letter
@@ -23,16 +21,10 @@ public class MongoSubscriptionStoreTests : SubscriptionStoreTestsBase, IClassFix
         _ = fixture;
     }
 
-    public async override Task<IMessagingDataStore> CreateSubscriptionStoreAsync()
+    protected override void Configure(MessagingBuilder builder)
     {
-        var options = Options.Create(new MongoMessagingDataOptions());
+        builder.Services.AddSingleton(_.Database);
 
-        _.CleanCollections(x => x == options.Value.CollectionName);
-
-        var sut = new MongoMessagingDataStore(_.Database, options);
-
-        await sut.InitializeAsync(default);
-
-        return sut;
+        builder.AddMongoDataStore(TestHelpers.Configuration);
     }
 }

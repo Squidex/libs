@@ -17,7 +17,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class MessagingServiceExtensions
 {
-    public static IServiceCollection AddMessaging(this IServiceCollection services, Action<MessagingOptions>? configure = null)
+    public static MessagingBuilder AddMessaging(this IServiceCollection services, Action<MessagingOptions>? configure = null)
     {
         services.ConfigureOptional(configure);
 
@@ -61,12 +61,12 @@ public static class MessagingServiceExtensions
         services.TryAddSingleton<IMessagingDataStore,
             InMemoryMessagingDataStore>();
 
-        return services;
+        return new MessagingBuilder(services);
     }
 
-    public static IServiceCollection AddMessaging(this IServiceCollection services, ChannelName channel, bool consume, Action<ChannelOptions>? configure = null)
+    public static MessagingBuilder AddChannel(this MessagingBuilder builder, ChannelName channel, bool consume, Action<ChannelOptions>? configure = null)
     {
-        services.Configure<ChannelOptions>(channel.ToString(), options =>
+        builder.Services.Configure<ChannelOptions>(channel.ToString(), options =>
         {
             configure?.Invoke(options);
         });
@@ -76,20 +76,18 @@ public static class MessagingServiceExtensions
             return sp.GetRequiredService<IEnumerable<DelegatingConsumer>>().Single(x => x.Channel == channel);
         }
 
-        AddMessaging(services);
-
-        services.AddSingleton(
+        builder.Services.AddSingleton(
             sp => ActivatorUtilities.CreateInstance<DelegatingProducer>(sp, channel));
 
         if (consume)
         {
-            services.AddSingleton(
+            builder.Services.AddSingleton(
                 sp => ActivatorUtilities.CreateInstance<DelegatingConsumer>(sp, channel));
 
-            services.AddSingleton<IBackgroundProcess>(
+            builder.Services.AddSingleton<IBackgroundProcess>(
                 FindConsumer);
         }
 
-        return services;
+        return builder;
     }
 }

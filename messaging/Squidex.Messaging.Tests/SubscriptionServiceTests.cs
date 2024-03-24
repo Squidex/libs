@@ -8,6 +8,7 @@
 using System.Reactive.Linq;
 using Squidex.Hosting;
 using Squidex.Messaging.Implementation;
+using Squidex.Messaging.Internal;
 using Squidex.Messaging.Subscriptions;
 using Xunit;
 
@@ -32,153 +33,153 @@ public class SubscriptionServiceTests : IClassFixture<MongoFixture>
     [Fact]
     public async Task Should_subscribe_hot()
     {
-        var sut = await CreateSubscriptionServiceAsync();
+        await using var app = await CreateSutAsync();
 
-        await sut.SubscribeAsync(key);
+        await app.Sut.SubscribeAsync(key);
 
-        Assert.True(await sut.HasSubscriptionsAsync(key));
+        Assert.True(await app.Sut.HasSubscriptionsAsync(key));
     }
 
     [Fact]
     public async Task Should_subscribe_not_twice()
     {
-        var sut = await CreateSubscriptionServiceAsync();
+        await using var app = await CreateSutAsync();
 
-        (await sut.SubscribeAsync(key)).Subscribe();
+        (await app.Sut.SubscribeAsync(key)).Subscribe();
 
-        Assert.True(await sut.HasSubscriptionsAsync(key));
+        Assert.True(await app.Sut.HasSubscriptionsAsync(key));
     }
 
     [Fact]
     public async Task Should_unsubscribe()
     {
-        var sut = await CreateSubscriptionServiceAsync();
+        await using var app = await CreateSutAsync();
 
-        using ((await sut.SubscribeAsync(key)).Subscribe())
+        using ((await app.Sut.SubscribeAsync(key)).Subscribe())
         {
-            Assert.True(await WaitForSubscriptions(sut, true));
+            Assert.True(await WaitForSubscriptions(app.Sut, true));
         }
 
-        Assert.False(await WaitForSubscriptions(sut, false));
+        Assert.False(await WaitForSubscriptions(app.Sut, false));
     }
 
     [Fact]
     public async Task Should_load_existing_subscriptions_from_db()
     {
-        var sut1 = await CreateSubscriptionServiceAsync();
+        await using var app = await CreateSutAsync();
 
-        using ((await sut1.SubscribeAsync(key)).Subscribe())
+        using ((await app.Sut.SubscribeAsync(key)).Subscribe())
         {
-            var sut2 = await CreateSubscriptionServiceAsync();
+            await using var app2 = await CreateSutAsync();
 
-            Assert.True(await sut2.HasSubscriptionsAsync(key));
+            Assert.True(await app.Sut.HasSubscriptionsAsync(key));
         }
     }
 
     [Fact]
     public async Task Should_synchronize_subscriptions()
     {
-        var sut1 = await CreateSubscriptionServiceAsync();
-        var sut2 = await CreateSubscriptionServiceAsync();
+        await using var app1 = await CreateSutAsync();
+        await using var app2 = await CreateSutAsync();
 
-        using ((await sut1.SubscribeAsync(key)).Subscribe())
+        using ((await app1.Sut.SubscribeAsync(key)).Subscribe())
         {
-            Assert.True(await WaitForSubscriptions(sut1, true));
-            Assert.True(await WaitForSubscriptions(sut2, true));
+            Assert.True(await WaitForSubscriptions(app1.Sut, true));
+            Assert.True(await WaitForSubscriptions(app2.Sut, true));
         }
 
         await Task.Delay(200);
 
-        Assert.False(await WaitForSubscriptions(sut1, false));
-        Assert.False(await WaitForSubscriptions(sut2, false));
+        Assert.False(await WaitForSubscriptions(app1.Sut, false));
+        Assert.False(await WaitForSubscriptions(app2.Sut, false));
     }
 
     [Fact]
     public async Task Should_subscribe()
     {
-        var sut = await CreateSubscriptionServiceAsync();
+        await using var app = await CreateSutAsync();
 
-        using ((await sut.SubscribeAsync(key)).Subscribe())
+        using ((await app.Sut.SubscribeAsync(key)).Subscribe())
         {
-            Assert.True(await sut.HasSubscriptionsAsync(key));
+            Assert.True(await app.Sut.HasSubscriptionsAsync(key));
         }
 
         await Task.Delay(200);
 
-        Assert.False(await sut.HasSubscriptionsAsync(key));
+        Assert.False(await app.Sut.HasSubscriptionsAsync(key));
     }
 
     [Fact]
     public async Task Should_publish_to_self()
     {
-        var sut = await CreateSubscriptionServiceAsync();
+        await using var app = await CreateSutAsync();
 
         var received = Completion();
 
-        using ((await sut.SubscribeAsync(key)).Subscribe(x =>
+        using ((await app.Sut.SubscribeAsync(key)).Subscribe(x =>
         {
             received.TrySetResult(x);
         }))
         {
             while (received.Task.Status is not TaskStatus.Faulted and not TaskStatus.RanToCompletion)
             {
-                await sut.PublishAsync(key, new TestTypes.Message(Guid.NewGuid(), 42));
+                await app.Sut.PublishAsync(key, new TestMessage(Guid.NewGuid(), 42));
                 await Task.Delay(100);
             }
         }
 
-        Assert.Equal(42, (await received.Task as TestTypes.Message)?.Value);
+        Assert.Equal(42, (await received.Task as TestMessage)?.Value);
     }
 
     [Fact]
     public async Task Should_publish_to_other_instances()
     {
-        var sut1 = await CreateSubscriptionServiceAsync();
-        var sut2 = await CreateSubscriptionServiceAsync();
+        await using var app1 = await CreateSutAsync();
+        await using var app2 = await CreateSutAsync();
 
         var received = Completion();
 
-        using ((await sut1.SubscribeAsync(key)).Subscribe(x =>
+        using ((await app1.Sut.SubscribeAsync(key)).Subscribe(x =>
         {
             received.TrySetResult(x);
         }))
         {
             while (received.Task.Status is not TaskStatus.Faulted and not TaskStatus.RanToCompletion)
             {
-                await sut2.PublishAsync(key, new TestTypes.Message(Guid.NewGuid(), 42));
+                await app2.Sut.PublishAsync(key, new TestMessage(Guid.NewGuid(), 42));
                 await Task.Delay(100);
             }
         }
 
-        Assert.Equal(42, (await received.Task as TestTypes.Message)?.Value);
+        Assert.Equal(42, (await received.Task as TestMessage)?.Value);
     }
 
     [Fact]
     public async Task Should_publish_to_other_instances_with_wrapper()
     {
-        var sut1 = await CreateSubscriptionServiceAsync();
-        var sut2 = await CreateSubscriptionServiceAsync();
+        await using var app1 = await CreateSutAsync();
+        await using var app2 = await CreateSutAsync();
 
         var received = Completion();
 
-        using ((await sut1.SubscribeAsync(key)).Subscribe(x =>
+        using ((await app1.Sut.SubscribeAsync(key)).Subscribe(x =>
         {
             received.TrySetResult(x);
         }))
         {
             while (received.Task.Status is not TaskStatus.Faulted and not TaskStatus.RanToCompletion)
             {
-                await sut2.PublishAsync(key, new Wrapper());
+                await app2.Sut.PublishAsync(key, new Wrapper());
                 await Task.Delay(100);
             }
         }
 
-        Assert.Equal(42, (await received.Task as TestTypes.Message)?.Value);
+        Assert.Equal(42, (await received.Task as TestMessage)?.Value);
     }
 
     private sealed class Wrapper : IPayloadWrapper
     {
-        public object Message { get; } = new TestTypes.Message(Guid.NewGuid(), 42);
+        public object Message { get; } = new TestMessage(Guid.NewGuid(), 42);
 
         public ValueTask<object> CreatePayloadAsync()
         {
@@ -222,39 +223,33 @@ public class SubscriptionServiceTests : IClassFixture<MongoFixture>
         return completion;
     }
 
-    private async Task<ISubscriptionService> CreateSubscriptionServiceAsync()
+    private Task<Provider<ISubscriptionService>> CreateSutAsync()
     {
         var serviceProvider =
             new ServiceCollection()
-                .AddLogging()
+                .AddLogging(options =>
+                {
+                    options.AddDebug();
+                    options.AddConsole();
+                })
                 .AddSingleton(_.Database)
                 .AddReplicatedCache()
-                .AddReplicatedCacheMessaging()
                 .AddMessaging()
-                .AddMessagingSubscriptions()
-                .AddMongoMessagingDataStore(TestHelpers.Configuration)
-                .AddMongoTransport(TestHelpers.Configuration)
+                    .Configure<MessagingOptions>(options =>
+                    {
+                        options.DataCacheDuration = TimeSpan.Zero;
+                    })
+                    .Configure<SubscriptionOptions>(options =>
+                    {
+                        options.GroupName = groupName;
+                    })
+                    .AddSubscriptions()
+                    .AddMongoDataStore(TestHelpers.Configuration)
+                    .AddMongoTransport(TestHelpers.Configuration)
+                    .Services
                 .AddSingleton<IInstanceNameProvider, RandomInstanceNameProvider>()
-                .Configure<MessagingOptions>(options =>
-                {
-                    options.DataCacheDuration = TimeSpan.Zero;
-                })
-                .Configure<SubscriptionOptions>(options =>
-                {
-                    options.GroupName = groupName;
-                })
                 .BuildServiceProvider();
 
-        foreach (var initializable in serviceProvider.GetRequiredService<IEnumerable<IInitializable>>())
-        {
-            await initializable.InitializeAsync(default);
-        }
-
-        foreach (var process in serviceProvider.GetRequiredService<IEnumerable<IBackgroundProcess>>())
-        {
-            await process.StartAsync(default);
-        }
-
-        return serviceProvider.GetRequiredService<ISubscriptionService>();
+        return serviceProvider.CreateAsync<ISubscriptionService>();
     }
 }

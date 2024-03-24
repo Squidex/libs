@@ -14,20 +14,21 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class SubscriptionsServiceExtensions
 {
-    public static IServiceCollection AddMessagingSubscriptions(this IServiceCollection services, bool consume = true, Action<ChannelOptions>? configure = null, string channelName = "subscriptions")
+    public static MessagingBuilder AddSubscriptions(this MessagingBuilder builder, bool consume = true, Action<ChannelOptions>? configure = null, string channelName = "subscriptions")
     {
         var channel = new ChannelName(channelName, ChannelType.Topic);
 
-        services.AddMessaging(channel, consume, configure);
+        builder.Services.AddMemoryCache();
+        builder.AddChannel(channel, consume, configure);
 
-        services.AddSingletonAs<SubscriptionService>()
+        builder.Services.AddSingletonAs<SubscriptionService>()
             .As<ISubscriptionService>().As<IMessageHandler>();
 
-        services.Configure<MessagingOptions>(options =>
+        builder.Services.Configure<MessagingOptions>(options =>
         {
             options.Routing.Add(x => x is PayloadMessageBase, channel);
         });
 
-        return services;
+        return builder;
     }
 }
