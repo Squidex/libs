@@ -90,4 +90,10 @@ public static class MessagingServiceExtensions
 
         return builder;
     }
+
+    public static MessagingBuilder Configure(this MessagingBuilder builder, Action<MessagingOptions>? configure = null)
+    {
+        builder.Services.ConfigureOptional(configure);
+        return builder;
+    }
 }
