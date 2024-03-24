@@ -13,7 +13,7 @@ public sealed class InMemoryChatStore : IChatStore
 {
     private readonly ConcurrentDictionary<string, string> values = new ConcurrentDictionary<string, string>();
 
-    public Task ClearAsync(string conversationId,
+    public Task RemoveAsync(string conversationId,
         CancellationToken ct)
     {
         values.Remove(conversationId, out _);

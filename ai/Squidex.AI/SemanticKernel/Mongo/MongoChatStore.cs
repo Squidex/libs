@@ -33,7 +33,7 @@ public sealed class MongoChatStore : IChatStore, IInitializable
             cancellationToken: ct);
     }
 
-    public Task ClearAsync(string conversationId,
+    public Task RemoveAsync(string conversationId,
         CancellationToken ct)
     {
         return collection.DeleteOneAsync(x => x.Id == conversationId, ct);

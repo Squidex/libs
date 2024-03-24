@@ -8,6 +8,7 @@
 using System.ComponentModel;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
+using Squidex.AI.SemanticKernel;
 using Xunit;
 
 namespace Squidex.AI;
@@ -82,7 +83,7 @@ public class OpenAIChatAgentTests
     [Trait("Category", "Dependencies")]
     public async Task Should_ask_questions_without_conversation()
     {
-        var sut = CreateSut();
+        var (sut, _) = CreateSut();
 
         var message1 = await sut.PromptAsync("Write an interesting article about Paris in 5 words.");
         AssertMessage("Paris: City of Love and Lights", message1);
@@ -90,9 +91,30 @@ public class OpenAIChatAgentTests
 
     [Fact]
     [Trait("Category", "Dependencies")]
+    public async Task Should_delete_conversation()
+    {
+        var (sut, services) = CreateSut();
+
+        var conversationId = Guid.NewGuid().ToString();
+        try
+        {
+            await sut.PromptAsync(string.Empty, conversationId);
+        }
+        finally
+        {
+            await sut.StopConversationAsync(conversationId);
+        }
+
+        var store = services.GetRequiredService<IChatStore>();
+
+        Assert.Null(await store.GetAsync(conversationId, default));
+    }
+
+    [Fact]
+    [Trait("Category", "Dependencies")]
     public async Task Should_ask_questions()
     {
-        var sut = CreateSut();
+        var (sut, _) = CreateSut();
 
         var conversationId = Guid.NewGuid().ToString();
         try
@@ -113,7 +135,7 @@ public class OpenAIChatAgentTests
     [Trait("Category", "Dependencies")]
     public async Task Should_ask_question_with_tool()
     {
-        var sut = CreateSut();
+        var (sut, _) = CreateSut();
 
         var conversationId = Guid.NewGuid().ToString();
         try
@@ -134,7 +156,7 @@ public class OpenAIChatAgentTests
     [Trait("Category", "Dependencies")]
     public async Task Should_ask_question_with_tool2()
     {
-        var sut = CreateSut();
+        var (sut, _) = CreateSut();
 
         var conversationId = Guid.NewGuid().ToString();
         try
@@ -155,7 +177,7 @@ public class OpenAIChatAgentTests
     [Trait("Category", "Dependencies")]
     public async Task Should_ask_multiple_question_with_tools()
     {
-        var sut = CreateSut();
+        var (sut, _) = CreateSut();
 
         var conversationId = Guid.NewGuid().ToString();
         try
@@ -176,7 +198,7 @@ public class OpenAIChatAgentTests
     [Trait("Category", "Dependencies")]
     public async Task Should_ask_multiple_question_with_tools2()
     {
-        var sut = CreateSut();
+        var (sut, _) = CreateSut();
 
         var conversationId = Guid.NewGuid().ToString();
         try
@@ -193,7 +215,7 @@ public class OpenAIChatAgentTests
         }
     }
 
-    private static IChatAgent CreateSut()
+    private static (IChatAgent, IServiceProvider) CreateSut()
     {
         var services =
             new ServiceCollection()
@@ -212,7 +234,7 @@ public class OpenAIChatAgentTests
                 })
                 .BuildServiceProvider();
 
-        return services.GetRequiredService<IChatAgent>();
+        return (services.GetRequiredService<IChatAgent>(), services);
     }
 
     private static void AssertMessage(string text, ChatBotResponse message)

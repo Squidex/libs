@@ -134,6 +134,6 @@ internal sealed class OpenAIChatAgent : IChatAgent
     public Task StopConversationAsync(string conversationId,
         CancellationToken ct = default)
     {
-        return store.GetAsync(conversationId, ct);
+        return store.RemoveAsync(conversationId, ct);
     }
 }
