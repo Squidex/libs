@@ -293,7 +293,7 @@ public class OpenAITests
         };
 
         var message = await sut.PromptAsync(request1, context);
-        Assert.Contains("https://", message.Content);
+        Assert.Contains("https://", message.Content, StringComparison.Ordinal);
     }
 
     private static async Task UseConversationId(Func<string, IChatAgent, IServiceProvider, Task> action)

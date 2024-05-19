@@ -34,7 +34,7 @@ public class MemoryAssetStore : IAssetStore
     public virtual async Task CopyAsync(string sourceFileName, string targetFileName,
         CancellationToken ct = default)
     {
-        ArgumentException.ThrowIfNullOrEmpty(targetFileName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(targetFileName);
 
         var sourceName = GetFileName(sourceFileName, nameof(sourceFileName));
 

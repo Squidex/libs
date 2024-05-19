@@ -17,7 +17,7 @@ public class AssetAlreadyExistsException : Exception
 
     private static string FormatMessage(string fileName)
     {
-        ArgumentException.ThrowIfNullOrEmpty(fileName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
 
         return $"An asset with name '{fileName}' already exists.";
     }

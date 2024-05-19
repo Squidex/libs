@@ -103,34 +103,49 @@ public abstract class AssetStoreTests<T> where T : IAssetStore
         await Assert.ThrowsAsync<ArgumentNullException>(() => Sut.UploadAsync("File", null!));
     }
 
-    [Fact]
-    public async Task Should_throw_exception_if_source_file_name_to_copy_is_empty()
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    public async Task Should_throw_exception_if_source_file_name_to_copy_is_empty(string? input)
     {
-        await CheckEmpty(v => Sut.CopyAsync(v, "Target"));
+        await Assert.ThrowsAnyAsync<ArgumentException>(() => Sut.CopyAsync(input!, "Target"));
     }
 
-    [Fact]
-    public async Task Should_throw_exception_if_target_file_name_to_copy_is_empty()
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    public async Task Should_throw_exception_if_target_file_name_to_copy_is_empty(string? input)
     {
-        await CheckEmpty(v => Sut.CopyAsync("Source", v));
+        await Assert.ThrowsAnyAsync<ArgumentException>(() => Sut.CopyAsync("Source", input!));
     }
 
-    [Fact]
-    public async Task Should_throw_exception_if_file_name_to_delete_is_empty()
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    public async Task Should_throw_exception_if_file_name_to_delete_is_empty(string? input)
     {
-        await CheckEmpty(v => Sut.DeleteAsync(v));
+        await Assert.ThrowsAnyAsync<ArgumentException>(() => Sut.DeleteAsync(input!));
     }
 
-    [Fact]
-    public async Task Should_throw_exception_if_file_name_to_download_is_empty()
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    public async Task Should_throw_exception_if_file_name_to_download_is_empty(string? input)
     {
-        await CheckEmpty(v => Sut.DownloadAsync(v, new MemoryStream()));
+        await Assert.ThrowsAnyAsync<ArgumentException>(() => Sut.DownloadAsync(input!, new MemoryStream()));
     }
 
-    [Fact]
-    public async Task Should_throw_exception_if_file_name_to_upload_is_empty()
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    public async Task Should_throw_exception_if_file_name_to_upload_is_empty(string? input)
     {
-        await CheckEmpty(v => Sut.UploadAsync(v, new MemoryStream()));
+        await Assert.ThrowsAnyAsync<ArgumentException>(() => Sut.UploadAsync(input!, new MemoryStream()));
     }
 
     [Fact]
@@ -398,13 +413,6 @@ public abstract class AssetStoreTests<T> where T : IAssetStore
 
         Assert.True(await Sut.GetSizeAsync($"{folder2}/prefix2-file1.txt") > 0);
         Assert.True(await Sut.GetSizeAsync($"{folder2}/prefix2-file2.txt") > 0);
-    }
-
-    private static async Task CheckEmpty(Func<string, Task> action)
-    {
-        await Assert.ThrowsAsync<ArgumentNullException>(() => action(null!));
-        await Assert.ThrowsAsync<ArgumentException>(() => action(string.Empty));
-        await Assert.ThrowsAsync<ArgumentException>(() => action(" "));
     }
 
     private static MemoryStream CreateFile(int length)

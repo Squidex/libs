@@ -23,7 +23,7 @@ public abstract class AssetThumbnailGeneratorBase : IAssetThumbnailGenerator
 
     public virtual bool IsResizable(string mimeType, ResizeOptions options, [MaybeNullWhen(false)] out string? destinationMimeType)
     {
-        ArgumentException.ThrowIfNullOrEmpty(mimeType);
+        ArgumentException.ThrowIfNullOrWhiteSpace(mimeType);
         ArgumentNullException.ThrowIfNull(options);
 
         destinationMimeType = null;
@@ -63,7 +63,7 @@ public abstract class AssetThumbnailGeneratorBase : IAssetThumbnailGenerator
         CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(source);
-        ArgumentException.ThrowIfNullOrEmpty(mimeType);
+        ArgumentException.ThrowIfNullOrWhiteSpace(mimeType);
 
         // If we cannot read or write from the mime type we can just stop here.
         if (!CanReadAndWrite(mimeType))
@@ -81,7 +81,7 @@ public abstract class AssetThumbnailGeneratorBase : IAssetThumbnailGenerator
         CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(source);
-        ArgumentException.ThrowIfNullOrEmpty(mimeType);
+        ArgumentException.ThrowIfNullOrWhiteSpace(mimeType);
         ArgumentNullException.ThrowIfNull(options);
 
         // If we cannot read or write from the mime type we can just stop here.
@@ -100,7 +100,7 @@ public abstract class AssetThumbnailGeneratorBase : IAssetThumbnailGenerator
         CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(source);
-        ArgumentException.ThrowIfNullOrEmpty(mimeType);
+        ArgumentException.ThrowIfNullOrWhiteSpace(mimeType);
         ArgumentNullException.ThrowIfNull(destination);
 
         // If we cannot read or write from the mime type we can just stop here.
@@ -120,7 +120,7 @@ public abstract class AssetThumbnailGeneratorBase : IAssetThumbnailGenerator
         CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(source);
-        ArgumentException.ThrowIfNullOrEmpty(mimeType);
+        ArgumentException.ThrowIfNullOrWhiteSpace(mimeType);
         ArgumentNullException.ThrowIfNull(destination);
         ArgumentNullException.ThrowIfNull(options);
 

@@ -21,9 +21,9 @@ public abstract class AssetFile : IDisposable, IAsyncDisposable
 
     protected AssetFile(string fileName, string mimeType, long fileSize)
     {
-        ArgumentException.ThrowIfNullOrEmpty(fileName);
-        ArgumentException.ThrowIfNullOrEmpty(mimeType);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(fileSize, 0);
+        ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(mimeType);
+        ArgumentOutOfRangeException.ThrowIfLessThan(fileSize, 0);
 
         this.fileName = fileName;
         this.fileSize = fileSize;
