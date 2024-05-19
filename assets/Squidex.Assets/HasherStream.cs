@@ -6,7 +6,6 @@
 // ==========================================================================
 
 using System.Security.Cryptography;
-using Squidex.Assets.Internal;
 
 namespace Squidex.Assets;
 
@@ -43,7 +42,7 @@ public sealed class HasherStream : Stream
 
     public HasherStream(Stream inner, HashAlgorithmName hashAlgorithmName)
     {
-        Guard.NotNull(inner, nameof(inner));
+        ArgumentNullException.ThrowIfNull(inner);
 
         if (!inner.CanRead)
         {

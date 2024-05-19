@@ -8,7 +8,6 @@
 using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
-using Squidex.Assets.Internal;
 using Squidex.Hosting;
 
 namespace Squidex.Assets;
@@ -52,7 +51,7 @@ public sealed class MongoGridFsAssetStore : IAssetStore, IInitializable
     public async Task CopyAsync(string sourceFileName, string targetFileName,
         CancellationToken ct = default)
     {
-        Guard.NotNullOrEmpty(targetFileName, nameof(targetFileName));
+        ArgumentException.ThrowIfNullOrWhiteSpace(targetFileName);
 
         var sourceName = GetFileName(sourceFileName, nameof(sourceFileName));
 
@@ -72,7 +71,7 @@ public sealed class MongoGridFsAssetStore : IAssetStore, IInitializable
     public async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default,
         CancellationToken ct = default)
     {
-        Guard.NotNull(stream, nameof(stream));
+        ArgumentNullException.ThrowIfNull(stream);
 
         var name = GetFileName(fileName, nameof(fileName));
 
@@ -94,7 +93,7 @@ public sealed class MongoGridFsAssetStore : IAssetStore, IInitializable
     public async Task<long> UploadAsync(string fileName, Stream stream, bool overwrite = false,
         CancellationToken ct = default)
     {
-        Guard.NotNull(stream, nameof(stream));
+        ArgumentNullException.ThrowIfNull(stream);
 
         var name = GetFileName(fileName, nameof(fileName));
 
@@ -165,7 +164,7 @@ public sealed class MongoGridFsAssetStore : IAssetStore, IInitializable
 
     private static string GetFileName(string fileName, string parameterName)
     {
-        Guard.NotNullOrEmpty(fileName, parameterName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(fileName, parameterName);
 
         return FilePathHelper.EnsureThatPathIsChildOf(fileName.Replace('\\', '/'), "./");
     }

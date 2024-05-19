@@ -12,7 +12,6 @@ using Amazon.S3.Model;
 using Amazon.S3.Transfer;
 using Amazon.S3.Util;
 using Microsoft.Extensions.Options;
-using Squidex.Assets.Internal;
 using Squidex.Hosting;
 
 namespace Squidex.Assets;
@@ -208,7 +207,7 @@ public sealed class AmazonS3AssetStore : IAssetStore, IInitializable
     public async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default,
         CancellationToken ct = default)
     {
-        Guard.NotNull(stream, nameof(stream));
+        ArgumentNullException.ThrowIfNull(stream);
 
         var key = GetKey(fileName, nameof(fileName));
 
@@ -239,7 +238,7 @@ public sealed class AmazonS3AssetStore : IAssetStore, IInitializable
     public async Task<long> UploadAsync(string fileName, Stream stream, bool overwrite = false,
         CancellationToken ct = default)
     {
-        Guard.NotNull(stream, nameof(stream));
+        ArgumentNullException.ThrowIfNull(stream);
 
         var key = GetKey(fileName, nameof(fileName));
 
@@ -359,7 +358,7 @@ public sealed class AmazonS3AssetStore : IAssetStore, IInitializable
 
     private string GetKey(string fileName, string parameterName)
     {
-        Guard.NotNullOrEmpty(fileName, parameterName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(fileName, parameterName);
 
         fileName = fileName.Replace('\\', '/');
 

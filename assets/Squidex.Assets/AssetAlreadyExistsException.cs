@@ -5,8 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Squidex.Assets.Internal;
-
 namespace Squidex.Assets;
 
 [Serializable]
@@ -19,7 +17,7 @@ public class AssetAlreadyExistsException : Exception
 
     private static string FormatMessage(string fileName)
     {
-        Guard.NotNullOrEmpty(fileName, nameof(fileName));
+        ArgumentException.ThrowIfNullOrEmpty(fileName);
 
         return $"An asset with name '{fileName}' already exists.";
     }

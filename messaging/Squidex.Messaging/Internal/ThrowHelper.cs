@@ -14,11 +14,6 @@ public static class ThrowHelper
         throw new ArgumentException(message, paramName);
     }
 
-    public static void ArgumentNullException(string? paramName)
-    {
-        throw new ArgumentNullException(paramName);
-    }
-
     public static void KeyNotFoundException(string? message = null)
     {
         throw new KeyNotFoundException(message);

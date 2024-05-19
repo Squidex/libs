@@ -5,8 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Squidex.Assets.Internal;
-
 namespace Squidex.Assets;
 
 public abstract class AssetFile : IDisposable, IAsyncDisposable
@@ -23,9 +21,9 @@ public abstract class AssetFile : IDisposable, IAsyncDisposable
 
     protected AssetFile(string fileName, string mimeType, long fileSize)
     {
-        Guard.NotNullOrEmpty(fileName, nameof(fileName));
-        Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
-        Guard.GreaterEquals(fileSize, 0, nameof(fileSize));
+        ArgumentException.ThrowIfNullOrEmpty(fileName);
+        ArgumentException.ThrowIfNullOrEmpty(mimeType);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(fileSize, 0);
 
         this.fileName = fileName;
         this.fileSize = fileSize;

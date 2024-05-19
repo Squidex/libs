@@ -5,18 +5,10 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.AI;
+namespace Squidex.AI.Implementation;
 
-public interface IChatAgent
+public interface IChatProvider
 {
-    bool IsConfigured { get; }
-
-    Task StopConversationAsync(string conversationId,
-        CancellationToken ct = default);
-
-    Task<ChatResult> PromptAsync(ChatRequest request, ChatContext? context = null,
-        CancellationToken ct = default);
-
-    IAsyncEnumerable<ChatEvent> StreamAsync(ChatRequest request, ChatContext? context = null,
+    IAsyncEnumerable<InternalChatEvent> StreamAsync(ChatProviderRequest request,
         CancellationToken ct = default);
 }

@@ -45,6 +45,9 @@ public sealed class BackgroundCache : IBackgroundCache
 
     public Task<T> GetOrCreateAsync<T>(object key, TimeSpan expiration, Func<object, Task<T>> creator, Func<T, Task<bool>>? isValid = null)
     {
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(creator);
+
         var now = GetTime();
 
         if (memoryCache.TryGetValue(key, out var cached))

@@ -10,7 +10,6 @@ using System.Net.Http.Headers;
 using Google;
 using Google.Cloud.Storage.V1;
 using Microsoft.Extensions.Options;
-using Squidex.Assets.Internal;
 using Squidex.Hosting;
 
 namespace Squidex.Assets;
@@ -172,7 +171,7 @@ public sealed class GoogleCloudAssetStore : IAssetStore, IInitializable
 
     private static string GetFileName(string fileName, string parameterName)
     {
-        Guard.NotNullOrEmpty(fileName, parameterName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(fileName, parameterName);
 
         return FilePathHelper.EnsureThatPathIsChildOf(fileName.Replace('\\', '/'), "./");
     }

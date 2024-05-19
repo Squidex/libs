@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
-    <RootNamespace>Squidex.Kernel</RootNamespace>
+    <RootNamespace>Squidex.AI</RootNamespace>
     <NeutralLanguage>en</NeutralLanguage>
   </PropertyGroup>
 

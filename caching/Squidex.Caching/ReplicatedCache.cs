@@ -43,6 +43,8 @@ public sealed class ReplicatedCache : IReplicatedCache, IMessageHandler<CacheInv
     public Task AddAsync(string key, object? value, TimeSpan expiration,
         CancellationToken ct = default)
     {
+        ArgumentNullException.ThrowIfNull(key);
+
         if (expiration <= TimeSpan.Zero)
         {
             return Task.CompletedTask;
@@ -56,6 +58,8 @@ public sealed class ReplicatedCache : IReplicatedCache, IMessageHandler<CacheInv
     public Task AddAsync(IEnumerable<KeyValuePair<string, object?>> items, TimeSpan expiration,
         CancellationToken ct = default)
     {
+        ArgumentNullException.ThrowIfNull(items);
+
         if (expiration <= TimeSpan.Zero)
         {
             return Task.CompletedTask;
@@ -72,18 +76,25 @@ public sealed class ReplicatedCache : IReplicatedCache, IMessageHandler<CacheInv
     public Task RemoveAsync(string key,
         CancellationToken ct = default)
     {
+        ArgumentNullException.ThrowIfNull(key);
+
         return RemoveAsync(new[] { key }, ct);
     }
 
     public Task RemoveAsync(string key1, string key2,
         CancellationToken ct = default)
     {
+        ArgumentNullException.ThrowIfNull(key1);
+        ArgumentNullException.ThrowIfNull(key2);
+
         return RemoveAsync(new[] { key1, key2 }, ct);
     }
 
     public async Task RemoveAsync(string[] keys,
         CancellationToken ct = default)
     {
+        ArgumentNullException.ThrowIfNull(keys);
+
         foreach (var key in keys)
         {
             if (key != null)
@@ -97,12 +108,16 @@ public sealed class ReplicatedCache : IReplicatedCache, IMessageHandler<CacheInv
 
     public bool TryGetValue(string key, out object? value)
     {
+        ArgumentNullException.ThrowIfNull(key);
+
         return memoryCache.TryGetValue(key, out value);
     }
 
     private Task InvalidateAsync(string[] keys,
         CancellationToken ct)
     {
+        ArgumentNullException.ThrowIfNull(keys);
+
         return messageBus.PublishAsync(new CacheInvalidateMessage { Keys = keys, Source = InstanceId }, ct: ct);
     }
 }

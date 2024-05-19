@@ -8,25 +8,25 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="logo-squared.png" Pack="true" PackagePath="\" />
+    <None Include="logo-squared.png" />
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="Meziantou.Analyzer" Version="2.0.146">
+    <PackageReference Include="Betalgo.OpenAI" Version="8.2.2" />
+    <PackageReference Include="Meziantou.Analyzer" Version="2.0.143">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
-    <PackageReference Include="Microsoft.SemanticKernel" Version="1.6.3" />
-    <PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.6.3" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.2" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="MongoDB.Driver" Version="2.24.0" />
     <PackageReference Include="RefactoringEssentials" Version="5.6.0" PrivateAssets="all" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" PrivateAssets="all" />
     <PackageReference Include="System.Linq.Async" Version="6.0.1" />
+    <PackageReference Include="System.Reactive" Version="6.0.0" />
+    <PackageReference Include="System.Text.Json" Version="8.0.2" />
   </ItemGroup>
 
   <ItemGroup>
@@ -34,6 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\assets\Squidex.Assets\Squidex.Assets.csproj" />
     <ProjectReference Include="..\..\hosting\Squidex.Hosting.Abstractions\Squidex.Hosting.Abstractions.csproj" />
   </ItemGroup>
 

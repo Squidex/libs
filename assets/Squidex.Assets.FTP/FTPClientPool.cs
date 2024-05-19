@@ -6,7 +6,6 @@
 // ==========================================================================
 
 using FluentFTP;
-using Squidex.Assets.Internal;
 
 namespace Squidex.Assets;
 
@@ -20,8 +19,6 @@ internal sealed class FTPClientPool
 
     public FTPClientPool(Func<IAsyncFtpClient> clientFactory, int clientsLimit)
     {
-        Guard.NotNull(clientFactory, nameof(clientFactory));
-
         this.clientFactory = clientFactory;
         this.clientsLimit = clientsLimit;
     }

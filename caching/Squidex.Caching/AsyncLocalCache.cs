@@ -30,6 +30,8 @@ public sealed class AsyncLocalCache : ILocalCache
 
     public void Add(object key, object? value)
     {
+        ArgumentNullException.ThrowIfNull(key);
+
         var cacheKey = GetCacheKey(key);
         var cacheLocal = LocalCache.Value;
 
@@ -41,6 +43,8 @@ public sealed class AsyncLocalCache : ILocalCache
 
     public void Remove(object key)
     {
+        ArgumentNullException.ThrowIfNull(key);
+
         var cacheKey = GetCacheKey(key);
         var cacheLocal = LocalCache.Value;
 
@@ -49,6 +53,8 @@ public sealed class AsyncLocalCache : ILocalCache
 
     public bool TryGetValue(object key, out object? value)
     {
+        ArgumentNullException.ThrowIfNull(key);
+
         value = null;
 
         var cacheKey = GetCacheKey(key);
