@@ -35,7 +35,10 @@ public class OpenAITests
     {
         var sut =
             new ServiceCollection()
-                .AddOpenAIChat(TestHelpers.Configuration)
+                .AddOpenAIChat(TestHelpers.Configuration, options =>
+                {
+                    options.ApiKey = "test";
+                })
                 .BuildServiceProvider()
                 .GetRequiredService<IChatAgent>();
 
@@ -43,6 +46,7 @@ public class OpenAITests
     }
 
     [Fact]
+    [Trait("Category", "Dependencies")]
     public async Task Should_throw_exception_on_invalid_configuration()
     {
         var sut =
@@ -63,6 +67,7 @@ public class OpenAITests
     }
 
     [Fact]
+    [Trait("Category", "Dependencies")]
     public async Task Should_throw_exception_on_invalid_configuration_when_streaming()
     {
         var sut =

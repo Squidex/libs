@@ -34,7 +34,7 @@ public static class AIServiceExtensions
     }
 
     public static IServiceCollection AddOpenAIChat(this IServiceCollection services, IConfiguration config, Action<OpenAIOptions>? configure = null,
-        string configPath = "chatbot:openai")
+        string configPath = "ai:openai")
     {
         services.Configure(config, configPath, configure);
 
