@@ -6,7 +6,6 @@
 // ==========================================================================
 
 using System.Reactive.Linq;
-using Squidex.Hosting;
 using Squidex.Messaging.Implementation;
 using Squidex.Messaging.Internal;
 using Squidex.Messaging.Subscriptions;

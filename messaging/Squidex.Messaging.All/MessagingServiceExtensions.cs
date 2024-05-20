@@ -7,7 +7,6 @@
 
 using Microsoft.Extensions.Configuration;
 using Squidex.Messaging;
-using Squidex.Messaging.Implementation;
 
 namespace Microsoft.Extensions.DependencyInjection;
 

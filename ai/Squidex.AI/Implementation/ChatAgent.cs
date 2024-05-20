@@ -5,7 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
@@ -49,7 +48,6 @@ public sealed class ChatAgent : IChatAgent
         CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        ArgumentNullException.ThrowIfNull(request.Prompt);
 
         var streamMeta = new ChatMetadata();
         var streamContent = new StringBuilder();
@@ -74,7 +72,6 @@ public sealed class ChatAgent : IChatAgent
         CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        ArgumentNullException.ThrowIfNull(request.Prompt);
 
         return StreamCoreAsync(request, context, ct);
     }
