@@ -5,16 +5,13 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.AI.Implementation;
+namespace Squidex.AI.Implementation.Mongo;
 
-public interface IChatStore
+public sealed class MongoChatEntity
 {
-    Task RemoveAsync(string conversationId,
-        CancellationToken ct);
+    public string Id { get; set; }
 
-    Task StoreAsync(string conversationId, string value, DateTime expires,
-        CancellationToken ct);
+    public string Value { get; set; }
 
-    Task<string?> GetAsync(string conversationId,
-        CancellationToken ct);
+    public DateTime Expires { get; set; }
 }

@@ -18,4 +18,6 @@ public sealed class ChatOptions
     public decimal PricePerOutputTokenInEUR { get; set; } = 0.004m / 1000;
 
     public Dictionary<string, decimal> ToolCostsInEur { get; set; } = [];
+
+    public TimeSpan ConversationLifetime { get; set; } = TimeSpan.FromDays(3);
 }

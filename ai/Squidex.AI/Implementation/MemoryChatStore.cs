@@ -27,7 +27,7 @@ public sealed class MemoryChatStore : IChatStore
         return Task.FromResult(result);
     }
 
-    public Task StoreAsync(string conversationId, string value,
+    public Task StoreAsync(string conversationId, string value, DateTime expires,
         CancellationToken ct)
     {
         values[conversationId] = value;

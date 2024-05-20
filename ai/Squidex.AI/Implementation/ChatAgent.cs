@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
@@ -15,6 +16,7 @@ namespace Squidex.AI.Implementation;
 public sealed class ChatAgent : IChatAgent
 {
     private readonly ChatOptions options;
+    private readonly TimeProvider timeProvider;
     private readonly IChatProvider chatProvider;
     private readonly IChatStore chatStore;
     private readonly List<IChatTool> chatTools;
@@ -23,11 +25,13 @@ public sealed class ChatAgent : IChatAgent
 
     public ChatAgent(
         IOptions<ChatOptions> options,
+        TimeProvider timeProvider,
         IChatProvider chatProvider,
         IChatStore chatStore,
         IEnumerable<IChatTool> chatTools)
     {
         this.options = options.Value;
+        this.timeProvider = timeProvider;
         this.chatProvider = chatProvider;
         this.chatStore = chatStore;
         this.chatTools = chatTools.ToList();
@@ -149,7 +153,7 @@ public sealed class ChatAgent : IChatAgent
 
         if (request.ConversationId != null)
         {
-            await StoreHistoryAsync(request.ConversationId, history);
+            await StoreHistoryAsync(request.ConversationId, history, default);
         }
     }
 
@@ -165,9 +169,15 @@ public sealed class ChatAgent : IChatAgent
         return tools;
     }
 
-    private async Task StoreHistoryAsync(string conversationId, ChatHistory history)
+    private Task StoreHistoryAsync(string conversationId, ChatHistory history,
+        CancellationToken ct)
     {
-        await chatStore.StoreAsync(conversationId, JsonSerializer.Serialize(history), default);
+        var expires = timeProvider.GetLocalNow().UtcDateTime + options.ConversationLifetime;
+
+        var json = JsonSerializer.Serialize(history) ??
+            throw new ChatException($"Cannot serialize conversion with ID '{conversationId}'.");
+
+        return chatStore.StoreAsync(conversationId, json, expires, ct);
     }
 
     private async Task<ChatHistory> GetOrCreateConversationAsync(ChatRequest request, ChatConfiguration configuration,

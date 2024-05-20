@@ -19,6 +19,7 @@ public static class AIServiceExtensions
     {
         services.AddHttpClient();
         services.AddOptions<ChatOptions>();
+        services.TryAddSingleton(TimeProvider.System);
         services.TryAddSingleton<IChatStore, MemoryChatStore>();
         services.TryAddSingleton<IChatAgent, ChatAgent>();
         services.TryAddSingleton<IChatProvider, NoopChatProvider>();
@@ -34,7 +35,7 @@ public static class AIServiceExtensions
     }
 
     public static IServiceCollection AddOpenAIChat(this IServiceCollection services, IConfiguration config, Action<OpenAIOptions>? configure = null,
-        string configPath = "ai:openai")
+        string configPath = "chatBot:openai")
     {
         services.Configure(config, configPath, configure);
 
