@@ -96,7 +96,21 @@ public class OpenAITests
         var request1 = new ChatRequest
         {
             Prompt = string.Empty,
-            Configuration = null
+        };
+
+        var message1 = await sut.PromptAsync(request1, context);
+        AssertMessage("Hello! How can I assist you today?", message1);
+    }
+
+    [Fact]
+    [Trait("Category", "Dependencies")]
+    public async Task Should_say_hello_with_null()
+    {
+        var (sut, _) = CreateSut();
+
+        var request1 = new ChatRequest
+        {
+            Prompt = null,
         };
 
         var message1 = await sut.PromptAsync(request1, context);

@@ -12,12 +12,18 @@ using tusdotnet.Parsers;
 
 namespace Squidex.Assets;
 
-public sealed class AssetTusFile : AssetFile, ITusFile, IDisposable, IAsyncDisposable
+public sealed class AssetTusFile : IAssetFile, ITusFile, IAsyncDisposable, IDisposable
 {
     private readonly Stream stream;
     private readonly Action<AssetTusFile> disposed;
 
     public string Id { get; }
+
+    public string FileName { get; }
+
+    public string MimeType { get; }
+
+    public long FileSize { get; }
 
     public Dictionary<string, string> Metadata { get; }
 
@@ -46,11 +52,14 @@ public sealed class AssetTusFile : AssetFile, ITusFile, IDisposable, IAsyncDispo
         Dictionary<string, Metadata> metadataRaw,
         Stream stream,
         Action<AssetTusFile> disposed)
-        : base(GetFileName(metadata), GetMimeType(metadata), stream.Length)
     {
         Id = id;
 
         this.stream = stream;
+
+        FileSize = stream.Length;
+        FileName = GetFileName(metadata);
+        MimeType = GetMimeType(metadata);
 
         Metadata = metadata;
         MetadataRaw = metadataRaw;
@@ -90,23 +99,24 @@ public sealed class AssetTusFile : AssetFile, ITusFile, IDisposable, IAsyncDispo
         return "application/octet-stream";
     }
 
-    public override void Dispose()
+    public void Dispose()
     {
         disposed(this);
 
         stream.Dispose();
     }
 
-    public override ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
         disposed(this);
 
         return stream.DisposeAsync();
     }
 
-    public override Stream OpenRead()
+    public ValueTask<Stream> OpenReadAsync(
+        CancellationToken ct = default)
     {
-        return new NonDisposingStream(stream);
+        return new ValueTask<Stream>(new NonDisposingStream(stream));
     }
 
     public Task<Stream> GetContentAsync(

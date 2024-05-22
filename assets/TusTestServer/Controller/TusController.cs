@@ -64,7 +64,7 @@ public class TusController : ControllerBase
             return result;
         }
 
-        await using var fileStream = file.OpenRead();
+        await using var fileStream = await file.OpenReadAsync(HttpContext.RequestAborted);
 
         var name = file.FileName;
 

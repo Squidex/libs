@@ -7,18 +7,37 @@
 
 namespace Squidex.Assets;
 
-public sealed class DelegateAssetFile : AssetFile
+public sealed class DelegateAssetFile : IAssetFile
 {
-    private readonly Func<Stream> openStream;
+    private readonly Func<CancellationToken, ValueTask<Stream>> openStream;
 
-    public DelegateAssetFile(string fileName, string mimeType, long fileSize, Func<Stream> openStream)
-        : base(fileName, mimeType, fileSize)
+    public string FileName { get; }
+
+    public string MimeType { get; }
+
+    public long FileSize { get; }
+
+    public DelegateAssetFile(string fileName, string mimeType, long fileSize, Func<CancellationToken, ValueTask<Stream>> openStream)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(mimeType);
+        ArgumentOutOfRangeException.ThrowIfLessThan(fileSize, 0);
+
+        FileName = fileName;
+        FileSize = fileSize;
+        MimeType = mimeType;
+
         this.openStream = openStream;
     }
 
-    public override Stream OpenRead()
+    public ValueTask<Stream> OpenReadAsync(
+        CancellationToken ct = default)
     {
-        return openStream();
+        return openStream(ct);
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        return default;
     }
 }

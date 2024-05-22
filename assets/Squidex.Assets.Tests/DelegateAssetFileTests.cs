@@ -15,7 +15,9 @@ public class DelegateAssetFileTests
     [Fact]
     public void Should_be_serializable_to_json()
     {
-        var source = new DelegateAssetFile("fileName", "file/type", 1024, () => new MemoryStream());
+        var source =
+            new DelegateAssetFile("fileName", "file/type", 1024, ct =>
+                new ValueTask<Stream>(new MemoryStream()));
 
         var deserialized = JsonConvert.DeserializeObject<DelegateAssetFile>(JsonConvert.SerializeObject(source));
 

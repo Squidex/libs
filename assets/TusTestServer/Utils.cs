@@ -31,9 +31,9 @@ public static class Utils
                 {
                     OnFileCompleteAsync = async eventContext =>
                     {
-                        var file = (AssetFile)(await eventContext.GetFileAsync());
+                        var file = (IAssetFile)(await eventContext.GetFileAsync());
 
-                        await using var fileStream = file.OpenRead();
+                        await using var fileStream = await file.OpenReadAsync(eventContext.CancellationToken);
 
                         var name = file.FileName;
 

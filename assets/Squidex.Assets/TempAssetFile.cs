@@ -7,29 +7,32 @@
 
 namespace Squidex.Assets;
 
-public sealed class TempAssetFile : AssetFile
+public sealed class TempAssetFile : IAssetFile
 {
-    private readonly Stream stream;
+    private readonly Stream stream = TempHelper.GetTempStream();
 
-    public override long FileSize => stream.Length;
+    public long FileSize => stream.Length;
 
-    public static TempAssetFile Create(AssetFile source)
+    public string FileName { get; }
+
+    public string MimeType { get; }
+
+    public static TempAssetFile Create(IAssetFile source)
     {
         return new TempAssetFile(source.FileName, source.MimeType);
     }
 
     public TempAssetFile(string fileName, string mimeType)
-        : base(fileName, mimeType, 0)
     {
-        stream = TempHelper.GetTempStream();
+        ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(mimeType);
+
+        FileName = fileName;
+
+        MimeType = mimeType;
     }
 
-    public override void Dispose()
-    {
-        stream.Dispose();
-    }
-
-    public override ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
         return stream.DisposeAsync();
     }
@@ -39,8 +42,14 @@ public sealed class TempAssetFile : AssetFile
         return new NonDisposingStream(stream);
     }
 
-    public override Stream OpenRead()
+    public Stream OpenRead()
     {
-        return new NonDisposingStream(stream);
+        return OpenRead();
+    }
+
+    public ValueTask<Stream> OpenReadAsync(
+        CancellationToken ct = default)
+    {
+        return new ValueTask<Stream>(OpenRead());
     }
 }
