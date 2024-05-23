@@ -7,7 +7,6 @@
 
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Text.Json;
 using Microsoft.Extensions.Options;
 
 namespace Squidex.AI.Implementation;
@@ -15,7 +14,6 @@ namespace Squidex.AI.Implementation;
 public sealed class ChatAgent : IChatAgent
 {
     private readonly ChatOptions options;
-    private readonly TimeProvider timeProvider;
     private readonly IChatProvider chatProvider;
     private readonly IChatStore chatStore;
     private readonly List<IChatTool> chatTools;
@@ -23,25 +21,35 @@ public sealed class ChatAgent : IChatAgent
     public bool IsConfigured => chatProvider is not NoopChatProvider;
 
     public ChatAgent(
-        IOptions<ChatOptions> options,
-        TimeProvider timeProvider,
         IChatProvider chatProvider,
         IChatStore chatStore,
-        IEnumerable<IChatTool> chatTools)
+        IEnumerable<IChatTool> chatTools,
+        IOptions<ChatOptions> options)
     {
         this.options = options.Value;
-        this.timeProvider = timeProvider;
         this.chatProvider = chatProvider;
         this.chatStore = chatStore;
         this.chatTools = chatTools.ToList();
     }
 
-    public Task StopConversationAsync(string conversationId,
+    public async Task StopConversationAsync(string conversationId,
         CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(conversationId);
 
-        return chatStore.RemoveAsync(conversationId, ct);
+        var conversation = await chatStore.GetAsync(conversationId, ct);
+
+        if (conversation == null)
+        {
+            return;
+        }
+
+        await chatStore.RemoveAsync(conversationId, ct);
+
+        foreach (var tool in chatTools)
+        {
+            await tool.CleanupAsync(conversation.ToolData, ct);
+        }
     }
 
     public async Task<ChatResult> PromptAsync(ChatRequest request, ChatContext? context = null,
@@ -95,15 +103,16 @@ public sealed class ChatAgent : IChatAgent
         configuration ??= options.Defaults;
         configuration ??= new ChatConfiguration();
 
-        var history = await GetOrCreateConversationAsync(request, configuration, ct);
+        var conversation = await GetOrCreateConversationAsync(request, configuration, ct);
 
         var providerRequest = new ChatProviderRequest
         {
-            Agent = this,
+            ChatAgent = this,
             Context = context,
-            Tools = GetTools(configuration),
+            History = conversation.History,
             Tool = request.Tool,
-            History = history,
+            ToolData = conversation.ToolData,
+            Tools = GetTools(configuration),
         };
 
         var streamCosts = 0m;
@@ -146,11 +155,11 @@ public sealed class ChatAgent : IChatAgent
             }
         }
 
-        history.Add(streamContent.ToString(), ChatMessageType.Assistant);
+        conversation.History.Add(streamContent.ToString(), ChatMessageType.Assistant);
 
         if (request.ConversationId != null)
         {
-            await StoreHistoryAsync(request.ConversationId, history, default);
+            await StoreHistoryAsync(request.ConversationId, conversation, default);
         }
     }
 
@@ -166,50 +175,40 @@ public sealed class ChatAgent : IChatAgent
         return tools;
     }
 
-    private Task StoreHistoryAsync(string conversationId, ChatHistory history,
+    private Task StoreHistoryAsync(string conversationId, Conversation conversation,
         CancellationToken ct)
     {
-        var expires = timeProvider.GetLocalNow().UtcDateTime + options.ConversationLifetime;
-
-        var json = JsonSerializer.Serialize(history) ??
-            throw new ChatException($"Cannot serialize conversion with ID '{conversationId}'.");
-
-        return chatStore.StoreAsync(conversationId, json, expires, ct);
+        return chatStore.StoreAsync(conversationId, conversation, ct);
     }
 
-    private async Task<ChatHistory> GetOrCreateConversationAsync(ChatRequest request, ChatConfiguration configuration,
+    private async Task<Conversation> GetOrCreateConversationAsync(ChatRequest request, ChatConfiguration configuration,
         CancellationToken ct)
     {
-        ChatHistory? history = null;
+        Conversation? result = null;
 
         if (request.ConversationId != null)
         {
-            var stored = await chatStore.GetAsync(request.ConversationId, ct);
-            if (stored != null)
-            {
-                history = JsonSerializer.Deserialize<ChatHistory>(stored) ??
-                    throw new ChatException($"Cannot deserialize conversion with ID '{request.ConversationId}'.");
-            }
+            result = await chatStore.GetAsync(request.ConversationId, ct);
         }
 
-        if (history == null)
+        if (result == null)
         {
-            history = [];
+            result = new Conversation { History = [], ToolData = [] };
 
             if (configuration.SystemMessages != null)
             {
                 foreach (var systemMessage in configuration.SystemMessages)
                 {
-                    history.Add(systemMessage, ChatMessageType.System);
+                    result.History.Add(systemMessage, ChatMessageType.System);
                 }
             }
         }
 
         if (!string.IsNullOrWhiteSpace(request.Prompt))
         {
-            history.Add(request.Prompt, ChatMessageType.User);
+            result.History.Add(request.Prompt, ChatMessageType.User);
         }
 
-        return history;
+        return result;
     }
 }

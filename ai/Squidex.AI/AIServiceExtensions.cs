@@ -27,9 +27,28 @@ public static class AIServiceExtensions
         return services;
     }
 
+    public static IServiceCollection AddAICleaner(this IServiceCollection services)
+    {
+        services.AddSingletonAs<ChatCleaner>()
+            .AsSelf();
+
+        return services;
+    }
+
     public static IServiceCollection AddTool<T>(this IServiceCollection services) where T : class, IChatTool
     {
-        services.AddSingleton<IChatTool, T>();
+        services.AddSingletonAs<T>()
+            .As<IChatTool>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddDallE(this IServiceCollection services, IConfiguration config, Action<DallEOptions>? configure = null,
+        string configPath = "chatBot:dallE")
+    {
+        services.Configure(config, configPath, configure);
+
+        services.AddTool<DallETool>();
 
         return services;
     }

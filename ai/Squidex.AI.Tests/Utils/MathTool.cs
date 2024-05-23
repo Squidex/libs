@@ -25,11 +25,11 @@ public sealed class MathTool : IChatTool
             }
         };
 
-    public async Task<string> ExecuteAsync(IChatAgent agent, ChatContext context, Dictionary<string, ToolValue> arguments,
+    public async Task<string> ExecuteAsync(ToolContext toolContext,
         CancellationToken ct)
     {
-        var lhs = arguments["lhs"].AsNumber;
-        var rhs = arguments["rhs"].AsNumber;
+        var lhs = toolContext.Arguments["lhs"].AsNumber;
+        var rhs = toolContext.Arguments["rhs"].AsNumber;
 
         await Task.Yield();
         return $"The result {(lhs * rhs) + 42}. Return this value to the user.";

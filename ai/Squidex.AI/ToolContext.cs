@@ -5,20 +5,15 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using OpenAI;
-using OpenAI.ObjectModels;
+namespace Squidex.AI;
 
-namespace Squidex.AI.Implementation.OpenAI;
-
-public sealed class OpenAIOptions : OpenAiOptions
+public sealed class ToolContext
 {
-    public string Model { get; set; } = Models.Gpt_3_5_Turbo;
+    required public ChatContext Context { get; init; }
 
-    public int? MaxTokens { get; set; }
+    required public Dictionary<string, string> ToolData { get; init; }
 
-    public int CharactersPerToken { get; set; } = 5;
+    required public Dictionary<string, ToolValue> Arguments { get; init; }
 
-    public int? Seed { get; set; }
-
-    public float? Temperature { get; set; }
+    required public IChatAgent ChatAgent { get; init; }
 }

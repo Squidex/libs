@@ -6,19 +6,20 @@
 // ==========================================================================
 
 using OpenAI;
-using OpenAI.ObjectModels;
 
 namespace Squidex.AI.Implementation.OpenAI;
 
-public sealed class OpenAIOptions : OpenAiOptions
+public sealed class DallEOptions : OpenAiOptions
 {
-    public string Model { get; set; } = Models.Gpt_3_5_Turbo;
+    public string? Model { get; set; } = "dall-e-3";
 
-    public int? MaxTokens { get; set; }
+    public string? Style { get; set; }
 
-    public int CharactersPerToken { get; set; } = 5;
+    public string? Size { get; set; }
 
-    public int? Seed { get; set; }
+    public string? Quality { get; set; }
 
-    public float? Temperature { get; set; }
+    public string ImagePathPattern { get; set; } = "dall-e/{IMAGE_ID}";
+
+    public bool DownloadImage { get; set; } = false;
 }

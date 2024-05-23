@@ -14,9 +14,11 @@ namespace Squidex.AI.Implementation.OpenAI;
 
 public sealed class DallETool : IChatTool
 {
+    private const string DataPrefix = "dall_e_image";
     private readonly OpenAIService service;
-    private readonly OpenAIOptions options;
+    private readonly DallEOptions options;
     private readonly IAssetStore assetStore;
+    private readonly IAssetThumbnailGenerator assetThumbnailGenerator;
     private readonly IHttpImageEndpoint httpImageEndpoint;
     private readonly IHttpClientFactory httpClientFactory;
 
@@ -33,8 +35,9 @@ public sealed class DallETool : IChatTool
         };
 
     public DallETool(
-        IOptions<OpenAIOptions> options,
+        IOptions<DallEOptions> options,
         IAssetStore assetStore,
+        IAssetThumbnailGenerator assetThumbnailGenerator,
         IHttpImageEndpoint httpImageEndpoint,
         IHttpClientFactory httpClientFactory)
     {
@@ -42,14 +45,27 @@ public sealed class DallETool : IChatTool
 
         this.options = options.Value;
         this.assetStore = assetStore;
+        this.assetThumbnailGenerator = assetThumbnailGenerator;
         this.httpImageEndpoint = httpImageEndpoint;
         this.httpClientFactory = httpClientFactory;
     }
 
-    public async Task<string> ExecuteAsync(IChatAgent agent, ChatContext context, Dictionary<string, ToolValue> arguments,
+    public async Task CleanupAsync(Dictionary<string, string> toolData,
         CancellationToken ct)
     {
-        if (!arguments.TryGetValue("query", out var queryArg))
+        foreach (var (key, value) in toolData)
+        {
+            if (key.StartsWith(DataPrefix, StringComparison.Ordinal))
+            {
+                await assetStore.DeleteAsync(value, ct);
+            }
+        }
+    }
+
+    public async Task<string> ExecuteAsync(ToolContext toolContext,
+        CancellationToken ct)
+    {
+        if (!toolContext.Arguments.TryGetValue("query", out var queryArg))
         {
             throw new ChatException("Missing argument 'query'.");
         }
@@ -58,19 +74,23 @@ public sealed class DallETool : IChatTool
 
         var request = new ImageCreateRequest
         {
-            Prompt = query
+            Model = options.Model,
+            Prompt = query,
+            Quality = options.Quality,
+            Size = options.Size,
+            Style = options.Style
         };
 
         var response = await service.Image.CreateImage(request, ct);
 
         if (response.Error != null)
         {
-            throw new ChatException($"Request failed with internal error: {response.Error.Message}. HTTP {response.HttpStatusCode}");
+            throw new ChatException($"Request failed with internal error: {response.Error.Message}. HTTP {response.HttpStatusCode}.");
         }
 
         if (!response.Successful)
         {
-            throw new ChatException($"Request failed with unknown error. HTTP {response.HttpStatusCode}");
+            throw new ChatException($"Request failed with unknown error. HTTP {response.HttpStatusCode}.");
         }
 
         var url = response.Results[0].Url;
@@ -86,12 +106,28 @@ public sealed class DallETool : IChatTool
         var imageUrl = httpImageEndpoint.GetUrl(imagePath);
 
         using var httpClient = httpClientFactory.CreateClient(url);
+        using var httpResponse = await httpClient.GetAsync(url, ct);
+        using var httpStream = await httpResponse.Content.ReadAsStreamAsync(ct);
+        using var tempStream = TempHelper.GetTempStream();
 
-        await using (var httpResponse = await httpClient.GetStreamAsync(url, ct))
+        var mimeType = httpResponse.Content.Headers.ContentType?.ToString();
+
+        if (string.IsNullOrWhiteSpace(mimeType))
         {
-            await assetStore.UploadAsync(imagePath, httpResponse, true, ct);
+            throw new ChatException("Request failed because the file does not contain a content type.");
         }
 
+        var resizeOptions = new ResizeOptions
+        {
+            Format = ImageFormat.WEBP
+        };
+
+        await assetThumbnailGenerator.CreateThumbnailAsync(httpStream, mimeType, tempStream, resizeOptions, ct);
+        tempStream.Position = 0;
+
+        await assetStore.UploadAsync(imagePath, tempStream, true, ct);
+
+        toolContext.ToolData[$"{DataPrefix}_{imageId}"] = imagePath;
         return imageUrl;
     }
 }

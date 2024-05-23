@@ -11,6 +11,12 @@ public interface IChatTool
 {
     ToolSpec Spec { get; }
 
-    Task<string> ExecuteAsync(IChatAgent agent, ChatContext context, Dictionary<string, ToolValue> arguments,
+    Task<string> ExecuteAsync(ToolContext toolContext,
         CancellationToken ct);
+
+    Task CleanupAsync(Dictionary<string, string> toolData,
+        CancellationToken ct)
+    {
+        return Task.CompletedTask;
+    }
 }

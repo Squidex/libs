@@ -334,11 +334,12 @@ public class OpenAITests
     {
         var services =
             new ServiceCollection()
-                .AddTool<DallETool>()
+                .AddDallE(TestHelpers.Configuration)
                 .AddTool<MathTool>()
                 .AddTool<WheatherTool>()
                 .AddSingleton<IHttpImageEndpoint, ImageEndpoint>()
                 .AddSingleton<IAssetStore, MemoryAssetStore>()
+                .AddSingleton<IAssetThumbnailGenerator, ImageSharpThumbnailGenerator>()
                 .AddOpenAIChat(TestHelpers.Configuration, options =>
                 {
                     options.Seed = 42;

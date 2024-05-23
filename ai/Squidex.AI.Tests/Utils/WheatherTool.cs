@@ -21,10 +21,10 @@ public sealed class WheatherTool : IChatTool
             }
         };
 
-    public async Task<string> ExecuteAsync(IChatAgent agent, ChatContext context, Dictionary<string, ToolValue> arguments,
+    public async Task<string> ExecuteAsync(ToolContext toolContext,
         CancellationToken ct)
     {
-        var location = arguments["location"].AsString;
+        var location = toolContext.Arguments["location"].AsString;
 
         await Task.Yield();
 

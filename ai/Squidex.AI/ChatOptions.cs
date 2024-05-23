@@ -19,5 +19,7 @@ public sealed class ChatOptions
 
     public Dictionary<string, decimal> ToolCostsInEur { get; set; } = [];
 
+    public TimeSpan CleanupTime { get; set; } = TimeSpan.FromMinutes(30);
+
     public TimeSpan ConversationLifetime { get; set; } = TimeSpan.FromDays(3);
 }

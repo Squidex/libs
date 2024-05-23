@@ -7,9 +7,9 @@
 
 using Microsoft.Extensions.Logging;
 
-#pragma warning disable MA0134 // Observe result of async calls
+namespace Squidex.Hosting;
 
-namespace Squidex.Messaging.Internal;
+#pragma warning disable MA0134 // Observe result of async calls
 
 public sealed class SimpleTimer : IAsyncDisposable
 {

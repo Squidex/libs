@@ -13,5 +13,5 @@ public class ChatContext
 {
     public ClaimsPrincipal? User { get; set; } = ClaimsPrincipal.Current;
 
-    public Dictionary<string, object> Data { get; } = [];
+    public Dictionary<string, object> Data { get; set; } = [];
 }

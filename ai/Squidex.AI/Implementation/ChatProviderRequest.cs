@@ -15,7 +15,9 @@ public sealed class ChatProviderRequest
 
     required public List<IChatTool> Tools { get; init; }
 
+    required public Dictionary<string, string> ToolData { get; init; }
+
     required public string? Tool { get; set; }
 
-    required public IChatAgent Agent { get; init; }
+    required public IChatAgent ChatAgent { get; init; }
 }

@@ -194,7 +194,15 @@ public sealed class OpenAIChatProvider : IChatProvider
             {
                 var args = job.Call.ParseArguments(job.Tool.Spec);
 
-                var result = await job.Tool.ExecuteAsync(request.Agent, request.Context, args, ct);
+                var toolContext = new ToolContext
+                {
+                    Arguments = args,
+                    ChatAgent = request.ChatAgent,
+                    Context = request.Context,
+                    ToolData = request.ToolData
+                };
+
+                var result = await job.Tool.ExecuteAsync(toolContext, ct);
 
                 results[job.Index] = OpenAIMessage.FromTool(result, job.Id);
             }

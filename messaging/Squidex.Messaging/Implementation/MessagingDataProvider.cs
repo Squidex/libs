@@ -8,7 +8,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Squidex.Hosting;
-using Squidex.Messaging.Internal;
 
 namespace Squidex.Messaging.Implementation;
 
@@ -45,6 +44,17 @@ public sealed class MessagingDataProvider : IMessagingDataProvider, IBackgroundP
         return Task.CompletedTask;
     }
 
+    public async Task StopAsync(
+        CancellationToken ct)
+    {
+        if (updateTimer != null)
+        {
+            await updateTimer.DisposeAsync();
+
+            updateTimer = null;
+        }
+    }
+
     public Task UpdateAliveAsync(
         CancellationToken ct = default)
     {
@@ -73,17 +83,6 @@ public sealed class MessagingDataProvider : IMessagingDataProvider, IBackgroundP
                     .ToArray();
 
         return messagingDataStore.StoreManyAsync(requests, ct);
-    }
-
-    public async Task StopAsync(
-        CancellationToken ct)
-    {
-        if (updateTimer != null)
-        {
-            await updateTimer.DisposeAsync();
-
-            updateTimer = null;
-        }
     }
 
     public async Task<IReadOnlyDictionary<string, T>> GetEntriesAsync<T>(string group,

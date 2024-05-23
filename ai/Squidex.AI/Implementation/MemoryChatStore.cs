@@ -6,12 +6,13 @@
 // ==========================================================================
 
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 
 namespace Squidex.AI.Implementation;
 
 public sealed class MemoryChatStore : IChatStore
 {
-    private readonly ConcurrentDictionary<string, string> values = new ConcurrentDictionary<string, string>();
+    private readonly ConcurrentDictionary<string, (Conversation Conversation, DateTime LastUpdate)> values = [];
 
     public Task RemoveAsync(string conversationId,
         CancellationToken ct)
@@ -20,17 +21,31 @@ public sealed class MemoryChatStore : IChatStore
         return Task.CompletedTask;
     }
 
-    public Task<string?> GetAsync(string conversationId,
+    public Task<Conversation?> GetAsync(string conversationId,
         CancellationToken ct)
     {
         values.TryGetValue(conversationId, out var result);
-        return Task.FromResult(result);
+        return Task.FromResult<Conversation?>(result.Conversation);
     }
 
-    public Task StoreAsync(string conversationId, string value, DateTime expires,
+    public Task StoreAsync(string conversationId, Conversation conversation,
         CancellationToken ct)
     {
-        values[conversationId] = value;
+        values[conversationId] = (conversation, DateTime.UtcNow);
         return Task.CompletedTask;
+    }
+
+    public async IAsyncEnumerable<(string Id, Conversation Value)> QueryAsync(DateTime olderThan,
+        [EnumeratorCancellation] CancellationToken ct)
+    {
+        await Task.Yield();
+
+        foreach (var (key, value) in values)
+        {
+            if (value.LastUpdate < olderThan)
+            {
+                yield return (key, value.Conversation);
+            }
+        }
     }
 }

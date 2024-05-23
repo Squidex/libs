@@ -7,7 +7,7 @@
 
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
-using Squidex.Messaging.Internal;
+using Squidex.Hosting;
 
 namespace Squidex.Messaging.Mongo;
 

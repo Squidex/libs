@@ -12,9 +12,12 @@ public interface IChatStore
     Task RemoveAsync(string conversationId,
         CancellationToken ct);
 
-    Task StoreAsync(string conversationId, string value, DateTime expires,
+    Task StoreAsync(string conversationId, Conversation conversation,
         CancellationToken ct);
 
-    Task<string?> GetAsync(string conversationId,
+    Task<Conversation?> GetAsync(string conversationId,
+        CancellationToken ct);
+
+    IAsyncEnumerable<(string Id, Conversation Value)> QueryAsync(DateTime olderThan,
         CancellationToken ct);
 }

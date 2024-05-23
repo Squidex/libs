@@ -13,5 +13,5 @@ public sealed class MongoChatEntity
 
     public string Value { get; set; }
 
-    public DateTime Expires { get; set; }
+    public DateTime LastUpdated { get; set; }
 }
