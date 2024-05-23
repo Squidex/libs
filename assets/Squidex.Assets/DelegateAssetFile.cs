@@ -9,7 +9,7 @@ namespace Squidex.Assets;
 
 public class DelegateAssetFile : IAssetFile
 {
-    private readonly Func<CancellationToken, ValueTask<Stream>> openStream;
+    private readonly Func<Stream> openStream;
 
     public string FileName { get; }
 
@@ -17,13 +17,8 @@ public class DelegateAssetFile : IAssetFile
 
     public long FileSize { get; }
 
-    public DelegateAssetFile(string fileName, string mimeType, long fileSize, Func<Stream> openStream)
-        : this(fileName, mimeType, fileSize, _ => new ValueTask<Stream>(openStream()))
-    {
-    }
-
     public DelegateAssetFile(string fileName, string mimeType, long fileSize,
-        Func<CancellationToken, ValueTask<Stream>> openStream)
+        Func<Stream> openStream)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
         ArgumentException.ThrowIfNullOrWhiteSpace(mimeType);
@@ -36,14 +31,14 @@ public class DelegateAssetFile : IAssetFile
         this.openStream = openStream;
     }
 
-    public ValueTask<Stream> OpenReadAsync(
-        CancellationToken ct = default)
+    public Stream OpenRead()
     {
-        return openStream(ct);
+        return openStream();
     }
 
     public ValueTask DisposeAsync()
     {
+        GC.SuppressFinalize(this);
         return default;
     }
 }

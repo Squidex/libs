@@ -15,6 +15,5 @@ public interface IAssetFile : IAsyncDisposable
 
     string MimeType { get; }
 
-    ValueTask<Stream> OpenReadAsync(
-        CancellationToken ct = default);
+    Stream OpenRead();
 }

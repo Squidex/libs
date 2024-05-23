@@ -33,7 +33,7 @@ public static class Utils
                     {
                         var file = (IAssetFile)(await eventContext.GetFileAsync());
 
-                        await using var fileStream = await file.OpenReadAsync(eventContext.CancellationToken);
+                        await using var fileStream = file.OpenRead();
 
                         var name = file.FileName;
 

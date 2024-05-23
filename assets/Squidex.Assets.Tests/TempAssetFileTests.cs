@@ -26,9 +26,7 @@ public class TempAssetFileTests
     [Fact]
     public async Task Should_construct_from_other_file()
     {
-        var source =
-            new DelegateAssetFile("fileName", "file/type", 1024, ct =>
-                new ValueTask<Stream>(new MemoryStream()));
+        var source = new DelegateAssetFile("fileName", "file/type", 1024, () => new MemoryStream());
 
         await using (var result = TempAssetFile.Create(source))
         {

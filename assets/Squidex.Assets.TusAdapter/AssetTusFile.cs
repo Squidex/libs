@@ -113,10 +113,9 @@ public sealed class AssetTusFile : IAssetFile, ITusFile, IAsyncDisposable, IDisp
         return stream.DisposeAsync();
     }
 
-    public ValueTask<Stream> OpenReadAsync(
-        CancellationToken ct = default)
+    public Stream OpenRead()
     {
-        return new ValueTask<Stream>(new NonDisposingStream(stream));
+        return new NonDisposingStream(stream);
     }
 
     public Task<Stream> GetContentAsync(
