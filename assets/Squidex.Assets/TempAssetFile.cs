@@ -44,12 +44,6 @@ public sealed class TempAssetFile : IAssetFile
 
     public Stream OpenRead()
     {
-        return OpenRead();
-    }
-
-    public ValueTask<Stream> OpenReadAsync(
-        CancellationToken ct = default)
-    {
-        return new ValueTask<Stream>(OpenRead());
+        return new NonDisposingStream(stream);
     }
 }
