@@ -19,6 +19,7 @@ public sealed class DallETool : IChatTool
     private readonly DallEOptions options;
     private readonly IAssetStore assetStore;
     private readonly IAssetThumbnailGenerator assetThumbnailGenerator;
+    private readonly IChatProvider chatProvider;
     private readonly IHttpImageEndpoint httpImageEndpoint;
     private readonly IHttpClientFactory httpClientFactory;
 
@@ -38,6 +39,7 @@ public sealed class DallETool : IChatTool
         IOptions<DallEOptions> options,
         IAssetStore assetStore,
         IAssetThumbnailGenerator assetThumbnailGenerator,
+        IChatProvider chatProvider,
         IHttpImageEndpoint httpImageEndpoint,
         IHttpClientFactory httpClientFactory)
     {
@@ -46,6 +48,7 @@ public sealed class DallETool : IChatTool
         this.options = options.Value;
         this.assetStore = assetStore;
         this.assetThumbnailGenerator = assetThumbnailGenerator;
+        this.chatProvider = chatProvider;
         this.httpImageEndpoint = httpImageEndpoint;
         this.httpClientFactory = httpClientFactory;
     }
@@ -95,11 +98,37 @@ public sealed class DallETool : IChatTool
 
         var url = response.Results[0].Url;
 
-        if (!options.DownloadImage)
+        if (options.DownloadImage)
         {
-            return url;
+            url = await DownloadImageAsync(url, toolContext, ct);
         }
 
+        var fileName = await GenerateFileNameAsync(query, toolContext, ct);
+
+        return $"![{fileName}]({url})";
+    }
+
+    private async Task<string> GenerateFileNameAsync(string query, ToolContext toolContext,
+        CancellationToken ct)
+    {
+        var result = await chatProvider.PromptAsync(
+            $"Generate a slugified file name for a webp image from the following query <QUERY>{query}</QUERY>.\nDo not return other content.",
+            toolContext,
+            ct);
+
+        if (result.Any(char.IsLower) &&
+            result.EndsWith(".webp", StringComparison.OrdinalIgnoreCase) &&
+            Uri.IsWellFormedUriString(result, UriKind.Relative))
+        {
+            return result;
+        }
+
+        return "image.webp";
+    }
+
+    private async Task<string> DownloadImageAsync(string url, ToolContext toolContext,
+        CancellationToken ct)
+    {
         var imageId = Guid.NewGuid().ToString();
 
         var imagePath = options.ImagePathPattern.Replace("{IMAGE_ID}", imageId, StringComparison.Ordinal);
