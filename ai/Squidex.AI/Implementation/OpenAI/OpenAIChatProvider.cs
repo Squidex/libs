@@ -16,8 +16,6 @@ namespace Squidex.AI.Implementation.OpenAI;
 
 public sealed class OpenAIChatProvider : IChatProvider
 {
-    private const int CharacterPerToken = 4;
-    private const int MaxToolRuns = 5;
     private readonly StreamOptions streamOptions = new StreamOptions { IncludeUsage = true };
     private readonly OpenAIOptions options;
     private readonly OpenAIService service;
@@ -88,9 +86,11 @@ public sealed class OpenAIChatProvider : IChatProvider
             });
         }
 
+        var maxIterations = options.MaxIterations;
+
         try
         {
-            for (var run = 1; run <= MaxToolRuns; run++)
+            for (var run = 1; run <= maxIterations; run++)
             {
                 var stream = service.ChatCompletion.CreateCompletionAsStream(internalRequest, cancellationToken: ct);
 
@@ -127,8 +127,9 @@ public sealed class OpenAIChatProvider : IChatProvider
                             observer.OnNext(new ChunkEvent { Content = choice.Content });
                         }
                     }
-                    else if (run == MaxToolRuns)
+                    else if (run == maxIterations)
                     {
+                        // This should actually never happen.
                         throw new ChatException($"Exceeded max tool runs.");
                     }
                     else
@@ -140,6 +141,12 @@ public sealed class OpenAIChatProvider : IChatProvider
 
                         internalRequest.Messages.Add(choice);
                         internalRequest.Messages.AddRange(toolsResults);
+
+                        if (run == maxIterations - 1)
+                        {
+                            // Prevent the tool call for the last result, this should actually never happen.
+                            internalRequest.ToolChoice = ToolChoice.None;
+                        }
                     }
                 }
 

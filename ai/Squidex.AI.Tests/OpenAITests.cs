@@ -7,9 +7,7 @@
 
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using Squidex.AI.Implementation.OpenAI;
 using Squidex.AI.Utils;
-using Squidex.Assets;
 using Xunit;
 
 namespace Squidex.AI;
@@ -299,22 +297,6 @@ public class OpenAITests
             }, opts => opts.RespectingRuntimeTypes());
     });
 
-    [Fact]
-    [Trait("Category", "Dependencies")]
-    public async Task Should_create_dall_e_image()
-    {
-        var (sut, _) = CreateSut();
-
-        var request1 = new ChatRequest
-        {
-            Prompt = "Create the image of a puppy.",
-            ConversationId = string.Empty,
-        };
-
-        var message = await sut.PromptAsync(request1, context);
-        Assert.Contains("https://", message.Content, StringComparison.Ordinal);
-    }
-
     private static async Task UseConversationId(Func<string, IChatAgent, IServiceProvider, Task> action)
     {
         var (sut, services) = CreateSut();
@@ -334,12 +316,8 @@ public class OpenAITests
     {
         var services =
             new ServiceCollection()
-                .AddDallE(TestHelpers.Configuration)
                 .AddTool<MathTool>()
                 .AddTool<WheatherTool>()
-                .AddSingleton<IHttpImageEndpoint, ImageEndpoint>()
-                .AddSingleton<IAssetStore, MemoryAssetStore>()
-                .AddSingleton<IAssetThumbnailGenerator, ImageSharpThumbnailGenerator>()
                 .AddOpenAIChat(TestHelpers.Configuration, options =>
                 {
                     options.Seed = 42;

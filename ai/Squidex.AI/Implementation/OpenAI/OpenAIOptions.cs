@@ -16,6 +16,8 @@ public sealed class OpenAIOptions : OpenAiOptions
 
     public int? MaxTokens { get; set; }
 
+    public int MaxIterations { get; set; } = 2;
+
     public int CharactersPerToken { get; set; } = 5;
 
     public int? Seed { get; set; }

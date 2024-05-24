@@ -19,6 +19,10 @@ public sealed class DallEOptions : OpenAiOptions
 
     public string? Quality { get; set; }
 
+    public string PromptResult { get; set; } = "Here is the image as markdown. Do not modify it: <MARKDOWN>![{fileName}]({url})</MARKDOWN>";
+
+    public string PrompFileName { get; set; } = "Generate a slugified file name for a webp image from the following query <QUERY>{query}</QUERY>.\\nDo not return other content.";
+
     public string ImagePathPattern { get; set; } = "dall-e/{IMAGE_ID}";
 
     public bool DownloadImage { get; set; } = false;

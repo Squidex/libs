@@ -105,14 +105,14 @@ public sealed class DallETool : IChatTool
 
         var fileName = await GenerateFileNameAsync(query, toolContext, ct);
 
-        return $"![{fileName}]({url})";
+        return options.PromptResult.Replace("{fileName}", fileName).Replace("{url}", url);
     }
 
     private async Task<string> GenerateFileNameAsync(string query, ToolContext toolContext,
         CancellationToken ct)
     {
         var result = await chatProvider.PromptAsync(
-            $"Generate a slugified file name for a webp image from the following query <QUERY>{query}</QUERY>.\nDo not return other content.",
+            options.PrompFileName.Replace("{query}", query),
             toolContext,
             ct);
 
