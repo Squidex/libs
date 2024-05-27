@@ -105,7 +105,9 @@ public sealed class DallETool : IChatTool
 
         var fileName = await GenerateFileNameAsync(query, toolContext, ct);
 
-        return options.PromptResult.Replace("{fileName}", fileName).Replace("{url}", url);
+        return options.PromptResult
+            .Replace("{fileName}", fileName, StringComparison.Ordinal)
+            .Replace("{fileUrl}", url, StringComparison.Ordinal);
     }
 
     private async Task<string> GenerateFileNameAsync(string query, ToolContext toolContext,

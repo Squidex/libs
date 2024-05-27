@@ -8,6 +8,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Squidex.AI.Utils;
+using Squidex.Hosting;
 using Xunit;
 
 namespace Squidex.AI;
@@ -89,7 +90,7 @@ public class OpenAITests
     [Trait("Category", "Dependencies")]
     public async Task Should_say_hello()
     {
-        var (sut, _) = CreateSut();
+        var (sut, _) = await CreateSutAsync();
 
         var request1 = new ChatRequest
         {
@@ -104,7 +105,7 @@ public class OpenAITests
     [Trait("Category", "Dependencies")]
     public async Task Should_say_hello_with_null()
     {
-        var (sut, _) = CreateSut();
+        var (sut, _) = await CreateSutAsync();
 
         var request1 = new ChatRequest
         {
@@ -119,7 +120,7 @@ public class OpenAITests
     [Trait("Category", "Dependencies")]
     public async Task Should_say_hello_by_configuration()
     {
-        var (sut, _) = CreateSut();
+        var (sut, _) = await CreateSutAsync();
 
         var request1 = new ChatRequest
         {
@@ -135,7 +136,7 @@ public class OpenAITests
     [Trait("Category", "Dependencies")]
     public async Task Should_ask_simple_question()
     {
-        var (sut, _) = CreateSut();
+        var (sut, _) = await CreateSutAsync();
 
         var request1 = new ChatRequest
         {
@@ -200,7 +201,7 @@ public class OpenAITests
     [Trait("Category", "Dependencies")]
     public async Task Should_not_use_tool_for_configuration()
     {
-        var (sut, _) = CreateSut();
+        var (sut, _) = await CreateSutAsync();
 
         var request1 = new ChatRequest
         {
@@ -299,7 +300,7 @@ public class OpenAITests
 
     private static async Task UseConversationId(Func<string, IChatAgent, IServiceProvider, Task> action)
     {
-        var (sut, services) = CreateSut();
+        var (sut, services) = await CreateSutAsync();
 
         var conversationId = Guid.NewGuid().ToString();
         try
@@ -312,7 +313,7 @@ public class OpenAITests
         }
     }
 
-    private static (IChatAgent, IServiceProvider) CreateSut()
+    private static async Task<(IChatAgent, IServiceProvider)> CreateSutAsync()
     {
         var services =
             new ServiceCollection()
@@ -348,6 +349,13 @@ public class OpenAITests
                     };
                 })
                 .BuildServiceProvider();
+
+        var initializables = services.GetRequiredService<IEnumerable<IInitializable>>();
+
+        foreach (var initializable in initializables)
+        {
+            await initializable.InitializeAsync(default);
+        }
 
         return (services.GetRequiredService<IChatAgent>(), services);
     }

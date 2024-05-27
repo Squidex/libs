@@ -59,6 +59,7 @@ public sealed class ChatAgent : IChatAgent
 
         var streamMeta = new ChatMetadata();
         var streamContent = new StringBuilder();
+        var streamTools = new List<IChatTool>();
 
         await foreach (var message in StreamAsync(request, context, ct))
         {
@@ -70,10 +71,15 @@ public sealed class ChatAgent : IChatAgent
                 case MetadataEvent m:
                     streamMeta = m.Metadata;
                     break;
+                case ToolStartEvent t:
+                    streamTools.Add(t.Tool);
+                    break;
             }
         }
 
-        return new ChatResult { Content = streamContent.ToString(), Metadata = streamMeta };
+        var content = streamContent.ToString();
+
+        return new ChatResult { Content = content, Metadata = streamMeta, Tools = streamTools };
     }
 
     public IAsyncEnumerable<ChatEvent> StreamAsync(ChatRequest request, ChatContext? context = null,

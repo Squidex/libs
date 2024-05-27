@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Squidex.AI.Implementation;
 using Squidex.AI.Implementation.OpenAI;
+using Squidex.AI.Implementation.Pinecone;
 
 namespace Squidex.AI;
 
@@ -48,12 +49,24 @@ public static class AIServiceExtensions
     {
         services.Configure(config, configPath, configure);
 
+        services.AddAI();
         services.AddTool<DallETool>();
 
         return services;
     }
 
-    public static IServiceCollection AddOpenAIChat(this IServiceCollection services, IConfiguration config, Action<OpenAIOptions>? configure = null,
+    public static IServiceCollection AddPineconeTool(this IServiceCollection services, IConfiguration config, Action<PineconeOptions>? configure = null,
+        string configPath = "chatBot:pinecone")
+    {
+        services.Configure(config, configPath, configure);
+
+        services.AddAI();
+        services.AddTool<PineconeTool>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddOpenAIChat(this IServiceCollection services, IConfiguration config, Action<OpenAIChatOptions>? configure = null,
         string configPath = "chatBot:openai")
     {
         services.Configure(config, configPath, configure);
@@ -61,6 +74,18 @@ public static class AIServiceExtensions
         services.AddAI();
         services.AddSingletonAs<OpenAIChatProvider>()
             .As<IChatProvider>().AsSelf();
+
+        return services;
+    }
+
+    public static IServiceCollection AddOpenAIEmbeddings(this IServiceCollection services, IConfiguration config, Action<OpenAIEmbeddingsOptions>? configure = null,
+        string configPath = "chatBot:openaiEmbeddings")
+    {
+        services.Configure(config, configPath, configure);
+
+        services.AddAI();
+        services.AddSingletonAs<OpenAIEmbeddings>()
+            .As<IEmbeddings>().AsSelf();
 
         return services;
     }

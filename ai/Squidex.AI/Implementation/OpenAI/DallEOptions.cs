@@ -6,12 +6,13 @@
 // ==========================================================================
 
 using OpenAI;
+using OpenAI.ObjectModels;
 
 namespace Squidex.AI.Implementation.OpenAI;
 
 public sealed class DallEOptions : OpenAiOptions
 {
-    public string? Model { get; set; } = "dall-e-3";
+    public string? Model { get; set; } = Models.Dall_e_3;
 
     public string? Style { get; set; }
 
@@ -19,7 +20,7 @@ public sealed class DallEOptions : OpenAiOptions
 
     public string? Quality { get; set; }
 
-    public string PromptResult { get; set; } = "Here is the image as markdown. Do not modify it: <MARKDOWN>![{fileName}]({url})</MARKDOWN>";
+    public string PromptResult { get; set; } = "Here is the image as markdown. Do not modify it: <MARKDOWN>![{fileName}]({fileUrl})</MARKDOWN>";
 
     public string PrompFileName { get; set; } = "Generate a slugified file name for a webp image from the following query <QUERY>{query}</QUERY>.\\nDo not return other content.";
 

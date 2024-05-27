@@ -17,10 +17,10 @@ namespace Squidex.AI.Implementation.OpenAI;
 public sealed class OpenAIChatProvider : IChatProvider
 {
     private readonly StreamOptions streamOptions = new StreamOptions { IncludeUsage = true };
-    private readonly OpenAIOptions options;
+    private readonly OpenAIChatOptions options;
     private readonly OpenAIService service;
 
-    public OpenAIChatProvider(IOptions<OpenAIOptions> options)
+    public OpenAIChatProvider(IOptions<OpenAIChatOptions> options)
     {
         service = new OpenAIService(options.Value);
 

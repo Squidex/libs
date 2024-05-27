@@ -5,13 +5,12 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.AI;
+using OpenAI;
+using OpenAI.ObjectModels;
 
-public sealed record ChatResult
+namespace Squidex.AI.Implementation.OpenAI;
+
+public sealed class OpenAIEmbeddingsOptions : OpenAiOptions
 {
-    required public ChatMetadata Metadata { get; init; }
-
-    required public List<IChatTool> Tools { get; set; }
-
-    required public string Content { get; init; }
+    public string ModelName { get; set; } = Models.TextEmbeddingV3Large;
 }

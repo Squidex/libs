@@ -41,12 +41,12 @@ public abstract class AssetThumbnailGeneratorTests
     {
 #pragma warning disable RECS0021 // Warns about calls to virtual member functions occuring in the constructor
 #pragma warning disable MA0056 // Do not call overridable members in constructor
-        sut = CreateSut();
+        sut = await CreateSutAsync();
 #pragma warning restore MA0056 // Do not call overridable members in constructor
 #pragma warning restore RECS0021 // Warns about calls to virtual member functions occuring in the constructor
     }
 
-    protected abstract IAssetThumbnailGenerator CreateSut();
+    protected abstract IAssetThumbnailGenerator await CreateSutAsync();
 
     protected abstract string Name();
 

@@ -7,6 +7,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Squidex.AI.Implementation.OpenAI;
+using Squidex.AI.Implementation.Pinecone;
 using Squidex.AI.Utils;
 using Squidex.Assets;
 using Squidex.Hosting;
@@ -14,56 +15,39 @@ using Xunit;
 
 namespace Squidex.AI;
 
-public class DalLETests
+public class PineconeTests
 {
     private readonly ChatContext context = new ChatContext();
 
     [Fact]
     [Trait("Category", "Dependencies")]
-    public async Task Should_create_dall_e_image()
+    public async Task Should_answer_question()
     {
-        var (sut, _) = await CreateSutAsync(downloadImage: false);
+        var (sut, _) = await CreateSutAsync();
 
         var request1 = new ChatRequest
         {
-            Prompt = "Create the image of a puppy.",
+            Prompt = "What is Squidex?",
             ConversationId = string.Empty,
         };
 
         var message = await sut.PromptAsync(request1, context);
-        Assert.Contains("https://", message.Content, StringComparison.Ordinal);
+        Assert.NotEmpty(message.Content);
+        Assert.Contains(message.Tools, x => x is PineconeTool);
     }
 
-    [Fact]
-    [Trait("Category", "Dependencies")]
-    public async Task Should_create_dall_e_image_with_download()
-    {
-        var (sut, _) = await CreateSutAsync(downloadImage: true);
-
-        var request1 = new ChatRequest
-        {
-            Prompt = "Create the image of a puppy.",
-            ConversationId = string.Empty,
-        };
-
-        var message = await sut.PromptAsync(request1, context);
-        Assert.Contains("https://", message.Content, StringComparison.Ordinal);
-    }
-
-    private static async Task<(IChatAgent, IServiceProvider)> CreateSutAsync(bool downloadImage)
+    private static async Task<(IChatAgent, IServiceProvider)> CreateSutAsync()
     {
         var services =
             new ServiceCollection()
-                .AddSingleton<IHttpImageEndpoint, ImageEndpoint>()
-                .AddSingleton<IAssetStore, MemoryAssetStore>()
-                .AddSingleton<IAssetThumbnailGenerator, ImageSharpThumbnailGenerator>()
-                .AddDallE(TestHelpers.Configuration, options =>
-                {
-                    options.DownloadImage = downloadImage;
-                })
                 .AddOpenAIChat(TestHelpers.Configuration, options =>
                 {
                     options.Seed = 42;
+                })
+                .AddOpenAIEmbeddings(TestHelpers.Configuration)
+                .AddPineconeTool(TestHelpers.Configuration, options =>
+                {
+                    options.ToolDescription = "Answers questions about Squidex.";
                 })
                 .Configure<ChatOptions>(options =>
                 {

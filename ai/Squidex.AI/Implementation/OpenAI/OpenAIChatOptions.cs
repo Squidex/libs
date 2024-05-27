@@ -10,7 +10,7 @@ using OpenAI.ObjectModels;
 
 namespace Squidex.AI.Implementation.OpenAI;
 
-public sealed class OpenAIOptions : OpenAiOptions
+public sealed class OpenAIChatOptions : OpenAiOptions
 {
     public string Model { get; set; } = Models.Gpt_3_5_Turbo;
 
