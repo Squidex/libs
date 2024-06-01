@@ -39,7 +39,10 @@ public static class AIServiceExtensions
     public static IServiceCollection AddTool<T>(this IServiceCollection services) where T : class, IChatTool
     {
         services.AddSingletonAs<T>()
-            .As<IChatTool>();
+            .AsSelf();
+
+        services.AddSingletonAs<SingleChatToolProvider<T>>()
+            .As<IChatToolProvider>();
 
         return services;
     }

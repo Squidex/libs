@@ -259,7 +259,17 @@ public class OpenAITests
     [Trait("Category", "Dependencies")]
     public Task Should_ask_question_with_tool_as_streaming() => UseConversationId(async (conversationId, sut, services) =>
     {
-        var tool = services.GetRequiredService<IEnumerable<IChatTool>>().Single(x => x is MathTool);
+        var tools = new List<IChatTool>();
+
+        foreach (var provider in services.GetRequiredService<IEnumerable<IChatToolProvider>>())
+        {
+            await foreach (var tool in provider.GetToolsAsync(new ChatContext(), default))
+            {
+                tools.Add(tool);
+            }
+        }
+
+        var mathTool = tools.Single(x => x is MathTool);
 
         var request1 = new ChatRequest
         {
@@ -271,8 +281,8 @@ public class OpenAITests
 
         stream1.Should().BeEquivalentTo(new List<ChatEvent>
             {
-                new ToolStartEvent { Tool = tool, },
-                new ToolEndEvent { Tool = tool, },
+                new ToolStartEvent { Tool = mathTool, },
+                new ToolEndEvent { Tool = mathTool, },
                 new ChunkEvent { Content = "The" },
                 new ChunkEvent { Content = " result" },
                 new ChunkEvent { Content = " of" },

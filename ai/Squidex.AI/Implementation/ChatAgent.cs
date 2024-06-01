@@ -16,23 +16,23 @@ public sealed class ChatAgent : IChatAgent
     private readonly ChatOptions options;
     private readonly IChatProvider chatProvider;
     private readonly IChatStore chatStore;
-    private readonly List<IChatTool> chatTools;
+    private readonly List<IChatToolProvider> chatToolProviders;
 
     public bool IsConfigured => chatProvider is not NoopChatProvider;
 
     public ChatAgent(
         IChatProvider chatProvider,
         IChatStore chatStore,
-        IEnumerable<IChatTool> chatTools,
+        IEnumerable<IChatToolProvider> chatToolProviders,
         IOptions<ChatOptions> options)
     {
         this.options = options.Value;
         this.chatProvider = chatProvider;
         this.chatStore = chatStore;
-        this.chatTools = chatTools.ToList();
+        this.chatToolProviders = chatToolProviders.ToList();
     }
 
-    public async Task StopConversationAsync(string conversationId,
+    public async Task StopConversationAsync(string conversationId, ChatContext? context = null,
         CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(conversationId);
@@ -46,9 +46,14 @@ public sealed class ChatAgent : IChatAgent
 
         await chatStore.RemoveAsync(conversationId, ct);
 
-        foreach (var tool in chatTools)
+        foreach (var provider in chatToolProviders)
         {
-            await tool.CleanupAsync(conversation.ToolData, ct);
+            context ??= new ChatContext();
+
+            await foreach (var tool in provider.GetToolsAsync(context, ct))
+            {
+                await tool.CleanupAsync(conversation.ToolData, ct);
+            }
         }
     }
 
@@ -117,8 +122,8 @@ public sealed class ChatAgent : IChatAgent
             Context = context,
             History = conversation.History,
             Tool = request.Tool,
+            Tools = await GetToolsAsync(configuration, context, ct),
             ToolData = conversation.ToolData,
-            Tools = GetTools(configuration),
         };
 
         var streamCosts = 0m;
@@ -169,13 +174,20 @@ public sealed class ChatAgent : IChatAgent
         }
     }
 
-    private List<IChatTool> GetTools(ChatConfiguration configuration)
+    private async Task<List<IChatTool>> GetToolsAsync(ChatConfiguration configuration, ChatContext context,
+        CancellationToken ct)
     {
-        var tools = chatTools;
+        var tools = new List<IChatTool>();
 
-        if (configuration.Tools != null)
+        foreach (var toolProvider in chatToolProviders)
         {
-            tools = tools.Where(x => configuration.Tools.Contains(x.Spec.Name)).ToList();
+            await foreach (var tool in toolProvider.GetToolsAsync(context, ct))
+            {
+                if (configuration.Tools?.Contains(tool.Spec.Name) != false)
+                {
+                    tools.Add(tool);
+                }
+            }
         }
 
         return tools;

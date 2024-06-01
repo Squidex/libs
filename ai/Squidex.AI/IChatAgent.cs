@@ -11,7 +11,7 @@ public interface IChatAgent
 {
     bool IsConfigured { get; }
 
-    Task StopConversationAsync(string conversationId,
+    Task StopConversationAsync(string conversationId, ChatContext? context = null,
         CancellationToken ct = default);
 
     Task<ChatResult> PromptAsync(ChatRequest request, ChatContext? context = null,
