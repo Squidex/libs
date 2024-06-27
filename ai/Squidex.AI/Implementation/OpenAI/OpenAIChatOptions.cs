@@ -12,7 +12,7 @@ namespace Squidex.AI.Implementation.OpenAI;
 
 public sealed class OpenAIChatOptions : OpenAiOptions
 {
-    public string Model { get; set; } = Models.Gpt_3_5_Turbo;
+    public string Model { get; set; } = Models.Gpt_4o;
 
     public int? MaxTokens { get; set; }
 

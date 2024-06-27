@@ -13,9 +13,9 @@ public sealed class ChatOptions
 
     public Dictionary<string, ChatConfiguration> Configurations { get; set; } = [];
 
-    public decimal PricePerInputTokenInEUR { get; set; } = 0.003m / 1000;
+    public decimal PricePerInputTokenInEUR { get; set; } = 0.005m / 1000;
 
-    public decimal PricePerOutputTokenInEUR { get; set; } = 0.004m / 1000;
+    public decimal PricePerOutputTokenInEUR { get; set; } = 0.010m / 1000;
 
     public Dictionary<string, decimal> ToolCostsInEur { get; set; } = [];
 

@@ -138,10 +138,12 @@ public class AzureBlobAssetStore : IAssetStore, IInitializable
         {
             var blob = blobContainer.GetBlobClient(name);
 
-            var downloadOptions = new BlobDownloadOptions
+            var downloadOptions = new BlobDownloadOptions();
+
+            if (range.IsDefined)
             {
-                Range = new HttpRange(range.From ?? 0, range.To)
-            };
+                downloadOptions.Range = new HttpRange(range.From ?? 0, range.Length);
+            }
 
             var result = await blob.DownloadStreamingAsync(downloadOptions, ct);
 

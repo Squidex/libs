@@ -36,6 +36,14 @@ public static class AIServiceExtensions
         return services;
     }
 
+    public static IServiceCollection AddAIPipe<T>(this IServiceCollection services) where T : class, IChatPipe
+    {
+        services.AddSingletonAs<T>()
+            .As<IChatPipe>();
+
+        return services;
+    }
+
     public static IServiceCollection AddTool<T>(this IServiceCollection services) where T : class, IChatTool
     {
         services.AddSingletonAs<T>()
@@ -53,7 +61,20 @@ public static class AIServiceExtensions
         services.Configure(config, configPath, configure);
 
         services.AddAI();
-        services.AddTool<DallETool>();
+
+        services.AddSingletonAs<DallETool>()
+            .AsSelf().As<IImageTool>();
+
+        services.AddSingletonAs<SingleChatToolProvider<DallETool>>()
+            .As<IChatToolProvider>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddAIImagePipe(this IServiceCollection services)
+    {
+        services.AddAI();
+        services.AddAIPipe<ImagePipe>();
 
         return services;
     }

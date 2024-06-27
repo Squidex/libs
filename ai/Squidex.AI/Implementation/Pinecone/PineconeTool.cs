@@ -55,6 +55,8 @@ public sealed class PineconeTool : IChatTool, IInitializable
     public async Task<string> ExecuteAsync(ToolContext toolContext,
         CancellationToken ct)
     {
+        ArgumentNullException.ThrowIfNull(toolContext);
+
         if (index == null)
         {
             throw new InvalidOperationException("Not initialized yet.");

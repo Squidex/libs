@@ -12,7 +12,7 @@ using Squidex.Assets;
 
 namespace Squidex.AI.Implementation.OpenAI;
 
-public sealed class DallETool : IChatTool
+public sealed class DallETool : IImageTool
 {
     private const string DataPrefix = "dall_e_image";
     private readonly OpenAIService service;
@@ -68,6 +68,8 @@ public sealed class DallETool : IChatTool
     public async Task<string> ExecuteAsync(ToolContext toolContext,
         CancellationToken ct)
     {
+        ArgumentNullException.ThrowIfNull(toolContext);
+
         if (!toolContext.Arguments.TryGetValue("query", out var queryArg))
         {
             throw new ChatException("Missing argument 'query'.");
@@ -100,7 +102,7 @@ public sealed class DallETool : IChatTool
 
         if (options.DownloadImage)
         {
-            url = await DownloadImageAsync(url, toolContext, ct);
+            url = await DownloadImageAsync(url, null, ct);
         }
 
         var fileName = await GenerateFileNameAsync(query, toolContext, ct);
@@ -128,7 +130,7 @@ public sealed class DallETool : IChatTool
         return "image.webp";
     }
 
-    private async Task<string> DownloadImageAsync(string url, ToolContext toolContext,
+    private async Task<string> DownloadImageAsync(string url, ToolContext? toolContext,
         CancellationToken ct)
     {
         var imageId = Guid.NewGuid().ToString();
@@ -157,8 +159,13 @@ public sealed class DallETool : IChatTool
         tempStream.Position = 0;
 
         await assetStore.UploadAsync(imagePath, tempStream, true, ct);
+        tempStream.Position = 0;
 
-        toolContext.ToolData[$"{DataPrefix}_{imageId}"] = imagePath;
+        if (toolContext != null)
+        {
+            toolContext.ToolData[$"{DataPrefix}_{imageId}"] = imagePath;
+        }
+
         return imageUrl;
     }
 }

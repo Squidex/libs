@@ -234,13 +234,13 @@ public abstract class AssetStoreTests<T> where T : IAssetStore
     {
         var path = GetPath(testCase);
 
-        await Sut.UploadAsync(path, assetSmall, true);
+        await Sut.UploadAsync(path, assetLarge, true);
 
         var readData = new MemoryStream();
 
-        await Sut.DownloadAsync(path, readData, new BytesRange(1, 2));
+        await Sut.DownloadAsync(path, readData, new BytesRange(2, 5));
 
-        Assert.Equal(new Span<byte>(assetSmall.ToArray()).Slice(1, 2).ToArray(), readData.ToArray());
+        Assert.Equal(assetLarge.ToArray().AsSpan().Slice(2, 4).ToArray(), readData.ToArray());
     }
 
     [Theory]

@@ -16,20 +16,23 @@ public sealed class ChatAgent : IChatAgent
     private readonly ChatOptions options;
     private readonly IChatProvider chatProvider;
     private readonly IChatStore chatStore;
-    private readonly List<IChatToolProvider> chatToolProviders;
+    private readonly IEnumerable<IChatPipe> chatPipes;
+    private readonly IEnumerable<IChatToolProvider> chatToolProviders;
 
     public bool IsConfigured => chatProvider is not NoopChatProvider;
 
     public ChatAgent(
         IChatProvider chatProvider,
         IChatStore chatStore,
+        IEnumerable<IChatPipe> chatPipes,
         IEnumerable<IChatToolProvider> chatToolProviders,
         IOptions<ChatOptions> options)
     {
         this.options = options.Value;
+        this.chatPipes = chatPipes;
         this.chatProvider = chatProvider;
         this.chatStore = chatStore;
-        this.chatToolProviders = chatToolProviders.ToList();
+        this.chatToolProviders = chatToolProviders;
     }
 
     public async Task StopConversationAsync(string conversationId, ChatContext? context = null,
@@ -129,7 +132,14 @@ public sealed class ChatAgent : IChatAgent
         var streamCosts = 0m;
         var streamContent = new StringBuilder();
 
-        await foreach (var @event in chatProvider.StreamAsync(providerRequest, ct).WithCancellation(ct))
+        var stream = chatProvider.StreamAsync(providerRequest, ct);
+
+        foreach (var pipe in chatPipes)
+        {
+            stream = pipe.StreamAsync(stream, providerRequest, ct);
+        }
+
+        await foreach (var @event in stream.WithCancellation(ct))
         {
             if (@event is ChatFinishEvent f)
             {

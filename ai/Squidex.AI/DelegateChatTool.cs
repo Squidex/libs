@@ -20,8 +20,11 @@ public sealed class DelegateChatTool : IChatTool
         this.action = action;
     }
 
-    public Task<string> ExecuteAsync(ToolContext toolContext, CancellationToken ct)
+    public Task<string> ExecuteAsync(ToolContext toolContext,
+        CancellationToken ct)
     {
+        ArgumentNullException.ThrowIfNull(toolContext);
+
         return action(toolContext, ct);
     }
 }
