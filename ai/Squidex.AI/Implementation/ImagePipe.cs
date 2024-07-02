@@ -68,7 +68,7 @@ public sealed class ImagePipe : IChatPipe
                                 ToolData = request.ToolData
                             };
 
-                            result = await imageGenerator.ExecuteAsync(toolContext, ct);
+                            result = await imageGenerator.GenerateAsync(toolContext, ct);
 
                             yield return new ToolEndEvent { Tool = imageGenerator, Result = result };
                         }
