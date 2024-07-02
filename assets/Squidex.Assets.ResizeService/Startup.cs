@@ -27,11 +27,11 @@ public sealed class Startup
         services.AddDefaultWebServices(configuration);
         services.AddSingleton<ImageResizer>();
 
-        services.AddSingletonAs(c => new CompositeThumbnailGenerator(new IAssetThumbnailGenerator[]
-        {
+        services.AddSingletonAs(c => new CompositeThumbnailGenerator(
+        [
             new ImageSharpThumbnailGenerator(),
             new ImageMagickThumbnailGenerator()
-        }, options.MaxTasks)).As<IAssetThumbnailGenerator>();
+        ], options.MaxTasks)).As<IAssetThumbnailGenerator>();
     }
 
     public void Configure(IApplicationBuilder app)

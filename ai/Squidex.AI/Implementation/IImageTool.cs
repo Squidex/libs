@@ -9,4 +9,6 @@ namespace Squidex.AI.Implementation;
 
 public interface IImageTool : IChatTool
 {
+    Task<string> GenerateAsync(ToolContext toolContext,
+        CancellationToken ct);
 }

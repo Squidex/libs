@@ -485,7 +485,7 @@ public class SemanticLogTests
         A.CallTo(() => channel1.Log(A<SemanticLogLevel>._, A<string>._)).Throws(exception1);
         A.CallTo(() => channel2.Log(A<SemanticLogLevel>._, A<string>._)).Throws(exception2);
 
-        var sut = new SemanticLog(options, new[] { channel1, channel2 }, Enumerable.Empty<ILogAppender>(), JsonLogWriterFactory.Default());
+        var sut = new SemanticLog(options, [channel1, channel2], [], JsonLogWriterFactory.Default());
 
         try
         {

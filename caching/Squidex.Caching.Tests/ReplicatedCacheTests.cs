@@ -39,11 +39,10 @@ public class ReplicatedCacheTests
     public async Task Should_serve_from_cache_when_many_added()
     {
         await sut.AddAsync(
-            new[]
-            {
+            [
                 new KeyValuePair<string, object?>("Key1", 1),
                 new KeyValuePair<string, object?>("Key2", 1),
-            },
+            ],
             TimeSpan.FromMinutes(10));
 
         AssertCache(sut, "Key1", 1, true);

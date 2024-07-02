@@ -13,8 +13,8 @@ namespace Squidex.Assets;
 [Trait("Category", "Dependencies")]
 public class RemoteThumbnailGeneratorTests : AssetThumbnailGeneratorTests
 {
-    protected override HashSet<ImageFormat> SupportedFormats => new HashSet<ImageFormat>
-    {
+    protected override HashSet<ImageFormat> SupportedFormats =>
+    [
         ImageFormat.BMP,
         ImageFormat.PNG,
         ImageFormat.GIF,
@@ -22,7 +22,7 @@ public class RemoteThumbnailGeneratorTests : AssetThumbnailGeneratorTests
         ImageFormat.TGA,
         ImageFormat.TIFF,
         ImageFormat.WEBP
-    };
+    ];
 
     protected override string Name()
     {
@@ -41,11 +41,11 @@ public class RemoteThumbnailGeneratorTests : AssetThumbnailGeneratorTests
 
         var httpClientFactory = services.GetRequiredService<IHttpClientFactory>();
 
-        var inner = new CompositeThumbnailGenerator(new IAssetThumbnailGenerator[]
-        {
+        var inner = new CompositeThumbnailGenerator(
+        [
             new ImageSharpThumbnailGenerator(),
             new ImageMagickThumbnailGenerator()
-        });
+        ]);
 
         return new RemoteThumbnailGenerator(httpClientFactory, inner);
     }

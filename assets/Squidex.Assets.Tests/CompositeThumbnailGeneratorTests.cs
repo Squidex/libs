@@ -16,10 +16,10 @@ public class CompositeThumbnailGeneratorTests : AssetThumbnailGeneratorTests
 
     protected override IAssetThumbnailGenerator CreateSut()
     {
-        return new CompositeThumbnailGenerator(new IAssetThumbnailGenerator[]
-        {
+        return new CompositeThumbnailGenerator(
+        [
             new ImageSharpThumbnailGenerator(),
             new ImageMagickThumbnailGenerator()
-        });
+        ]);
     }
 }

@@ -15,7 +15,7 @@ public class ConfigurationException : Exception
     public IReadOnlyList<ConfigurationError> Errors { get; }
 
     public ConfigurationException(ConfigurationError error, Exception? inner = null)
-        : this(new List<ConfigurationError> { error }, inner)
+        : this([error], inner)
     {
     }
 

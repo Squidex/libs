@@ -53,14 +53,16 @@ public sealed class ImagePipe : IChatPipe
 
                         if (!string.IsNullOrEmpty(description))
                         {
-                            yield return new ToolStartEvent { Tool = imageGenerator };
+                            var args = new Dictionary<string, ToolValue>
+                            {
+                                ["query"] = new ToolStringValue(description),
+                            };
+
+                            yield return new ToolStartEvent { Tool = imageGenerator, Arguments = args };
 
                             var toolContext = new ToolContext
                             {
-                                Arguments = new Dictionary<string, ToolValue>
-                                {
-                                    ["query"] = new ToolStringValue(description),
-                                },
+                                Arguments = args,
                                 ChatAgent = request.ChatAgent,
                                 Context = request.Context,
                                 ToolData = request.ToolData
@@ -68,7 +70,7 @@ public sealed class ImagePipe : IChatPipe
 
                             result = await imageGenerator.ExecuteAsync(toolContext, ct);
 
-                            yield return new ToolEndEvent { Tool = imageGenerator };
+                            yield return new ToolEndEvent { Tool = imageGenerator, Result = result };
                         }
 
                         var beforeImage = bufferText[..imageStart];

@@ -11,7 +11,9 @@ public sealed record ChatResult
 {
     required public ChatMetadata Metadata { get; init; }
 
-    required public List<IChatTool> Tools { get; set; }
+    required public List<ToolStartEvent> ToolStarts { get; set; }
+
+    required public List<ToolEndEvent> ToolEnds { get; set; }
 
     required public string Content { get; init; }
 }

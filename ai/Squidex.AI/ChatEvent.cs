@@ -20,11 +20,15 @@ public abstract record ChatEvent : InternalChatEvent
 public sealed record ToolStartEvent : ChatEvent
 {
     required public IChatTool Tool { get; init; }
+
+    required public Dictionary<string, ToolValue> Arguments { get; set; }
 }
 
 public sealed record ToolEndEvent : ChatEvent
 {
     required public IChatTool Tool { get; init; }
+
+    required public string Result { get; set; }
 }
 
 public sealed record MetadataEvent : ChatEvent

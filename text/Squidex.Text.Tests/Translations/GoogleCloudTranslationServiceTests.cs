@@ -58,7 +58,7 @@ public class GoogleCloudTranslationServiceTests : TranslationServiceTestsBase
                 .BuildServiceProvider()
                 .GetRequiredService<ITranslationService>();
 
-        var results = await sut.TranslateAsync(new[] { "Hello" }, "en");
+        var results = await sut.TranslateAsync(["Hello"], "en");
 
         Assert.All(results, x => Assert.Equal(TranslationStatus.NotConfigured, x.Status));
     }
@@ -69,10 +69,7 @@ public class GoogleCloudTranslationServiceTests : TranslationServiceTestsBase
     {
         var service = CreateService();
 
-        var results = await service.TranslateAsync(new[]
-        {
-            "World"
-        }, "ko", "en");
+        var results = await service.TranslateAsync(["World"], "ko", "en");
 
         Assert.Equal(new[]
         {
@@ -86,10 +83,7 @@ public class GoogleCloudTranslationServiceTests : TranslationServiceTestsBase
     {
         var service = CreateService();
 
-        var results = await service.TranslateAsync(new[]
-        {
-            "World"
-        }, "he-IL", "en");
+        var results = await service.TranslateAsync(["World"], "he-IL", "en");
 
         Assert.Equal(new[]
         {

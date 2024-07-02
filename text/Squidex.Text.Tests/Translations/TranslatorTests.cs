@@ -22,11 +22,11 @@ public class TranslatorTests
     {
         ct = cts.Token;
 
-        sut = new Translator(new[]
-        {
+        sut = new Translator(
+        [
             service1,
             service2
-        });
+        ]);
     }
 
     [Fact]
@@ -41,11 +41,11 @@ public class TranslatorTests
         A.CallTo(() => service1.IsConfigured)
             .Returns(true);
 
-        var sut2 = new Translator(new[]
-        {
+        var sut2 = new Translator(
+        [
             service1,
             service2
-        });
+        ]);
 
         Assert.True(sut2.IsConfigured);
     }
@@ -56,11 +56,11 @@ public class TranslatorTests
         A.CallTo(() => service2.IsConfigured)
             .Returns(true);
 
-        var sut2 = new Translator(new[]
-        {
+        var sut2 = new Translator(
+        [
             service1,
             service2
-        });
+        ]);
 
         Assert.True(sut2.IsConfigured);
     }
@@ -73,11 +73,11 @@ public class TranslatorTests
         A.CallTo(() => service2.IsConfigured)
             .Returns(true);
 
-        var sut2 = new Translator(new[]
-        {
+        var sut2 = new Translator(
+        [
             service1,
             service2
-        });
+        ]);
 
         Assert.True(sut2.IsConfigured);
     }
@@ -85,7 +85,7 @@ public class TranslatorTests
     [Fact]
     public async Task Should_not_call_service_for_empty_request()
     {
-        await sut.TranslateAsync(Enumerable.Empty<string>(), "en", ct: ct);
+        await sut.TranslateAsync([], "en", ct: ct);
 
         A.CallTo(() => service1.TranslateAsync(A<IEnumerable<string>>._, A<string>._, A<string>._, ct))
             .MustNotHaveHappened();
@@ -98,12 +98,9 @@ public class TranslatorTests
     public async Task Should_serve_results_from_first_service()
     {
         A.CallTo(() => service1.TranslateAsync(IsRequest("KeyA"), "de", null!, ct))
-            .Returns(new List<TranslationResult>
-            {
-                TranslationResult.Success("TextA", "en", 10)
-            });
+            .Returns([TranslationResult.Success("TextA", "en", 10)]);
 
-        var results = await sut.TranslateAsync(new[] { "KeyA" }, "de", ct: ct);
+        var results = await sut.TranslateAsync(["KeyA"], "de", ct: ct);
 
         Assert.Equal(new[]
         {
@@ -118,18 +115,12 @@ public class TranslatorTests
     public async Task Should_serve_results_from_second_service_if_first_failed()
     {
         A.CallTo(() => service1.TranslateAsync(IsRequest("KeyA"), "de", null!, ct))
-            .Returns(new List<TranslationResult>
-            {
-                TranslationResult.Failed()
-            });
+            .Returns([TranslationResult.Failed()]);
 
         A.CallTo(() => service2.TranslateAsync(IsRequest("KeyA"), "de", null!, ct))
-            .Returns(new List<TranslationResult>
-            {
-                TranslationResult.Success("TextA", "en", 13)
-            });
+            .Returns([TranslationResult.Success("TextA", "en", 13)]);
 
-        var results = await sut.TranslateAsync(new[] { "KeyA" }, "de", ct: ct);
+        var results = await sut.TranslateAsync(["KeyA"], "de", ct: ct);
 
         Assert.Equal(new[]
         {
@@ -141,22 +132,22 @@ public class TranslatorTests
     public async Task Should_enrich_failed_results()
     {
         A.CallTo(() => service1.TranslateAsync(IsRequest("KeyA", "KeyB", "KeyC", "KeyD"), "de", null!, ct))
-            .Returns(new List<TranslationResult>
-            {
+            .Returns(
+            [
                 TranslationResult.Success("TextA", "en", 13),
                 TranslationResult.Failed(),
                 TranslationResult.Failed(),
                 TranslationResult.Success("TextD", "en", 6)
-            });
+            ]);
 
         A.CallTo(() => service2.TranslateAsync(IsRequest("KeyB", "KeyC"), "de", null!, ct))
-            .Returns(new List<TranslationResult>
-            {
+            .Returns(
+            [
                 TranslationResult.Success("TextB", "en", 17),
                 TranslationResult.Success("TextC", "en", 11)
-            });
+            ]);
 
-        var results = await sut.TranslateAsync(new[] { "KeyA", "KeyB", "KeyC", "KeyD" }, "de", ct: ct);
+        var results = await sut.TranslateAsync(["KeyA", "KeyB", "KeyC", "KeyD"], "de", ct: ct);
 
         Assert.Equal(new[]
         {

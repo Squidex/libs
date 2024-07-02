@@ -65,7 +65,19 @@ public sealed class DallETool : IImageTool
         }
     }
 
-    public async Task<string> ExecuteAsync(ToolContext toolContext,
+    public Task<string> GenerateAsync(ToolContext toolContext,
+        CancellationToken ct)
+    {
+        return ExecuteCoreAsync(toolContext, options.GenerateResult, ct);
+    }
+
+    public Task<string> ExecuteAsync(ToolContext toolContext,
+        CancellationToken ct)
+    {
+        return ExecuteCoreAsync(toolContext, options.PromptResult, ct);
+    }
+
+    private async Task<string> ExecuteCoreAsync(ToolContext toolContext, string format,
         CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(toolContext);
@@ -105,11 +117,16 @@ public sealed class DallETool : IImageTool
             url = await DownloadImageAsync(url, null, ct);
         }
 
-        var fileName = await GenerateFileNameAsync(query, toolContext, ct);
+        var result = format.Replace("{url}", url, StringComparison.Ordinal);
 
-        return options.PromptResult
-            .Replace("{fileName}", fileName, StringComparison.Ordinal)
-            .Replace("{fileUrl}", url, StringComparison.Ordinal);
+        if (format.Contains("{name}", StringComparison.Ordinal))
+        {
+            var fileName = await GenerateFileNameAsync(query, toolContext, ct);
+
+            result = result.Replace("{fileName}", fileName, StringComparison.Ordinal);
+        }
+
+        return result;
     }
 
     private async Task<string> GenerateFileNameAsync(string query, ToolContext toolContext,
@@ -120,14 +137,12 @@ public sealed class DallETool : IImageTool
             toolContext,
             ct);
 
-        if (result.Any(char.IsLower) &&
-            result.EndsWith(".webp", StringComparison.OrdinalIgnoreCase) &&
-            Uri.IsWellFormedUriString(result, UriKind.Relative))
+        if (result.Any(char.IsLower) && Uri.IsWellFormedUriString(result, UriKind.Relative))
         {
             return result;
         }
 
-        return "image.webp";
+        return "image";
     }
 
     private async Task<string> DownloadImageAsync(string url, ToolContext? toolContext,

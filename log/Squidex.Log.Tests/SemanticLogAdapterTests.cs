@@ -42,7 +42,7 @@ public class SemanticLogAdapterTests
                 output = message;
             });
 
-        log = new Lazy<SemanticLog>(() => new SemanticLog(options, channels, new List<ILogAppender>(), JsonLogWriterFactory.Default()));
+        log = new Lazy<SemanticLog>(() => new SemanticLog(options, channels, [], JsonLogWriterFactory.Default()));
 
         sut = SemanticLogLoggerProvider.ForTesting(log.Value);
     }

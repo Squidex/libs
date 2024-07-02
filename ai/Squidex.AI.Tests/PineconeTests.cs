@@ -29,8 +29,9 @@ public class PineconeTests
         };
 
         var message = await sut.PromptAsync(request1, context);
+
         Assert.NotEmpty(message.Content);
-        Assert.Contains(message.Tools, x => x is PineconeTool);
+        Assert.Contains(message.ToolEnds.Select(x => x.Tool), x => x is PineconeTool);
     }
 
     private static async Task<(IChatAgent, IServiceProvider)> CreateSutAsync()

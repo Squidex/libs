@@ -78,7 +78,7 @@ public sealed class ReplicatedCache : IReplicatedCache, IMessageHandler<CacheInv
     {
         ArgumentNullException.ThrowIfNull(key);
 
-        return RemoveAsync(new[] { key }, ct);
+        return RemoveAsync([key], ct);
     }
 
     public Task RemoveAsync(string key1, string key2,
@@ -87,7 +87,7 @@ public sealed class ReplicatedCache : IReplicatedCache, IMessageHandler<CacheInv
         ArgumentNullException.ThrowIfNull(key1);
         ArgumentNullException.ThrowIfNull(key2);
 
-        return RemoveAsync(new[] { key1, key2 }, ct);
+        return RemoveAsync([key1, key2], ct);
     }
 
     public async Task RemoveAsync(string[] keys,

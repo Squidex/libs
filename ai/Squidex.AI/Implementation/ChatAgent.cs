@@ -65,29 +65,39 @@ public sealed class ChatAgent : IChatAgent
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var streamMeta = new ChatMetadata();
-        var streamContent = new StringBuilder();
-        var streamTools = new List<IChatTool>();
+        var contents = new StringBuilder();
+        var toolStarts = new List<ToolStartEvent>();
+        var toolEnds = new List<ToolEndEvent>();
+        var metadata = new ChatMetadata();
 
         await foreach (var message in StreamAsync(request, context, ct))
         {
             switch (message)
             {
                 case ChunkEvent c:
-                    streamContent.Append(c.Content);
+                    contents.Append(c.Content);
                     break;
                 case MetadataEvent m:
-                    streamMeta = m.Metadata;
+                    metadata = m.Metadata;
                     break;
-                case ToolStartEvent t:
-                    streamTools.Add(t.Tool);
+                case ToolStartEvent s:
+                    toolStarts.Add(s);
+                    break;
+                case ToolEndEvent e:
+                    toolEnds.Add(e);
                     break;
             }
         }
 
-        var content = streamContent.ToString();
+        var content = contents.ToString();
 
-        return new ChatResult { Content = content, Metadata = streamMeta, Tools = streamTools };
+        return new ChatResult
+        {
+            Content = content,
+            ToolStarts = toolStarts,
+            ToolEnds = toolEnds,
+            Metadata = metadata,
+        };
     }
 
     public IAsyncEnumerable<ChatEvent> StreamAsync(ChatRequest request, ChatContext? context = null,

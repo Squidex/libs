@@ -35,7 +35,7 @@ public sealed class HandlerPipeline
                 var messageType = method.GetParameters()[0].ParameterType;
                 var messageBuilder = GetType().GetMethod(nameof(BuildCaller), BindingFlags.NonPublic | BindingFlags.Static)!.MakeGenericMethod(messageType);
 
-                var builtDelegate = messageBuilder.Invoke(null, new object[] { handler });
+                var builtDelegate = messageBuilder.Invoke(null, [handler]);
 
                 if (builtDelegate is Func<object, CancellationToken, Task> typed)
                 {

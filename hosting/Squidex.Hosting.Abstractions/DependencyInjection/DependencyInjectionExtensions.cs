@@ -143,7 +143,7 @@ public static class DependencyInjectionExtensions
                 {
                     var wrapped = (TService)innerFactory(s);
 
-                    return factory(s, new object[] { wrapped });
+                    return factory(s, [wrapped]);
                 },
                 lifetime));
 

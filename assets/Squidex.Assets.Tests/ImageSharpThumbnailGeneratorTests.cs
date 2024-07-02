@@ -11,8 +11,8 @@ namespace Squidex.Assets;
 
 public class ImageSharpThumbnailGeneratorTests : AssetThumbnailGeneratorTests
 {
-    protected override HashSet<ImageFormat> SupportedFormats => new HashSet<ImageFormat>
-    {
+    protected override HashSet<ImageFormat> SupportedFormats =>
+    [
         ImageFormat.BMP,
         ImageFormat.PNG,
         ImageFormat.GIF,
@@ -20,7 +20,7 @@ public class ImageSharpThumbnailGeneratorTests : AssetThumbnailGeneratorTests
         ImageFormat.TGA,
         ImageFormat.TIFF,
         ImageFormat.WEBP
-    };
+    ];
 
     protected override string Name()
     {

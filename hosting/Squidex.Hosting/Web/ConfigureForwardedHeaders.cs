@@ -25,10 +25,10 @@ public sealed class ConfigureForwardedHeaders : IConfigureOptions<ForwardedHeade
 
     public void Configure(ForwardedHeadersOptions options)
     {
-        options.AllowedHosts = new List<string>
-        {
+        options.AllowedHosts =
+        [
             urlGenerator.BuildHost().ToString()
-        };
+        ];
 
         options.ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
         options.ForwardLimit = null;

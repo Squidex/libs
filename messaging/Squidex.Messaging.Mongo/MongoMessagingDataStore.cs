@@ -41,8 +41,7 @@ public sealed class MongoMessagingDataStore : IMessagingDataStore, IInitializabl
         CancellationToken ct)
     {
         return collection.Indexes.CreateManyAsync(
-            new[]
-            {
+            [
                 new CreateIndexModel<Entity>(
                     Builders<Entity>.IndexKeys
                         .Ascending(x => x.Group)
@@ -54,7 +53,7 @@ public sealed class MongoMessagingDataStore : IMessagingDataStore, IInitializabl
                     {
                         ExpireAfter = TimeSpan.Zero
                     })
-            }, ct);
+            ], ct);
     }
 
     public async Task<IReadOnlyList<Entry>> GetEntriesAsync(string group,

@@ -72,7 +72,7 @@ public class ImagePipeTests
         var source = new IEnumerable<InternalChatEvent>[]
         {
             CreateEvents("<IMG>Small "),
-            [new ToolStartEvent { Tool = null! }],
+            [new ToolStartEvent { Tool = null!, Arguments = null! }],
             CreateEvents("Puppet</IMG>")
         }.SelectMany(x => x).ToAsyncEnumerable();
 

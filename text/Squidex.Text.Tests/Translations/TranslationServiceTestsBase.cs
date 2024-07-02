@@ -18,7 +18,7 @@ public abstract class TranslationServiceTestsBase
     {
         var service = CreateService();
 
-        var results = await service.TranslateAsync(Enumerable.Empty<string>(), "en");
+        var results = await service.TranslateAsync([], "en");
 
         Assert.Empty(results);
     }
@@ -29,10 +29,7 @@ public abstract class TranslationServiceTestsBase
     {
         var service = CreateService();
 
-        var results = await service.TranslateAsync(new[]
-        {
-            "Hello, my friend"
-        }, "de", "en");
+        var results = await service.TranslateAsync(["Hello, my friend"], "de", "en");
 
         Assert.Equal(new[]
         {
@@ -46,10 +43,7 @@ public abstract class TranslationServiceTestsBase
     {
         var service = CreateService();
 
-        var results = await service.TranslateAsync(new[]
-        {
-            "Hello World"
-        }, "de", "en");
+        var results = await service.TranslateAsync(["Hello World"], "de", "en");
 
         Assert.Equal(new[]
         {
@@ -63,10 +57,7 @@ public abstract class TranslationServiceTestsBase
     {
         var service = CreateService();
 
-        var results = await service.TranslateAsync(new[]
-        {
-            "Hello World"
-        }, "de-DE", "en");
+        var results = await service.TranslateAsync(["Hello World"], "de-DE", "en");
 
         Assert.Equal(new[]
         {
@@ -80,11 +71,11 @@ public abstract class TranslationServiceTestsBase
     {
         var service = CreateService();
 
-        var results = await service.TranslateAsync(new[]
-        {
+        var results = await service.TranslateAsync(
+        [
             "Hello World",
             "Hello"
-        }, "de", "en");
+        ], "de", "en");
 
         Assert.Equal(new[]
         {

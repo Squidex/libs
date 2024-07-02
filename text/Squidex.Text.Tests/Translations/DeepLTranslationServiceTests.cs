@@ -31,7 +31,7 @@ public class DeepLTranslationServiceTests : TranslationServiceTestsBase
                 .BuildServiceProvider()
                 .GetRequiredService<ITranslationService>();
 
-        var results = await sut.TranslateAsync(new[] { "Hello" }, "en");
+        var results = await sut.TranslateAsync(["Hello"], "en");
 
         Assert.All(results, x => Assert.Equal(TranslationStatus.NotConfigured, x.Status));
     }

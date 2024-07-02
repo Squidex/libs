@@ -101,7 +101,7 @@ public sealed class HandlerPipelineTests
 
     private static void IsValidHandler(IMessageHandler handler)
     {
-        var sut = new HandlerPipeline(new[] { handler });
+        var sut = new HandlerPipeline([handler]);
 
         Assert.NotNull(sut.GetHandlers(typeof(Concrete)).Single());
     }

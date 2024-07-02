@@ -10,6 +10,7 @@ using System.Reactive.Linq;
 using Microsoft.Extensions.Options;
 using OpenAI.Managers;
 using OpenAI.ObjectModels.RequestModels;
+using OpenAI.ObjectModels.ResponseModels;
 using OpenAIMessage = OpenAI.ObjectModels.RequestModels.ChatMessage;
 
 namespace Squidex.AI.Implementation.OpenAI;
@@ -196,11 +197,11 @@ public sealed class OpenAIChatProvider : IChatProvider
         // Run all the tools in parallel, because they could take long time potentially.
         await Parallel.ForEachAsync(validCalls, ct, async (job, ct) =>
         {
-            observer.OnNext(new ToolStartEvent { Tool = job.Tool });
+            var args = job.Call.ParseArguments(job.Tool.Spec);
+
+            observer.OnNext(new ToolStartEvent { Tool = job.Tool, Arguments = args });
             try
             {
-                var args = job.Call.ParseArguments(job.Tool.Spec);
-
                 var toolContext = new ToolContext
                 {
                     Arguments = args,
@@ -212,10 +213,13 @@ public sealed class OpenAIChatProvider : IChatProvider
                 var result = await job.Tool.ExecuteAsync(toolContext, ct);
 
                 results[job.Index] = OpenAIMessage.FromTool(result, job.Id);
+
+                observer.OnNext(new ToolEndEvent { Tool = job.Tool, Result = result });
             }
-            finally
+            catch (Exception)
             {
-                observer.OnNext(new ToolEndEvent { Tool = job.Tool });
+                observer.OnNext(new ToolEndEvent { Tool = job.Tool, Result = "Failed" });
+                throw;
             }
         });
 

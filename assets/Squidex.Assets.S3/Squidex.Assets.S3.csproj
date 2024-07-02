@@ -13,8 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AWSSDK.S3" Version="3.7.307" />
-    <PackageReference Include="Meziantou.Analyzer" Version="2.0.146">
+    <PackageReference Include="AWSSDK.S3" Version="3.7.309.12" />
+    <PackageReference Include="Meziantou.Analyzer" Version="2.0.159">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

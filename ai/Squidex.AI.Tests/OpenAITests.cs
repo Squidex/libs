@@ -281,8 +281,20 @@ public class OpenAITests
 
         stream1.Should().BeEquivalentTo(new List<ChatEvent>
             {
-                new ToolStartEvent { Tool = mathTool, },
-                new ToolEndEvent { Tool = mathTool, },
+                new ToolStartEvent
+                {
+                    Tool = mathTool,
+                    Arguments = new Dictionary<string, ToolValue>
+                    {
+                        ["lhs"] = new ToolNumberValue(10),
+                        ["rhs"] = new ToolNumberValue(42)
+                    }
+                },
+                new ToolEndEvent
+                {
+                    Tool = mathTool,
+                    Result = "The result {(lhs * rhs) + 42}. Return this value to the user.",
+                },
                 new ChunkEvent { Content = "The" },
                 new ChunkEvent { Content = " result" },
                 new ChunkEvent { Content = " of" },

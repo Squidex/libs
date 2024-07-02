@@ -27,7 +27,7 @@ public class DalLEPipeTests
     {
         var (sut, _) = await CreateSutAsync(downloadImage: false);
 
-        A.CallTo(() => imageTool.ExecuteAsync(A<ToolContext>._, default))
+        A.CallTo(() => imageTool.GenerateAsync(A<ToolContext>._, default))
             .Returns("[Image](url/to/image)");
 
         var request1 = new ChatRequest

@@ -5,6 +5,10 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Text.Json;
+using Markdig.Parsers;
+using Markdig.Syntax;
+using Markdig.Syntax.Inlines;
 using Microsoft.Extensions.DependencyInjection;
 using Squidex.AI.Implementation.OpenAI;
 using Squidex.AI.Utils;
@@ -31,7 +35,8 @@ public class DalLETests
         };
 
         var message = await sut.PromptAsync(request1, context);
-        Assert.Contains("https://", message.Content, StringComparison.Ordinal);
+
+        AssertImageFromTool(message);
     }
 
     [Fact]
@@ -47,7 +52,25 @@ public class DalLETests
         };
 
         var message = await sut.PromptAsync(request1, context);
-        Assert.Contains("https://", message.Content, StringComparison.Ordinal);
+
+        AssertImageFromTool(message);
+    }
+
+    private static void AssertImageFromTool(ChatResult result)
+    {
+        var toolEnd = result.ToolEnds.Single();
+        var toolJson = JsonDocument.Parse(toolEnd.Result);
+        var toolUrl = toolJson.RootElement.GetProperty("url").ToString();
+
+        var markdownDoc = MarkdownParser.Parse(result.Content);
+
+        var markdownImage =
+            markdownDoc.Descendants<ParagraphBlock>()
+                .SelectMany(x => x.Inline!.Descendants<LinkInline>()).FirstOrDefault(l => l.IsImage);
+
+        Assert.Equal(toolUrl, markdownImage?.Url);
+        Assert.NotNull(markdownImage?.FirstChild);
+        Assert.NotNull(markdownImage?.LastChild);
     }
 
     private static async Task<(IChatAgent, IServiceProvider)> CreateSutAsync(bool downloadImage)
