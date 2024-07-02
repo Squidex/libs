@@ -87,7 +87,7 @@ public class ImagePipeTests
     {
         var source = CreateEvents("<IMG>Puppy</IMG>").ToAsyncEnumerable();
 
-        A.CallTo(() => tool.ExecuteAsync(A<ToolContext>._, default))
+        A.CallTo(() => tool.GenerateAsync(A<ToolContext>._, default))
             .Returns("URL_TO_PUPPY_IMAGE");
 
         var resultStream = await sut.StreamAsync(source, request).ToListAsync();
@@ -101,7 +101,7 @@ public class ImagePipeTests
     {
         var source = CreateEvents("Text Before <IMG>Puppy</IMG> Text After").ToAsyncEnumerable();
 
-        A.CallTo(() => tool.ExecuteAsync(A<ToolContext>._, default))
+        A.CallTo(() => tool.GenerateAsync(A<ToolContext>._, default))
             .Returns("URL_TO_PUPPY_IMAGE");
 
         var resultStream = await sut.StreamAsync(source, request).ToListAsync();
