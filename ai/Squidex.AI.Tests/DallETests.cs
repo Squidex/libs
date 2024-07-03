@@ -10,6 +10,8 @@ using Markdig.Parsers;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
 using Microsoft.Extensions.DependencyInjection;
+using MongoDB.Driver;
+using Squidex.AI.Implementation;
 using Squidex.AI.Implementation.OpenAI;
 using Squidex.AI.Utils;
 using Squidex.Assets;
@@ -21,6 +23,35 @@ namespace Squidex.AI;
 public class DalLETests
 {
     private readonly ChatContext context = new ChatContext();
+
+    [Fact]
+    [Trait("Category", "Dependencies")]
+    public async Task Should_generate_image()
+    {
+        var (_, services) = await CreateSutAsync(downloadImage: false);
+
+        var sut = services.GetRequiredService<IImageTool>();
+
+        var ctx = new ToolContext
+        {
+            Arguments = new Dictionary<string, ToolValue>
+            {
+                ["query"] = new ToolStringValue("Puppy"),
+            },
+            ChatAgent = null!,
+            Context = new ChatContext(),
+            ToolData = []
+        };
+
+        var result = await sut.GenerateAsync(ctx, default);
+
+        var markdownDoc = MarkdownParser.Parse(result);
+        var markdownImage =
+            markdownDoc.Descendants<ParagraphBlock>()
+                .SelectMany(x => x.Inline!.Descendants<LinkInline>()).FirstOrDefault(l => l.IsImage);
+
+        Assert.NotNull(markdownImage);
+    }
 
     [Fact]
     [Trait("Category", "Dependencies")]

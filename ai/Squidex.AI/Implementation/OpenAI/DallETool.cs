@@ -123,7 +123,7 @@ public sealed class DallETool : IImageTool
         {
             var fileName = await GenerateFileNameAsync(query, toolContext, ct);
 
-            result = result.Replace("{fileName}", fileName, StringComparison.Ordinal);
+            result = result.Replace("{name}", fileName, StringComparison.Ordinal);
         }
 
         return result;
