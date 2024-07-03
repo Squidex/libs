@@ -10,7 +10,6 @@ using System.Reactive.Linq;
 using Microsoft.Extensions.Options;
 using OpenAI.Managers;
 using OpenAI.ObjectModels.RequestModels;
-using OpenAI.ObjectModels.ResponseModels;
 using OpenAIMessage = OpenAI.ObjectModels.RequestModels.ChatMessage;
 
 namespace Squidex.AI.Implementation.OpenAI;

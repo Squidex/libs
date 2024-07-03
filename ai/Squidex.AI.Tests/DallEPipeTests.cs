@@ -5,9 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using FakeItEasy;
 using Microsoft.Extensions.DependencyInjection;
-using Squidex.AI.Implementation;
 using Squidex.AI.Implementation.OpenAI;
 using Squidex.AI.Utils;
 using Squidex.Assets;
@@ -18,7 +16,6 @@ namespace Squidex.AI;
 
 public class DalLEPipeTests
 {
-    private readonly IImageTool imageTool = A.Fake<IImageTool>();
     private readonly ChatContext context = new ChatContext();
 
     [Fact]
@@ -27,20 +24,17 @@ public class DalLEPipeTests
     {
         var (sut, _) = await CreateSutAsync(downloadImage: false);
 
-        A.CallTo(() => imageTool.GenerateAsync(A<ToolContext>._, default))
-            .Returns("[Image](url/to/image)");
-
         var request1 = new ChatRequest
         {
             Prompt = "Write a short article about Paris. Add a single image.",
             ConversationId = string.Empty,
         };
 
-        var message = await sut.PromptAsync(request1, context);
-        Assert.Contains("[Image](url/to/image", message.Content, StringComparison.Ordinal);
+        var message1 = await sut.PromptAsync(request1, context);
+        Assert.Contains("](https://oaidalleapiprodscus.blob.core.windows.net", message1.Content, StringComparison.Ordinal);
     }
 
-    private async Task<(IChatAgent, IServiceProvider)> CreateSutAsync(bool downloadImage)
+    private static async Task<(IChatAgent, IServiceProvider)> CreateSutAsync(bool downloadImage)
     {
         var services =
             new ServiceCollection()
@@ -56,7 +50,6 @@ public class DalLEPipeTests
                     options.Seed = 42;
                 })
                 .AddAIImagePipe()
-                .AddSingleton(imageTool)
                 .Configure<ChatOptions>(options =>
                 {
                     options.Defaults = new ChatConfiguration

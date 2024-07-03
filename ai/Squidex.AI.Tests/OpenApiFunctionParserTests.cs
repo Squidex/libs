@@ -6,9 +6,9 @@
 // ==========================================================================
 
 using FluentAssertions;
-using FluentAssertions.Equivalency;
 using OpenAI.ObjectModels.RequestModels;
 using Squidex.AI.Implementation.OpenAI;
+using Squidex.AI.Utils;
 using Xunit;
 
 namespace Squidex.AI;
@@ -86,7 +86,7 @@ public class OpenApiFunctionParserTests
         parsed.Should().BeEquivalentTo(new Dictionary<string, ToolValue>
         {
             ["string"] = new ToolNullValue()
-        }, IgnoreAsMethods);
+        }, opts => opts.ExcludeToolValuesAs());
     }
 
     [Fact]
@@ -106,7 +106,7 @@ public class OpenApiFunctionParserTests
         parsed.Should().BeEquivalentTo(new Dictionary<string, ToolValue>
         {
             ["string"] = new ToolStringValue("Hello")
-        }, IgnoreAsMethods);
+        }, opts => opts.ExcludeToolValuesAs());
     }
 
     [Fact]
@@ -126,7 +126,7 @@ public class OpenApiFunctionParserTests
         parsed.Should().BeEquivalentTo(new Dictionary<string, ToolValue>
         {
             ["boolean"] = new ToolBooleanValue(true)
-        }, IgnoreAsMethods);
+        }, opts => opts.ExcludeToolValuesAs());
     }
 
     [Fact]
@@ -146,7 +146,7 @@ public class OpenApiFunctionParserTests
         parsed.Should().BeEquivalentTo(new Dictionary<string, ToolValue>
         {
             ["boolean"] = new ToolBooleanValue(false)
-        }, IgnoreAsMethods);
+        }, opts => opts.ExcludeToolValuesAs());
     }
 
     [Fact]
@@ -166,7 +166,7 @@ public class OpenApiFunctionParserTests
         parsed.Should().BeEquivalentTo(new Dictionary<string, ToolValue>
         {
             ["number"] = new ToolNumberValue(42)
-        }, IgnoreAsMethods);
+        }, opts => opts.ExcludeToolValuesAs());
     }
 
     [Fact]
@@ -189,7 +189,7 @@ public class OpenApiFunctionParserTests
         parsed.Should().BeEquivalentTo(new Dictionary<string, ToolValue>
         {
             ["enum"] = new ToolStringValue("A")
-        }, IgnoreAsMethods);
+        }, opts => opts.ExcludeToolValuesAs());
     }
 
     [Fact]
@@ -219,10 +219,5 @@ public class OpenApiFunctionParserTests
                 [name] = spec
             }
         };
-    }
-
-    private static EquivalencyAssertionOptions<Dictionary<string, ToolValue>> IgnoreAsMethods(EquivalencyAssertionOptions<Dictionary<string, ToolValue>> options)
-    {
-        return options.Excluding(x => x.Name.StartsWith("As", StringComparison.Ordinal));
     }
 }

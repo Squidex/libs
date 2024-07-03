@@ -5,17 +5,14 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.AI;
+using FluentAssertions.Equivalency;
 
-public sealed class ToolContext
+namespace Squidex.AI.Utils;
+
+public static class TestExtensions
 {
-    required public ChatContext Context { get; init; }
-
-    required public Dictionary<string, string> ToolData { get; init; }
-
-    required public Dictionary<string, ToolValue> Arguments { get; init; }
-
-    required public IChatAgent ChatAgent { get; init; }
-
-    public object? ToolTag { get; init; }
+    public static EquivalencyAssertionOptions<T> ExcludeToolValuesAs<T>(this EquivalencyAssertionOptions<T> options)
+    {
+        return options.Excluding(x => x.Name.StartsWith("As", StringComparison.Ordinal));
+    }
 }

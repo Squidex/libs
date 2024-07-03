@@ -20,11 +20,11 @@ public sealed class DallEOptions : OpenAiOptions
 
     public string? Quality { get; set; }
 
-    public string PromptResult { get; set; } = "{ \"url\": \"{url}\" }";
+    public string DefaultResult { get; set; } = "{ \"url\": \"{url}\" }";
 
-    public string GenerateResult { get; set; } = "![{name}]({url})";
+    public string PlainResult { get; set; } = "![{name}]({url})";
 
-    public string PrompFileName { get; set; } = "Generate a slugified file name for an image from the following query <QUERY>{query}</QUERY>.\\nDo not return other content.";
+    public string ImageNamePattern { get; set; } = "Generate a slugified file name for an image from the following query <QUERY>{query}</QUERY>.\\nDo not return other content.";
 
     public string ImagePathPattern { get; set; } = "dall-e/{IMAGE_ID}";
 

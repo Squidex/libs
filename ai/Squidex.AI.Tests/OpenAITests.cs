@@ -279,45 +279,48 @@ public class OpenAITests
 
         var stream1 = await sut.StreamAsync(request1, context).ToListAsync();
 
-        stream1.Should().BeEquivalentTo(new List<ChatEvent>
+        var expectedStream = new List<ChatEvent>
+        {
+            new ToolStartEvent
             {
-                new ToolStartEvent
+                Tool = mathTool,
+                Arguments = new Dictionary<string, ToolValue>
                 {
-                    Tool = mathTool,
-                    Arguments = new Dictionary<string, ToolValue>
-                    {
-                        ["lhs"] = new ToolNumberValue(10),
-                        ["rhs"] = new ToolNumberValue(42)
-                    }
-                },
-                new ToolEndEvent
-                {
-                    Tool = mathTool,
-                    Result = "The result {(lhs * rhs) + 42}. Return this value to the user.",
-                },
-                new ChunkEvent { Content = "The" },
-                new ChunkEvent { Content = " result" },
-                new ChunkEvent { Content = " of" },
-                new ChunkEvent { Content = " multiplying" },
-                new ChunkEvent { Content = " " },
-                new ChunkEvent { Content = "10" },
-                new ChunkEvent { Content = " with" },
-                new ChunkEvent { Content = " " },
-                new ChunkEvent { Content = "42" },
-                new ChunkEvent { Content = " is" },
-                new ChunkEvent { Content = " " },
-                new ChunkEvent { Content = "462" },
-                new ChunkEvent { Content = "." },
-                new MetadataEvent
-                {
-                    Metadata = new ChatMetadata
-                    {
-                        CostsInEUR = 0.001175M,
-                        NumInputTokens = 349,
-                        NumOutputTokens = 32
-                    }
+                    ["lhs"] = new ToolNumberValue(10),
+                    ["rhs"] = new ToolNumberValue(42)
                 }
-            }, opts => opts.RespectingRuntimeTypes());
+            },
+            new ToolEndEvent
+            {
+                Tool = mathTool,
+                Result = "The result {(lhs * rhs) + 42}. Return this value to the user.",
+            },
+            new ChunkEvent { Content = "The" },
+            new ChunkEvent { Content = " result" },
+            new ChunkEvent { Content = " of" },
+            new ChunkEvent { Content = " multiplying" },
+            new ChunkEvent { Content = " " },
+            new ChunkEvent { Content = "10" },
+            new ChunkEvent { Content = " with" },
+            new ChunkEvent { Content = " " },
+            new ChunkEvent { Content = "42" },
+            new ChunkEvent { Content = " is" },
+            new ChunkEvent { Content = " " },
+            new ChunkEvent { Content = "462" },
+            new ChunkEvent { Content = "." },
+            new MetadataEvent
+            {
+                Metadata = new ChatMetadata
+                {
+                    CostsInEUR = 0.001175M,
+                    NumInputTokens = 349,
+                    NumOutputTokens = 32
+                }
+            }
+        };
+
+        stream1.Should().BeEquivalentTo(expectedStream,
+            opts => opts.RespectingRuntimeTypes().ExcludeToolValuesAs());
     });
 
     private static async Task UseConversationId(Func<string, IChatAgent, IServiceProvider, Task> action)

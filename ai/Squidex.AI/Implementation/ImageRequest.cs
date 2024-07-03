@@ -5,17 +5,15 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.AI;
+namespace Squidex.AI.Implementation;
 
-public sealed class ToolContext
+public sealed class ImageRequest
 {
     required public ChatContext Context { get; init; }
 
     required public Dictionary<string, string> ToolData { get; init; }
 
-    required public Dictionary<string, ToolValue> Arguments { get; init; }
+    required public string Query { get; init; }
 
     required public IChatAgent ChatAgent { get; init; }
-
-    public object? ToolTag { get; init; }
 }

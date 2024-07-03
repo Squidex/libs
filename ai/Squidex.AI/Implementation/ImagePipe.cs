@@ -47,38 +47,47 @@ public sealed class ImagePipe : IChatPipe
                     var imageEnd = bufferText.IndexOf(ImageEnd, StringComparison.Ordinal);
                     if (imageEnd > imageStart)
                     {
-                        string? result = null;
-
-                        var description = bufferText[(imageStart + ImageStart.Length)..imageEnd];
-
-                        if (!string.IsNullOrEmpty(description))
-                        {
-                            var args = new Dictionary<string, ToolValue>
-                            {
-                                ["query"] = new ToolStringValue(description),
-                            };
-
-                            yield return new ToolStartEvent { Tool = imageGenerator, Arguments = args };
-
-                            var toolContext = new ToolContext
-                            {
-                                Arguments = args,
-                                ChatAgent = request.ChatAgent,
-                                Context = request.Context,
-                                ToolData = request.ToolData
-                            };
-
-                            result = await imageGenerator.GenerateAsync(toolContext, ct);
-
-                            yield return new ToolEndEvent { Tool = imageGenerator, Result = result };
-                        }
-
                         var beforeImage = bufferText[..imageStart];
 
                         // Chunks with only whitespaces are valid.
                         if (!string.IsNullOrEmpty(beforeImage))
                         {
                             yield return new ChunkEvent { Content = beforeImage };
+                        }
+
+                        string? result = null;
+
+                        var description = bufferText[(imageStart + ImageStart.Length)..imageEnd];
+
+                        if (!string.IsNullOrEmpty(description))
+                        {
+                            var tool = imageGenerator;
+
+                            var imageRequest = new ImageRequest
+                            {
+                                Query = description,
+                                ChatAgent = request.ChatAgent,
+                                Context = request.Context,
+                                ToolData = request.ToolData
+                            };
+
+                            var toolContext = tool.CreateRequest(imageRequest);
+
+                            // Provide feedback to the user interface.
+                            yield return new ToolStartEvent
+                            {
+                                Tool = tool,
+                                Arguments = toolContext.Arguments
+                            };
+
+                            result = await tool.ExecuteAsync(toolContext, ct);
+
+                            // Tool end events are only executed when the call is successful.
+                            yield return new ToolEndEvent
+                            {
+                                Tool = tool,
+                                Result = result
+                            };
                         }
 
                         // Empty images are not needed in this case.

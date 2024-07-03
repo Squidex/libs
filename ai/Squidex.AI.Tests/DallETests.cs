@@ -43,7 +43,7 @@ public class DalLETests
             ToolData = []
         };
 
-        var result = await sut.GenerateAsync(ctx, default);
+        var result = await sut.ExecuteAsync(ctx, default);
 
         var markdownDoc = MarkdownParser.Parse(result);
         var markdownImage =

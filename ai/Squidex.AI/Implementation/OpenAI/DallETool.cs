@@ -65,19 +65,26 @@ public sealed class DallETool : IImageTool
         }
     }
 
-    public Task<string> GenerateAsync(ToolContext toolContext,
-        CancellationToken ct)
+    public ToolContext CreateRequest(ImageRequest request)
     {
-        return ExecuteCoreAsync(toolContext, options.GenerateResult, ct);
+        ArgumentNullException.ThrowIfNull(request);
+
+        var toolContext = new ToolContext
+        {
+            Arguments = new Dictionary<string, ToolValue>
+            {
+                ["query"] = new ToolStringValue(request.Query)
+            },
+            ChatAgent = request.ChatAgent,
+            Context = request.Context,
+            ToolTag = true,
+            ToolData = request.ToolData
+        };
+
+        return toolContext;
     }
 
-    public Task<string> ExecuteAsync(ToolContext toolContext,
-        CancellationToken ct)
-    {
-        return ExecuteCoreAsync(toolContext, options.PromptResult, ct);
-    }
-
-    private async Task<string> ExecuteCoreAsync(ToolContext toolContext, string format,
+    public async Task<string> ExecuteAsync(ToolContext toolContext,
         CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(toolContext);
@@ -87,15 +94,12 @@ public sealed class DallETool : IImageTool
             throw new ChatException("Missing argument 'query'.");
         }
 
-        var query = queryArg.ToString();
-
-        var request = new ImageCreateRequest
+        var request = new ImageCreateRequest(queryArg.ToString())
         {
             Model = options.Model,
-            Prompt = query,
-            Quality = options.Quality,
             Size = options.Size,
-            Style = options.Style
+            Style = options.Style,
+            Quality = options.Quality,
         };
 
         var response = await service.Image.CreateImage(request, ct);
@@ -117,11 +121,16 @@ public sealed class DallETool : IImageTool
             url = await DownloadImageAsync(url, null, ct);
         }
 
+        var format =
+            toolContext.ToolTag is true ?
+            options.PlainResult :
+            options.DefaultResult;
+
         var result = format.Replace("{url}", url, StringComparison.Ordinal);
 
         if (format.Contains("{name}", StringComparison.Ordinal))
         {
-            var fileName = await GenerateFileNameAsync(query, toolContext, ct);
+            var fileName = await GenerateFileNameAsync(request.Prompt, toolContext, ct);
 
             result = result.Replace("{name}", fileName, StringComparison.Ordinal);
         }
@@ -133,7 +142,7 @@ public sealed class DallETool : IImageTool
         CancellationToken ct)
     {
         var result = await chatProvider.PromptAsync(
-            options.PrompFileName.Replace("{query}", query),
+            options.ImageNamePattern.Replace("{query}", query, StringComparison.Ordinal),
             toolContext,
             ct);
 
@@ -155,8 +164,9 @@ public sealed class DallETool : IImageTool
 
         using var httpClient = httpClientFactory.CreateClient(url);
         using var httpResponse = await httpClient.GetAsync(url, ct);
-        using var httpStream = await httpResponse.Content.ReadAsStreamAsync(ct);
-        using var tempStream = TempHelper.GetTempStream();
+
+        await using var imageSource = await httpResponse.Content.ReadAsStreamAsync(ct);
+        await using var imageFile = TempHelper.GetTempStream();
 
         var mimeType = httpResponse.Content.Headers.ContentType?.ToString();
 
@@ -170,11 +180,11 @@ public sealed class DallETool : IImageTool
             Format = ImageFormat.WEBP
         };
 
-        await assetThumbnailGenerator.CreateThumbnailAsync(httpStream, mimeType, tempStream, resizeOptions, ct);
-        tempStream.Position = 0;
+        await assetThumbnailGenerator.CreateThumbnailAsync(imageSource, mimeType, imageFile, resizeOptions, ct);
+        imageFile.Position = 0;
 
-        await assetStore.UploadAsync(imagePath, tempStream, true, ct);
-        tempStream.Position = 0;
+        await assetStore.UploadAsync(imagePath, imageFile, true, ct);
+        imageFile.Position = 0;
 
         if (toolContext != null)
         {

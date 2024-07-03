@@ -7,7 +7,9 @@
 
 using System.Text;
 using FakeItEasy;
+using FluentAssertions;
 using Squidex.AI.Implementation;
+using Squidex.AI.Utils;
 using Xunit;
 
 namespace Squidex.AI;
@@ -87,7 +89,10 @@ public class ImagePipeTests
     {
         var source = CreateEvents("<IMG>Puppy</IMG>").ToAsyncEnumerable();
 
-        A.CallTo(() => tool.GenerateAsync(A<ToolContext>._, default))
+        A.CallTo(() => tool.CreateRequest(A<ImageRequest>.That.Matches(x => x.Query == "Puppy")))
+            .ReturnsLazily(c => CreateContext(c.GetArgument<ImageRequest>(0)!.Query));
+
+        A.CallTo(() => tool.ExecuteAsync(A<ToolContext>.That.Matches(x => x.Arguments.ContainsKey("query")), default))
             .Returns("URL_TO_PUPPY_IMAGE");
 
         var resultStream = await sut.StreamAsync(source, request).ToListAsync();
@@ -101,13 +106,55 @@ public class ImagePipeTests
     {
         var source = CreateEvents("Text Before <IMG>Puppy</IMG> Text After").ToAsyncEnumerable();
 
-        A.CallTo(() => tool.GenerateAsync(A<ToolContext>._, default))
+        A.CallTo(() => tool.CreateRequest(A<ImageRequest>.That.Matches(x => x.Query == "Puppy")))
+            .ReturnsLazily(c => CreateContext(c.GetArgument<ImageRequest>(0)!.Query));
+
+        A.CallTo(() => tool.ExecuteAsync(A<ToolContext>.That.Matches(x => x.Arguments.ContainsKey("query")), default))
             .Returns("URL_TO_PUPPY_IMAGE");
 
         var resultStream = await sut.StreamAsync(source, request).ToListAsync();
         var resultText = CombineResult(resultStream);
 
         Assert.Equal("Text Before URL_TO_PUPPY_IMAGE Text After", resultText);
+    }
+
+    [Fact]
+    public async Task Should_replace_image_marker_with_text_before_as_stream()
+    {
+        var source = CreateEvents("Text Before <IMG>Puppy</IMG> Text After").ToAsyncEnumerable();
+
+        A.CallTo(() => tool.CreateRequest(A<ImageRequest>.That.Matches(x => x.Query == "Puppy")))
+            .ReturnsLazily(c => CreateContext(c.GetArgument<ImageRequest>(0)!.Query));
+
+        A.CallTo(() => tool.ExecuteAsync(A<ToolContext>.That.Matches(x => x.Arguments.ContainsKey("query")), default))
+            .Returns("URL_TO_PUPPY_IMAGE");
+
+        var resultStream = await sut.StreamAsync(source, request).ToListAsync();
+
+        var expectedStream = new IEnumerable<InternalChatEvent>[]
+        {
+            [new ChunkEvent { Content = "Text Before " }],
+            [
+                new ToolStartEvent
+                {
+                    Tool = tool,
+                    Arguments = new Dictionary<string, ToolValue>
+                    {
+                        ["query"] = new ToolStringValue("Puppy")
+                    }
+                },
+                new ToolEndEvent
+                {
+                    Tool = tool,
+                    Result = "URL_TO_PUPPY_IMAGE"
+                },
+            ],
+            [new ChunkEvent { Content = "URL_TO_PUPPY_IMAGE" }],
+            CreateEvents(" Text After")
+        }.SelectMany(x => x).ToList();
+
+        resultStream.Should().BeEquivalentTo(expectedStream,
+            opts => opts.RespectingRuntimeTypes().ExcludeToolValuesAs());
     }
 
     private static string CombineResult(IEnumerable<InternalChatEvent> source)
@@ -130,5 +177,19 @@ public class ImagePipeTests
 
             yield return new ChunkEvent { Content = source.Substring(i, length) };
         }
+    }
+
+    private ToolContext CreateContext(string query)
+    {
+        return new ToolContext
+        {
+            Arguments = new Dictionary<string, ToolValue>
+            {
+                ["query"] = new ToolStringValue(query),
+            },
+            ChatAgent = null!,
+            Context = request.Context,
+            ToolData = request.ToolData
+        };
     }
 }
