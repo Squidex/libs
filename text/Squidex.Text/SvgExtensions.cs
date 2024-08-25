@@ -102,6 +102,11 @@ public static class SvgExtensions
             {
                 var attributeName = reader.GetAttributeNameAsMemory(i);
 
+                if (attributeName.Span.StartsWith("data-", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
                 if (!SvgAttributes.Allowed.Contains(attributeName))
                 {
                     errors.Add(new SvgError($"Invalid attribute '{attributeName}'",

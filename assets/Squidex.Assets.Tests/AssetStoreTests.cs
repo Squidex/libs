@@ -43,12 +43,12 @@ public abstract class AssetStoreTests<T> where T : IAssetStore
         FolderLinux
     }
 
-    public static readonly TheoryData<TestCase> FolderCases = new TheoryData<TestCase>
-    {
+    public static readonly TheoryData<TestCase> FolderCases =
+    [
         TestCase.NoFolder,
         TestCase.FolderWindows,
         TestCase.FolderLinux
-    };
+    ];
 
     [Theory]
     [InlineData("../{file}.png")]

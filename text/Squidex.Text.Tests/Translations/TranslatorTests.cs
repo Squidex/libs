@@ -102,10 +102,10 @@ public class TranslatorTests
 
         var results = await sut.TranslateAsync(["KeyA"], "de", ct: ct);
 
-        Assert.Equal(new[]
-        {
+        Assert.Equal(
+        [
             TranslationResult.Success("TextA", "en", 10)
-        }, results);
+        ], results);
 
         A.CallTo(() => service2.TranslateAsync(A<IEnumerable<string>>._, A<string>._, A<string>._, ct))
             .MustNotHaveHappened();
@@ -122,10 +122,10 @@ public class TranslatorTests
 
         var results = await sut.TranslateAsync(["KeyA"], "de", ct: ct);
 
-        Assert.Equal(new[]
-        {
+        Assert.Equal(
+        [
             TranslationResult.Success("TextA", "en", 13)
-        }, results);
+        ], results);
     }
 
     [Fact]
@@ -149,13 +149,13 @@ public class TranslatorTests
 
         var results = await sut.TranslateAsync(["KeyA", "KeyB", "KeyC", "KeyD"], "de", ct: ct);
 
-        Assert.Equal(new[]
-        {
+        Assert.Equal(
+        [
             TranslationResult.Success("TextA", "en", 13),
             TranslationResult.Success("TextB", "en", 17),
             TranslationResult.Success("TextC", "en", 11),
             TranslationResult.Success("TextD", "en", 6)
-        }, results);
+        ], results);
     }
 
     private static IEnumerable<string> IsRequest(params string[] requests)

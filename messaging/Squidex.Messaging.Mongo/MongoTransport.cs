@@ -95,7 +95,7 @@ public sealed class MongoTransport : IMessagingTransport
 
         if (channel.Type == ChannelType.Queue)
         {
-            queues = new List<string> { channel.Name };
+            queues = [channel.Name];
         }
         else
         {
@@ -149,8 +149,7 @@ public sealed class MongoTransport : IMessagingTransport
                 var collection = database.GetCollection<MongoMessage>($"{options.CollectionName}_{name}");
 
                 await collection.Indexes.CreateManyAsync(
-                    new[]
-                    {
+                    [
                         new CreateIndexModel<MongoMessage>(
                             Builders<MongoMessage>.IndexKeys
                                 .Ascending(x => x.TimeHandled)
@@ -162,7 +161,7 @@ public sealed class MongoTransport : IMessagingTransport
                             {
                                 ExpireAfter = TimeSpan.Zero
                             })
-                    },
+                    ],
                     default);
 
                 return collection;

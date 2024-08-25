@@ -31,10 +31,10 @@ public abstract class TranslationServiceTestsBase
 
         var results = await service.TranslateAsync(["Hello, my friend"], "de", "en");
 
-        Assert.Equal(new[]
-        {
+        Assert.Equal(
+        [
             TranslationResult.Success("Hallo, mein Freund", "en", 0.00032m)
-        }, results);
+        ], results);
     }
 
     [Fact]
@@ -45,10 +45,10 @@ public abstract class TranslationServiceTestsBase
 
         var results = await service.TranslateAsync(["Hello World"], "de", "en");
 
-        Assert.Equal(new[]
-        {
+        Assert.Equal(
+        [
             TranslationResult.Success("Hallo Welt", "en", 0.00022m)
-        }, results);
+        ], results);
     }
 
     [Fact]
@@ -59,10 +59,10 @@ public abstract class TranslationServiceTestsBase
 
         var results = await service.TranslateAsync(["Hello World"], "de-DE", "en");
 
-        Assert.Equal(new[]
-        {
+        Assert.Equal(
+        [
             TranslationResult.Success("Hallo Welt", "en", 0.00022m)
-        }, results);
+        ], results);
     }
 
     [Fact]
@@ -77,10 +77,10 @@ public abstract class TranslationServiceTestsBase
             "Hello"
         ], "de", "en");
 
-        Assert.Equal(new[]
-        {
+        Assert.Equal(
+        [
             TranslationResult.Success("Hallo Welt", "en", 0.00022m),
             TranslationResult.Success("Hallo", "en", 0.0001m)
-        }, results);
+        ], results);
     }
 }

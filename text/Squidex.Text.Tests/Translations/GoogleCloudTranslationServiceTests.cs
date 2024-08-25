@@ -71,10 +71,10 @@ public class GoogleCloudTranslationServiceTests : TranslationServiceTestsBase
 
         var results = await service.TranslateAsync(["World"], "ko", "en");
 
-        Assert.Equal(new[]
-        {
+        Assert.Equal(
+        [
             TranslationResult.Success("세계", "en", 0.0001m)
-        }, results);
+        ], results);
     }
 
     [Fact]
@@ -85,9 +85,9 @@ public class GoogleCloudTranslationServiceTests : TranslationServiceTestsBase
 
         var results = await service.TranslateAsync(["World"], "he-IL", "en");
 
-        Assert.Equal(new[]
-        {
+        Assert.Equal(
+        [
             TranslationResult.Success("עוֹלָם", "en", 0.0001m)
-        }, results);
+        ], results);
     }
 }
