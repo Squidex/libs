@@ -5,6 +5,9 @@
     <LangVersion>Latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyVersion>5.18.0.1</AssemblyVersion>
+    <FileVersion>5.18.0.1</FileVersion>
+    <Version>5.18.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>

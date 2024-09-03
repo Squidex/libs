@@ -36,6 +36,36 @@ public sealed class DeepLTranslationService : ITranslationService
         public string DetectedSourceLanguage { get; set; }
     }
 
+    private sealed class GlossariesDto
+    {
+        [JsonPropertyName("glossaries")]
+        public GlossaryDto[] Glossaries { get; set; }
+    }
+
+    private sealed class GlossaryDto
+    {
+        [JsonPropertyName("glossary_id")]
+        public string GlossaryId { get; set; } // "def3a26b-3e84-45b3-84ae-0c0aaf3525f7"
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; } // "My Glossary"
+
+        [JsonPropertyName("ready")]
+        public bool Ready { get; set; } // true
+
+        [JsonPropertyName("source_lang")]
+        public string SourceLang { get; set; } // "EN"
+
+        [JsonPropertyName("target_lang")]
+        public string TargetLang { get; set; } // "DE"
+
+        [JsonPropertyName("creation_time")]
+        public DateTime CreationTime { get; set; } // "2021-08-03T14:16:18.329Z"
+
+        [JsonPropertyName("entry_count")]
+        public int EntryCount { get; set; } // 1
+    }
+
     public DeepLTranslationService(IOptions<DeepLTranslationOptions> options, IHttpClientFactory httpClientFactory)
     {
         this.options = options.Value;
@@ -77,6 +107,48 @@ public sealed class DeepLTranslationService : ITranslationService
         if (sourceLanguage != null)
         {
             parameters.Add(new KeyValuePair<string, string>("source_lang", GetLanguageCode(sourceLanguage)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(options.GlossaryByName) && string.IsNullOrWhiteSpace(options.GlossaryById))
+        {
+            var gl_url =
+                (options.AuthKey.EndsWith(":fx", StringComparison.Ordinal) ?
+                UrlFree :
+                UrlPaid).Replace("/translate", "/glossaries");
+
+            var gl_requestMessage = new HttpRequestMessage(HttpMethod.Get, gl_url);
+            gl_requestMessage.Headers.Add("Authorization", $"DeepL-Auth-Key {options.AuthKey}");
+            var gl_httpClient = httpClientFactory.CreateClient("DeepL");
+
+            using (var gl_response = await gl_httpClient.SendAsync(gl_requestMessage, ct))
+            {
+                try
+                {
+                    gl_response.EnsureSuccessStatusCode();
+
+                    var jsonString = await gl_response.Content.ReadAsStringAsync(ct);
+                    var jsonResponse = JsonSerializer.Deserialize<GlossariesDto>(jsonString)!;
+
+                    var index = 0;
+                    foreach (var glossary in jsonResponse.Glossaries)
+                    {
+                        if (options.GlossaryByName.Equals(glossary.Name, StringComparison.Ordinal))
+                        {
+                            options.GlossaryById = glossary.GlossaryId;
+                            break;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AddError(TranslationResult.Failed(ex));
+                }
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(options.GlossaryById))
+        {
+            parameters.Add(new KeyValuePair<string, string>("glossary_id", options.GlossaryById));
         }
 
         var url =

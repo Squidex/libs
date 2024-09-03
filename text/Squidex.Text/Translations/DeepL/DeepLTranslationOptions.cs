@@ -11,6 +11,9 @@ public sealed class DeepLTranslationOptions
 {
     public string AuthKey { get; set; }
 
+    public string GlossaryById { get; set; } // glossary_id
+    public string GlossaryByName { get; set; } // glossary_id
+
     public decimal CostsPerCharacterInEUR { get; set; } = 20m / 1_000_000;
 
     public Dictionary<string, string> Mapping { get; set; }
