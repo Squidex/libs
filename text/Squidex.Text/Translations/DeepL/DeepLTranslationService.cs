@@ -151,6 +151,11 @@ public sealed class DeepLTranslationService : ITranslationService
             parameters.Add(new KeyValuePair<string, string>("glossary_id", options.GlossaryById));
         }
 
+        if (!string.IsNullOrWhiteSpace(options.TagHandling))
+        {
+            parameters.Add(new KeyValuePair<string, string>("tag_handling", options.TagHandling));
+        }
+
         var url =
             options.AuthKey.EndsWith(":fx", StringComparison.Ordinal) ?
             UrlFree :
