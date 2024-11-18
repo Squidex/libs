@@ -17,18 +17,11 @@ public sealed class BackgroundCache : IBackgroundCache
     private readonly ConcurrentDictionary<object, bool> isUpdating = new ConcurrentDictionary<object, bool>();
     private readonly IMemoryCache memoryCache;
 
-    private sealed class Entry<T>
+    private sealed class Entry<T>(Task<T> value, DateTimeOffset expires)
     {
-        public Task<T> Value { get; }
+        public Task<T> Value { get; } = value;
 
-        public DateTimeOffset Expires { get; }
-
-        public Entry(Task<T> value, DateTimeOffset expires)
-        {
-            Value = value;
-
-            Expires = expires;
-        }
+        public DateTimeOffset Expires { get; } = expires;
     }
 
     public Func<DateTimeOffset>? Clock { get; set; }

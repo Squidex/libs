@@ -10,18 +10,9 @@ using Squidex.Messaging;
 
 namespace Squidex.Caching;
 
-public sealed class ReplicatedCache : IReplicatedCache, IMessageHandler<CacheInvalidateMessage>
+public sealed class ReplicatedCache(IMemoryCache memoryCache, IMessageBus messageBus) : IReplicatedCache, IMessageHandler<CacheInvalidateMessage>
 {
-    private readonly IMemoryCache memoryCache;
-    private readonly IMessageBus messageBus;
-
     public Guid InstanceId { get; } = Guid.NewGuid();
-
-    public ReplicatedCache(IMemoryCache memoryCache, IMessageBus messageBus)
-    {
-        this.memoryCache = memoryCache;
-        this.messageBus = messageBus;
-    }
 
     public Task HandleAsync(CacheInvalidateMessage message,
         CancellationToken ct)

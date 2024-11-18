@@ -10,15 +10,8 @@ using Microsoft.Extensions.Logging;
 
 namespace Squidex.Messaging.Redis;
 
-internal sealed class LoggerTextWriter : TextWriter
+internal sealed class LoggerTextWriter(ILogger log) : TextWriter
 {
-    private readonly ILogger log;
-
-    public LoggerTextWriter(ILogger log)
-    {
-        this.log = log;
-    }
-
     public override Encoding Encoding => Encoding.UTF8;
 
     public override void Write(char value)

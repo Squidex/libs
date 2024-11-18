@@ -13,28 +13,15 @@ using Squidex.Messaging.Internal;
 
 namespace Squidex.Messaging.Mongo;
 
-public sealed class MongoTransport : IMessagingTransport
+public sealed class MongoTransport(
+    IMongoDatabase database,
+    IMessagingDataProvider messagingDataProvider,
+    IOptions<MongoTransportOptions> options,
+    TimeProvider timeProvider,
+    ILogger<MongoTransport> log) : IMessagingTransport
 {
     private readonly Dictionary<string, Task<IMongoCollection<MongoMessage>>> collections = [];
-    private readonly MongoTransportOptions options;
-    private readonly IMongoDatabase database;
-    private readonly IMessagingDataProvider messagingDataProvider;
-    private readonly TimeProvider timeProvider;
-    private readonly ILogger<MongoTransport> log;
-
-    public MongoTransport(
-        IMongoDatabase database,
-        IMessagingDataProvider messagingDataProvider,
-        IOptions<MongoTransportOptions> options,
-        TimeProvider timeProvider,
-        ILogger<MongoTransport> log)
-    {
-        this.options = options.Value;
-        this.database = database;
-        this.messagingDataProvider = messagingDataProvider;
-        this.timeProvider = timeProvider;
-        this.log = log;
-    }
+    private readonly MongoTransportOptions options = options.Value;
 
     public Task InitializeAsync(
         CancellationToken ct)

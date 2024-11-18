@@ -7,15 +7,8 @@
 
 namespace Squidex.AI.Implementation;
 
-public sealed class SingleChatToolProvider<T> : IChatToolProvider where T : IChatTool
+public sealed class SingleChatToolProvider<T>(T tool) : IChatToolProvider where T : IChatTool
 {
-    private readonly T tool;
-
-    public SingleChatToolProvider(T tool)
-    {
-        this.tool = tool;
-    }
-
     public IAsyncEnumerable<IChatTool> GetToolsAsync(ChatContext chatContext,
         CancellationToken ct)
     {

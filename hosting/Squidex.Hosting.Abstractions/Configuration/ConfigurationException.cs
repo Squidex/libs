@@ -10,19 +10,13 @@ using System.Text;
 namespace Squidex.Hosting.Configuration;
 
 [Serializable]
-public class ConfigurationException : Exception
+public class ConfigurationException(IReadOnlyList<ConfigurationError> errors, Exception? inner = null) : Exception(FormatMessage(errors), inner)
 {
-    public IReadOnlyList<ConfigurationError> Errors { get; }
+    public IReadOnlyList<ConfigurationError> Errors { get; } = errors;
 
     public ConfigurationException(ConfigurationError error, Exception? inner = null)
         : this([error], inner)
     {
-    }
-
-    public ConfigurationException(IReadOnlyList<ConfigurationError> errors, Exception? inner = null)
-        : base(FormatMessage(errors), inner)
-    {
-        Errors = errors;
     }
 
     private static string FormatMessage(IReadOnlyList<ConfigurationError> errors)

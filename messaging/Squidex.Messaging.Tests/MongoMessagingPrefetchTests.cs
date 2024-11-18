@@ -11,14 +11,9 @@ using Xunit;
 
 namespace Squidex.Messaging;
 
-public class MongoMessagingPrefetchTests : MessagingTestsBase, IClassFixture<MongoFixture>
+public class MongoMessagingPrefetchTests(MongoFixture fixture) : MessagingTestsBase, IClassFixture<MongoFixture>
 {
-    public MongoFixture _ { get; }
-
-    public MongoMessagingPrefetchTests(MongoFixture fixture)
-    {
-        _ = fixture;
-    }
+    public MongoFixture _ { get; } = fixture;
 
     protected override void Configure(MessagingBuilder builder)
     {

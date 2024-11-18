@@ -11,18 +11,14 @@ using Squidex.Hosting;
 
 namespace Squidex.Messaging.Mongo;
 
-internal sealed class MongoTransportCleaner : IAsyncDisposable
+internal sealed class MongoTransportCleaner(IMongoCollection<MongoMessage> collection, string collectionName,
+    TimeSpan timeout,
+    TimeSpan expires,
+    TimeSpan updateInterval,
+    ILogger log,
+    TimeProvider timeProvider) : IAsyncDisposable
 {
-    private readonly SimpleTimer timer;
-
-    public MongoTransportCleaner(IMongoCollection<MongoMessage> collection, string collectionName,
-        TimeSpan timeout,
-        TimeSpan expires,
-        TimeSpan updateInterval,
-        ILogger log,
-        TimeProvider timeProvider)
-    {
-        timer = new SimpleTimer(async ct =>
+    private readonly SimpleTimer timer = new SimpleTimer(async ct =>
         {
             var now = timeProvider.GetUtcNow().UtcDateTime;
 
@@ -40,7 +36,6 @@ internal sealed class MongoTransportCleaner : IAsyncDisposable
                 log.LogInformation("{collectionName}: Items reset: {count}.", collectionName, update.ModifiedCount);
             }
         }, updateInterval, log);
-    }
 
     public ValueTask DisposeAsync()
     {

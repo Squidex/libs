@@ -9,15 +9,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Squidex.Assets;
 
-public class TusController : Controller
+public class TusController(AssetTusRunner runner) : Controller
 {
-    private readonly AssetTusRunner runner;
-
-    public TusController(AssetTusRunner runner)
-    {
-        this.runner = runner;
-    }
-
 #pragma warning disable ASP0018 // Unused route parameter
     [Route("files/controller/{**catchAll}")]
 #pragma warning restore ASP0018 // Unused route parameter

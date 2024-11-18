@@ -9,25 +9,13 @@ using System.Net;
 
 namespace Squidex.Assets.Internal;
 
-internal sealed class ProgressableStreamContent : HttpContent
+internal sealed class ProgressableStreamContent(Stream content, int uploadBufferSize, Func<long, Task> uploadProgress) : HttpContent
 {
-    private readonly Stream content;
-    private readonly int uploadBufferSize;
-    private readonly long uploadLength;
-    private readonly Func<long, Task> uploadProgress;
+    private readonly long uploadLength = content.Length - content.Position;
 
     public ProgressableStreamContent(Stream content, Func<long, Task> uploadProgress)
         : this(content, 4096, uploadProgress)
     {
-    }
-
-    public ProgressableStreamContent(Stream content, int uploadBufferSize, Func<long, Task> uploadProgress)
-    {
-        this.content = content;
-        this.uploadBufferSize = uploadBufferSize;
-        this.uploadProgress = uploadProgress;
-
-        uploadLength = content.Length - content.Position;
     }
 
     protected override Task SerializeToStreamAsync(Stream stream, TransportContext? context)

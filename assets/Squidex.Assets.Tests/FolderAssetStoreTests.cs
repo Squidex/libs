@@ -13,14 +13,9 @@ using Xunit;
 
 namespace Squidex.Assets;
 
-public class FolderAssetStoreTests : AssetStoreTests<FolderAssetStore>, IClassFixture<FolderAssetStoreFixture>
+public class FolderAssetStoreTests(FolderAssetStoreFixture fixture) : AssetStoreTests<FolderAssetStore>, IClassFixture<FolderAssetStoreFixture>
 {
-    public FolderAssetStoreFixture _ { get; }
-
-    public FolderAssetStoreTests(FolderAssetStoreFixture fixture)
-    {
-        _ = fixture;
-    }
+    public FolderAssetStoreFixture _ { get; } = fixture;
 
     public override FolderAssetStore CreateStore()
     {

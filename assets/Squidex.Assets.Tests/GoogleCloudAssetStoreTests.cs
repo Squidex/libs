@@ -12,14 +12,9 @@ using Xunit;
 namespace Squidex.Assets;
 
 [Trait("Category", "Dependencies")]
-public class GoogleCloudAssetStoreTests : AssetStoreTests<GoogleCloudAssetStore>, IClassFixture<GoogleCloudAssetStoreFixture>
+public class GoogleCloudAssetStoreTests(GoogleCloudAssetStoreFixture fixture) : AssetStoreTests<GoogleCloudAssetStore>, IClassFixture<GoogleCloudAssetStoreFixture>
 {
-    public GoogleCloudAssetStoreFixture _ { get; }
-
-    public GoogleCloudAssetStoreTests(GoogleCloudAssetStoreFixture fixture)
-    {
-        _ = fixture;
-    }
+    public GoogleCloudAssetStoreFixture _ { get; } = fixture;
 
     public override GoogleCloudAssetStore CreateStore()
     {

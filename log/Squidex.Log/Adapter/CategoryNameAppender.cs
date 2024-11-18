@@ -7,15 +7,8 @@
 
 namespace Squidex.Log.Adapter;
 
-public sealed class CategoryNameAppender : ILogAppender
+public sealed class CategoryNameAppender(string category) : ILogAppender
 {
-    private readonly string category;
-
-    public CategoryNameAppender(string category)
-    {
-        this.category = category;
-    }
-
     public void Append(IObjectWriter writer, SemanticLogLevel logLevel, Exception? exception)
     {
         writer.WriteProperty(nameof(category), category);

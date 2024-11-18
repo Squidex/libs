@@ -12,14 +12,9 @@ using Xunit;
 namespace Squidex.Messaging;
 
 [Trait("Category", "Dependencies")]
-public class MongoSubscriptionStoreTests : SubscriptionStoreTestsBase, IClassFixture<MongoFixture>
+public class MongoSubscriptionStoreTests(MongoFixture fixture) : SubscriptionStoreTestsBase, IClassFixture<MongoFixture>
 {
-    public MongoFixture _ { get; }
-
-    public MongoSubscriptionStoreTests(MongoFixture fixture)
-    {
-        _ = fixture;
-    }
+    public MongoFixture _ { get; } = fixture;
 
     protected override void Configure(MessagingBuilder builder)
     {

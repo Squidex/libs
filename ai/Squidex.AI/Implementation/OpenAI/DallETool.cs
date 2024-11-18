@@ -5,23 +5,24 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Betalgo.Ranul.OpenAI.Managers;
+using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using Microsoft.Extensions.Options;
-using OpenAI.Managers;
-using OpenAI.ObjectModels.RequestModels;
 using Squidex.Assets;
 
 namespace Squidex.AI.Implementation.OpenAI;
 
-public sealed class DallETool : IImageTool
+public sealed class DallETool(
+    IOptions<DallEOptions> options,
+    IAssetStore assetStore,
+    IAssetThumbnailGenerator assetThumbnailGenerator,
+    IChatProvider chatProvider,
+    IHttpImageEndpoint httpImageEndpoint,
+    IHttpClientFactory httpClientFactory) : IImageTool
 {
     private const string DataPrefix = "dall_e_image";
-    private readonly OpenAIService service;
-    private readonly DallEOptions options;
-    private readonly IAssetStore assetStore;
-    private readonly IAssetThumbnailGenerator assetThumbnailGenerator;
-    private readonly IChatProvider chatProvider;
-    private readonly IHttpImageEndpoint httpImageEndpoint;
-    private readonly IHttpClientFactory httpClientFactory;
+    private readonly OpenAIService service = new OpenAIService(options.Value);
+    private readonly DallEOptions options = options.Value;
 
     public ToolSpec Spec { get; } =
         new ToolSpec("dall-e", "Dall-E", "Generates images based on queries.")
@@ -34,24 +35,6 @@ public sealed class DallETool : IImageTool
                 }
             }
         };
-
-    public DallETool(
-        IOptions<DallEOptions> options,
-        IAssetStore assetStore,
-        IAssetThumbnailGenerator assetThumbnailGenerator,
-        IChatProvider chatProvider,
-        IHttpImageEndpoint httpImageEndpoint,
-        IHttpClientFactory httpClientFactory)
-    {
-        service = new OpenAIService(options.Value);
-
-        this.options = options.Value;
-        this.assetStore = assetStore;
-        this.assetThumbnailGenerator = assetThumbnailGenerator;
-        this.chatProvider = chatProvider;
-        this.httpImageEndpoint = httpImageEndpoint;
-        this.httpClientFactory = httpClientFactory;
-    }
 
     public async Task CleanupAsync(Dictionary<string, string> toolData,
         CancellationToken ct)

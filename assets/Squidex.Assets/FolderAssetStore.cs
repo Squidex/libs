@@ -11,18 +11,10 @@ using Squidex.Hosting;
 
 namespace Squidex.Assets;
 
-public sealed class FolderAssetStore : IAssetStore, IInitializable
+public sealed class FolderAssetStore(IOptions<FolderAssetOptions> options, ILogger<FolderAssetStore> log) : IAssetStore, IInitializable
 {
     private const int BufferSize = 81920;
-    private readonly ILogger<FolderAssetStore> log;
-    private readonly DirectoryInfo directory;
-
-    public FolderAssetStore(IOptions<FolderAssetOptions> options, ILogger<FolderAssetStore> log)
-    {
-        this.log = log;
-
-        directory = new DirectoryInfo(options.Value.Path);
-    }
+    private readonly DirectoryInfo directory = new DirectoryInfo(options.Value.Path);
 
     public Task InitializeAsync(
         CancellationToken ct)

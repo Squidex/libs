@@ -16,18 +16,13 @@ using Squidex.Hosting;
 
 namespace Squidex.Assets;
 
-public sealed class AmazonS3AssetStore : IAssetStore, IInitializable
+public sealed class AmazonS3AssetStore(IOptions<AmazonS3AssetOptions> options) : IAssetStore, IInitializable
 {
     private const int BufferSize = 81920;
-    private readonly AmazonS3AssetOptions options;
+    private readonly AmazonS3AssetOptions options = options.Value;
     private TransferUtility s3Transfer;
     private AmazonS3Client s3Client;
     private bool canCopy = true;
-
-    public AmazonS3AssetStore(IOptions<AmazonS3AssetOptions> options)
-    {
-        this.options = options.Value;
-    }
 
     public Task ReleaseAsync(
         CancellationToken ct)

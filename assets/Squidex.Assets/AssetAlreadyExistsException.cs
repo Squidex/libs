@@ -8,13 +8,8 @@
 namespace Squidex.Assets;
 
 [Serializable]
-public class AssetAlreadyExistsException : Exception
+public class AssetAlreadyExistsException(string fileName, Exception? inner = null) : Exception(FormatMessage(fileName), inner)
 {
-    public AssetAlreadyExistsException(string fileName, Exception? inner = null)
-        : base(FormatMessage(fileName), inner)
-    {
-    }
-
     private static string FormatMessage(string fileName)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(fileName);

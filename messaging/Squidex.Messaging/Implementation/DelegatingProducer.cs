@@ -11,29 +11,16 @@ using IMessagingTransports = System.Collections.Generic.IEnumerable<Squidex.Mess
 
 namespace Squidex.Messaging.Implementation;
 
-public sealed class DelegatingProducer : IInternalMessageProducer
+public sealed class DelegatingProducer(
+    IInstanceNameProvider instanceName,
+    IMessagingTransports messagingTransports,
+    IMessagingSerializer messagingSerializer,
+    IOptionsMonitor<ChannelOptions> channelOptions,
+    TimeProvider timeProvider) : IInternalMessageProducer
 {
     private readonly HashSet<string> initializedChannels = [];
     private readonly SemaphoreSlim semaphore = new SemaphoreSlim(1);
-    private readonly string instanceName;
-    private readonly IMessagingTransports messagingTransports;
-    private readonly IMessagingSerializer messagingSerializer;
-    private readonly IOptionsMonitor<ChannelOptions> channelOptions;
-    private readonly TimeProvider timeProvider;
-
-    public DelegatingProducer(
-        IInstanceNameProvider instanceName,
-        IMessagingTransports messagingTransports,
-        IMessagingSerializer messagingSerializer,
-        IOptionsMonitor<ChannelOptions> channelOptions,
-        TimeProvider timeProvider)
-    {
-        this.channelOptions = channelOptions;
-        this.instanceName = instanceName.Name;
-        this.messagingTransports = messagingTransports;
-        this.messagingSerializer = messagingSerializer;
-        this.timeProvider = timeProvider;
-    }
+    private readonly string instanceName = instanceName.Name;
 
     public async Task ProduceAsync(ChannelName channel, object message, string? key = null,
         CancellationToken ct = default)

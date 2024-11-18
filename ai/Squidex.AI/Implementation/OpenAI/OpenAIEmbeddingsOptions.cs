@@ -5,12 +5,12 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using OpenAI;
-using OpenAI.ObjectModels;
+using Betalgo.Ranul.OpenAI;
+using Betalgo.Ranul.OpenAI.ObjectModels;
 
 namespace Squidex.AI.Implementation.OpenAI;
 
-public sealed class OpenAIEmbeddingsOptions : OpenAiOptions
+public sealed class OpenAIEmbeddingsOptions : OpenAIOptions
 {
     public string ModelName { get; set; } = Models.TextEmbeddingV3Large;
 }

@@ -5,12 +5,12 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using OpenAI;
-using OpenAI.ObjectModels;
+using Betalgo.Ranul.OpenAI;
+using Betalgo.Ranul.OpenAI.ObjectModels;
 
 namespace Squidex.AI.Implementation.OpenAI;
 
-public sealed class DallEOptions : OpenAiOptions
+public sealed class DallEOptions : OpenAIOptions
 {
     public string? Model { get; set; } = Models.Dall_e_3;
 

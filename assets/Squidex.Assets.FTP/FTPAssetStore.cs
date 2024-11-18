@@ -15,25 +15,15 @@ using Squidex.Hosting;
 namespace Squidex.Assets;
 
 [ExcludeFromCodeCoverage]
-public sealed class FTPAssetStore : IAssetStore, IInitializable
+public sealed class FTPAssetStore(IOptions<FTPAssetOptions> options, ILogger<FTPAssetStore> log) : IAssetStore, IInitializable
 {
-    private readonly ILogger<FTPAssetStore> log;
-    private readonly FTPClientPool pool;
-    private readonly FTPAssetOptions options;
-
-    public FTPAssetStore(IOptions<FTPAssetOptions> options, ILogger<FTPAssetStore> log)
-    {
-        this.options = options.Value;
-
-        this.log = log;
-
-        pool = new FTPClientPool(
+    private readonly FTPClientPool pool = new FTPClientPool(
             () => new AsyncFtpClient(
                 options.Value.ServerHost,
                 options.Value.Username,
                 options.Value.Password,
                 options.Value.ServerPort), 1);
-    }
+    private readonly FTPAssetOptions options = options.Value;
 
     public async Task InitializeAsync(
         CancellationToken ct)

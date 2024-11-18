@@ -16,22 +16,14 @@ using GooglePushConfig = Google.Cloud.PubSub.V1.PushConfig;
 
 namespace Squidex.Messaging.GoogleCloud;
 
-public sealed class GooglePubSubTransport : IMessagingTransport
+public sealed class GooglePubSubTransport(IOptions<GooglePubSubTransportOptions> options,
+    ILogger<GooglePubSubTransport> log) : IMessagingTransport
 {
     private readonly Dictionary<string, Task<PublisherClient>> publishers = [];
-    private readonly GooglePubSubTransportOptions options;
+    private readonly GooglePubSubTransportOptions options = options.Value;
     private readonly GooglePushConfig pushConfig = new GooglePushConfig();
     private readonly HashSet<string> createdSubcriptions = [];
     private readonly HashSet<string> createdTopics = [];
-    private readonly ILogger<GooglePubSubTransport> log;
-
-    public GooglePubSubTransport(IOptions<GooglePubSubTransportOptions> options,
-        ILogger<GooglePubSubTransport> log)
-    {
-        this.options = options.Value;
-
-        this.log = log;
-    }
 
     public Task InitializeAsync(
         CancellationToken ct)

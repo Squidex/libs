@@ -10,17 +10,11 @@ using System.Text;
 
 namespace Squidex.AI.Implementation;
 
-public sealed class ImagePipe : IChatPipe
+public sealed class ImagePipe(IImageTool imageGenerator) : IChatPipe
 {
     private const string ImageStart = "<IMG>";
     private const string ImageEnd = "</IMG>";
     private const int BufferLength = 5;
-    private readonly IImageTool imageGenerator;
-
-    public ImagePipe(IImageTool imageGenerator)
-    {
-        this.imageGenerator = imageGenerator;
-    }
 
     public async IAsyncEnumerable<InternalChatEvent> StreamAsync(IAsyncEnumerable<InternalChatEvent> source, ChatProviderRequest request,
         [EnumeratorCancellation] CancellationToken ct = default)

@@ -12,16 +12,9 @@ using Microsoft.Extensions.Options;
 
 namespace Squidex.Hosting.Web;
 
-public sealed class ConfigureForwardedHeaders : IConfigureOptions<ForwardedHeadersOptions>
+public sealed class ConfigureForwardedHeaders(IOptions<UrlOptions> urlOptions, IUrlGenerator urlGenerator) : IConfigureOptions<ForwardedHeadersOptions>
 {
-    private readonly UrlOptions urlOptions;
-    private readonly IUrlGenerator urlGenerator;
-
-    public ConfigureForwardedHeaders(IOptions<UrlOptions> urlOptions, IUrlGenerator urlGenerator)
-    {
-        this.urlOptions = urlOptions.Value;
-        this.urlGenerator = urlGenerator;
-    }
+    private readonly UrlOptions urlOptions = urlOptions.Value;
 
     public void Configure(ForwardedHeadersOptions options)
     {

@@ -8,13 +8,8 @@
 namespace Squidex.Assets;
 
 [Serializable]
-public class AssetNotFoundException : Exception
+public class AssetNotFoundException(string fileName, Exception? inner = null) : Exception(FormatMessage(fileName), inner)
 {
-    public AssetNotFoundException(string fileName, Exception? inner = null)
-        : base(FormatMessage(fileName), inner)
-    {
-    }
-
     private static string FormatMessage(string fileName)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(fileName);

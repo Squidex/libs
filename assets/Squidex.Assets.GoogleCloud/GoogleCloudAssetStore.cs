@@ -14,17 +14,12 @@ using Squidex.Hosting;
 
 namespace Squidex.Assets;
 
-public sealed class GoogleCloudAssetStore : IAssetStore, IInitializable
+public sealed class GoogleCloudAssetStore(IOptions<GoogleCloudAssetOptions> options) : IAssetStore, IInitializable
 {
     private static readonly UploadObjectOptions IfNotExists = new UploadObjectOptions { IfGenerationMatch = 0 };
     private static readonly CopyObjectOptions IfNotExistsCopy = new CopyObjectOptions { IfGenerationMatch = 0 };
-    private readonly string bucketName;
+    private readonly string bucketName = options.Value.Bucket;
     private StorageClient storageClient;
-
-    public GoogleCloudAssetStore(IOptions<GoogleCloudAssetOptions> options)
-    {
-        bucketName = options.Value.Bucket;
-    }
 
     public async Task InitializeAsync(
         CancellationToken ct)

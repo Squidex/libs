@@ -9,15 +9,8 @@ using Microsoft.AspNetCore.Http.Features;
 
 namespace Squidex.Assets.ResizeService;
 
-public sealed class Startup
+public sealed class Startup(IConfiguration configuration)
 {
-    private readonly IConfiguration configuration;
-
-    public Startup(IConfiguration configuration)
-    {
-        this.configuration = configuration;
-    }
-
     public void ConfigureServices(IServiceCollection services)
     {
         var options = configuration.GetSection("images").Get<ImageResizeOptions>()!;

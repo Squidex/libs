@@ -12,14 +12,9 @@ using Xunit;
 namespace Squidex.Assets;
 
 [Trait("Category", "Dependencies")]
-public class AzureBlobAssetStoreTests : AssetStoreTests<AzureBlobAssetStore>, IClassFixture<AzureBlobAssetStoreFixture>
+public class AzureBlobAssetStoreTests(AzureBlobAssetStoreFixture fixture) : AssetStoreTests<AzureBlobAssetStore>, IClassFixture<AzureBlobAssetStoreFixture>
 {
-    public AzureBlobAssetStoreFixture _ { get; }
-
-    public AzureBlobAssetStoreTests(AzureBlobAssetStoreFixture fixture)
-    {
-        _ = fixture;
-    }
+    public AzureBlobAssetStoreFixture _ { get; } = fixture;
 
     public override AzureBlobAssetStore CreateStore()
     {

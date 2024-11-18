@@ -10,13 +10,8 @@ using Squidex.Log;
 
 namespace Squidex.Hosting;
 
-public sealed class BackgroundHost : SystemHost<IBackgroundProcess>, IHostedService
+public sealed class BackgroundHost(ISemanticLog log, IEnumerable<IBackgroundProcess> systems) : SystemHost<IBackgroundProcess>(log, systems), IHostedService
 {
-    public BackgroundHost(ISemanticLog log, IEnumerable<IBackgroundProcess> systems)
-        : base(log, systems)
-    {
-    }
-
     public async Task StartAsync(
         CancellationToken cancellationToken)
     {

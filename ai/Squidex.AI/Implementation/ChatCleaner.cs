@@ -11,31 +11,16 @@ using Squidex.Hosting;
 
 namespace Squidex.AI.Implementation;
 
-public sealed class ChatCleaner : IBackgroundProcess
+public sealed class ChatCleaner(
+    IChatAgent chatAgent,
+    IChatStore chatStore,
+    IEnumerable<IChatTool> chatTools,
+    IOptions<ChatOptions> options,
+    TimeProvider timeProvider,
+    ILogger<ChatCleaner> log) : IBackgroundProcess
 {
-    private readonly ChatOptions options;
-    private readonly TimeProvider timeProvider;
-    private readonly IChatAgent chatAgent;
-    private readonly IChatStore chatStore;
-    private readonly IEnumerable<IChatTool> chatTools;
-    private readonly ILogger<ChatCleaner> log;
+    private readonly ChatOptions options = options.Value;
     private SimpleTimer? cleanupTimer;
-
-    public ChatCleaner(
-        IChatAgent chatAgent,
-        IChatStore chatStore,
-        IEnumerable<IChatTool> chatTools,
-        IOptions<ChatOptions> options,
-        TimeProvider timeProvider,
-        ILogger<ChatCleaner> log)
-    {
-        this.chatAgent = chatAgent;
-        this.chatStore = chatStore;
-        this.chatTools = chatTools;
-        this.log = log;
-        this.options = options.Value;
-        this.timeProvider = timeProvider;
-    }
 
     public Task StartAsync(
         CancellationToken ct)

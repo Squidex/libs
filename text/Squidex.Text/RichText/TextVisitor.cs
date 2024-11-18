@@ -10,17 +10,11 @@ using Squidex.Text.RichText.Model;
 
 namespace Squidex.Text.RichText;
 
-public sealed class TextVisitor : Visitor
+public sealed class TextVisitor(StringBuilder stringBuilder, int maxLength) : Visitor
 {
-    private readonly StringBuilder stringBuilder;
-    private readonly int maxLength;
+    private readonly StringBuilder stringBuilder = stringBuilder;
+    private readonly int maxLength = maxLength;
     private NodeType previousNodeType;
-
-    public TextVisitor(StringBuilder stringBuilder, int maxLength)
-    {
-        this.stringBuilder = stringBuilder;
-        this.maxLength = maxLength;
-    }
 
     public static void Render(INode node, StringBuilder stringBuilder, int maxLength = int.MaxValue)
     {

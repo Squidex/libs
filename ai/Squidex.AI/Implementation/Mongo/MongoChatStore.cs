@@ -13,14 +13,9 @@ using Squidex.Hosting;
 
 namespace Squidex.AI.Implementation.Mongo;
 
-public sealed class MongoChatStore : IChatStore, IInitializable
+public sealed class MongoChatStore(IMongoDatabase database, IOptions<MongoChatStoreOptions> options) : IChatStore, IInitializable
 {
-    private readonly IMongoCollection<MongoChatEntity> collection;
-
-    public MongoChatStore(IMongoDatabase database, IOptions<MongoChatStoreOptions> options)
-    {
-        collection = database.GetCollection<MongoChatEntity>(options.Value.CollectionName);
-    }
+    private readonly IMongoCollection<MongoChatEntity> collection = database.GetCollection<MongoChatEntity>(options.Value.CollectionName);
 
     public Task InitializeAsync(
         CancellationToken ct)

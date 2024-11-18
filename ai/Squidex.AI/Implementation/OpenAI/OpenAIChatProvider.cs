@@ -7,25 +7,18 @@
 
 using System.Globalization;
 using System.Reactive.Linq;
+using Betalgo.Ranul.OpenAI.Managers;
+using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using Microsoft.Extensions.Options;
-using OpenAI.Managers;
-using OpenAI.ObjectModels.RequestModels;
-using OpenAIMessage = OpenAI.ObjectModels.RequestModels.ChatMessage;
+using OpenAIMessage = Betalgo.Ranul.OpenAI.ObjectModels.RequestModels.ChatMessage;
 
 namespace Squidex.AI.Implementation.OpenAI;
 
-public sealed class OpenAIChatProvider : IChatProvider
+public sealed class OpenAIChatProvider(IOptions<OpenAIChatOptions> options) : IChatProvider
 {
     private readonly StreamOptions streamOptions = new StreamOptions { IncludeUsage = true };
-    private readonly OpenAIChatOptions options;
-    private readonly OpenAIService service;
-
-    public OpenAIChatProvider(IOptions<OpenAIChatOptions> options)
-    {
-        service = new OpenAIService(options.Value);
-
-        this.options = options.Value;
-    }
+    private readonly OpenAIChatOptions options = options.Value;
+    private readonly OpenAIService service = new OpenAIService(options.Value);
 
     public IAsyncEnumerable<InternalChatEvent> StreamAsync(ChatProviderRequest request,
         CancellationToken ct = default)

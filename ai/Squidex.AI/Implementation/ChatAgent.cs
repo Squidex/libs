@@ -11,29 +11,16 @@ using Microsoft.Extensions.Options;
 
 namespace Squidex.AI.Implementation;
 
-public sealed class ChatAgent : IChatAgent
+public sealed class ChatAgent(
+    IChatProvider chatProvider,
+    IChatStore chatStore,
+    IEnumerable<IChatPipe> chatPipes,
+    IEnumerable<IChatToolProvider> chatToolProviders,
+    IOptions<ChatOptions> options) : IChatAgent
 {
-    private readonly ChatOptions options;
-    private readonly IChatProvider chatProvider;
-    private readonly IChatStore chatStore;
-    private readonly IEnumerable<IChatPipe> chatPipes;
-    private readonly IEnumerable<IChatToolProvider> chatToolProviders;
+    private readonly ChatOptions options = options.Value;
 
     public bool IsConfigured => chatProvider is not NoopChatProvider;
-
-    public ChatAgent(
-        IChatProvider chatProvider,
-        IChatStore chatStore,
-        IEnumerable<IChatPipe> chatPipes,
-        IEnumerable<IChatToolProvider> chatToolProviders,
-        IOptions<ChatOptions> options)
-    {
-        this.options = options.Value;
-        this.chatPipes = chatPipes;
-        this.chatProvider = chatProvider;
-        this.chatStore = chatStore;
-        this.chatToolProviders = chatToolProviders;
-    }
 
     public async Task StopConversationAsync(string conversationId, ChatContext? context = null,
         CancellationToken ct = default)

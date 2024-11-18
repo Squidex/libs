@@ -14,23 +14,12 @@ public sealed class TestValue(string value)
     public string Value { get; } = value;
 }
 
-public sealed class TestMessage : BaseMessage
+public sealed class TestMessage(Guid testId, int value) : BaseMessage(testId)
 {
-    public int Value { get; }
-
-    public TestMessage(Guid testId, int value)
-        : base(testId)
-    {
-        Value = value;
-    }
+    public int Value { get; } = value;
 }
 
-public abstract class BaseMessage
+public abstract class BaseMessage(Guid testId)
 {
-    public Guid TestId { get; }
-
-    protected BaseMessage(Guid testId)
-    {
-        TestId = testId;
-    }
+    public Guid TestId { get; } = testId;
 }

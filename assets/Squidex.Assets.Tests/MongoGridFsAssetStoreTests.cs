@@ -12,14 +12,9 @@ using Xunit;
 namespace Squidex.Assets;
 
 [Trait("Category", "Dependencies")]
-public class MongoGridFsAssetStoreTests : AssetStoreTests<MongoGridFsAssetStore>, IClassFixture<MongoGridFSAssetStoreFixture>
+public class MongoGridFsAssetStoreTests(MongoGridFSAssetStoreFixture fixture) : AssetStoreTests<MongoGridFsAssetStore>, IClassFixture<MongoGridFSAssetStoreFixture>
 {
-    public MongoGridFSAssetStoreFixture _ { get; }
-
-    public MongoGridFsAssetStoreTests(MongoGridFSAssetStoreFixture fixture)
-    {
-        _ = fixture;
-    }
+    public MongoGridFSAssetStoreFixture _ { get; } = fixture;
 
     public override MongoGridFsAssetStore CreateStore()
     {

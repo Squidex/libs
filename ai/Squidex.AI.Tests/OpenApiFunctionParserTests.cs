@@ -5,8 +5,8 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using FluentAssertions;
-using OpenAI.ObjectModels.RequestModels;
 using Squidex.AI.Implementation.OpenAI;
 using Squidex.AI.Utils;
 using Xunit;

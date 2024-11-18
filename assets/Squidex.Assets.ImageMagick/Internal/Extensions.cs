@@ -58,11 +58,11 @@ internal static class Extensions
                     var w = Math.Min(BufferSize, image.Width - x);
                     var h = Math.Min(BufferSize, image.Height - y);
 
-                    var bufferLength = w * h * colorChannels;
+                    var bufferLength = (int)(w * h * colorChannels);
 
                     var actualBuffer = buffer.AsSpan()[..bufferLength];
 
-                    pixels.SetArea(x, y, w, h, actualBuffer);
+                    pixels.SetArea(x, y, (uint)w, (uint)h, actualBuffer);
                 }
             }
         }

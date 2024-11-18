@@ -30,17 +30,9 @@ using ImageSharpOptions = SixLabors.ImageSharp.Processing.ResizeOptions;
 
 namespace Squidex.Assets;
 
-public sealed class ImageSharpThumbnailGenerator : AssetThumbnailGeneratorBase
+public sealed class ImageSharpThumbnailGenerator(IHttpClientFactory httpClientFactory) : AssetThumbnailGeneratorBase
 {
-    private readonly HashSet<string> mimeTypes;
-    private readonly IHttpClientFactory httpClientFactory;
-
-    public ImageSharpThumbnailGenerator(IHttpClientFactory httpClientFactory)
-    {
-        this.httpClientFactory = httpClientFactory;
-
-        mimeTypes = Configuration.Default.ImageFormatsManager.ImageFormats.SelectMany(x => x.MimeTypes).ToHashSet();
-    }
+    private readonly HashSet<string> mimeTypes = Configuration.Default.ImageFormatsManager.ImageFormats.SelectMany(x => x.MimeTypes).ToHashSet();
 
     public override bool CanReadAndWrite(string mimeType)
     {

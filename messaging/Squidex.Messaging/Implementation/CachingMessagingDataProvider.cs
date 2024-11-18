@@ -10,18 +10,9 @@ using Microsoft.Extensions.Options;
 
 namespace Squidex.Messaging.Implementation;
 
-public sealed class CachingMessagingDataProvider : IMessagingDataProvider
+public sealed class CachingMessagingDataProvider(IMemoryCache cache, IMessagingDataProvider inner, IOptions<MessagingOptions> options) : IMessagingDataProvider
 {
-    private readonly IMessagingDataProvider inner;
-    private readonly IMemoryCache cache;
-    private readonly MessagingOptions options;
-
-    public CachingMessagingDataProvider(IMemoryCache cache, IMessagingDataProvider inner, IOptions<MessagingOptions> options)
-    {
-        this.options = options.Value;
-        this.cache = cache;
-        this.inner = inner;
-    }
+    private readonly MessagingOptions options = options.Value;
 
     public async Task<IReadOnlyDictionary<string, T>> GetEntriesAsync<T>(string group,
         CancellationToken ct = default) where T : notnull

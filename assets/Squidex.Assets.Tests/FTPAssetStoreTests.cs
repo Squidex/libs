@@ -12,18 +12,13 @@ using Xunit;
 namespace Squidex.Assets;
 
 [Trait("Category", "Dependencies")]
-public class FTPAssetStoreTests : AssetStoreTests<FTPAssetStore>, IClassFixture<FTPAssetStoreFixture>
+public class FTPAssetStoreTests(FTPAssetStoreFixture fixture) : AssetStoreTests<FTPAssetStore>, IClassFixture<FTPAssetStoreFixture>
 {
-    public FTPAssetStoreFixture _ { get; }
+    public FTPAssetStoreFixture _ { get; } = fixture;
 
     protected override bool CanUploadStreamsWithoutLength => false;
 
     protected override bool CanDeleteAssetsWithPrefix => false;
-
-    public FTPAssetStoreTests(FTPAssetStoreFixture fixture)
-    {
-        _ = fixture;
-    }
 
     public override FTPAssetStore CreateStore()
     {

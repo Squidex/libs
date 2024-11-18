@@ -9,15 +9,8 @@ using Squidex.Log;
 
 namespace Squidex.Assets.ResizeService;
 
-public sealed class ImageResizer
+public sealed class ImageResizer(IAssetThumbnailGenerator assetThumbnailGenerator)
 {
-    private readonly IAssetThumbnailGenerator assetThumbnailGenerator;
-
-    public ImageResizer(IAssetThumbnailGenerator assetThumbnailGenerator)
-    {
-        this.assetThumbnailGenerator = assetThumbnailGenerator;
-    }
-
     public void Map(IEndpointRouteBuilder endpoints)
     {
         endpoints.MapPost("/blur", BlurAsync);

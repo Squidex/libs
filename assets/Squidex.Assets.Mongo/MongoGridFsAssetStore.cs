@@ -12,17 +12,11 @@ using Squidex.Hosting;
 
 namespace Squidex.Assets;
 
-public sealed class MongoGridFsAssetStore : IAssetStore, IInitializable
+public sealed class MongoGridFsAssetStore(IGridFSBucket<string> bucket) : IAssetStore, IInitializable
 {
     private static readonly FilterDefinitionBuilder<GridFSFileInfo<string>> Filters = Builders<GridFSFileInfo<string>>.Filter;
     private static readonly GridFSDownloadOptions DownloadDefault = new GridFSDownloadOptions();
     private static readonly GridFSDownloadOptions DownloadSeekable = new GridFSDownloadOptions { Seekable = true };
-    private readonly IGridFSBucket<string> bucket;
-
-    public MongoGridFsAssetStore(IGridFSBucket<string> bucket)
-    {
-        this.bucket = bucket;
-    }
 
     public async Task InitializeAsync(
         CancellationToken ct)

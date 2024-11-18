@@ -12,8 +12,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Blurhash.ImageSharp" Version="3.0.0" />
-    <PackageReference Include="Meziantou.Analyzer" Version="2.0.163">
+    <PackageReference Include="Blurhash.ImageSharp" Version="4.0.0" />
+    <PackageReference Include="Meziantou.Analyzer" Version="2.0.179">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

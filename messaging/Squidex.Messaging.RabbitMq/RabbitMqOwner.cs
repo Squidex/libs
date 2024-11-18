@@ -12,7 +12,7 @@ namespace Squidex.Messaging.RabbitMq;
 
 public sealed class RabbitMqOwner
 {
-    public IConnection Connection { get; }
+    public Task<IConnection> Connection { get; }
 
     public RabbitMqTransportOptions Options { get; }
 
@@ -23,11 +23,16 @@ public sealed class RabbitMqOwner
         var connectionFactory = new ConnectionFactory
         {
             Uri = options.Value.Uri,
-
-            // Of course we want an asynchronous behavior.
-            DispatchConsumersAsync = true
         };
 
-        Connection = connectionFactory.CreateConnection();
+        Connection = connectionFactory.CreateConnectionAsync();
+    }
+
+    public async Task<IChannel> CreateChannelAsync(
+        CancellationToken ct)
+    {
+        var connection = await Connection;
+
+        return await connection.CreateChannelAsync(cancellationToken: ct);
     }
 }

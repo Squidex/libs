@@ -10,14 +10,9 @@ using Microsoft.Extensions.Options;
 
 namespace Squidex.Hosting.Web;
 
-public sealed class ConfigureHttpsRedirection : IConfigureOptions<HttpsRedirectionOptions>
+public sealed class ConfigureHttpsRedirection(IOptions<UrlOptions> urlOptions) : IConfigureOptions<HttpsRedirectionOptions>
 {
-    private readonly UrlOptions urlOptions;
-
-    public ConfigureHttpsRedirection(IOptions<UrlOptions> urlOptions)
-    {
-        this.urlOptions = urlOptions.Value;
-    }
+    private readonly UrlOptions urlOptions = urlOptions.Value;
 
     public void Configure(HttpsRedirectionOptions options)
     {

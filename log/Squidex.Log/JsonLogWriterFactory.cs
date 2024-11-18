@@ -10,9 +10,9 @@ using Microsoft.Extensions.ObjectPool;
 
 namespace Squidex.Log;
 
-public sealed class JsonLogWriterFactory : IRootWriterFactory
+public sealed class JsonLogWriterFactory(bool indended = false, bool formatLine = false) : IRootWriterFactory
 {
-    private readonly ObjectPool<JsonLogWriter> writerPool;
+    private readonly ObjectPool<JsonLogWriter> writerPool = new DefaultObjectPoolProvider().Create(new JsonLogWriterPolicy(indended, formatLine));
 
     internal sealed class JsonLogWriterPolicy : PooledObjectPolicy<JsonLogWriter>
     {
@@ -43,11 +43,6 @@ public sealed class JsonLogWriterFactory : IRootWriterFactory
 
             return true;
         }
-    }
-
-    public JsonLogWriterFactory(bool indended = false, bool formatLine = false)
-    {
-        writerPool = new DefaultObjectPoolProvider().Create(new JsonLogWriterPolicy(indended, formatLine));
     }
 
     public static JsonLogWriterFactory Default()

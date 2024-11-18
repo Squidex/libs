@@ -10,17 +10,9 @@ using tusdotnet.Interfaces;
 
 namespace Squidex.Assets.Internal;
 
-internal sealed class AssetFileLock : ITusFileLock
+internal sealed class AssetFileLock(IAssetStore assetStore, string fileId) : ITusFileLock
 {
-    private readonly IAssetStore assetStore;
-    private readonly string filePath;
-
-    public AssetFileLock(IAssetStore assetStore, string fileId)
-    {
-        this.assetStore = assetStore;
-
-        filePath = $"locks/{fileId}.lock";
-    }
+    private readonly string filePath = $"locks/{fileId}.lock";
 
     public async Task<bool> Lock()
     {

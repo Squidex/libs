@@ -11,19 +11,12 @@ using Microsoft.Extensions.Options;
 
 namespace Squidex.Text.Translations.GoogleCloud;
 
-public sealed class GoogleCloudTranslationService : ITranslationService
+public sealed class GoogleCloudTranslationService(IOptions<GoogleCloudTranslationOptions> options) : ITranslationService
 {
-    private readonly GoogleCloudTranslationOptions options;
+    private readonly GoogleCloudTranslationOptions options = options.Value;
     private TranslationServiceClient service;
 
-    public bool IsConfigured { get; }
-
-    public GoogleCloudTranslationService(IOptions<GoogleCloudTranslationOptions> options)
-    {
-        this.options = options.Value;
-
-        IsConfigured = !string.IsNullOrWhiteSpace(options.Value.ProjectId);
-    }
+    public bool IsConfigured { get; } = !string.IsNullOrWhiteSpace(options.Value.ProjectId);
 
     public async Task<IReadOnlyList<TranslationResult>> TranslateAsync(IEnumerable<string> texts, string targetLanguage, string? sourceLanguage = null,
         CancellationToken ct = default)

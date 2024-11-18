@@ -11,29 +11,16 @@ using Squidex.Hosting;
 
 namespace Squidex.Messaging.Implementation;
 
-public sealed class MessagingDataProvider : IMessagingDataProvider, IBackgroundProcess
+public sealed class MessagingDataProvider(
+    IMessagingDataStore messagingDataStore,
+    IMessagingSerializer messagingSerializer,
+    IOptions<MessagingOptions> options,
+    TimeProvider timeProvider,
+    ILogger<MessagingDataProvider> log) : IMessagingDataProvider, IBackgroundProcess
 {
     private readonly Dictionary<(string Group, string Key), (SerializedObject Value, TimeSpan Expires)> localData = [];
-    private readonly MessagingOptions options;
-    private readonly IMessagingDataStore messagingDataStore;
-    private readonly IMessagingSerializer messagingSerializer;
-    private readonly ILogger<MessagingDataProvider> log;
-    private readonly TimeProvider timeProvider;
+    private readonly MessagingOptions options = options.Value;
     private SimpleTimer? updateTimer;
-
-    public MessagingDataProvider(
-        IMessagingDataStore messagingDataStore,
-        IMessagingSerializer messagingSerializer,
-        IOptions<MessagingOptions> options,
-        TimeProvider timeProvider,
-        ILogger<MessagingDataProvider> log)
-    {
-        this.options = options.Value;
-        this.messagingDataStore = messagingDataStore;
-        this.messagingSerializer = messagingSerializer;
-        this.timeProvider = timeProvider;
-        this.log = log;
-    }
 
     public Task StartAsync(
         CancellationToken ct)

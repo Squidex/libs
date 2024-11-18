@@ -7,18 +7,9 @@
 
 namespace Squidex.AI;
 
-public sealed class DelegateChatTool : IChatTool
+public sealed class DelegateChatTool(ToolSpec spec, Func<ToolContext, CancellationToken, Task<string>> action) : IChatTool
 {
-    private readonly Func<ToolContext, CancellationToken, Task<string>> action;
-
-    public ToolSpec Spec { get; }
-
-    public DelegateChatTool(ToolSpec spec, Func<ToolContext, CancellationToken, Task<string>> action)
-    {
-        Spec = spec;
-
-        this.action = action;
-    }
+    public ToolSpec Spec { get; } = spec;
 
     public Task<string> ExecuteAsync(ToolContext toolContext,
         CancellationToken ct)

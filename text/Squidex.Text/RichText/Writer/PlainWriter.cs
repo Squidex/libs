@@ -9,15 +9,8 @@ using System.Text;
 
 namespace Squidex.Text.RichText.Writer;
 
-internal sealed class PlainWriter : IWriter
+internal sealed class PlainWriter(StringBuilder stringBuilder) : IWriter
 {
-    private readonly StringBuilder stringBuilder;
-
-    public PlainWriter(StringBuilder stringBuilder)
-    {
-        this.stringBuilder = stringBuilder;
-    }
-
     public IWriter WriteLine(string text)
     {
         stringBuilder.Append(text);

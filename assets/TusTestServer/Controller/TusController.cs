@@ -10,15 +10,9 @@ using Squidex.Assets;
 
 namespace TusTestServer.Controller;
 
-public class TusController : ControllerBase
+public class TusController(AssetTusRunner runner) : ControllerBase
 {
-    private readonly AssetTusRunner runner;
     private readonly Uri uploadUri = new Uri("http://localhost:4000/files/controller");
-
-    public TusController(AssetTusRunner runner)
-    {
-        this.runner = runner;
-    }
 
     [Route("/upload")]
     public async Task<IActionResult> UploadAsync()
@@ -136,11 +130,11 @@ public class TusController : ControllerBase
         }
     }
 
-    public class PauseStream : DelegateStream
+    public class PauseStream(Stream innerStream, double pauseAfter) : DelegateStream(innerStream)
     {
-        private readonly int maxLength;
+        private readonly int maxLength = (int)Math.Floor(innerStream.Length * pauseAfter) + 1;
         private long totalRead;
-        private long totalRemaining;
+        private long totalRemaining = innerStream.Length;
         private long seekStart;
 
         public override long Length
@@ -152,14 +146,6 @@ public class TusController : ControllerBase
         {
             get => base.Position - seekStart;
             set => throw new NotSupportedException();
-        }
-
-        public PauseStream(Stream innerStream, double pauseAfter)
-            : base(innerStream)
-        {
-            maxLength = (int)Math.Floor(innerStream.Length * pauseAfter) + 1;
-
-            totalRemaining = innerStream.Length;
         }
 
         public override long Seek(long offset, SeekOrigin origin)

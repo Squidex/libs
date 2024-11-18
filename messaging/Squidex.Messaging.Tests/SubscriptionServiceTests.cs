@@ -17,17 +17,12 @@ using Xunit;
 namespace Squidex.Messaging;
 
 [Trait("Category", "Dependencies")]
-public class SubscriptionServiceTests : IClassFixture<MongoFixture>
+public class SubscriptionServiceTests(MongoFixture fixture) : IClassFixture<MongoFixture>
 {
     private readonly string groupName = $"group-{Guid.NewGuid()}";
     private readonly string key = $"key-{Guid.NewGuid()}";
 
-    public MongoFixture _ { get; }
-
-    public SubscriptionServiceTests(MongoFixture fixture)
-    {
-        _ = fixture;
-    }
+    public MongoFixture _ { get; } = fixture;
 
     [Fact]
     public async Task Should_subscribe_hot()

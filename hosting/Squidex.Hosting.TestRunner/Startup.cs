@@ -11,15 +11,8 @@ using Squidex.Log;
 
 namespace Squidex.Hosting;
 
-public sealed class Startup
+public sealed class Startup(IConfiguration configuration)
 {
-    private readonly IConfiguration configuration;
-
-    public Startup(IConfiguration configuration)
-    {
-        this.configuration = configuration;
-    }
-
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddSingletonAs(_ => JsonLogWriterFactory.Readable())

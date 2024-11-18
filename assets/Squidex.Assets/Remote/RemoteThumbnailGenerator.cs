@@ -11,18 +11,8 @@ using System.Text;
 
 namespace Squidex.Assets.Remote;
 
-public sealed class RemoteThumbnailGenerator : AssetThumbnailGeneratorBase
+public sealed class RemoteThumbnailGenerator(IHttpClientFactory httpClientFactory, IAssetThumbnailGenerator inner) : AssetThumbnailGeneratorBase
 {
-    private readonly IHttpClientFactory httpClientFactory;
-    private readonly IAssetThumbnailGenerator inner;
-
-    public RemoteThumbnailGenerator(IHttpClientFactory httpClientFactory, IAssetThumbnailGenerator inner)
-    {
-        this.httpClientFactory = httpClientFactory;
-
-        this.inner = inner;
-    }
-
     public override bool CanReadAndWrite(string mimeType)
     {
         return inner.CanReadAndWrite(mimeType);

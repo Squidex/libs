@@ -7,10 +7,10 @@
 
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using OpenAI.Builders;
-using OpenAI.ObjectModels.RequestModels;
-using OpenAI.ObjectModels.SharedModels;
-using OpenAIMessage = OpenAI.ObjectModels.RequestModels.ChatMessage;
+using Betalgo.Ranul.OpenAI.Builders;
+using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
+using Betalgo.Ranul.OpenAI.ObjectModels.SharedModels;
+using OpenAIMessage = Betalgo.Ranul.OpenAI.ObjectModels.RequestModels.ChatMessage;
 
 namespace Squidex.AI.Implementation.OpenAI;
 

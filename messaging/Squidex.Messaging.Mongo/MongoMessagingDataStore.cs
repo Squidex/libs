@@ -11,9 +11,9 @@ using Squidex.Hosting;
 
 namespace Squidex.Messaging.Mongo;
 
-public sealed class MongoMessagingDataStore : IMessagingDataStore, IInitializable
+public sealed class MongoMessagingDataStore(IMongoDatabase database, IOptions<MongoMessagingDataOptions> options) : IMessagingDataStore, IInitializable
 {
-    private readonly IMongoCollection<Entity> collection;
+    private readonly IMongoCollection<Entity> collection = database.GetCollection<Entity>(options.Value.CollectionName);
 
     private sealed class Entity
     {
@@ -30,11 +30,6 @@ public sealed class MongoMessagingDataStore : IMessagingDataStore, IInitializabl
         public byte[] ValueData { get; set; }
 
         public DateTime Expiration { get; set; }
-    }
-
-    public MongoMessagingDataStore(IMongoDatabase database, IOptions<MongoMessagingDataOptions> options)
-    {
-        collection = database.GetCollection<Entity>(options.Value.CollectionName);
     }
 
     public Task InitializeAsync(

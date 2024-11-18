@@ -13,7 +13,7 @@ using Squidex.Hosting;
 
 namespace Squidex.Assets;
 
-public class AzureBlobAssetStore : IAssetStore, IInitializable
+public class AzureBlobAssetStore(IOptions<AzureBlobAssetOptions> options) : IAssetStore, IInitializable
 {
     private static readonly BlobUploadOptions NoOverwriteUpload = new BlobUploadOptions
     {
@@ -29,14 +29,9 @@ public class AzureBlobAssetStore : IAssetStore, IInitializable
             IfNoneMatch = new ETag("*")
         }
     };
-    private readonly AzureBlobAssetOptions options;
+    private readonly AzureBlobAssetOptions options = options.Value;
     private BlobContainerClient blobContainer;
     private BlobContainerProperties blobContainerProperties;
-
-    public AzureBlobAssetStore(IOptions<AzureBlobAssetOptions> options)
-    {
-        this.options = options.Value;
-    }
 
     public async Task InitializeAsync(
         CancellationToken ct)

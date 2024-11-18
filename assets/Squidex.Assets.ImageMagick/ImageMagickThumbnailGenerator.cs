@@ -60,16 +60,21 @@ public sealed class ImageMagickThumbnailGenerator : AssetThumbnailGeneratorBase
                     var resizeMode = GetResizeMode(options, w, h, image);
                     var resizeAnchor = GetResizeAnchor(options);
 
-                    var (size, pad) = ResizeHelper.CalculateTargetLocationAndBounds(resizeMode, new Size(image.Width, image.Height), w, h, resizeAnchor);
+                    var (size, pad) = ResizeHelper.CalculateTargetLocationAndBounds(
+                        resizeMode,
+                        new Size((int)image.Width, (int)image.Height),
+                        w,
+                        h,
+                        resizeAnchor);
 
-                    var sourceRectangle = new MagickGeometry(pad.Width, pad.Height)
+                    var sourceRectangle = new MagickGeometry((uint)pad.Width, (uint)pad.Height)
                     {
                         IgnoreAspectRatio = true
                     };
 
                     clone.Resize(sourceRectangle);
 
-                    image.Extent(size.Width, size.Height);
+                    image.Extent((uint)size.Width, (uint)size.Height);
                     image.CompositeClear(color);
                     image.Composite(clone, pad.X, pad.Y, CompositeOperator.Over);
                 }
@@ -83,7 +88,7 @@ public sealed class ImageMagickThumbnailGenerator : AssetThumbnailGeneratorBase
 
                 if (options.Quality.HasValue)
                 {
-                    image.Quality = options.Quality.Value;
+                    image.Quality = (uint)options.Quality.Value;
                 }
             }
 
@@ -134,8 +139,8 @@ public sealed class ImageMagickThumbnailGenerator : AssetThumbnailGeneratorBase
 
                 return Task.FromResult<ImageInfo?>(new ImageInfo(
                     image.Format.ToImageFormat(),
-                    image.Width,
-                    image.Height,
+                    (int)image.Width,
+                    (int)image.Height,
                     image.Orientation.GetOrientation(),
                     hasSensitiveMetadata));
             }

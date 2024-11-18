@@ -9,16 +9,10 @@ using System.Text;
 
 namespace Squidex.Text.RichText.Writer;
 
-internal sealed class IndentedWriter : IWriter
+internal sealed class IndentedWriter(StringBuilder stringBuilder) : IWriter
 {
-    private readonly StringBuilder stringBuilder = new StringBuilder();
     private readonly Stack<string> indents = new Stack<string>(10);
     private bool previousWasLine = true;
-
-    public IndentedWriter(StringBuilder stringBuilder)
-    {
-        this.stringBuilder = stringBuilder;
-    }
 
     public IWriter WriteLine(string text)
     {

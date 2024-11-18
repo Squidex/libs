@@ -9,15 +9,8 @@ using tusdotnet.Interfaces;
 
 namespace Squidex.Assets.Internal;
 
-public sealed class AssetFileLockProvider : ITusFileLockProvider
+public sealed class AssetFileLockProvider(IAssetStore assetStore) : ITusFileLockProvider
 {
-    private readonly IAssetStore assetStore;
-
-    public AssetFileLockProvider(IAssetStore assetStore)
-    {
-        this.assetStore = assetStore;
-    }
-
     public Task<ITusFileLock> AquireLock(string fileId)
     {
         return Task.FromResult<ITusFileLock>(new AssetFileLock(assetStore, fileId));

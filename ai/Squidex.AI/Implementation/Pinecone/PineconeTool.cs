@@ -49,7 +49,7 @@ public sealed class PineconeTool : IChatTool, IInitializable
     public async Task InitializeAsync(
         CancellationToken ct)
     {
-        index = await client.GetIndex(options.IndexName, ct);
+        index = await client.GetIndex<GrpcTransport>(options.IndexName, ct);
     }
 
     public async Task<string> ExecuteAsync(ToolContext toolContext,

@@ -12,16 +12,11 @@ using Xunit;
 
 namespace Squidex.Messaging;
 
-public class RedisMessagingTests : MessagingTestsBase, IClassFixture<RedisFixture>
+public class RedisMessagingTests(RedisFixture fixture) : MessagingTestsBase, IClassFixture<RedisFixture>
 {
-    public RedisFixture _ { get; }
+    public RedisFixture _ { get; } = fixture;
 
     protected override bool CanHandleAndSimulateTimeout => false;
-
-    public RedisMessagingTests(RedisFixture fixture)
-    {
-        _ = fixture;
-    }
 
     protected override void Configure(MessagingBuilder builder)
     {

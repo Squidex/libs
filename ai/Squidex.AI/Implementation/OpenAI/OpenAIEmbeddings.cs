@@ -5,23 +5,16 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Betalgo.Ranul.OpenAI.Managers;
+using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using Microsoft.Extensions.Options;
-using OpenAI.Managers;
-using OpenAI.ObjectModels.RequestModels;
 
 namespace Squidex.AI.Implementation.OpenAI;
 
-public sealed class OpenAIEmbeddings : IEmbeddings
+public sealed class OpenAIEmbeddings(IOptions<OpenAIEmbeddingsOptions> options) : IEmbeddings
 {
-    private readonly OpenAIEmbeddingsOptions options;
-    private readonly OpenAIService service;
-
-    public OpenAIEmbeddings(IOptions<OpenAIEmbeddingsOptions> options)
-    {
-        service = new OpenAIService(options.Value);
-
-        this.options = options.Value;
-    }
+    private readonly OpenAIEmbeddingsOptions options = options.Value;
+    private readonly OpenAIService service = new OpenAIService(options.Value);
 
     public async Task<ReadOnlyMemory<double>> CalculateEmbeddingsAsync(string query,
         CancellationToken ct)

@@ -7,19 +7,11 @@
 
 namespace Squidex.Text;
 
-public sealed class SvgError
+public sealed class SvgError(string error, int lineCount = -1, int linePosition = -1)
 {
-    public int LineCount { get; }
+    public int LineCount { get; } = lineCount;
 
-    public int LinePosition { get; }
+    public int LinePosition { get; } = linePosition;
 
-    public string Error { get; }
-
-    public SvgError(string error, int lineCount = -1, int linePosition = -1)
-    {
-        Error = error;
-
-        LineCount = lineCount;
-        LinePosition = linePosition;
-    }
+    public string Error { get; } = error;
 }

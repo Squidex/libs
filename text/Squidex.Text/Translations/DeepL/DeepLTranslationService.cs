@@ -14,12 +14,11 @@ using Microsoft.Extensions.Options;
 namespace Squidex.Text.Translations.DeepL;
 
 [ExcludeFromCodeCoverage]
-public sealed class DeepLTranslationService : ITranslationService
+public sealed class DeepLTranslationService(IHttpClientFactory httpClientFactory, IOptions<DeepLTranslationOptions> options) : ITranslationService
 {
     private const string UrlPaid = "https://api.deepl.com/v2/translate";
     private const string UrlFree = "https://api-free.deepl.com/v2/translate";
-    private readonly DeepLTranslationOptions options;
-    private readonly IHttpClientFactory httpClientFactory;
+    private readonly DeepLTranslationOptions options = options.Value;
 
     private sealed class TranslationsDto
     {
@@ -36,15 +35,7 @@ public sealed class DeepLTranslationService : ITranslationService
         public string DetectedSourceLanguage { get; set; }
     }
 
-    public bool IsConfigured { get; }
-
-    public DeepLTranslationService(IHttpClientFactory httpClientFactory, IOptions<DeepLTranslationOptions> options)
-    {
-        this.options = options.Value;
-        this.httpClientFactory = httpClientFactory;
-
-        IsConfigured = !string.IsNullOrWhiteSpace(options.Value.AuthKey);
-    }
+    public bool IsConfigured { get; } = !string.IsNullOrWhiteSpace(options.Value.AuthKey);
 
     public async Task<IReadOnlyList<TranslationResult>> TranslateAsync(IEnumerable<string> texts, string targetLanguage, string? sourceLanguage = null,
         CancellationToken ct = default)

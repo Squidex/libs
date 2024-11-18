@@ -12,24 +12,28 @@ using tusdotnet.Parsers;
 
 namespace Squidex.Assets;
 
-public sealed class AssetTusFile : IAssetFile, ITusFile, IAsyncDisposable, IDisposable
+public sealed class AssetTusFile(
+    string id,
+    TusMetadata tusMetadata,
+    Dictionary<string, string> metadata,
+    Dictionary<string, Metadata> metadataRaw,
+    Stream stream,
+    Action<AssetTusFile> disposed) : IAssetFile, ITusFile, IAsyncDisposable, IDisposable
 {
-    private readonly Stream stream;
-    private readonly Action<AssetTusFile> disposed;
 
-    public string Id { get; }
+    public string Id { get; } = id;
 
-    public string FileName { get; }
+    public string FileName { get; } = GetFileName(metadata);
 
-    public string MimeType { get; }
+    public string MimeType { get; } = GetMimeType(metadata);
 
-    public long FileSize { get; }
+    public long FileSize { get; } = stream.Length;
 
-    public Dictionary<string, string> Metadata { get; }
+    public Dictionary<string, string> Metadata { get; } = metadata;
 
-    public Dictionary<string, Metadata> MetadataRaw { get; }
+    public Dictionary<string, Metadata> MetadataRaw { get; } = metadataRaw;
 
-    internal TusMetadata TusMetadata { get; }
+    internal TusMetadata TusMetadata { get; } = tusMetadata;
 
     public static AssetTusFile Create(string id, TusMetadata tusMetadata, Stream stream, Action<AssetTusFile> disposed)
     {
@@ -43,29 +47,6 @@ public sealed class AssetTusFile : IAssetFile, ITusFile, IAsyncDisposable, IDisp
         }
 
         return new AssetTusFile(id, tusMetadata, metadata, metadataRaw, stream, disposed);
-    }
-
-    public AssetTusFile(
-        string id,
-        TusMetadata tusMetadata,
-        Dictionary<string, string> metadata,
-        Dictionary<string, Metadata> metadataRaw,
-        Stream stream,
-        Action<AssetTusFile> disposed)
-    {
-        Id = id;
-
-        this.stream = stream;
-
-        FileSize = stream.Length;
-        FileName = GetFileName(metadata);
-        MimeType = GetMimeType(metadata);
-
-        Metadata = metadata;
-        MetadataRaw = metadataRaw;
-        TusMetadata = tusMetadata;
-
-        this.disposed = disposed;
     }
 
     private static string GetFileName(Dictionary<string, string> metadata)

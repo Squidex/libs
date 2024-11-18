@@ -9,7 +9,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Squidex.Text;
 
-internal sealed class ReadOnlyMemoryCharComparer : IEqualityComparer<ReadOnlyMemory<char>>
+internal sealed class ReadOnlyMemoryCharComparer(StringComparison comparison) : IEqualityComparer<ReadOnlyMemory<char>>
 {
     public static readonly ReadOnlyMemoryCharComparer Ordinal
         = new ReadOnlyMemoryCharComparer(StringComparison.Ordinal);
@@ -28,13 +28,6 @@ internal sealed class ReadOnlyMemoryCharComparer : IEqualityComparer<ReadOnlyMem
 
     public static readonly ReadOnlyMemoryCharComparer CurrentCultureIgnoreCase
         = new ReadOnlyMemoryCharComparer(StringComparison.CurrentCultureIgnoreCase);
-
-    private readonly StringComparison comparison;
-
-    public ReadOnlyMemoryCharComparer(StringComparison comparison)
-    {
-        this.comparison = comparison;
-    }
 
     public bool Equals(ReadOnlyMemory<char> x, ReadOnlyMemory<char> y)
     {

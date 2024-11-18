@@ -15,28 +15,16 @@ using Squidex.Messaging.Subscriptions.Messages;
 
 namespace Squidex.Messaging.Subscriptions.Implementation;
 
-public sealed class SubscriptionService : ISubscriptionService, IMessageHandler<PayloadMessageBase>
+public sealed class SubscriptionService(
+    IInstanceNameProvider instanceName,
+    IMessageBus messageBus,
+    IMessagingDataProvider messagingDataProvider,
+    IOptions<SubscriptionOptions> options,
+    ILogger<SubscriptionService> log) : ISubscriptionService, IMessageHandler<PayloadMessageBase>
 {
     private readonly ConcurrentDictionary<string, LocalSubscription> localSubscriptions = [];
-    private readonly SubscriptionOptions options;
-    private readonly string instanceName;
-    private readonly IMessageBus messageBus;
-    private readonly IMessagingDataProvider messagingDataProvider;
-    private readonly ILogger<SubscriptionService> log;
-
-    public SubscriptionService(
-        IInstanceNameProvider instanceName,
-        IMessageBus messageBus,
-        IMessagingDataProvider messagingDataProvider,
-        IOptions<SubscriptionOptions> options,
-        ILogger<SubscriptionService> log)
-    {
-        this.instanceName = instanceName.Name;
-        this.messageBus = messageBus;
-        this.messagingDataProvider = messagingDataProvider;
-        this.options = options.Value;
-        this.log = log;
-    }
+    private readonly SubscriptionOptions options = options.Value;
+    private readonly string instanceName = instanceName.Name;
 
     public async Task<bool> HasSubscriptionsAsync(string key,
         CancellationToken ct = default)
