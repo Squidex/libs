@@ -499,23 +499,22 @@ public abstract class AssetThumbnailGeneratorTests
         Assert.Null(imageInfo);
     }
 
-    private FileStream GetStream(string type, string? extension = null)
+    protected FileStream GetStream(string type, string? extension = null)
     {
         Directory.CreateDirectory("images");
 
         return new FileStream($"images/{type}.{Name()}.{extension ?? "png"}", FileMode.Create);
     }
 
-    private (string, Stream) GetImage(string fileName)
+    protected (string, Stream) GetImage(string fileName)
     {
-        var name = $"Squidex.Assets.Images.{fileName}";
+        var filePath = $"Squidex.Assets.Images.{fileName}";
+        var fileType = GetMimeType(fileName);
 
-        var mimeType = GetMimeType(fileName);
-
-        return (mimeType, GetType().Assembly.GetManifestResourceStream(name)!);
+        return (fileType, GetType().Assembly.GetManifestResourceStream(filePath)!);
     }
 
-    private static string GetMimeType(string fileName)
+    protected static string GetMimeType(string fileName)
     {
         var extension = fileName.Split('.')[^1];
 
@@ -529,12 +528,12 @@ public abstract class AssetThumbnailGeneratorTests
         return mimeType;
     }
 
-    private (string, Stream) GetImage(ImageFormat format)
+    protected (string, Stream) GetImage(ImageFormat format)
     {
         return GetImage($"logo.{format.ToString().ToLowerInvariant()}");
     }
 
-    private (string, Stream) GetRotatedJpeg()
+    protected (string, Stream) GetRotatedJpeg()
     {
         return GetImage("logo-wide-rotated.jpeg");
     }

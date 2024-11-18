@@ -30,6 +30,12 @@ public sealed class ResizeOptions : IOptions
 
     public string? Background { get; set; }
 
+    public string? WatermarkUrl { get; set; }
+
+    public float WatermarkOpacity { get; set; } = 1;
+
+    public WatermarkAnchor WatermarkAnchor { get; set; }
+
     internal bool IsResize
     {
         get => TargetWidth > 0 || TargetHeight > 0 || Quality > 0;
@@ -75,6 +81,21 @@ public sealed class ResizeOptions : IOptions
         if (Background != null)
         {
             yield return ("background", Background);
+        }
+
+        if (WatermarkAnchor != default)
+        {
+            yield return ("watermarkAnchor", WatermarkAnchor.ToString());
+        }
+
+        if (WatermarkOpacity < 1)
+        {
+            yield return ("watermarkOpacity", WatermarkOpacity.ToString(CultureInfo.InvariantCulture));
+        }
+
+        if (!string.IsNullOrWhiteSpace(WatermarkUrl))
+        {
+            yield return ("watermark", WatermarkUrl);
         }
 
         if (ExtraParameters != null)
@@ -151,6 +172,21 @@ public sealed class ResizeOptions : IOptions
             result.Background = background;
         }
 
+        if (parameters.TryGetValue("watermark", out var watermark))
+        {
+            result.WatermarkUrl = watermark;
+        }
+
+        if (parameters.TryGetValue("watermarkAnchor", out var a) && Enum.TryParse<WatermarkAnchor>(a, out var anchor))
+        {
+            result.WatermarkAnchor = anchor;
+        }
+
+        if (TryParseFloat("watermarkOpacity", out var watermarkOpacity))
+        {
+            result.WatermarkOpacity = watermarkOpacity;
+        }
+
         return result;
     }
 
@@ -192,6 +228,24 @@ public sealed class ResizeOptions : IOptions
         {
             sb.Append("_background_");
             sb.Append(Background);
+        }
+
+        if (WatermarkAnchor != default)
+        {
+            sb.Append("_wa_");
+            sb.Append(WatermarkAnchor);
+        }
+
+        if (!string.IsNullOrWhiteSpace(WatermarkUrl))
+        {
+            sb.Append("_wm_");
+            sb.Append(WatermarkUrl);
+        }
+
+        if (WatermarkOpacity < 1)
+        {
+            sb.Append("_wo_");
+            sb.Append(WatermarkOpacity);
         }
 
         return sb.ToString();

@@ -43,7 +43,7 @@ public class RemoteThumbnailGeneratorTests : AssetThumbnailGeneratorTests
 
         var inner = new CompositeThumbnailGenerator(
         [
-            new ImageSharpThumbnailGenerator(),
+            new ImageSharpThumbnailGenerator(httpClientFactory),
             new ImageMagickThumbnailGenerator()
         ]);
 

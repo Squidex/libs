@@ -11,7 +11,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ImageMagick;
-using SixLabors.ImageSharp;
 using Squidex.Assets.Internal;
 
 namespace Squidex.Assets;
@@ -55,36 +54,13 @@ public sealed class ImageMagickThumbnailGenerator : AssetThumbnailGeneratorBase
             foreach (var image in images)
             {
                 var clone = image.Clone();
-
                 var color = options.ParseColor();
-
                 if (w > 0 || h > 0)
                 {
-                    var isCropUpsize = options.Mode == ResizeMode.CropUpsize;
+                    var resizeMode = GetResizeMode(options, w, h, image);
+                    var resizeAnchor = GetResizeAnchor(options);
 
-                    var resizeMode = options.Mode;
-
-                    if (isCropUpsize)
-                    {
-                        resizeMode = ResizeMode.Crop;
-                    }
-
-                    if (w >= image.Width && h >= image.Height && resizeMode == ResizeMode.Crop && !isCropUpsize)
-                    {
-                        resizeMode = ResizeMode.BoxPad;
-                    }
-
-                    PointF? centerCoordinates = null;
-
-                    if (options.FocusX.HasValue && options.FocusY.HasValue)
-                    {
-                        centerCoordinates = new PointF(
-                            +(options.FocusX.Value / 2f) + 0.5f,
-                            -(options.FocusY.Value / 2f) + 0.5f
-                        );
-                    }
-
-                    var (size, pad) = ResizeHelper.CalculateTargetLocationAndBounds(resizeMode, new Size(image.Width, image.Height), w, h, centerCoordinates);
+                    var (size, pad) = ResizeHelper.CalculateTargetLocationAndBounds(resizeMode, new Size(image.Width, image.Height), w, h, resizeAnchor);
 
                     var sourceRectangle = new MagickGeometry(pad.Width, pad.Height)
                     {
@@ -94,7 +70,6 @@ public sealed class ImageMagickThumbnailGenerator : AssetThumbnailGeneratorBase
                     clone.Resize(sourceRectangle);
 
                     image.Extent(size.Width, size.Height);
-
                     image.CompositeClear(color);
                     image.Composite(clone, pad.X, pad.Y, CompositeOperator.Over);
                 }
@@ -169,6 +144,39 @@ public sealed class ImageMagickThumbnailGenerator : AssetThumbnailGeneratorBase
         {
             return Task.FromResult<ImageInfo?>(null);
         }
+    }
+
+    private static PointF? GetResizeAnchor(ResizeOptions options)
+    {
+        PointF? centerCoordinates = null;
+
+        if (options.FocusX.HasValue && options.FocusY.HasValue)
+        {
+            centerCoordinates = new PointF(
+                +(options.FocusX.Value / 2f) + 0.5f,
+                -(options.FocusY.Value / 2f) + 0.5f
+            );
+        }
+
+        return centerCoordinates;
+    }
+
+    private static ResizeMode GetResizeMode(ResizeOptions options, int w, int h, IMagickImage<byte> image)
+    {
+        var isCropUpsize = options.Mode == ResizeMode.CropUpsize;
+
+        var resizeMode = options.Mode;
+        if (isCropUpsize)
+        {
+            resizeMode = ResizeMode.Crop;
+        }
+
+        if (w >= image.Width && h >= image.Height && resizeMode == ResizeMode.Crop && !isCropUpsize)
+        {
+            resizeMode = ResizeMode.BoxPad;
+        }
+
+        return resizeMode;
     }
 
     private static MagickFormat GetFormat(string mimeType)

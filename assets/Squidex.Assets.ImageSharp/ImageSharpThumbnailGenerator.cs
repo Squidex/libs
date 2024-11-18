@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Blurhash.ImageSharp;
@@ -23,18 +24,21 @@ using SixLabors.ImageSharp.Metadata.Profiles.Exif;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using Squidex.Assets.Internal;
-using ISImageInfo = SixLabors.ImageSharp.ImageInfo;
-using ISResizeMode = SixLabors.ImageSharp.Processing.ResizeMode;
-using ISResizeOptions = SixLabors.ImageSharp.Processing.ResizeOptions;
+using ImageSharpInfo = SixLabors.ImageSharp.ImageInfo;
+using ImageSharpMode = SixLabors.ImageSharp.Processing.ResizeMode;
+using ImageSharpOptions = SixLabors.ImageSharp.Processing.ResizeOptions;
 
 namespace Squidex.Assets;
 
 public sealed class ImageSharpThumbnailGenerator : AssetThumbnailGeneratorBase
 {
     private readonly HashSet<string> mimeTypes;
+    private readonly IHttpClientFactory httpClientFactory;
 
-    public ImageSharpThumbnailGenerator()
+    public ImageSharpThumbnailGenerator(IHttpClientFactory httpClientFactory)
     {
+        this.httpClientFactory = httpClientFactory;
+
         mimeTypes = Configuration.Default.ImageFormatsManager.ImageFormats.SelectMany(x => x.MimeTypes).ToHashSet();
     }
 
@@ -72,39 +76,25 @@ public sealed class ImageSharpThumbnailGenerator : AssetThumbnailGeneratorBase
 
         using (var image = await Image.LoadAsync(source, ct))
         {
-            image.Mutate(x => x.AutoOrient());
+            var watermark = await GetWatermarkAsync(options, ct);
 
-            if (w > 0 || h > 0)
+            image.Mutate(operation =>
             {
-                var isCropUpsize = options.Mode == ResizeMode.CropUpsize;
+                operation.AutoOrient();
 
-                if (!Enum.TryParse<ISResizeMode>(options.Mode.ToString(), true, out var resizeMode))
+                if (w > 0 || h > 0)
                 {
-                    resizeMode = ISResizeMode.Max;
-                }
+                    var resizeMode = GetResizeMode(options, w, h, image);
+                    var resizeOptions = new ImageSharpOptions { Size = new Size(w, h), Mode = resizeMode, PremultiplyAlpha = true };
 
-                if (isCropUpsize)
-                {
-                    resizeMode = ISResizeMode.Crop;
-                }
+                    if (options.FocusX.HasValue && options.FocusY.HasValue)
+                    {
+                        resizeOptions.CenterCoordinates = new PointF(
+                            +(options.FocusX.Value / 2f) + 0.5f,
+                            -(options.FocusY.Value / 2f) + 0.5f
+                        );
+                    }
 
-                if (w >= image.Width && h >= image.Height && resizeMode == ISResizeMode.Crop && !isCropUpsize)
-                {
-                    resizeMode = ISResizeMode.BoxPad;
-                }
-
-                var resizeOptions = new ISResizeOptions { Size = new Size(w, h), Mode = resizeMode, PremultiplyAlpha = true };
-
-                if (options.FocusX.HasValue && options.FocusY.HasValue)
-                {
-                    resizeOptions.CenterCoordinates = new PointF(
-                        +(options.FocusX.Value / 2f) + 0.5f,
-                        -(options.FocusY.Value / 2f) + 0.5f
-                    );
-                }
-
-                image.Mutate(operation =>
-                {
                     operation.Resize(resizeOptions);
 
                     if (options.Background != null && Color.TryParse(options.Background, out var color))
@@ -115,13 +105,40 @@ public sealed class ImageSharpThumbnailGenerator : AssetThumbnailGeneratorBase
                     {
                         operation.BackgroundColor(Color.Transparent);
                     }
-                });
-            }
+                }
+
+                if (watermark != null)
+                {
+                    operation.Watermark(watermark, options.WatermarkAnchor, options.WatermarkOpacity);
+                }
+            });
 
             var encoder = options.GetEncoder(image.Metadata.DecodedImageFormat);
 
             await image.SaveAsync(destination, encoder, ct);
         }
+    }
+
+    private static ImageSharpMode GetResizeMode(ResizeOptions options, int w, int h, Image image)
+    {
+        var isCropUpsize = options.Mode == ResizeMode.CropUpsize;
+
+        if (!Enum.TryParse<ImageSharpMode>(options.Mode.ToString(), true, out var resizeMode))
+        {
+            resizeMode = ImageSharpMode.Max;
+        }
+
+        if (isCropUpsize)
+        {
+            resizeMode = ImageSharpMode.Crop;
+        }
+
+        if (w >= image.Width && h >= image.Height && resizeMode == ImageSharpMode.Crop && !isCropUpsize)
+        {
+            resizeMode = ImageSharpMode.BoxPad;
+        }
+
+        return resizeMode;
     }
 
     protected override async Task<ImageInfo?> GetImageInfoCoreAsync(Stream source, string mimeType,
@@ -166,7 +183,25 @@ public sealed class ImageSharpThumbnailGenerator : AssetThumbnailGeneratorBase
         }
     }
 
-    private static ImageInfo GetImageInfo(ISImageInfo imageInfo)
+    private async Task<Image?> GetWatermarkAsync(ResizeOptions options,
+        CancellationToken ct)
+    {
+        if (options.WatermarkUrl == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return await httpClientFactory.GetImageAsync(options.WatermarkUrl, ct);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static ImageInfo GetImageInfo(ImageSharpInfo imageInfo)
     {
         var orientation = ImageOrientation.None;
 

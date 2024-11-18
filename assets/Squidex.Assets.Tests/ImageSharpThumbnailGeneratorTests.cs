@@ -29,7 +29,13 @@ public class ImageSharpThumbnailGeneratorTests : AssetThumbnailGeneratorTests
 
     protected override IAssetThumbnailGenerator CreateSut()
     {
-        return new ImageSharpThumbnailGenerator();
+        var httpClientFactory =
+            new ServiceCollection()
+                .AddHttpClient()
+                .BuildServiceProvider()
+                .GetRequiredService<IHttpClientFactory>();
+
+        return new ImageSharpThumbnailGenerator(httpClientFactory);
     }
 
     [Fact]
@@ -39,5 +45,49 @@ public class ImageSharpThumbnailGeneratorTests : AssetThumbnailGeneratorTests
 
         Assert.False(result);
         Assert.Null(destimationMimeType);
+    }
+
+    [Theory]
+    [InlineData(WatermarkAnchor.TopLeft)]
+    [InlineData(WatermarkAnchor.TopRight)]
+    [InlineData(WatermarkAnchor.BottomLeft)]
+    [InlineData(WatermarkAnchor.BottomRight)]
+    [InlineData(WatermarkAnchor.Center)]
+    public async Task Should_add_watermark(WatermarkAnchor anchor)
+    {
+        var (mimeType, source) = GetImage("landscape.png");
+
+        await using (var target = GetStream($"watermark_{anchor}"))
+        {
+            await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
+            {
+                WatermarkAnchor = anchor,
+                WatermarkUrl = "https://github.com/Squidex/squidex/blob/master/media/logo-wide.png?raw=true"
+            });
+
+            Assert.True(target.Length > source.Length);
+        }
+    }
+
+    [Theory]
+    [InlineData(WatermarkAnchor.TopLeft)]
+    [InlineData(WatermarkAnchor.TopRight)]
+    [InlineData(WatermarkAnchor.BottomLeft)]
+    [InlineData(WatermarkAnchor.BottomRight)]
+    [InlineData(WatermarkAnchor.Center)]
+    public async Task Should_add_watermark_to_small_image(WatermarkAnchor anchor)
+    {
+        var (mimeType, source) = GetImage("landscape_small.png");
+
+        await using (var target = GetStream($"watermark_small_{anchor}"))
+        {
+            await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
+            {
+                WatermarkAnchor = anchor,
+                WatermarkUrl = "https://github.com/Squidex/squidex/blob/master/media/logo-wide.png?raw=true"
+            });
+
+            Assert.True(target.Length > source.Length);
+        }
     }
 }

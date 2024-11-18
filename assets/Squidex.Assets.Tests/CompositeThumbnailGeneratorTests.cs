@@ -16,9 +16,15 @@ public class CompositeThumbnailGeneratorTests : AssetThumbnailGeneratorTests
 
     protected override IAssetThumbnailGenerator CreateSut()
     {
+        var httpClientFactory =
+            new ServiceCollection()
+                .AddHttpClient()
+                .BuildServiceProvider()
+                .GetRequiredService<IHttpClientFactory>();
+
         return new CompositeThumbnailGenerator(
         [
-            new ImageSharpThumbnailGenerator(),
+            new ImageSharpThumbnailGenerator(httpClientFactory),
             new ImageMagickThumbnailGenerator()
         ]);
     }

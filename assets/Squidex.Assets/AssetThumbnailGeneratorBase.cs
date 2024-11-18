@@ -49,7 +49,11 @@ public abstract class AssetThumbnailGeneratorBase : IAssetThumbnailGenerator
             targetMimeType = null;
         }
 
-        if (options.TargetWidth > 0 || options.TargetHeight > 0 || options.Quality > 0 || targetMimeType != null)
+        if (options.TargetWidth > 0 ||
+            options.TargetHeight > 0 ||
+            options.Quality > 0 ||
+            targetMimeType != null ||
+            Uri.IsWellFormedUriString(options.WatermarkUrl, UriKind.Absolute))
         {
             destinationMimeType = targetMimeType ?? mimeType;
 

@@ -7,6 +7,7 @@
 
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
+using Microsoft.Extensions.DependencyInjection;
 using Squidex.Assets;
 
 #pragma warning disable MA0048 // File name must match type name
@@ -69,7 +70,13 @@ public static class Program
     {
         if (args.Contains("--resize"))
         {
-            var generator = new ImageSharpThumbnailGenerator();
+            var httpClientFactory =
+                new ServiceCollection()
+                    .AddHttpClient()
+                    .BuildServiceProvider()
+                    .GetRequiredService<IHttpClientFactory>();
+
+            var generator = new ImageSharpThumbnailGenerator(httpClientFactory);
 
             await using (var source = new FileStream("file_example_PNG_1MB.png", FileMode.Open))
             {

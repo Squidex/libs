@@ -12,6 +12,7 @@
   <ItemGroup>
     <None Remove="Images\feather.png" />
     <None Remove="Images\landscape.png" />
+    <None Remove="Images\landscape_small.png" />
     <None Remove="Images\logo-wide-rotated.jpeg" />
     <None Remove="Images\logo.avif" />
     <None Remove="Images\logo.bmp" />
@@ -56,6 +57,7 @@
   <ItemGroup>
     <EmbeddedResource Include="Images\feather.png" />
     <EmbeddedResource Include="Images\landscape.png" />
+	<EmbeddedResource Include="Images\landscape_small.png" />
     <EmbeddedResource Include="Images\logo-wide-rotated.jpeg" />
     <EmbeddedResource Include="Images\logo.avif" />
     <EmbeddedResource Include="Images\logo.bmp" />

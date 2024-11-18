@@ -26,11 +26,13 @@ public sealed class Startup
         services.AddDefaultForwardRules();
         services.AddDefaultWebServices(configuration);
         services.AddSingleton<ImageResizer>();
+        services.AddSingleton<ImageSharpThumbnailGenerator>();
+        services.AddSingleton<ImageMagickThumbnailGenerator>();
 
         services.AddSingletonAs(c => new CompositeThumbnailGenerator(
         [
-            new ImageSharpThumbnailGenerator(),
-            new ImageMagickThumbnailGenerator()
+            c.GetRequiredService<ImageSharpThumbnailGenerator>(),
+            c.GetRequiredService<ImageMagickThumbnailGenerator>(),
         ], options.MaxTasks)).As<IAssetThumbnailGenerator>();
     }
 
