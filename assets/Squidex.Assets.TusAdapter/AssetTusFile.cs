@@ -20,7 +20,6 @@ public sealed class AssetTusFile(
     Stream stream,
     Action<AssetTusFile> disposed) : IAssetFile, ITusFile, IAsyncDisposable, IDisposable
 {
-
     public string Id { get; } = id;
 
     public string FileName { get; } = GetFileName(metadata);

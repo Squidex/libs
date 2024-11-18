@@ -10,7 +10,7 @@ COPY *.sln ./
 
 # Copy the main source project files
 COPY ai/*/*.csproj ./
-RUN for file in $(ls *.csproj); do mkdir -p assets/${file%.*}/ && mv $file ai/${file%.*}/; done
+RUN for file in $(ls *.csproj); do mkdir -p ai/${file%.*}/ && mv $file ai/${file%.*}/; done
 
 COPY assets/*/*.csproj ./
 RUN for file in $(ls *.csproj); do mkdir -p assets/${file%.*}/ && mv $file assets/${file%.*}/; done
