@@ -5,7 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.AI.Implementation.Mongo;
+namespace Squidex.AI.Mongo;
 
 public sealed class MongoChatEntity
 {

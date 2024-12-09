@@ -87,6 +87,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squidex.AI", "ai\Squidex.AI
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squidex.AI.Tests", "ai\Squidex.AI.Tests\Squidex.AI.Tests.csproj", "{AD46BEF0-33C8-4994-B242-0D9E4C50488F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squidex.AI.Mongo", "ai\Squidex.AI.Mongo\Squidex.AI.Mongo.csproj", "{98AE3491-7D34-498B-8A8F-14BDAAF37AD3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -233,6 +235,10 @@ Global
 		{AD46BEF0-33C8-4994-B242-0D9E4C50488F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AD46BEF0-33C8-4994-B242-0D9E4C50488F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AD46BEF0-33C8-4994-B242-0D9E4C50488F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{98AE3491-7D34-498B-8A8F-14BDAAF37AD3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{98AE3491-7D34-498B-8A8F-14BDAAF37AD3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{98AE3491-7D34-498B-8A8F-14BDAAF37AD3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{98AE3491-7D34-498B-8A8F-14BDAAF37AD3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -273,6 +279,7 @@ Global
 		{B4461E6B-81ED-4C3D-86D6-03C2B367DB15} = {C857F3ED-A6AE-47C6-A115-87ECCB36AC02}
 		{A4EAB4B8-096D-4F4F-85E1-A1385B26680B} = {F18E275B-4805-4DCB-BE31-ACC314FB508E}
 		{AD46BEF0-33C8-4994-B242-0D9E4C50488F} = {F18E275B-4805-4DCB-BE31-ACC314FB508E}
+		{98AE3491-7D34-498B-8A8F-14BDAAF37AD3} = {F18E275B-4805-4DCB-BE31-ACC314FB508E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {060512DD-34DA-4929-A67F-2E473577FBF5}

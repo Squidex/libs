@@ -7,7 +7,7 @@
 
 using Squidex.Hosting.Configuration;
 
-namespace Squidex.AI.Implementation.Mongo;
+namespace Squidex.AI.Mongo;
 
 public sealed class MongoChatStoreOptions : IValidatableOptions
 {
