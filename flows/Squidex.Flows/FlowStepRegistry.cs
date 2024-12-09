@@ -7,7 +7,6 @@
 
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
-using Squidex.Text;
 
 namespace Squidex.Flows;
 
@@ -49,7 +48,7 @@ public sealed class FlowStepRegistry
             {
                 var stepProperty = new FlowStepPropertyDescriptor
                 {
-                    Name = property.Name.ToCamelCase()
+                    Name = property.Name
                 };
 
                 var display = property.GetCustomAttribute<DisplayAttribute>();

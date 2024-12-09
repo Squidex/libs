@@ -9,7 +9,7 @@ using NodaTime;
 
 namespace Squidex.Flows.Execution;
 
-public interface IErrorPolicy<TContext>
+public interface IErrorPolicy<TContext> where TContext : FlowContext
 {
-    Instant? ShouldRetry(ExecutionState<TContext> state, ExecutionStepState stepStep, IFlowStep<TContext> step);
+    Instant? ShouldRetry(ExecutionState<TContext> state, ExecutionStepState stepStep, IFlowStep step);
 }

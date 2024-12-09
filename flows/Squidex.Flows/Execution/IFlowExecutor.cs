@@ -9,7 +9,7 @@ using Squidex.Flows.Internal;
 
 namespace Squidex.Flows.Execution;
 
-public interface IFlowExecutor<TContext>
+public interface IFlowExecutor<TContext> where TContext : FlowContext
 {
     Task<ExecutionState<TContext>> CreateInstanceAsync(
         string ownerId,

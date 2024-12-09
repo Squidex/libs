@@ -5,17 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Flows.Execution.MongoDb;
+namespace Squidex.Flows;
 
-public sealed class MongoFlowStateEntity
+public class FlowContext
 {
-    public Guid Id { get; set; }
-
-    public string OwnerId { get; set; }
-
-    public string DefinitionId { get; set; }
-
-    public string State { get; set; }
-
-    public DateTimeOffset? DueTime { get; set; }
+    public Dictionary<string, string> UserData { get; set; } = [];
 }

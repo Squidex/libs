@@ -9,7 +9,7 @@ using NodaTime;
 
 namespace Squidex.Flows.Execution;
 
-public interface IFlowStateStore<TContext>
+public interface IFlowStateStore<TContext> where TContext : FlowContext
 {
     Task StoreAsync(List<ExecutionState<TContext>> states,
         CancellationToken ct);

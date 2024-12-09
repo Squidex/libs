@@ -9,10 +9,13 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using MongoDB.Driver;
 using NodaTime;
+using Squidex.Flows.Execution;
 
-namespace Squidex.Flows.Execution.MongoDb;
+namespace Squidex.Flows.Mongo;
 
-public sealed class MongoFlowStateStore<TContext>(IMongoDatabase database, JsonSerializerOptions jsonSerializerOptions) : IFlowStateStore<TContext>
+public sealed class MongoFlowStateStore<TContext>(IMongoDatabase database, JsonSerializerOptions jsonSerializerOptions)
+    : IFlowStateStore<TContext>
+     where TContext : FlowContext
 {
     private readonly IMongoCollection<MongoFlowStateEntity> collection = database.GetCollection<MongoFlowStateEntity>("FlowStates");
 

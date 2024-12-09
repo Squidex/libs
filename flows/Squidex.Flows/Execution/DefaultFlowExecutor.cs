@@ -8,7 +8,6 @@
 using System.ComponentModel.DataAnnotations;
 using NodaTime;
 using Squidex.Flows.Internal;
-using Squidex.Text;
 
 namespace Squidex.Flows.Execution;
 
@@ -16,7 +15,7 @@ internal sealed class DefaultFlowExecutor<TContext>(
     IErrorPolicy<TContext> errorPolicy,
     IExpressionEngine expressionEngine,
     IServiceProvider serviceProvider)
-    : IFlowExecutor<TContext>
+    : IFlowExecutor<TContext> where TContext : FlowContext
 {
     public IClock Clock { get; set; } = SystemClock.Instance;
 
@@ -64,7 +63,7 @@ internal sealed class DefaultFlowExecutor<TContext>(
 
             foreach (var member in error.MemberNames)
             {
-                addError($"steps.{stepId}.{member.ToCamelCase()}", ValidationErrorType.InvalidProperty, error.ErrorMessage);
+                addError($"steps.{stepId}.{member}", ValidationErrorType.InvalidProperty, error.ErrorMessage);
             }
         }
     }
@@ -77,6 +76,12 @@ internal sealed class DefaultFlowExecutor<TContext>(
         TContext context,
         CancellationToken ct)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(nameof(ownerId));
+        ArgumentException.ThrowIfNullOrWhiteSpace(nameof(definitionId));
+        ArgumentException.ThrowIfNullOrWhiteSpace(nameof(description));
+        ArgumentNullException.ThrowIfNull(nameof(definition));
+        ArgumentNullException.ThrowIfNull(nameof(context));
+
         if (definition.Steps.Count == 0)
         {
             throw new InvalidOperationException($"Flow definition has no steps.");
@@ -166,7 +171,7 @@ internal sealed class DefaultFlowExecutor<TContext>(
             throw new InvalidOperationException($"Cannot find step with ID '{definition.InitialStep}'.");
         }
 
-        if (stepDefinition.Step is not IFlowStep<TContext> step)
+        if (stepDefinition.Step is not IFlowStep step)
         {
             throw new InvalidOperationException($"Step has an invalid type.");
         }
@@ -250,7 +255,7 @@ internal sealed class DefaultFlowExecutor<TContext>(
                 var nextAttempt = errorPolicy.ShouldRetry(state, stepState, step);
                 if (nextAttempt > now)
                 {
-                    state.Next(stepId, nextAttempt);
+                    state.Next(stepId, nextAttempt.Value);
                 }
                 else
                 {

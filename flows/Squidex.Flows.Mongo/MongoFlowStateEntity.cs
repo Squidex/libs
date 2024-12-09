@@ -5,14 +5,17 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using NodaTime;
+namespace Squidex.Flows.Mongo;
 
-namespace Squidex.Flows.Execution;
-
-internal class NoRetryErrorPolicy<TContext> : IErrorPolicy<TContext> where TContext : FlowContext
+public sealed class MongoFlowStateEntity
 {
-    public Instant? ShouldRetry(ExecutionState<TContext> state, ExecutionStepState stepState, IFlowStep step)
-    {
-        return null;
-    }
+    public Guid Id { get; set; }
+
+    public string OwnerId { get; set; }
+
+    public string DefinitionId { get; set; }
+
+    public string State { get; set; }
+
+    public DateTimeOffset? DueTime { get; set; }
 }

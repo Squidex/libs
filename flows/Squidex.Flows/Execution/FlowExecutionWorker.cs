@@ -14,7 +14,7 @@ using Squidex.Hosting;
 
 namespace Squidex.Flows.Execution;
 
-public sealed class FlowExecutionWorker<TContext> : BackgroundService, IBackgroundProcess
+public sealed class FlowExecutionWorker<TContext> : BackgroundService, IBackgroundProcess where TContext : FlowContext
 {
     private readonly ConcurrentDictionary<Guid, bool> executing = new ConcurrentDictionary<Guid, bool>();
     private readonly PartitionedScheduler<ExecutionState<TContext>> requestScheduler;

@@ -7,9 +7,9 @@
 
 namespace Squidex.Flows;
 
-public interface IFlowStepFactory<TContext>
+public interface IFlowStepFactory
 {
     string StepType { get; set; }
 
-    IFlowStep<TContext> CreateStep(FlowStepDescriptor definition);
+    IFlowStep CreateStep(FlowStepDescriptor definition);
 }

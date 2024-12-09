@@ -11,13 +11,13 @@ using Squidex.Flows.Steps.Utils;
 
 namespace Squidex.Flows.Steps;
 
-public sealed partial class WebhookStep<TContext>
+public sealed partial class WebhookStep
 {
     public string? Signature { get; set; }
 
     public Dictionary<string, string>? ParsedHeaders { get; set; }
 
-    public ValueTask PrepareAsync(TContext context, FlowExecutionContext executionContext,
+    public ValueTask PrepareAsync(FlowContext context, FlowExecutionContext executionContext,
         CancellationToken ct)
     {
         ParsedHeaders = ParseHeaders(Headers);
@@ -52,7 +52,7 @@ public sealed partial class WebhookStep<TContext>
         return headersDictionary;
     }
 
-    public async ValueTask<FlowStepResult> ExecuteAsync(TContext context, FlowExecutionContext executionContext,
+    public async ValueTask<FlowStepResult> ExecuteAsync(FlowContext context, FlowExecutionContext executionContext,
         CancellationToken ct)
     {
         var method = HttpMethod.Post;

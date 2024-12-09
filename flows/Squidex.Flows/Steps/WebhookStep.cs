@@ -6,9 +6,6 @@
 // ==========================================================================
 
 using System.ComponentModel.DataAnnotations;
-using System.Text;
-using Microsoft.Extensions.DependencyInjection;
-using Squidex.Flows.Steps.Utils;
 
 namespace Squidex.Flows.Steps;
 
@@ -19,7 +16,7 @@ namespace Squidex.Flows.Steps;
     Display = "Send webhook",
     Description = "Invoke HTTP endpoints on a target system.",
     ReadMore = "https://en.wikipedia.org/wiki/Webhook")]
-public sealed partial class WebhookStep<TContext> : IFlowStep<TContext>
+public sealed partial class WebhookStep : IFlowStep
 {
     [Required]
     [Display(Name = "Url", Description = "The URL to the webhook.")]

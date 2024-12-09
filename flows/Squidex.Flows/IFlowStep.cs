@@ -16,16 +16,13 @@ public interface IFlowStep
     {
         return default;
     }
-}
 
-public interface IFlowStep<TContext> : IFlowStep
-{
-    ValueTask PrepareAsync(TContext context, FlowExecutionContext executionContext,
+    ValueTask PrepareAsync(FlowContext context, FlowExecutionContext executionContext,
         CancellationToken ct)
     {
         return default;
     }
 
-    ValueTask<FlowStepResult> ExecuteAsync(TContext context, FlowExecutionContext executionContext,
+    ValueTask<FlowStepResult> ExecuteAsync(FlowContext context, FlowExecutionContext executionContext,
         CancellationToken ct);
 }

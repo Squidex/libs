@@ -11,7 +11,7 @@ namespace Squidex.Flows.Steps;
 
 #pragma warning disable MA0048 // File name must match type name
 
-public class IfStep<TContext> : IFlowStep<TContext>
+public class IfStep : IFlowStep
 {
     public List<IfBranch> Branches { get; set; }
 
@@ -44,7 +44,7 @@ public class IfStep<TContext> : IFlowStep<TContext>
         return default;
     }
 
-    public ValueTask PrepareAsync(TContext context, FlowExecutionContext executionContext,
+    public ValueTask PrepareAsync(FlowContext context, FlowExecutionContext executionContext,
         CancellationToken ct)
     {
         var nextStep = Else;
@@ -63,7 +63,7 @@ public class IfStep<TContext> : IFlowStep<TContext>
         return default;
     }
 
-    public ValueTask<FlowStepResult> ExecuteAsync(TContext context, FlowExecutionContext executionContext,
+    public ValueTask<FlowStepResult> ExecuteAsync(FlowContext context, FlowExecutionContext executionContext,
         CancellationToken ct)
     {
         return new ValueTask<FlowStepResult>(FlowStepResult.Next(NextStep));

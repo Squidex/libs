@@ -7,11 +7,10 @@
 
 using NodaTime;
 using Squidex.Flows.Internal;
-using static Google.Cloud.Translate.V3.BatchTranslateDocumentMetadata.Types;
 
 namespace Squidex.Flows.Execution;
 
-public sealed class ExecutionState<TContext>
+public sealed class ExecutionState<TContext> where TContext : FlowContext
 {
     required public Guid InstanceId { get; set; }
 
@@ -21,9 +20,9 @@ public sealed class ExecutionState<TContext>
 
     required public FlowDefinition Definition { get; set; }
 
-    public int ExecutionPartition { get; set; }
+    required public TContext Context { get; set; }
 
-    public TContext Context { get; set; }
+    public int ExecutionPartition { get; set; }
 
     required public string Description { get; set; }
 
