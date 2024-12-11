@@ -10,14 +10,13 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NodaTime;
 using Squidex.Flows.Execution.Utils;
-using Squidex.Hosting;
 
 namespace Squidex.Flows.Execution;
 
-public sealed class FlowExecutionWorker<TContext> : BackgroundService, IBackgroundProcess where TContext : FlowContext
+public sealed class FlowExecutionWorker<TContext> : BackgroundService where TContext : FlowContext
 {
     private readonly ConcurrentDictionary<Guid, bool> executing = new ConcurrentDictionary<Guid, bool>();
-    private readonly PartitionedScheduler<ExecutionState<TContext>> requestScheduler;
+    private readonly PartitionedScheduler<FlowExecutionState<TContext>> requestScheduler;
     private readonly IFlowExecutor<TContext> executor;
     private readonly IFlowStateStore<TContext> store;
     private readonly ILogger<FlowExecutionWorker<TContext>> log;
@@ -33,7 +32,7 @@ public sealed class FlowExecutionWorker<TContext> : BackgroundService, IBackgrou
         this.store = store;
         this.log = log;
 
-        requestScheduler = new PartitionedScheduler<ExecutionState<TContext>>(HandleAsync, 32, 2);
+        requestScheduler = new PartitionedScheduler<FlowExecutionState<TContext>>(HandleAsync, 32, 2);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -69,7 +68,7 @@ public sealed class FlowExecutionWorker<TContext> : BackgroundService, IBackgrou
         }
     }
 
-    public async Task HandleAsync(ExecutionState<TContext> state,
+    public async Task HandleAsync(FlowExecutionState<TContext> state,
         CancellationToken ct)
     {
         if (!executing.TryAdd(state.InstanceId, false))

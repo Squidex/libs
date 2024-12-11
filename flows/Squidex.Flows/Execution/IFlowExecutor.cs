@@ -11,7 +11,7 @@ namespace Squidex.Flows.Execution;
 
 public interface IFlowExecutor<TContext> where TContext : FlowContext
 {
-    Task<ExecutionState<TContext>> CreateInstanceAsync(
+    Task<FlowExecutionState<TContext>> CreateInstanceAsync(
         string ownerId,
         string definitionId,
         string description,
@@ -22,6 +22,6 @@ public interface IFlowExecutor<TContext> where TContext : FlowContext
     Task ValidateAsync(FlowDefinition definition, AddError addError,
         CancellationToken ct);
 
-    Task ExecuteAsync(ExecutionState<TContext> state, ExecutionOptions options,
+    Task ExecuteAsync(FlowExecutionState<TContext> state, ExecutionOptions options,
         CancellationToken ct);
 }

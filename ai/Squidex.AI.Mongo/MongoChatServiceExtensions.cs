@@ -7,7 +7,7 @@
 
 using Microsoft.Extensions.Configuration;
 using Squidex.AI.Implementation;
-using Squidex.AI.Implementation.Mongo;
+using Squidex.AI.Mongo;
 
 namespace Microsoft.Extensions.DependencyInjection;
 

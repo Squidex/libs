@@ -9,9 +9,10 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using Squidex.AI.Implementation;
 using Squidex.Hosting;
 
-namespace Squidex.AI.Implementation.Mongo;
+namespace Squidex.AI.Mongo;
 
 public sealed class MongoChatStore(IMongoDatabase database, IOptions<MongoChatStoreOptions> options) : IChatStore, IInitializable
 {

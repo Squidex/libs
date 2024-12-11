@@ -94,6 +94,7 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squidex.Flows.Tests", "flows\Squidex.Flows.Tests\Squidex.Flows.Tests.csproj", "{CC9096C3-1FAD-42CD-AA50-622BE68BC78D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squidex.Flows.Mongo", "flows\Squidex.Flows.Mongo\Squidex.Flows.Mongo.csproj", "{559B7D03-755C-4233-A055-670ABF8D4D58}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squidex.AI.Mongo", "ai\Squidex.AI.Mongo\Squidex.AI.Mongo.csproj", "{98AE3491-7D34-498B-8A8F-14BDAAF37AD3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -253,6 +254,10 @@ Global
 		{559B7D03-755C-4233-A055-670ABF8D4D58}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{559B7D03-755C-4233-A055-670ABF8D4D58}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{559B7D03-755C-4233-A055-670ABF8D4D58}.Release|Any CPU.Build.0 = Release|Any CPU
+		{98AE3491-7D34-498B-8A8F-14BDAAF37AD3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{98AE3491-7D34-498B-8A8F-14BDAAF37AD3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{98AE3491-7D34-498B-8A8F-14BDAAF37AD3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{98AE3491-7D34-498B-8A8F-14BDAAF37AD3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -296,6 +301,7 @@ Global
 		{A11B0218-3FCB-46F4-B3B6-B56A36BA02BC} = {67DB170D-E43B-431F-AE3A-2730FC631D12}
 		{CC9096C3-1FAD-42CD-AA50-622BE68BC78D} = {67DB170D-E43B-431F-AE3A-2730FC631D12}
 		{559B7D03-755C-4233-A055-670ABF8D4D58} = {67DB170D-E43B-431F-AE3A-2730FC631D12}
+		{98AE3491-7D34-498B-8A8F-14BDAAF37AD3} = {F18E275B-4805-4DCB-BE31-ACC314FB508E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {060512DD-34DA-4929-A67F-2E473577FBF5}

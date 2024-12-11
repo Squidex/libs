@@ -10,7 +10,7 @@ using Squidex.Flows.Internal;
 
 namespace Squidex.Flows.Execution;
 
-public sealed class ExecutionState<TContext> where TContext : FlowContext
+public sealed class FlowExecutionState<TContext> where TContext : FlowContext
 {
     required public Guid InstanceId { get; set; }
 

@@ -51,7 +51,7 @@ public sealed class MongoFlowStateStore<TContext>(IMongoDatabase database, JsonS
             cancellationToken: ct);
     }
 
-    public async Task<ExecutionState<TContext>?> FindAsync(Guid id,
+    public async Task<FlowExecutionState<TContext>?> FindAsync(Guid id,
         CancellationToken ct = default)
     {
         var entity = await collection.Find(x => x.Id == id).FirstOrDefaultAsync(ct);
@@ -63,7 +63,7 @@ public sealed class MongoFlowStateStore<TContext>(IMongoDatabase database, JsonS
         return ParseState(entity);
     }
 
-    public async Task<(List<ExecutionState<TContext>> Items, long Total)> QueryByOwnerAsync(string ownerId, string? definitionId = null, int skip = 0, int take = 20,
+    public async Task<(List<FlowExecutionState<TContext>> Items, long Total)> QueryByOwnerAsync(string ownerId, string? definitionId = null, int skip = 0, int take = 20,
         CancellationToken ct = default)
     {
         var filters = new List<FilterDefinition<MongoFlowStateEntity>>
@@ -86,7 +86,7 @@ public sealed class MongoFlowStateStore<TContext>(IMongoDatabase database, JsonS
         return (items, entitiesTotal);
     }
 
-    public async IAsyncEnumerable<ExecutionState<TContext>> QueryPendingAsync(Instant now,
+    public async IAsyncEnumerable<FlowExecutionState<TContext>> QueryPendingAsync(Instant now,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
         var entitiesLimit = now.ToDateTimeOffset();
@@ -101,7 +101,7 @@ public sealed class MongoFlowStateStore<TContext>(IMongoDatabase database, JsonS
         }
     }
 
-    public async Task StoreAsync(List<ExecutionState<TContext>> states,
+    public async Task StoreAsync(List<FlowExecutionState<TContext>> states,
         CancellationToken ct)
     {
         if (states.Count == 0)
@@ -131,8 +131,8 @@ public sealed class MongoFlowStateStore<TContext>(IMongoDatabase database, JsonS
         await collection.BulkWriteAsync(batch, cancellationToken: ct);
     }
 
-    private ExecutionState<TContext> ParseState(MongoFlowStateEntity entity)
+    private FlowExecutionState<TContext> ParseState(MongoFlowStateEntity entity)
     {
-        return JsonSerializer.Deserialize<ExecutionState<TContext>>(entity.State, jsonSerializerOptions)!;
+        return JsonSerializer.Deserialize<FlowExecutionState<TContext>>(entity.State, jsonSerializerOptions)!;
     }
 }

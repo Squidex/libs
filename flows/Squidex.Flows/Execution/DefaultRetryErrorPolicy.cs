@@ -12,7 +12,7 @@ namespace Squidex.Flows.Execution;
 
 public sealed class DefaultRetryErrorPolicy<TContext> : IErrorPolicy<TContext> where TContext : FlowContext
 {
-    public Instant? ShouldRetry(ExecutionState<TContext> state, ExecutionStepState stepState, IFlowStep step)
+    public Instant? ShouldRetry(FlowExecutionState<TContext> state, ExecutionStepState stepState, IFlowStep step)
     {
         if (step.GetType().GetCustomAttribute<RetryAttribute>() == null)
         {

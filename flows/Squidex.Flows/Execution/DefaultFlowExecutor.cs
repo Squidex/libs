@@ -68,7 +68,7 @@ internal sealed class DefaultFlowExecutor<TContext>(
         }
     }
 
-    public Task<ExecutionState<TContext>> CreateInstanceAsync(
+    public Task<FlowExecutionState<TContext>> CreateInstanceAsync(
         string ownerId,
         string definitionId,
         string description,
@@ -92,7 +92,7 @@ internal sealed class DefaultFlowExecutor<TContext>(
             throw new InvalidOperationException($"Flow definition has no step with ID '{definition.InitialStep}'.");
         }
 
-        var state = new ExecutionState<TContext>
+        var state = new FlowExecutionState<TContext>
         {
             Context = context,
             Definition = definition,
@@ -112,7 +112,7 @@ internal sealed class DefaultFlowExecutor<TContext>(
     {
         var options = new ExecutionOptions { IsSimulation = true };
 
-        var state = new ExecutionState<TContext>
+        var state = new FlowExecutionState<TContext>
         {
             Context = context,
             Definition = definition,
@@ -135,7 +135,7 @@ internal sealed class DefaultFlowExecutor<TContext>(
         }
     }
 
-    public async Task ExecuteAsync(ExecutionState<TContext> state, ExecutionOptions options,
+    public async Task ExecuteAsync(FlowExecutionState<TContext> state, ExecutionOptions options,
         CancellationToken ct)
     {
         while (true)
@@ -155,7 +155,7 @@ internal sealed class DefaultFlowExecutor<TContext>(
         }
     }
 
-    private async Task ExecuteCoreAsync(ExecutionState<TContext> state, ExecutionOptions options, IClock clock,
+    private async Task ExecuteCoreAsync(FlowExecutionState<TContext> state, ExecutionOptions options, IClock clock,
         CancellationToken ct)
     {
         var definition = state.Definition;
@@ -268,7 +268,7 @@ internal sealed class DefaultFlowExecutor<TContext>(
         }
     }
 
-    private static Guid? GetNextStep(ExecutionState<TContext> state, FlowStepDefinition currentStep, FlowStepResult result)
+    private static Guid? GetNextStep(FlowExecutionState<TContext> state, FlowStepDefinition currentStep, FlowStepResult result)
     {
         var nextId = result.StepId ?? currentStep.NextStepId;
         if (!state.Definition.Steps.ContainsKey(nextId))
