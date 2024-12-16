@@ -5,13 +5,11 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Squidex.Flows.Internal;
-
 namespace Squidex.Flows;
 
 public interface IFlowStep
 {
-    ValueTask ValidateAsync(FlowDefinition definition, AddError addError,
+    ValueTask ValidateAsync(FlowValidationContext validationContext, AddError addError,
         CancellationToken ct)
     {
         return default;

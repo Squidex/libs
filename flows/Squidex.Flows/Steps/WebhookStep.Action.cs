@@ -6,7 +6,6 @@
 // ==========================================================================
 
 using System.Text;
-using Microsoft.Extensions.DependencyInjection;
 using Squidex.Flows.Steps.Utils;
 
 namespace Squidex.Flows.Steps;
@@ -78,8 +77,7 @@ public sealed partial class WebhookStep
             return FlowStepResult.Next();
         }
 
-        var httpClientFactory = executionContext.ServiceProvider.GetRequiredService<IHttpClientFactory>();
-        var httpClient = httpClientFactory.CreateClient("WebhookAction");
+        var httpClient = executionContext.Resolve<IHttpClientFactory>().CreateClient("FlowClient");
 
         var request = new HttpRequestMessage(method, Uri);
 

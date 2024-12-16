@@ -23,5 +23,7 @@ public sealed class FlowStepDescriptor
 
     public string Description { get; set; }
 
+    public bool IsObsolete { get; set; }
+
     public List<FlowStepPropertyDescriptor> Properties { get; } = [];
 }

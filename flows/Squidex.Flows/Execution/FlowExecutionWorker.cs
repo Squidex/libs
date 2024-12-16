@@ -8,15 +8,18 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using NodaTime;
 using Squidex.Flows.Execution.Utils;
+using Squidex.Hosting;
 
 namespace Squidex.Flows.Execution;
 
-public sealed class FlowExecutionWorker<TContext> : BackgroundService where TContext : FlowContext
+public sealed class FlowExecutionWorker<TContext> : BackgroundService, IBackgroundProcess where TContext : FlowContext
 {
     private readonly ConcurrentDictionary<Guid, bool> executing = new ConcurrentDictionary<Guid, bool>();
     private readonly PartitionedScheduler<FlowExecutionState<TContext>> requestScheduler;
+    private readonly FlowOptions options;
     private readonly IFlowExecutor<TContext> executor;
     private readonly IFlowStateStore<TContext> store;
     private readonly ILogger<FlowExecutionWorker<TContext>> log;
@@ -26,9 +29,11 @@ public sealed class FlowExecutionWorker<TContext> : BackgroundService where TCon
     public FlowExecutionWorker(
         IFlowExecutor<TContext> executor,
         IFlowStateStore<TContext> store,
+        IOptions<FlowOptions> options,
         ILogger<FlowExecutionWorker<TContext>> log)
     {
         this.executor = executor;
+        this.options = options.Value;
         this.store = store;
         this.log = log;
 
@@ -37,8 +42,7 @@ public sealed class FlowExecutionWorker<TContext> : BackgroundService where TCon
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(10));
-
+        var timer = new PeriodicTimer(options.JobQueryInterval);
         try
         {
             while (await timer.WaitForNextTickAsync(stoppingToken))
@@ -76,7 +80,14 @@ public sealed class FlowExecutionWorker<TContext> : BackgroundService where TCon
             return;
         }
 
-        await executor.ExecuteAsync(state, default, ct);
-        await store.StoreAsync([state], default);
+        try
+        {
+            await executor.ExecuteAsync(state, default, ct);
+            await store.StoreAsync([state], default);
+        }
+        finally
+        {
+            executing.Remove(state.InstanceId, out _);
+        }
     }
 }

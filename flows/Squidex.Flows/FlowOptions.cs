@@ -7,8 +7,9 @@
 
 namespace Squidex.Flows;
 
-[AttributeUsage(AttributeTargets.Property)]
-public sealed class ExpressionAttribute(ExpressionFallback fallback = default) : Attribute
+public class FlowOptions
 {
-    public ExpressionFallback Fallback => fallback;
+    public TimeSpan JobQueryInterval { get; set; } = TimeSpan.FromSeconds(10);
+
+    public List<Type> Steps { get; set; } = [];
 }

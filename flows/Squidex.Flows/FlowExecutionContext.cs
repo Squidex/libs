@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Microsoft.Extensions.DependencyInjection;
 using Squidex.Flows.Execution;
 
 namespace Squidex.Flows;
@@ -12,35 +13,48 @@ namespace Squidex.Flows;
 public sealed class FlowExecutionContext(
     IExpressionEngine expressionEngine,
     IServiceProvider serviceProvider,
-    Action<string> logger,
+    Action<string, string?> logger,
     bool isSimulation)
 {
-    public IServiceProvider ServiceProvider => serviceProvider;
-
     public bool IsSimulation => isSimulation;
 
-    public void Log(string message)
+    public T Resolve<T>() where T : class
     {
-        logger(message);
+        return serviceProvider.GetRequiredService<T>();
     }
 
-    public bool Evaluate<TContext>(string expression, TContext context)
+    public void Log(string message, object? dump = null)
     {
-        if (string.IsNullOrWhiteSpace(expression))
+        string? formattedDump = null;
+
+        if (dump is string text)
         {
-            return false;
+            formattedDump = text;
+        }
+        else if (dump is Exception exception)
+        {
+            formattedDump = exception.Message;
+        }
+        else if (dump != null)
+        {
+            formattedDump = Serialize(dump);
         }
 
-        return expressionEngine.Evaluate(expression, context);
+        logger(message, formattedDump);
     }
 
-    public string Execute<TContext>(string expression, TContext context)
+    public bool Evaluate<T>(string? expression, T value)
     {
-        if (string.IsNullOrWhiteSpace(expression))
-        {
-            return string.Empty;
-        }
+        return expressionEngine.Evaluate(expression, value);
+    }
 
-        return expressionEngine.Execute(expression, context);
+    public ValueTask<string?> RenderAsync<T>(string? expression, T value, ExpressionFallback fallback = default)
+    {
+        return expressionEngine.RenderAsync(expression, value, fallback);
+    }
+
+    public string Serialize<T>(T value)
+    {
+        return expressionEngine.Serialize(value);
     }
 }

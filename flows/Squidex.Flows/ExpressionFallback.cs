@@ -7,9 +7,10 @@
 
 namespace Squidex.Flows;
 
-public interface IFlowStepFactory
+public enum ExpressionFallback
 {
-    string StepType { get; set; }
-
-    IFlowStep CreateStep(FlowStepDescriptor definition);
+    None,
+    Context,
+    Event,
+    Envelope
 }

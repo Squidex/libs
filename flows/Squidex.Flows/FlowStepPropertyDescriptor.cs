@@ -24,4 +24,6 @@ public sealed class FlowStepPropertyDescriptor
     public bool IsScript { get; set; }
 
     public bool IsRequired { get; set; }
+
+    public bool IsObsolete { get; set; }
 }

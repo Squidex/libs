@@ -51,6 +51,12 @@ public sealed class MongoFlowStateStore<TContext>(IMongoDatabase database, JsonS
             cancellationToken: ct);
     }
 
+    public Task DeleteByOwnerIdAsync(string ownerId,
+        CancellationToken ct = default)
+    {
+        return collection.DeleteManyAsync(x => x.OwnerId == ownerId, ct);
+    }
+
     public async Task<FlowExecutionState<TContext>?> FindAsync(Guid id,
         CancellationToken ct = default)
     {
@@ -78,8 +84,12 @@ public sealed class MongoFlowStateStore<TContext>(IMongoDatabase database, JsonS
 
         var filter = Builders<MongoFlowStateEntity>.Filter.And(filters);
 
-        var entitiesTotal = await collection.Find(filter).CountDocumentsAsync(ct);
         var entitiesItems = await collection.Find(filter).Skip(skip).Limit(take).ToListAsync(ct);
+        var entitiesTotal = (long)entitiesItems.Count;
+        if (entitiesTotal >= take || skip > 0)
+        {
+            entitiesTotal = await collection.Find(filter).CountDocumentsAsync(ct);
+        }
 
         var items = entitiesItems.Select(ParseState).ToList();
 

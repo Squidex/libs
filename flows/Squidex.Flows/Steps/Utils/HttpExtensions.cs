@@ -9,7 +9,7 @@ namespace Squidex.Flows.Steps.Utils;
 
 public static class HttpExtensions
 {
-    public static async Task OneWayRequestAsync(this HttpClient client, HttpRequestMessage request, Action<string> logger, string? requestBody = null,
+    public static async Task OneWayRequestAsync(this HttpClient client, HttpRequestMessage request, Action<string, object?> logger, string? requestBody = null,
         CancellationToken ct = default)
     {
         HttpResponseMessage? response = null;
@@ -20,18 +20,18 @@ public static class HttpExtensions
             var responseString = await response.Content.ReadAsStringAsync(ct);
 
             var requestDump = HttpDumpFormatter.BuildDump(request, response, requestBody, responseString);
-            logger(requestDump);
+            logger(requestDump, null);
 
             if (!response.IsSuccessStatusCode)
             {
-                logger(requestDump);
+                logger(requestDump, null);
                 throw new HttpRequestException($"Response code does not indicate success: {(int)response.StatusCode} ({response.StatusCode}).");
             }
         }
         catch (Exception ex)
         {
             var requestDump = HttpDumpFormatter.BuildDump(request, response, requestBody, ex.ToString());
-            logger(requestDump);
+            logger(requestDump, null);
             throw;
         }
     }

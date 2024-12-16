@@ -5,10 +5,13 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Squidex.Flows.Internal;
+
 namespace Squidex.Flows;
 
-[AttributeUsage(AttributeTargets.Property)]
-public sealed class ExpressionAttribute(ExpressionFallback fallback = default) : Attribute
+public sealed class FlowValidationContext(IServiceProvider serviceProvider, FlowDefinition definition)
 {
-    public ExpressionFallback Fallback => fallback;
+    public IServiceProvider ServiceProvider => serviceProvider;
+
+    public FlowDefinition Definition => definition;
 }

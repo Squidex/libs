@@ -9,7 +9,9 @@ namespace Squidex.Flows.Execution;
 
 public interface IExpressionEngine
 {
-    bool Evaluate<TContext>(string expression, TContext context);
+    bool Evaluate<T>(string? expression, T value);
 
-    string Execute<TContext>(string expression, TContext context);
+    ValueTask<string?> RenderAsync<T>(string? expression, T value, ExpressionFallback fallback);
+
+    string Serialize<T>(T value);
 }

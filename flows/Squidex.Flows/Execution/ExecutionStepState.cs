@@ -44,4 +44,4 @@ public sealed class ExecutionStepAttempt
     public Exception? Error { get; set; }
 }
 
-public sealed record ExecutionStepLogEntry(Instant Timestamp, string Message);
+public sealed record ExecutionStepLogEntry(Instant Timestamp, string Message, string? Dump);

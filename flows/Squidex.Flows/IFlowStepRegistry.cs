@@ -7,8 +7,7 @@
 
 namespace Squidex.Flows;
 
-[AttributeUsage(AttributeTargets.Property)]
-public sealed class ExpressionAttribute(ExpressionFallback fallback = default) : Attribute
+public interface IFlowStepRegistry
 {
-    public ExpressionFallback Fallback => fallback;
+    IReadOnlyDictionary<string, FlowStepDescriptor> Steps { get; }
 }

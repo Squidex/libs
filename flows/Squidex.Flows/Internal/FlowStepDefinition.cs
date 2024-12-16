@@ -9,9 +9,9 @@ namespace Squidex.Flows.Internal;
 
 public class FlowStepDefinition
 {
-    public Guid Id { get; set; }
-
     public Guid NextStepId { get; set; }
+
+    public bool IgnoreError { get; set; }
 
     public IFlowStep Step { get; set; }
 }

@@ -26,6 +26,9 @@ public interface IFlowStateStore<TContext> where TContext : FlowContext
     Task CancelByOwnerIdAsync(string ownerId,
         CancellationToken ct = default);
 
+    Task DeleteByOwnerIdAsync(string ownerId,
+        CancellationToken ct = default);
+
     IAsyncEnumerable<FlowExecutionState<TContext>> QueryPendingAsync(Instant now,
         CancellationToken ct = default);
 

@@ -7,16 +7,26 @@
 
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
+using Microsoft.Extensions.Options;
+using Squidex.Hosting;
 
 namespace Squidex.Flows;
 
-public sealed class FlowStepRegistry
+public sealed class FlowStepRegistry(IOptions<FlowOptions> options) : IInitializable, IFlowStepRegistry
 {
-    public Dictionary<string, FlowStepDescriptor> Steps { get; } = [];
+    private readonly Dictionary<string, FlowStepDescriptor> steps = [];
 
-    public FlowStepRegistry Add<T>() where T : IFlowStep
+    public IReadOnlyDictionary<string, FlowStepDescriptor> Steps => steps;
+
+    public Task InitializeAsync(
+        CancellationToken ct)
     {
-        return Add(typeof(T));
+        foreach (var type in options.Value.Steps)
+        {
+            Add(type);
+        }
+
+        return Task.CompletedTask;
     }
 
     private FlowStepRegistry Add(Type stepType)
@@ -38,6 +48,7 @@ public sealed class FlowStepRegistry
                 Display = metadata.Display,
                 IconColor = metadata.IconColor,
                 IconImage = metadata.IconImage,
+                IsObsolete = stepType.GetCustomAttribute<ObsoleteAttribute>() != null,
                 ReadMore = metadata.ReadMore,
                 Title = metadata.Title,
             };
@@ -48,7 +59,10 @@ public sealed class FlowStepRegistry
             {
                 var stepProperty = new FlowStepPropertyDescriptor
                 {
-                    Name = property.Name
+                    Name = property.Name,
+                    IsFormattable = property.GetCustomAttribute<ExpressionAttribute>() != null,
+                    IsObsolete = stepType.GetCustomAttribute<ObsoleteAttribute>() != null,
+                    IsScript = property.GetCustomAttribute<ScriptAttribute>() != null
                 };
 
                 var display = property.GetCustomAttribute<DisplayAttribute>();
@@ -75,9 +89,6 @@ public sealed class FlowStepRegistry
                     stepProperty.IsRequired |= type.IsValueType && !IsBoolean(type) && !type.IsEnum;
                 }
 
-                stepProperty.IsFormattable |= property.GetCustomAttribute<ExpressionAttribute>() != null;
-                stepProperty.IsScript |= property.GetCustomAttribute<ScriptAttribute>() != null;
-
                 if (type.IsEnum)
                 {
                     var values = Enum.GetNames(type);
@@ -102,7 +113,7 @@ public sealed class FlowStepRegistry
             }
         }
 
-        Steps[name] = definition;
+        steps[name] = definition;
 
         return this;
     }
