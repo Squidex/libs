@@ -93,7 +93,8 @@ public sealed class ImageSharpThumbnailGenerator : AssetThumbnailGeneratorBase
                     resizeMode = ISResizeMode.BoxPad;
                 }
 
-                var resizeOptions = new ISResizeOptions { Size = new Size(w, h), Mode = resizeMode, PremultiplyAlpha = true };
+                var bgColor = options.Background != null && Color.TryParse(options.Background, out var color) ? color : Color.Transparent;
+                var resizeOptions = new ISResizeOptions { Size = new Size(w, h), Mode = resizeMode, PremultiplyAlpha = true, PadColor = bgColor };
 
                 if (options.FocusX.HasValue && options.FocusY.HasValue)
                 {
@@ -105,27 +106,8 @@ public sealed class ImageSharpThumbnailGenerator : AssetThumbnailGeneratorBase
 
                 image.Mutate(operation =>
                 {
-                    if (options.Background != null && Color.TryParse(options.Background, out var color))
-                    {
-                        File.AppendAllText(@"C:\DATA\Squidex.Assets.ImageSharp.log", "Use parsed color:" + color.ToString());
-                        operation.BackgroundColor(color);
-                    }
-                    else
-                    {
-                        File.AppendAllText(@"C:\DATA\Squidex.Assets.ImageSharp.log", "Use transparent:" + Color.Transparent.ToString());
-                        operation.BackgroundColor(Color.Transparent);
-                    }
-
                     operation.Resize(resizeOptions);
-
-                    /*if (options.Background != null && Color.TryParse(options.Background, out var color))
-                    {
-                         operation.BackgroundColor(color);
-                    }
-                    else
-                    {
-                        operation.BackgroundColor(Color.Transparent);
-                    }*/
+                    operation.BackgroundColor(bgColor);
                 });
             }
 
