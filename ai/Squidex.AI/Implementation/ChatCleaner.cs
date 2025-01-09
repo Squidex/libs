@@ -17,28 +17,36 @@ public sealed class ChatCleaner(
     IEnumerable<IChatTool> chatTools,
     IOptions<ChatOptions> options,
     TimeProvider timeProvider,
-    ILogger<ChatCleaner> log) : IBackgroundProcess
+    ILogger<ChatCleaner> log) : BackgroundProcess
 {
-    private readonly ChatOptions options = options.Value;
-    private SimpleTimer? cleanupTimer;
-
-    public Task StartAsync(
+    protected override async Task ExecuteAsync(
         CancellationToken ct)
     {
-        // Just a guard when this method is called twice.
-        cleanupTimer ??= new SimpleTimer(CleanupAsync, options.CleanupTime, log);
-
-        return Task.CompletedTask;
-    }
-
-    public async Task StopAsync(
-        CancellationToken ct)
-    {
-        if (cleanupTimer != null)
+        if (!chatAgent.IsConfigured)
         {
-            await cleanupTimer.DisposeAsync();
+            return;
+        }
 
-            cleanupTimer = null;
+        if (options.Value.CleanupTime <= TimeSpan.Zero)
+        {
+            log.LogInformation("Skipping cleanup, because cleanup time is less or equal than zero.");
+            return;
+        }
+
+        var timer = new PeriodicTimer(options.Value.CleanupTime);
+        while (await timer.WaitForNextTickAsync(ct))
+        {
+            try
+            {
+                await CleanupAsync(ct);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception ex)
+            {
+                log.LogWarning(ex, "Failed to execute timer.");
+            }
         }
     }
 
@@ -50,7 +58,7 @@ public sealed class ChatCleaner(
             return;
         }
 
-        var maxAge = timeProvider.GetUtcNow() - options.ConversationLifetime;
+        var maxAge = timeProvider.GetUtcNow() - options.Value.ConversationLifetime;
 
         await foreach (var (id, conversation) in chatStore.QueryAsync(maxAge.UtcDateTime, ct))
         {

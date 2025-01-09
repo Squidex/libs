@@ -11,7 +11,6 @@ using Squidex.Messaging.Internal;
 using Squidex.Messaging.Subscriptions;
 using Xunit;
 
-#pragma warning disable SA1300 // Element should begin with upper-case letter
 #pragma warning disable MA0040 // Flow the cancellation token
 
 namespace Squidex.Messaging;
@@ -21,8 +20,6 @@ public class SubscriptionServiceTests(MongoFixture fixture) : IClassFixture<Mong
 {
     private readonly string groupName = $"group-{Guid.NewGuid()}";
     private readonly string key = $"key-{Guid.NewGuid()}";
-
-    public MongoFixture _ { get; } = fixture;
 
     [Fact]
     public async Task Should_subscribe_hot()
@@ -226,7 +223,7 @@ public class SubscriptionServiceTests(MongoFixture fixture) : IClassFixture<Mong
                     options.AddDebug();
                     options.AddConsole();
                 })
-                .AddSingleton(_.Database)
+                .AddSingleton(fixture.Database)
                 .AddReplicatedCache()
                 .AddMessaging()
                     .Configure<MessagingOptions>(options =>

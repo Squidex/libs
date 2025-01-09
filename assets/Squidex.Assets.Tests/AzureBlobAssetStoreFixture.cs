@@ -5,20 +5,35 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Squidex.Hosting;
+using Xunit;
+
 namespace Squidex.Assets;
 
-public sealed class AzureBlobAssetStoreFixture
+public sealed class AzureBlobAssetStoreFixture : IAsyncLifetime
 {
-    public AzureBlobAssetStore AssetStore { get; }
+    private IServiceProvider services;
 
-    public AzureBlobAssetStoreFixture()
+    public AzureBlobAssetStore Store => services.GetRequiredService<AzureBlobAssetStore>();
+
+    public async Task DisposeAsync()
     {
-        var services =
+        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
+        {
+            await service.ReleaseAsync(default);
+        }
+    }
+
+    public async Task InitializeAsync()
+    {
+        services =
             new ServiceCollection()
                 .AddAzureBlobAssetStore(TestHelpers.Configuration)
                 .BuildServiceProvider();
 
-        AssetStore = services.GetRequiredService<AzureBlobAssetStore>();
-        AssetStore.InitializeAsync(default).Wait();
+        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
+        {
+            await service.InitializeAsync(default);
+        }
     }
 }

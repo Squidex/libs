@@ -87,7 +87,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squidex.AI", "ai\Squidex.AI
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squidex.AI.Tests", "ai\Squidex.AI.Tests\Squidex.AI.Tests.csproj", "{AD46BEF0-33C8-4994-B242-0D9E4C50488F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squidex.AI.Mongo", "ai\Squidex.AI.Mongo\Squidex.AI.Mongo.csproj", "{98AE3491-7D34-498B-8A8F-14BDAAF37AD3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squidex.AI.Mongo", "ai\Squidex.AI.Mongo\Squidex.AI.Mongo.csproj", "{98AE3491-7D34-498B-8A8F-14BDAAF37AD3}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squidex.AI.EntityFramework", "ai\Squidex.AI.EntityFramework\Squidex.AI.EntityFramework.csproj", "{F15850C7-D623-4CBE-ABE0-07D9822B9326}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squidex.Messaging.EntityFramework", "messaging\Squidex.Messaging.EntityFramework\Squidex.Messaging.EntityFramework.csproj", "{F653DF48-6ED7-45A0-B630-88E783202A64}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -239,6 +243,14 @@ Global
 		{98AE3491-7D34-498B-8A8F-14BDAAF37AD3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{98AE3491-7D34-498B-8A8F-14BDAAF37AD3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{98AE3491-7D34-498B-8A8F-14BDAAF37AD3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F15850C7-D623-4CBE-ABE0-07D9822B9326}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F15850C7-D623-4CBE-ABE0-07D9822B9326}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F15850C7-D623-4CBE-ABE0-07D9822B9326}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F15850C7-D623-4CBE-ABE0-07D9822B9326}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F653DF48-6ED7-45A0-B630-88E783202A64}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F653DF48-6ED7-45A0-B630-88E783202A64}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F653DF48-6ED7-45A0-B630-88E783202A64}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F653DF48-6ED7-45A0-B630-88E783202A64}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -280,6 +292,8 @@ Global
 		{A4EAB4B8-096D-4F4F-85E1-A1385B26680B} = {F18E275B-4805-4DCB-BE31-ACC314FB508E}
 		{AD46BEF0-33C8-4994-B242-0D9E4C50488F} = {F18E275B-4805-4DCB-BE31-ACC314FB508E}
 		{98AE3491-7D34-498B-8A8F-14BDAAF37AD3} = {F18E275B-4805-4DCB-BE31-ACC314FB508E}
+		{F15850C7-D623-4CBE-ABE0-07D9822B9326} = {F18E275B-4805-4DCB-BE31-ACC314FB508E}
+		{F653DF48-6ED7-45A0-B630-88E783202A64} = {28B7D0BB-1971-4802-BC40-28297D644B26}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {060512DD-34DA-4929-A67F-2E473577FBF5}

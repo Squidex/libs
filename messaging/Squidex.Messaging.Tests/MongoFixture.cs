@@ -6,37 +6,29 @@
 // ==========================================================================
 
 using MongoDB.Driver;
+using Testcontainers.MongoDb;
+using Xunit;
 
 namespace Squidex.Messaging;
 
-public sealed class MongoFixture : IDisposable
+public sealed class MongoFixture : IAsyncLifetime
 {
-    private readonly List<Predicate<string>> collectionsToClean = [];
+    private readonly MongoDbContainer mongoDB = new MongoDbBuilder().Build();
 
-    public IMongoDatabase Database { get; }
+    public IMongoDatabase Database { get; private set; }
 
-    public MongoFixture()
+    public async Task InitializeAsync()
     {
+        await mongoDB.StartAsync();
+
         var mongoClient = new MongoClient("mongodb://localhost:27017");
         var mongoDatabase = mongoClient.GetDatabase("Messaging_Tests");
 
         Database = mongoDatabase;
-
-        Dispose();
     }
 
-    public void CleanCollections(Predicate<string> predicate)
+    public async Task DisposeAsync()
     {
-        collectionsToClean.Add(predicate);
-    }
-
-    public void Dispose()
-    {
-        var collections = Database.ListCollectionNames().ToList();
-
-        foreach (var collectionName in collections.Where(x => collectionsToClean.Exists(p => p(x))))
-        {
-            Database.DropCollection(collectionName);
-        }
+        await mongoDB.StopAsync();
     }
 }

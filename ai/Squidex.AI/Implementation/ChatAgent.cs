@@ -203,7 +203,7 @@ public sealed class ChatAgent(
     private Task StoreHistoryAsync(string conversationId, Conversation conversation,
         CancellationToken ct)
     {
-        return chatStore.StoreAsync(conversationId, conversation, ct);
+        return chatStore.StoreAsync(conversationId, conversation, DateTime.UtcNow, ct);
     }
 
     private async Task<Conversation> GetOrCreateConversationAsync(ChatRequest request, ChatConfiguration configuration,

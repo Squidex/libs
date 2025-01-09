@@ -21,7 +21,7 @@ public static class AIServiceExtensions
         services.AddHttpClient();
         services.AddOptions<ChatOptions>();
         services.TryAddSingleton(TimeProvider.System);
-        services.TryAddSingleton<IChatStore, MemoryChatStore>();
+        services.TryAddSingleton<IChatStore, InMemoryChatStore>();
         services.TryAddSingleton<IChatAgent, ChatAgent>();
         services.TryAddSingleton<IChatProvider, NoopChatProvider>();
 

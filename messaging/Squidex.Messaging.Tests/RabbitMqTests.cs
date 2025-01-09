@@ -5,8 +5,11 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Xunit;
+
 namespace Squidex.Messaging;
 
+[Trait("Category", "Dependencies")]
 public class RabbitMqTests : MessagingTestsBase
 {
     protected override string TopicOrQueueName => "dev";

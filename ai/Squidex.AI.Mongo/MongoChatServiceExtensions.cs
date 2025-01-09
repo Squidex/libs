@@ -13,14 +13,13 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class MongoChatServiceExtensions
 {
-    public static IServiceCollection AddMongoChatStore(this IServiceCollection sevices, IConfiguration config, Action<MongoChatStoreOptions>? configure = null,
+    public static IServiceCollection AddMongoChatStore(this IServiceCollection services, IConfiguration config, Action<MongoChatStoreOptions>? configure = null,
         string configPath = "chatBot:mongoDb")
     {
-        sevices.ConfigureAndValidate(config, configPath, configure);
+        services.ConfigureAndValidate(config, configPath, configure);
 
-        sevices.AddSingletonAs<MongoChatStore>()
+        services.AddSingletonAs<MongoChatStore>()
             .As<IChatStore>();
-
-        return sevices;
+        return services;
     }
 }

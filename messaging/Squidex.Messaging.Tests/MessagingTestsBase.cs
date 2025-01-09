@@ -13,7 +13,6 @@ using Xunit;
 
 namespace Squidex.Messaging;
 
-[Trait("Category", "Dependencies")]
 public abstract class MessagingTestsBase
 {
     private readonly Guid testIdentifier = Guid.NewGuid();

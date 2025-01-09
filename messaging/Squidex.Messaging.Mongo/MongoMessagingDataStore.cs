@@ -11,7 +11,11 @@ using Squidex.Hosting;
 
 namespace Squidex.Messaging.Mongo;
 
-public sealed class MongoMessagingDataStore(IMongoDatabase database, IOptions<MongoMessagingDataOptions> options) : IMessagingDataStore, IInitializable
+public sealed class MongoMessagingDataStore(
+    IMongoDatabase database,
+    IOptions<MongoMessagingDataOptions> options,
+    TimeProvider timeProvider)
+    : IMessagingDataStore, IInitializable
 {
     private readonly IMongoCollection<Entity> collection = database.GetCollection<Entity>(options.Value.CollectionName);
 
@@ -25,7 +29,7 @@ public sealed class MongoMessagingDataStore(IMongoDatabase database, IOptions<Mo
 
         public string ValueType { get; set; }
 
-        public string ValueFormat { get; set; }
+        public string? ValueFormat { get; set; }
 
         public byte[] ValueData { get; set; }
 
@@ -56,11 +60,12 @@ public sealed class MongoMessagingDataStore(IMongoDatabase database, IOptions<Mo
     {
         var result = new List<Entry>();
 
-        var cursor = await collection.Find(x => x.Group == group).ToCursorAsync(ct);
+        var queryTime = timeProvider.GetUtcNow().UtcDateTime;
+        var queryCursor = await collection.Find(x => x.Group == group && x.Expiration > queryTime).ToCursorAsync(ct);
 
-        while (await cursor.MoveNextAsync(ct))
+        while (await queryCursor.MoveNextAsync(ct))
         {
-            foreach (var item in cursor.Current)
+            foreach (var item in queryCursor.Current)
             {
                 var value = new SerializedObject(item.ValueData, item.ValueType, item.ValueFormat);
 

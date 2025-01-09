@@ -8,14 +8,12 @@
 using StackExchange.Redis;
 using Xunit;
 
-#pragma warning disable SA1300 // Element should begin with upper-case letter
-
 namespace Squidex.Messaging;
 
-public class RedisMessagingTests(RedisFixture fixture) : MessagingTestsBase, IClassFixture<RedisFixture>
+[Trait("Category", "Dependencies")]
+public class RedisMessagingTests(RedisFixture fixture)
+    : MessagingTestsBase, IClassFixture<RedisFixture>
 {
-    public RedisFixture _ { get; } = fixture;
-
     protected override bool CanHandleAndSimulateTimeout => false;
 
     protected override void Configure(MessagingBuilder builder)
@@ -23,10 +21,9 @@ public class RedisMessagingTests(RedisFixture fixture) : MessagingTestsBase, ICl
         builder.AddRedisTransport(TestHelpers.Configuration, options =>
         {
             options.PollingInterval = TimeSpan.FromSeconds(0.1);
-
             options.ConnectionFactory = log =>
             {
-                return Task.FromResult<IConnectionMultiplexer>(_.Connection);
+                return Task.FromResult<IConnectionMultiplexer>(fixture.Connection);
             };
         });
     }

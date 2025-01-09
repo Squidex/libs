@@ -7,35 +7,48 @@
 
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
+using Squidex.Hosting;
+using Testcontainers.MongoDb;
+using Xunit;
 
 namespace Squidex.Assets;
 
-public sealed class MongoGridFSAssetStoreFixture : IDisposable
+public sealed class MongoGridFSAssetStoreFixture : IAsyncLifetime
 {
-    private readonly MongoClient mongoClient = new MongoClient(TestHelpers.Configuration["assetStore:mongoDB:connectionString"]);
+    private readonly MongoDbContainer mongoDB = new MongoDbBuilder().Build();
+    private IServiceProvider services;
 
-    public MongoGridFsAssetStore AssetStore { get; }
+    public MongoGridFsAssetStore Store => services.GetRequiredService<MongoGridFsAssetStore>();
 
-    public MongoGridFSAssetStoreFixture()
+    public async Task DisposeAsync()
     {
-        var mongoDatabase = mongoClient.GetDatabase(TestHelpers.Configuration["assetStore:mongoDB:database"]);
+        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
+        {
+            await service.ReleaseAsync(default);
+        }
 
+        await mongoDB.StopAsync();
+    }
+
+    public async Task InitializeAsync()
+    {
+        await mongoDB.StartAsync();
+
+        var mongoClient = new MongoClient(mongoDB.GetConnectionString());
+        var mongoDatabase = mongoClient.GetDatabase("Test");
         var gridFSBucket = new GridFSBucket<string>(mongoDatabase, new GridFSBucketOptions
         {
-            BucketName = TestHelpers.Configuration["assetStore:mongoDB:bucketName"]
+            BucketName = "TestBucket"
         });
 
-        var services =
+        services =
             new ServiceCollection()
                 .AddMongoAssetStore(c => gridFSBucket)
                 .BuildServiceProvider();
 
-        AssetStore = services.GetRequiredService<MongoGridFsAssetStore>();
-        AssetStore.InitializeAsync(default).Wait();
-    }
-
-    public void Dispose()
-    {
-        mongoClient.DropDatabase(TestHelpers.Configuration["assetStore:mongoDB:database"]);
+        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
+        {
+            await service.InitializeAsync(default);
+        }
     }
 }

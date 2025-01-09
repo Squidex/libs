@@ -5,36 +5,46 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using FakeItEasy;
+using Squidex.Hosting;
+using Xunit;
 
 namespace Squidex.Assets;
 
-public sealed class FolderAssetStoreFixture : IDisposable
+public sealed class FolderAssetStoreFixture : IAsyncLifetime
 {
+    private IServiceProvider services;
+
     public string TestFolder { get; } = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
 
-    public FolderAssetStore AssetStore { get; }
+    public FolderAssetStore Store => services.GetRequiredService<FolderAssetStore>();
 
-    public FolderAssetStoreFixture()
+    public async Task DisposeAsync()
     {
-        var services =
+        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
+        {
+            await service.ReleaseAsync(default);
+        }
+
+        if (Directory.Exists(TestFolder))
+        {
+            Directory.Delete(TestFolder, true);
+        }
+    }
+
+    public async Task InitializeAsync()
+    {
+        services =
             new ServiceCollection()
                 .AddFolderAssetStore(TestHelpers.Configuration, config =>
                 {
                     config.Path = TestFolder;
                 })
-                .AddSingleton(A.Dummy<ILogger<FolderAssetStore>>())
+                .AddLogging()
                 .BuildServiceProvider();
 
-        AssetStore = services.GetRequiredService<FolderAssetStore>();
-        AssetStore.InitializeAsync(default).Wait();
-    }
-
-    public void Dispose()
-    {
-        if (Directory.Exists(TestFolder))
+        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
         {
-            Directory.Delete(TestFolder, true);
+            await service.InitializeAsync(default);
         }
     }
 }
