@@ -18,7 +18,7 @@ namespace Squidex.AI;
 
 public sealed class MongoChatStoreFixture : IAsyncLifetime
 {
-    private readonly MongoDbContainer mongoDB = new MongoDbBuilder().Build();
+    private readonly MongoDbContainer mongoDb = new MongoDbBuilder().Build();
     private IServiceProvider services;
 
     public MongoChatStore Store => services.GetRequiredService<MongoChatStore>();
@@ -30,15 +30,15 @@ public sealed class MongoChatStoreFixture : IAsyncLifetime
             await service.ReleaseAsync(default);
         }
 
-        await mongoDB.StopAsync();
+        await mongoDb.StopAsync();
     }
 
     public async Task InitializeAsync()
     {
-        await mongoDB.StartAsync();
+        await mongoDb.StartAsync();
 
         services = new ServiceCollection()
-            .AddSingleton<IMongoClient>(_ => new MongoClient(mongoDB.GetConnectionString()))
+            .AddSingleton<IMongoClient>(_ => new MongoClient(mongoDb.GetConnectionString()))
             .AddSingleton(c => c.GetRequiredService<IMongoClient>().GetDatabase("Test"))
             .AddMongoChatStore(new ConfigurationBuilder().Build())
             .BuildServiceProvider();

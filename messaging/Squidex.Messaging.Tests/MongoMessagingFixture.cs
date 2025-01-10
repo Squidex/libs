@@ -13,15 +13,15 @@ namespace Squidex.Messaging;
 
 public sealed class MongoMessagingFixture : IAsyncLifetime
 {
-    private readonly MongoDbContainer mongoDB = new MongoDbBuilder().Build();
+    private readonly MongoDbContainer mongoDb = new MongoDbBuilder().Build();
 
     public IMongoDatabase Database { get; private set; }
 
     public async Task InitializeAsync()
     {
-        await mongoDB.StartAsync();
+        await mongoDb.StartAsync();
 
-        var mongoClient = new MongoClient("mongodb://localhost:27017");
+        var mongoClient = new MongoClient(mongoDb.GetConnectionString());
         var mongoDatabase = mongoClient.GetDatabase("Messaging_Tests");
 
         Database = mongoDatabase;
@@ -29,6 +29,6 @@ public sealed class MongoMessagingFixture : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        await mongoDB.StopAsync();
+        await mongoDb.StopAsync();
     }
 }

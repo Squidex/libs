@@ -14,7 +14,7 @@ namespace Squidex.Messaging;
 
 public class MongoMessagingDataStoreFixture : IAsyncLifetime
 {
-    private readonly MongoDbContainer mongoDB = new MongoDbBuilder().Build();
+    private readonly MongoDbContainer mongoDb = new MongoDbBuilder().Build();
     private IServiceProvider services;
 
     public IMessagingDataStore Store => services.GetRequiredService<IMessagingDataStore>();
@@ -26,15 +26,15 @@ public class MongoMessagingDataStoreFixture : IAsyncLifetime
             await service.ReleaseAsync(default);
         }
 
-        await mongoDB.StopAsync();
+        await mongoDb.StopAsync();
     }
 
     public async Task InitializeAsync()
     {
-        await mongoDB.StartAsync();
+        await mongoDb.StartAsync();
 
         services = new ServiceCollection()
-            .AddSingleton<IMongoClient>(_ => new MongoClient(mongoDB.GetConnectionString()))
+            .AddSingleton<IMongoClient>(_ => new MongoClient(mongoDb.GetConnectionString()))
             .AddSingleton(c => c.GetRequiredService<IMongoClient>().GetDatabase("Test"))
             .AddMessaging()
             .AddMongoDataStore(new ConfigurationBuilder().Build())

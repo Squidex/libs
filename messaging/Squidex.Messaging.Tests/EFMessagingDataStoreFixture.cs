@@ -51,7 +51,7 @@ public class EFMessagingDataStoreFixture : IAsyncLifetime
             })
             .AddLogging()
             .AddMessaging()
-            .AddEntityFrameworkDataStore<AppDbContext>(new ConfigurationBuilder().Build())
+            .AddEntityFrameworkDataStore<AppDbContext>(TestHelpers.Configuration)
             .Services
             .BuildServiceProvider();
 
