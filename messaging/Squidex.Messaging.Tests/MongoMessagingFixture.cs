@@ -11,7 +11,7 @@ using Xunit;
 
 namespace Squidex.Messaging;
 
-public sealed class MongoFixture : IAsyncLifetime
+public sealed class MongoMessagingFixture : IAsyncLifetime
 {
     private readonly MongoDbContainer mongoDB = new MongoDbBuilder().Build();
 

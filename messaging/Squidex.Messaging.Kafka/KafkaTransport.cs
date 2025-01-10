@@ -12,8 +12,10 @@ using Squidex.Messaging.Internal;
 
 namespace Squidex.Messaging.Kafka;
 
-public sealed class KafkaTransport(KafkaOwner owner,
-    ILogger<KafkaTransport> log) : IMessagingTransport
+public sealed class KafkaTransport(
+    KafkaOwner owner,
+    ILogger<KafkaTransport> log)
+    : IMessagingTransport
 {
     private IProducer<string, byte[]>? producer;
 

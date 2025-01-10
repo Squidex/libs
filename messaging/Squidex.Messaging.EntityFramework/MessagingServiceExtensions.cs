@@ -14,6 +14,19 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class MessagingServiceExtensions
 {
+    public static MessagingBuilder AddEntityFrameworkTransport<T>(this MessagingBuilder builder, IConfiguration config, Action<EFTransportOptions>? configure = null,
+        string configPath = "messaging:ef") where T : DbContext
+    {
+        builder.Services.Configure(config, configPath, configure);
+
+        builder.Services.AddSingletonAs<EFTransport<T>>()
+            .As<IMessagingTransport>();
+        builder.Services.AddDbContextFactory<T>();
+        builder.Services.AddSingleton(TimeProvider.System);
+
+        return builder;
+    }
+
     public static MessagingBuilder AddEntityFrameworkDataStore<T>(this MessagingBuilder builder, IConfiguration config, Action<EFMessagingDataStoreOptions>? configure = null,
         string configPath = "messaging:ef:subscriptions") where T : DbContext
     {
@@ -33,6 +46,16 @@ public static class MessagingServiceExtensions
         {
             b.HasKey(nameof(EFMessagingDataEntity.Group), nameof(EFMessagingDataEntity.Key));
             b.HasIndex(x => x.Expiration);
+        });
+
+        return modelBuilder;
+    }
+
+    public static ModelBuilder AddMessagingTransport(this ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<EFMessage>(b =>
+        {
+            b.HasIndex(nameof(EFMessage.ChannelName), nameof(EFMessage.TimeHandled));
         });
 
         return modelBuilder;

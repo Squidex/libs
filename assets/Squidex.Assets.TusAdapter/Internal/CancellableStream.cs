@@ -9,8 +9,8 @@
 
 namespace Squidex.Assets.Internal;
 
-internal sealed class CancellableStream(Stream innerStream,
-    CancellationToken cancellationToken) : DelegateStream(innerStream)
+internal sealed class CancellableStream(Stream innerStream, CancellationToken cancellationToken)
+    : DelegateStream(innerStream)
 {
     public override long Length
     {

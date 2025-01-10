@@ -17,36 +17,25 @@ public sealed class ChatCleaner(
     IEnumerable<IChatTool> chatTools,
     IOptions<ChatOptions> options,
     TimeProvider timeProvider,
-    ILogger<ChatCleaner> log) : BackgroundProcess
+    ILogger<ChatCleaner> log)
+    : IBackgroundProcess
 {
-    protected override async Task ExecuteAsync(
+    private SimpleTimer? timer;
+
+    public Task StartAsync(
         CancellationToken ct)
     {
-        if (!chatAgent.IsConfigured)
-        {
-            return;
-        }
+        timer = new SimpleTimer(CleanupAsync, options.Value.CleanupTime, log);
+        return Task.CompletedTask;
+    }
 
-        if (options.Value.CleanupTime <= TimeSpan.Zero)
+    public async Task StopAsync(
+        CancellationToken ct)
+    {
+        if (timer != null)
         {
-            log.LogInformation("Skipping cleanup, because cleanup time is less or equal than zero.");
-            return;
-        }
-
-        var timer = new PeriodicTimer(options.Value.CleanupTime);
-        while (await timer.WaitForNextTickAsync(ct))
-        {
-            try
-            {
-                await CleanupAsync(ct);
-            }
-            catch (OperationCanceledException)
-            {
-            }
-            catch (Exception ex)
-            {
-                log.LogWarning(ex, "Failed to execute timer.");
-            }
+            await timer.DisposeAsync();
+            timer = null;
         }
     }
 

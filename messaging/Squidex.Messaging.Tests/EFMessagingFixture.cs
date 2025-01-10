@@ -8,57 +8,40 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
-using Squidex.Hosting;
 using Testcontainers.PostgreSql;
 using Xunit;
 
 namespace Squidex.Messaging;
 
-public class EFMessagingDataStoreFixture : IAsyncLifetime
+public sealed class EFMessagingFixture : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer postgresSql = new PostgreSqlBuilder().Build();
-    private IServiceProvider services;
-
-    public IMessagingDataStore Store => services.GetRequiredService<IMessagingDataStore>();
+    public PostgreSqlContainer PostgresSql { get; } = new PostgreSqlBuilder().Build();
 
     public sealed class AppDbContext(DbContextOptions options) : DbContext(options)
     {
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.AddMessagingDataStore();
+            modelBuilder.AddMessagingTransport();
             base.OnModelCreating(modelBuilder);
         }
     }
 
     public async Task DisposeAsync()
     {
-        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
-        {
-            await service.ReleaseAsync(default);
-        }
-
-        await postgresSql.StopAsync();
+        await PostgresSql.StopAsync();
     }
 
     public async Task InitializeAsync()
     {
-        await postgresSql.StartAsync();
+        await PostgresSql.StartAsync();
 
-        services = new ServiceCollection()
-            .AddDbContext<AppDbContext>(b =>
+        var services = new ServiceCollection()
+            .AddDbContextFactory<AppDbContext>(b =>
             {
-                b.UseNpgsql(postgresSql.GetConnectionString());
+                b.UseNpgsql(PostgresSql.GetConnectionString());
             })
-            .AddLogging()
-            .AddMessaging()
-            .AddEntityFrameworkDataStore<AppDbContext>(new ConfigurationBuilder().Build())
-            .Services
             .BuildServiceProvider();
-
-        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
-        {
-            await service.InitializeAsync(default);
-        }
 
         var factory = services.GetRequiredService<IDbContextFactory<AppDbContext>>();
         var context = await factory.CreateDbContextAsync();

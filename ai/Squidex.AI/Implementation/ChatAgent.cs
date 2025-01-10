@@ -16,7 +16,8 @@ public sealed class ChatAgent(
     IChatStore chatStore,
     IEnumerable<IChatPipe> chatPipes,
     IEnumerable<IChatToolProvider> chatToolProviders,
-    IOptions<ChatOptions> options) : IChatAgent
+    IOptions<ChatOptions> options)
+    : IChatAgent
 {
     private readonly ChatOptions options = options.Value;
 

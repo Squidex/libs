@@ -215,7 +215,6 @@ public abstract class MessagingTestsBase
                     {
                         options.Expires = TimeSpan.FromDays(1);
                     })
-                    .AddSubscriptions()
                     .AddOverride(Configure)
                     .AddHandler(handler)
                     .Services

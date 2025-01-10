@@ -5,15 +5,22 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Testcontainers.RabbitMq;
 using Xunit;
 
 namespace Squidex.Messaging;
 
-public class EFMessagingDataStoreTests(EFMessagingDataStoreFixture fixture)
-    : MessagingDataStoreTests, IClassFixture<EFMessagingDataStoreFixture>
+public class RabbitMqFixture : IAsyncLifetime
 {
-    protected override Task<IMessagingDataStore> CreateSutAsync()
+    public RabbitMqContainer RabbitMq { get; } = new RabbitMqBuilder().Build();
+
+    public async Task DisposeAsync()
     {
-        return Task.FromResult(fixture.Store);
+        await RabbitMq.StopAsync();
+    }
+
+    public async Task InitializeAsync()
+    {
+        await RabbitMq.StartAsync();
     }
 }

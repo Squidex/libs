@@ -6,6 +6,7 @@
 // ==========================================================================
 
 using System.Globalization;
+using System.Text.Json;
 
 namespace Squidex.Messaging;
 
@@ -64,5 +65,15 @@ public sealed class TransportHeaders : Dictionary<string, string>
         }
 
         return false;
+    }
+
+    public string Serialize()
+    {
+        return JsonSerializer.Serialize(this);
+    }
+
+    public static TransportHeaders Deserialize(string source)
+    {
+        return JsonSerializer.Deserialize<TransportHeaders>(source)!;
     }
 }

@@ -9,8 +9,8 @@ using Xunit;
 
 namespace Squidex.Messaging;
 
-[Trait("Category", "Dependencies")]
-public class RabbitMqTests : MessagingTestsBase
+public class RabbitMqTests(RabbitMqFixture fixture)
+    : MessagingTestsBase, IClassFixture<RabbitMqFixture>
 {
     protected override string TopicOrQueueName => "dev";
 
@@ -18,6 +18,9 @@ public class RabbitMqTests : MessagingTestsBase
 
     protected override void Configure(MessagingBuilder builder)
     {
-        builder.AddRabbitMqTransport(TestHelpers.Configuration);
+        builder.AddRabbitMqTransport(TestHelpers.Configuration, options =>
+        {
+            options.Uri = new Uri(fixture.RabbitMq.GetConnectionString());
+        });
     }
 }

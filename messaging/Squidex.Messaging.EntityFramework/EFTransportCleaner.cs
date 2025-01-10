@@ -5,37 +5,40 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using MongoDB.Driver;
 using Squidex.Hosting;
 
-namespace Squidex.Messaging.Mongo;
+namespace Squidex.Messaging.EntityFramework;
 
-internal sealed class MongoTransportCleaner(
-    IMongoCollection<MongoMessage> collection,
+internal sealed class EFTransportCleaner<T>(
+    IDbContextFactory<T> dbContextFactory,
     string channelName,
     TimeSpan timeout,
     TimeSpan expires,
     TimeSpan updateInterval,
     ILogger log,
     TimeProvider timeProvider)
-    : IAsyncDisposable
+    : IAsyncDisposable where T : DbContext
 {
     private readonly SimpleTimer timer = new SimpleTimer(async ct =>
     {
         var timestamp = timeProvider.GetUtcNow().UtcDateTime;
         var timedout = timestamp - timeout;
 
-        var update = await collection.UpdateManyAsync(x => x.TimeHandled != null && x.TimeHandled < timedout,
-            Builders<MongoMessage>.Update
-                .Set(x => x.TimeHandled, null)
-                .Set(x => x.TimeToLive, timestamp + expires)
-                .Set(x => x.PrefetchId, null),
-            cancellationToken: ct);
+        await using var context = await dbContextFactory.CreateDbContextAsync(ct);
 
-        if (update.IsModifiedCountAvailable && update.ModifiedCount > 0)
+        var updated =
+            await context.Set<EFMessage>()
+                .Where(x => x.ChannelName == channelName && x.TimeHandled != null && x.TimeHandled < timedout)
+                .ExecuteUpdateAsync(b => b
+                    .SetProperty(x => x.TimeHandled, (DateTime?)null)
+                    .SetProperty(x => x.TimeToLive, timestamp + expires),
+                    ct);
+
+        if (updated > 0)
         {
-            log.LogInformation("{collectionName}: Items reset: {count}.", channelName, update.ModifiedCount);
+            log.LogInformation("{collectionName}: Items reset: {count}.", channelName, updated);
         }
     }, updateInterval, log);
 

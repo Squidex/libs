@@ -17,31 +17,24 @@ internal class EFMessagingDataStore<T>(
     IOptions<EFMessagingDataStoreOptions> options,
     TimeProvider timeProvider,
     ILogger<EFMessagingDataStore<T>> log)
-    : BackgroundProcess, IMessagingDataStore where T : DbContext
+    : IMessagingDataStore, IBackgroundProcess where T : DbContext
 {
-    protected override async Task ExecuteAsync(
+    private SimpleTimer? timer;
+
+    public Task StartAsync(
         CancellationToken ct)
     {
-        if (options.Value.CleanupTime <= TimeSpan.Zero)
-        {
-            log.LogInformation("Skipping cleanup, because cleanup time is less or equal than zero.");
-            return;
-        }
+        timer = new SimpleTimer(CleanupAsync, options.Value.CleanupTime, log);
+        return Task.CompletedTask;
+    }
 
-        var timer = new PeriodicTimer(options.Value.CleanupTime);
-        while (await timer.WaitForNextTickAsync(ct))
+    public async Task StopAsync(
+        CancellationToken ct)
+    {
+        if (timer != null)
         {
-            try
-            {
-                await CleanupAsync(ct);
-            }
-            catch (OperationCanceledException)
-            {
-            }
-            catch (Exception ex)
-            {
-                log.LogWarning(ex, "Failed to execute timer.");
-            }
+            await timer.DisposeAsync();
+            timer = null;
         }
     }
 
@@ -55,7 +48,7 @@ internal class EFMessagingDataStore<T>(
         var result = new List<Entry>();
 
         var queryTime = timeProvider.GetUtcNow().UtcDateTime;
-        var queryFilter = context.Set<EFMessagingDataEntity>().Where(x => x.Group == group && x.Expiration < queryTime);
+        var queryFilter = context.Set<EFMessagingDataEntity>().Where(x => x.Group == group && x.Expiration > queryTime);
 
         await foreach (var entity in queryFilter.AsAsyncEnumerable().WithCancellation(ct))
         {
@@ -76,22 +69,42 @@ internal class EFMessagingDataStore<T>(
         }
 
         await using var context = await dbContextFactory.CreateDbContextAsync(ct);
-        foreach (var entry in entries)
+        foreach (var (group, key, value, expiration) in entries)
         {
-            var entity = new EFMessagingDataEntity
+            try
             {
-                Expiration = entry.Expiration,
-                Key = entry.Group,
-                ValueData = entry.Value.Data,
-                ValueFormat = entry.Value.Format,
-                ValueType = entry.Value.TypeString,
-                Group = entry.Group,
-            };
+                var entity = new EFMessagingDataEntity
+                {
+                    Expiration = expiration,
+                    Key = key,
+                    ValueData = value.Data,
+                    ValueFormat = value.Format,
+                    ValueType = value.TypeString,
+                    Group = group,
+                };
 
-            await context.Set<EFMessagingDataEntity>().AddAsync(entity, ct);
+                try
+                {
+                    await context.Set<EFMessagingDataEntity>().AddAsync(entity, ct);
+                    await context.SaveChangesAsync(ct);
+                }
+                finally
+                {
+                    context.Entry(entity).State = EntityState.Detached;
+                }
+            }
+            catch (DbUpdateException)
+            {
+                await context.Set<EFMessagingDataEntity>()
+                    .Where(x => x.Group == group && x.Key == key)
+                    .ExecuteUpdateAsync(b => b
+                        .SetProperty(x => x.Expiration, expiration)
+                        .SetProperty(x => x.ValueData, value.Data)
+                        .SetProperty(x => x.ValueFormat, value.Format)
+                        .SetProperty(x => x.ValueType, value.TypeString),
+                        ct);
+            }
         }
-
-        await context.SaveChangesAsync(ct);
     }
 
     public async Task DeleteAsync(string group, string key,
@@ -102,7 +115,8 @@ internal class EFMessagingDataStore<T>(
 
         await using var context = await dbContextFactory.CreateDbContextAsync(ct);
 
-        await context.Set<EFMessagingDataEntity>().Where(x => x.Group == group && x.Key == key).ExecuteDeleteAsync(ct);
+        await context.Set<EFMessagingDataEntity>().Where(x => x.Group == group && x.Key == key)
+            .ExecuteDeleteAsync(ct);
     }
 
     public async Task CleanupAsync(
@@ -111,6 +125,8 @@ internal class EFMessagingDataStore<T>(
         await using var context = await dbContextFactory.CreateDbContextAsync(ct);
 
         var now = timeProvider.GetUtcNow().UtcDateTime;
-        await context.Set<EFMessagingDataEntity>().Where(x => x.Expiration < now).ExecuteDeleteAsync(ct);
+
+        await context.Set<EFMessagingDataEntity>().Where(x => x.Expiration < now)
+            .ExecuteDeleteAsync(ct);
     }
 }

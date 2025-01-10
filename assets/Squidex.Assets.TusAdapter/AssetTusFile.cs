@@ -18,7 +18,8 @@ public sealed class AssetTusFile(
     Dictionary<string, string> metadata,
     Dictionary<string, Metadata> metadataRaw,
     Stream stream,
-    Action<AssetTusFile> disposed) : IAssetFile, ITusFile, IAsyncDisposable, IDisposable
+    Action<AssetTusFile> disposed)
+    : IAssetFile, ITusFile, IAsyncDisposable, IDisposable
 {
     public string Id { get; } = id;
 

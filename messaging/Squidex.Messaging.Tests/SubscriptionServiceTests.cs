@@ -15,8 +15,8 @@ using Xunit;
 
 namespace Squidex.Messaging;
 
-[Trait("Category", "Dependencies")]
-public class SubscriptionServiceTests(MongoFixture fixture) : IClassFixture<MongoFixture>
+public class SubscriptionServiceTests(MongoMessagingFixture fixture)
+    : IClassFixture<MongoMessagingFixture>
 {
     private readonly string groupName = $"group-{Guid.NewGuid()}";
     private readonly string key = $"key-{Guid.NewGuid()}";

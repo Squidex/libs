@@ -6,15 +6,28 @@
 // ==========================================================================
 
 using StackExchange.Redis;
+using Testcontainers.Redis;
+using Xunit;
+
+#pragma warning disable MA0040 // Forward the CancellationToken parameter to methods that take one
 
 namespace Squidex.Messaging;
 
-public class RedisFixture
+public class RedisFixture : IAsyncLifetime
 {
-    public ConnectionMultiplexer Connection { get; }
+    private readonly RedisContainer redis = new RedisBuilder().Build();
 
-    public RedisFixture()
+    public ConnectionMultiplexer Connection { get; set; }
+
+    public async Task DisposeAsync()
     {
-        Connection = ConnectionMultiplexer.Connect("localhost");
+        await redis.StopAsync();
+    }
+
+    public async Task InitializeAsync()
+    {
+        await redis.StartAsync();
+
+        Connection = await ConnectionMultiplexer.ConnectAsync(redis.GetConnectionString());
     }
 }

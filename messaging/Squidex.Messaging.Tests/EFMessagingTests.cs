@@ -5,21 +5,24 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace Squidex.Messaging;
 
-public class MongoMessagingPrefetchTests(MongoMessagingFixture fixture)
-    : MessagingTestsBase, IClassFixture<MongoMessagingFixture>
+public class EFMessagingTests(EFMessagingFixture fixture)
+    : MessagingTestsBase, IClassFixture<EFMessagingFixture>
 {
     protected override void Configure(MessagingBuilder builder)
     {
-        builder.Services.AddSingleton(fixture.Database);
-
-        builder.AddMongoDataStore(TestHelpers.Configuration);
-        builder.AddMongoTransport(TestHelpers.Configuration, options =>
+        builder.Services.AddDbContext<EFMessagingFixture.AppDbContext>(b =>
         {
-            options.Prefetch = 5;
+            b.UseNpgsql(fixture.PostgresSql.GetConnectionString());
+        });
+
+        builder.AddEntityFrameworkDataStore<EFMessagingFixture.AppDbContext>(TestHelpers.Configuration);
+        builder.AddEntityFrameworkTransport<EFMessagingFixture.AppDbContext>(TestHelpers.Configuration, options =>
+        {
             options.PollingInterval = TimeSpan.FromSeconds(0.1);
             options.UpdateInterval = TimeSpan.FromSeconds(0.1);
         });

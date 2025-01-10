@@ -76,12 +76,12 @@ public sealed class MongoMessagingDataStore(
         return result;
     }
 
-    public async Task StoreManyAsync(Entry[] requests,
+    public async Task StoreManyAsync(Entry[] entries,
         CancellationToken ct)
     {
         List<WriteModel<Entity>>? updates = null;
 
-        foreach (var (group, key, value, expiration) in requests)
+        foreach (var (group, key, value, expiration) in entries)
         {
             updates ??= [];
             updates.Add(new UpdateOneModel<Entity>(

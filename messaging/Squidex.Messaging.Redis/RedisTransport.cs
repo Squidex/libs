@@ -13,8 +13,10 @@ using StackExchange.Redis;
 
 namespace Squidex.Messaging.Redis;
 
-public sealed class RedisTransport(IOptions<RedisTransportOptions> options,
-    ILogger<RedisTransport> log) : IMessagingTransport
+public sealed class RedisTransport(
+    IOptions<RedisTransportOptions> options,
+    ILogger<RedisTransport> log)
+    : IMessagingTransport
 {
     private readonly RedisTransportOptions options = options.Value;
     private ISubscriber? subscriber;

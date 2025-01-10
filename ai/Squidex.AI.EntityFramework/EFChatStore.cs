@@ -21,7 +21,8 @@ public sealed class EFChatStore<T>(IDbContextFactory<T> dbContextFactory) : ICha
 
         await using var context = await dbContextFactory.CreateDbContextAsync(ct);
 
-        await context.Set<EFChatEntity>().Where(x => x.Id == conversationId).ExecuteDeleteAsync(ct);
+        await context.Set<EFChatEntity>().Where(x => x.Id == conversationId)
+            .ExecuteDeleteAsync(ct);
     }
 
     public async Task<Conversation?> GetAsync(string conversationId,

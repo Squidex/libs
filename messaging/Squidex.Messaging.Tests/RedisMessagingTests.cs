@@ -10,7 +10,6 @@ using Xunit;
 
 namespace Squidex.Messaging;
 
-[Trait("Category", "Dependencies")]
 public class RedisMessagingTests(RedisFixture fixture)
     : MessagingTestsBase, IClassFixture<RedisFixture>
 {

@@ -5,15 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Xunit;
+namespace Squidex.Messaging.EntityFramework;
 
-namespace Squidex.Messaging;
-
-public class EFMessagingDataStoreTests(EFMessagingDataStoreFixture fixture)
-    : MessagingDataStoreTests, IClassFixture<EFMessagingDataStoreFixture>
+internal sealed class EFSubscriptionValue
 {
-    protected override Task<IMessagingDataStore> CreateSutAsync()
-    {
-        return Task.FromResult(fixture.Store);
-    }
+    public string InstanceName { get; init; }
 }
