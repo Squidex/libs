@@ -16,7 +16,8 @@ public sealed class MessagingDataProvider(
     IMessagingSerializer messagingSerializer,
     IOptions<MessagingOptions> options,
     TimeProvider timeProvider,
-    ILogger<MessagingDataProvider> log) : IMessagingDataProvider, IBackgroundProcess
+    ILogger<MessagingDataProvider> log)
+    : IMessagingDataProvider, IBackgroundProcess
 {
     private readonly Dictionary<(string Group, string Key), (SerializedObject Value, TimeSpan Expires)> localData = [];
     private readonly MessagingOptions options = options.Value;
@@ -37,7 +38,6 @@ public sealed class MessagingDataProvider(
         if (updateTimer != null)
         {
             await updateTimer.DisposeAsync();
-
             updateTimer = null;
         }
     }

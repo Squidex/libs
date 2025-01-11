@@ -7,18 +7,15 @@
 
 using Xunit;
 
-#pragma warning disable SA1300 // Element should begin with upper-case letter
-
 namespace Squidex.Messaging;
 
 [Trait("Category", "Dependencies")]
-public class MongoSubscriptionStoreTests(MongoFixture fixture) : SubscriptionStoreTestsBase, IClassFixture<MongoFixture>
+public class MongoSubscriptionStoreTests(MongoMessagingFixture fixture)
+    : SubscriptionStoreTestsBase, IClassFixture<MongoMessagingFixture>
 {
-    public MongoFixture _ { get; } = fixture;
-
     protected override void Configure(MessagingBuilder builder)
     {
-        builder.Services.AddSingleton(_.Database);
+        builder.Services.AddSingleton(fixture.Database);
 
         builder.AddMongoDataStore(TestHelpers.Configuration);
     }

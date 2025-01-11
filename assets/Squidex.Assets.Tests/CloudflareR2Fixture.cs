@@ -9,7 +9,7 @@ namespace Squidex.Assets;
 
 public sealed class CloudflareR2Fixture
 {
-    public AmazonS3AssetStore AssetStore { get; }
+    public AmazonS3AssetStore Store { get; }
 
     public CloudflareR2Fixture()
     {
@@ -19,7 +19,7 @@ public sealed class CloudflareR2Fixture
                 .AddAmazonS3AssetStore(TestHelpers.Configuration, null, "assetStore:r2")
                 .BuildServiceProvider();
 
-        AssetStore = services.GetRequiredService<AmazonS3AssetStore>();
-        AssetStore.InitializeAsync(default).Wait();
+        Store = services.GetRequiredService<AmazonS3AssetStore>();
+        Store.InitializeAsync(default).Wait();
     }
 }

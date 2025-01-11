@@ -11,8 +11,10 @@ using Squidex.Messaging.Internal;
 
 namespace Squidex.Messaging.RabbitMq;
 
-public sealed class RabbitMqTransport(RabbitMqOwner owner,
-    ILogger<RabbitMqTransport> log) : IMessagingTransport
+public sealed class RabbitMqTransport(
+    RabbitMqOwner owner,
+    ILogger<RabbitMqTransport> log)
+    : IMessagingTransport
 {
     private readonly HashSet<string> createdQueues = [];
     private readonly SemaphoreSlim semaphoreSlim = new SemaphoreSlim(1);

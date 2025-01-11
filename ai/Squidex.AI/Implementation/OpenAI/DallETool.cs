@@ -18,7 +18,8 @@ public sealed class DallETool(
     IAssetThumbnailGenerator assetThumbnailGenerator,
     IChatProvider chatProvider,
     IHttpImageEndpoint httpImageEndpoint,
-    IHttpClientFactory httpClientFactory) : IImageTool
+    IHttpClientFactory httpClientFactory)
+    : IImageTool
 {
     private const string DataPrefix = "dall_e_image";
     private readonly OpenAIService service = new OpenAIService(options.Value);

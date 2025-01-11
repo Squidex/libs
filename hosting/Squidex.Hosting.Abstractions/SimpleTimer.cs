@@ -9,27 +9,30 @@ using Microsoft.Extensions.Logging;
 
 namespace Squidex.Hosting;
 
-#pragma warning disable MA0134 // Observe result of async calls
-
 public sealed class SimpleTimer : IAsyncDisposable
 {
     private readonly CancellationTokenSource stopToken = new CancellationTokenSource();
+    private readonly Task task;
 
     public bool IsDisposed => stopToken.IsCancellationRequested;
 
     public SimpleTimer(Func<CancellationToken, Task> action, TimeSpan interval, ILogger log)
     {
-        Task.Run(async () =>
+        if (interval <= TimeSpan.Zero)
+        {
+            return;
+        }
+
+        task = Task.Run(async () =>
         {
             try
             {
-                while (!stopToken.IsCancellationRequested)
+                var timer = new PeriodicTimer(interval);
+                while (await timer.WaitForNextTickAsync(stopToken.Token))
                 {
                     try
                     {
                         await action(stopToken.Token);
-
-                        await Task.Delay(interval, stopToken.Token);
                     }
                     catch (OperationCanceledException)
                     {
@@ -50,5 +53,13 @@ public sealed class SimpleTimer : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         await stopToken.CancelAsync();
+        try
+        {
+            await task;
+        }
+        catch
+        {
+            return;
+        }
     }
 }

@@ -10,7 +10,7 @@ using System.Runtime.CompilerServices;
 
 namespace Squidex.AI.Implementation;
 
-public sealed class MemoryChatStore : IChatStore
+public sealed class InMemoryChatStore : IChatStore
 {
     private readonly ConcurrentDictionary<string, (Conversation Conversation, DateTime LastUpdate)> values = [];
 
@@ -28,10 +28,10 @@ public sealed class MemoryChatStore : IChatStore
         return Task.FromResult<Conversation?>(result.Conversation);
     }
 
-    public Task StoreAsync(string conversationId, Conversation conversation,
+    public Task StoreAsync(string conversationId, Conversation conversation, DateTime now,
         CancellationToken ct)
     {
-        values[conversationId] = (conversation, DateTime.UtcNow);
+        values[conversationId] = (conversation, now);
         return Task.CompletedTask;
     }
 

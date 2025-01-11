@@ -7,35 +7,51 @@
 
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
+using Squidex.Hosting;
+using Testcontainers.MongoDb;
+using Xunit;
 
 namespace Squidex.Assets;
 
-public sealed class MongoGridFSAssetStoreFixture : IDisposable
+public sealed class MongoGridFSAssetStoreFixture : IAsyncLifetime
 {
-    private readonly MongoClient mongoClient = new MongoClient(TestHelpers.Configuration["assetStore:mongoDB:connectionString"]);
+    private readonly MongoDbContainer mongoDb = new MongoDbBuilder().Build();
+    private IServiceProvider services;
 
-    public MongoGridFsAssetStore AssetStore { get; }
+    public MongoGridFsAssetStore Store => services.GetRequiredService<MongoGridFsAssetStore>();
 
-    public MongoGridFSAssetStoreFixture()
+    public async Task DisposeAsync()
     {
-        var mongoDatabase = mongoClient.GetDatabase(TestHelpers.Configuration["assetStore:mongoDB:database"]);
-
-        var gridFSBucket = new GridFSBucket<string>(mongoDatabase, new GridFSBucketOptions
+        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
         {
-            BucketName = TestHelpers.Configuration["assetStore:mongoDB:bucketName"]
-        });
+            await service.ReleaseAsync(default);
+        }
 
-        var services =
-            new ServiceCollection()
-                .AddMongoAssetStore(c => gridFSBucket)
-                .BuildServiceProvider();
-
-        AssetStore = services.GetRequiredService<MongoGridFsAssetStore>();
-        AssetStore.InitializeAsync(default).Wait();
+        await mongoDb.StopAsync();
     }
 
-    public void Dispose()
+    public async Task InitializeAsync()
     {
-        mongoClient.DropDatabase(TestHelpers.Configuration["assetStore:mongoDB:database"]);
+        await mongoDb.StartAsync();
+
+        services =
+            new ServiceCollection()
+                .AddSingleton<IMongoClient>(_ => new MongoClient(mongoDb.GetConnectionString()))
+                .AddSingleton(c => c.GetRequiredService<IMongoClient>().GetDatabase("Test"))
+                .AddMongoAssetStore(c =>
+                {
+                    var mongoDatabase = c.GetRequiredService<IMongoDatabase>();
+
+                    return new GridFSBucket<string>(mongoDatabase, new GridFSBucketOptions
+                    {
+                        BucketName = "TestBucket"
+                    });
+                })
+                .BuildServiceProvider();
+
+        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
+        {
+            await service.InitializeAsync(default);
+        }
     }
 }

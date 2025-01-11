@@ -8,18 +8,15 @@
 using Microsoft.Extensions.Options;
 using Xunit;
 
-#pragma warning disable SA1300 // Element should begin with upper-case letter
-
 namespace Squidex.Assets;
 
 [Trait("Category", "Dependencies")]
-public class AmazonS3AssetStoreTests(AmazonS3AssetStoreFixture fixture) : AssetStoreTests<AmazonS3AssetStore>, IClassFixture<AmazonS3AssetStoreFixture>
+public class AmazonS3AssetStoreTests(AmazonS3AssetStoreFixture fixture)
+    : AssetStoreTests, IClassFixture<AmazonS3AssetStoreFixture>
 {
-    public AmazonS3AssetStoreFixture _ { get; } = fixture;
-
-    public override AmazonS3AssetStore CreateStore()
+    public override Task<IAssetStore> CreateSutAsync()
     {
-        return _.AssetStore;
+        return Task.FromResult<IAssetStore>(fixture.Store);
     }
 
     [Fact]
@@ -42,7 +39,7 @@ public class AmazonS3AssetStoreTests(AmazonS3AssetStoreFixture fixture) : AssetS
     [Fact]
     public void Should_calculate_source_url()
     {
-        var url = ((IAssetStore)Sut).GeneratePublicUrl(FileName);
+        var url = ((IAssetStore)fixture.Store).GeneratePublicUrl(FileName);
 
         Assert.Null(url);
     }

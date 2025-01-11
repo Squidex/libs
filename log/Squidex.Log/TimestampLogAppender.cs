@@ -7,17 +7,15 @@
 
 namespace Squidex.Log;
 
-public sealed class TimestampLogAppender(Func<DateTime>? clock = null) : ILogAppender
+public sealed class TimestampLogAppender(TimeProvider timeProvider) : ILogAppender
 {
-    private readonly Func<DateTime> clock = clock ?? (() => DateTime.UtcNow);
-
     public TimestampLogAppender()
-        : this(null)
+        : this(TimeProvider.System)
     {
     }
 
     public void Append(IObjectWriter writer, SemanticLogLevel logLevel, Exception? exception)
     {
-        writer.WriteProperty("timestamp", clock());
+        writer.WriteProperty("timestamp", timeProvider.GetUtcNow().UtcDateTime);
     }
 }

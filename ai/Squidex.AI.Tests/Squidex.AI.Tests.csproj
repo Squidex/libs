@@ -26,8 +26,11 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
     <PackageReference Include="RefactoringEssentials" Version="5.6.0" PrivateAssets="all" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" PrivateAssets="all" />
+    <PackageReference Include="Testcontainers.MongoDb" Version="4.1.0" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.1.0" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
       <PrivateAssets>all</PrivateAssets>
@@ -41,6 +44,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\assets\Squidex.Assets.ImageSharp\Squidex.Assets.ImageSharp.csproj" />
+    <ProjectReference Include="..\Squidex.AI.EntityFramework\Squidex.AI.EntityFramework.csproj" />
     <ProjectReference Include="..\Squidex.AI.Mongo\Squidex.AI.Mongo.csproj" />
     <ProjectReference Include="..\Squidex.AI\Squidex.AI.csproj" />
   </ItemGroup>

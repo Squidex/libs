@@ -15,7 +15,7 @@ namespace Squidex.Messaging.Mongo;
 internal sealed class MongoSubscription : IAsyncDisposable, IMessageAck
 {
     private static readonly UpdateDefinitionBuilder<MongoMessage> Update = Builders<MongoMessage>.Update;
-    private readonly string? collectionName;
+    private readonly string? channelName;
     private readonly string? queueFilter;
     private readonly IMongoCollection<MongoMessage> collection;
     private readonly MongoTransportOptions options;
@@ -26,18 +26,18 @@ internal sealed class MongoSubscription : IAsyncDisposable, IMessageAck
     public MongoSubscription(
         MessageTransportCallback callback,
         IMongoCollection<MongoMessage> collection,
-        string? collectionName,
+        string? channelName,
         string? queueFilter,
         MongoTransportOptions options,
         TimeProvider timeProvider,
         ILogger log)
     {
-        this.queueFilter = queueFilter;
-        this.collectionName = collectionName;
+        this.channelName = channelName;
         this.collection = collection;
-        this.options = options;
-        this.timeProvider = timeProvider;
         this.log = log;
+        this.options = options;
+        this.queueFilter = queueFilter;
+        this.timeProvider = timeProvider;
 
         timer = new SimpleTimer(async ct =>
         {
@@ -55,10 +55,8 @@ internal sealed class MongoSubscription : IAsyncDisposable, IMessageAck
         {
             return PollNormalAsync(callback, ct);
         }
-        else
-        {
-            return PollPrefetchAsync(callback, ct);
-        }
+
+        return PollPrefetchAsync(callback, ct);
     }
 
     private async Task<bool> PollNormalAsync(MessageTransportCallback callback,
@@ -177,7 +175,7 @@ internal sealed class MongoSubscription : IAsyncDisposable, IMessageAck
         }
         catch (Exception ex)
         {
-            log.LogError(ex, "Failed to put the message back into the queue '{queue}'.", collectionName);
+            log.LogError(ex, "Failed to put the message back into the queue '{queue}'.", channelName);
         }
     }
 
@@ -201,7 +199,7 @@ internal sealed class MongoSubscription : IAsyncDisposable, IMessageAck
         }
         catch (Exception ex)
         {
-            log.LogError(ex, "Failed to remove message from queue '{queue}'.", collectionName);
+            log.LogError(ex, "Failed to remove message from queue '{queue}'.", channelName);
         }
     }
 }
