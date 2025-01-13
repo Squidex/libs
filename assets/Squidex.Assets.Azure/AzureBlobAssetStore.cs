@@ -11,7 +11,7 @@ using Azure.Storage.Blobs.Models;
 using Microsoft.Extensions.Options;
 using Squidex.Hosting;
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.Azure;
 
 public class AzureBlobAssetStore(IOptions<AzureBlobAssetOptions> options) : IAssetStore, IInitializable
 {

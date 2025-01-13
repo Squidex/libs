@@ -12,7 +12,7 @@ using Google.Cloud.Storage.V1;
 using Microsoft.Extensions.Options;
 using Squidex.Hosting;
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.GoogleCloud;
 
 public sealed class GoogleCloudAssetStore(IOptions<GoogleCloudAssetOptions> options) : IAssetStore, IInitializable
 {

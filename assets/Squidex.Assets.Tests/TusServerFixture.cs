@@ -8,6 +8,7 @@
 using Microsoft.AspNetCore.TestHost;
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
+using Squidex.Assets.TusAdapter;
 using tusdotnet;
 using tusdotnet.Interfaces;
 using tusdotnet.Models;

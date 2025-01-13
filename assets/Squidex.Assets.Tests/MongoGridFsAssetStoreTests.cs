@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Squidex.Assets.TusAdapter;
 using Xunit;
 
 namespace Squidex.Assets;

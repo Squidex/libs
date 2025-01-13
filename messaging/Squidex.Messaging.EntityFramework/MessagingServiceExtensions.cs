@@ -39,25 +39,4 @@ public static class MessagingServiceExtensions
 
         return builder;
     }
-
-    public static ModelBuilder AddMessagingDataStore(this ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<EFMessagingDataEntity>(b =>
-        {
-            b.HasKey(nameof(EFMessagingDataEntity.Group), nameof(EFMessagingDataEntity.Key));
-            b.HasIndex(x => x.Expiration);
-        });
-
-        return modelBuilder;
-    }
-
-    public static ModelBuilder AddMessagingTransport(this ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<EFMessage>(b =>
-        {
-            b.HasIndex(nameof(EFMessage.ChannelName), nameof(EFMessage.TimeHandled));
-        });
-
-        return modelBuilder;
-    }
 }

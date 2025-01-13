@@ -15,7 +15,11 @@ namespace Squidex.Messaging;
 
 public class RedisFixture : IAsyncLifetime
 {
-    private readonly RedisContainer redis = new RedisBuilder().Build();
+    private readonly RedisContainer redis =
+        new RedisBuilder()
+            .WithReuse(true)
+            .WithLabel("reuse-id", "messaging-redis")
+            .Build();
 
     public ConnectionMultiplexer Connection { get; set; }
 

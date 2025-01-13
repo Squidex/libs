@@ -9,7 +9,7 @@ using System;
 using System.IO;
 using static TagLib.File;
 
-namespace Squidex.Assets.Internal;
+namespace Squidex.Assets.ImageMagick.Internal;
 
 internal sealed class StreamFileAbstraction(Stream stream, string extension) : IFileAbstraction
 {

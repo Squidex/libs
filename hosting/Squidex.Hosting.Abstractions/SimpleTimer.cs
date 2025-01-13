@@ -16,7 +16,7 @@ public sealed class SimpleTimer : IAsyncDisposable
 
     public bool IsDisposed => stopToken.IsCancellationRequested;
 
-    public SimpleTimer(Func<CancellationToken, Task> action, TimeSpan interval, ILogger log)
+    public SimpleTimer(Func<CancellationToken, Task> action, TimeSpan interval, ILogger? log)
     {
         if (interval <= TimeSpan.Zero)
         {
@@ -39,7 +39,7 @@ public sealed class SimpleTimer : IAsyncDisposable
                     }
                     catch (Exception ex)
                     {
-                        log.LogWarning(ex, "Failed to execute timer.");
+                        log?.LogWarning(ex, "Failed to execute timer.");
                     }
                 }
             }

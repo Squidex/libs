@@ -14,7 +14,11 @@ namespace Squidex.Messaging;
 
 public class KafkaFixture : IAsyncLifetime
 {
-    public KafkaContainer Kafka { get; } = new KafkaBuilder().Build();
+    public KafkaContainer Kafka { get; } =
+        new KafkaBuilder()
+            .WithReuse(true)
+            .WithLabel("reuse-id", "messaging-kafka")
+            .Build();
 
     public async Task DisposeAsync()
     {

@@ -10,7 +10,7 @@ using tusdotnet.Interfaces;
 using tusdotnet.Models;
 using tusdotnet.Parsers;
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.TusAdapter;
 
 public sealed class AssetTusFile(
     string id,

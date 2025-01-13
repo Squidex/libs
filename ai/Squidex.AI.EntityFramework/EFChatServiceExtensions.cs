@@ -6,6 +6,7 @@
 // ==========================================================================
 
 using Microsoft.EntityFrameworkCore;
+using Squidex.AI;
 using Squidex.AI.Implementation;
 using Squidex.AI.Mongo;
 
@@ -13,24 +14,14 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class EFChatServiceExtensions
 {
-    public static IServiceCollection AddEntityFrameworkChatStore<T>(this IServiceCollection services)
+    public static AIBuilder AddEntityFrameworkChatStore<T>(this AIBuilder builder)
         where T : DbContext
     {
-        services.AddSingletonAs<EFChatStore<T>>()
+        builder.Services.AddSingletonAs<EFChatStore<T>>()
             .As<IChatStore>();
 
-        services.AddDbContextFactory<T>();
+        builder.Services.AddDbContextFactory<T>();
 
-        return services;
-    }
-
-    public static ModelBuilder AddChatStore(this ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<EFChatEntity>(b =>
-        {
-            b.HasIndex(x => x.LastUpdated);
-        });
-
-        return modelBuilder;
+        return builder;
     }
 }

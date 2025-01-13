@@ -8,7 +8,7 @@
 using System.Text;
 using tusdotnet.Interfaces;
 
-namespace Squidex.Assets.Internal;
+namespace Squidex.Assets.TusAdapter.Internal;
 
 internal sealed class AssetFileLock(IAssetStore assetStore, string fileId) : ITusFileLock
 {

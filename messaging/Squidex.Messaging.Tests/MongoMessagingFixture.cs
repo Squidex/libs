@@ -13,7 +13,11 @@ namespace Squidex.Messaging;
 
 public sealed class MongoMessagingFixture : IAsyncLifetime
 {
-    private readonly MongoDbContainer mongoDb = new MongoDbBuilder().Build();
+    private readonly MongoDbContainer mongoDb =
+        new MongoDbBuilder()
+            .WithReuse(true)
+            .WithLabel("reuse-id", "messaging-mongo")
+            .Build();
 
     public IMongoDatabase Database { get; private set; }
 

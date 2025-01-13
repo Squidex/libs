@@ -14,7 +14,7 @@ using tusdotnet.Interfaces;
 using tusdotnet.Models;
 using tusdotnet.Models.Configuration;
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.TusAdapter;
 
 public sealed class AssetTusRunner
 {

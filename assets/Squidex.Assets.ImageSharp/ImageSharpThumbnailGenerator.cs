@@ -23,12 +23,12 @@ using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.Metadata.Profiles.Exif;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
-using Squidex.Assets.Internal;
+using Squidex.Assets.ImageSharp.Internal;
 using ImageSharpInfo = SixLabors.ImageSharp.ImageInfo;
 using ImageSharpMode = SixLabors.ImageSharp.Processing.ResizeMode;
 using ImageSharpOptions = SixLabors.ImageSharp.Processing.ResizeOptions;
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.ImageSharp;
 
 public sealed class ImageSharpThumbnailGenerator(IHttpClientFactory httpClientFactory) : AssetThumbnailGeneratorBase
 {

@@ -10,7 +10,7 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using Squidex.Hosting;
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.Mongo;
 
 public sealed class MongoAssetKeyValueStore<T> : IAssetKeyValueStore<T>, IInitializable
 {

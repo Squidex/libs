@@ -15,6 +15,7 @@ using Squidex.AI.Implementation;
 using Squidex.AI.Implementation.OpenAI;
 using Squidex.AI.Utils;
 using Squidex.Assets;
+using Squidex.Assets.ImageSharp;
 using Squidex.Hosting;
 using Xunit;
 
@@ -111,6 +112,7 @@ public class DalLETests
                 .AddSingleton<IHttpImageEndpoint, ImageEndpoint>()
                 .AddSingleton<IAssetStore, MemoryAssetStore>()
                 .AddSingleton<IAssetThumbnailGenerator, ImageSharpThumbnailGenerator>()
+                .AddAI()
                 .AddDallE(TestHelpers.Configuration, options =>
                 {
                     options.DownloadImage = downloadImage;
@@ -119,6 +121,7 @@ public class DalLETests
                 {
                     options.Seed = 42;
                 })
+                .Services
                 .Configure<ChatOptions>(options =>
                 {
                     options.Defaults = new ChatConfiguration

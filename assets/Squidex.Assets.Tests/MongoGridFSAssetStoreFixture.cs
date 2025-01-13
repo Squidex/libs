@@ -7,6 +7,7 @@
 
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
+using Squidex.Assets.Mongo;
 using Squidex.Hosting;
 using Testcontainers.MongoDb;
 using Xunit;
@@ -15,7 +16,12 @@ namespace Squidex.Assets;
 
 public sealed class MongoGridFSAssetStoreFixture : IAsyncLifetime
 {
-    private readonly MongoDbContainer mongoDb = new MongoDbBuilder().Build();
+    private readonly MongoDbContainer mongoDb =
+        new MongoDbBuilder()
+            .WithReuse(true)
+            .WithLabel("reuse-id", "asset-postgres")
+            .Build();
+
     private IServiceProvider services;
 
     public MongoGridFsAssetStore Store => services.GetRequiredService<MongoGridFsAssetStore>();

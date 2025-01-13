@@ -7,7 +7,7 @@
 
 using Squidex.Hosting.Configuration;
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.FTP;
 
 public sealed class FTPAssetOptions : IValidatableOptions
 {

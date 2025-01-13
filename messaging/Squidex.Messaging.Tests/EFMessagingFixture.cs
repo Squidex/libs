@@ -15,7 +15,11 @@ namespace Squidex.Messaging;
 
 public sealed class EFMessagingFixture : IAsyncLifetime
 {
-    public PostgreSqlContainer PostgresSql { get; } = new PostgreSqlBuilder().Build();
+    public PostgreSqlContainer PostgresSql { get; } =
+        new PostgreSqlBuilder()
+            .WithReuse(true)
+            .WithLabel("reuse-id", "messaging-postgres")
+            .Build();
 
     public sealed class AppDbContext(DbContextOptions options) : DbContext(options)
     {

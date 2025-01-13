@@ -6,13 +6,13 @@
 // ==========================================================================
 
 using System.Collections.Concurrent;
-using Squidex.Assets.Internal;
+using Squidex.Assets.TusAdapter.Internal;
 using tusdotnet.Interfaces;
 using tusdotnet.Models;
 
 #pragma warning disable MA0106 // Avoid closure by using an overload with the 'factoryArgument' parameter
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.TusAdapter;
 
 public sealed class AssetTusStore(IAssetStore assetStore, IAssetKeyValueStore<TusMetadata> keyValueStore) :
     ITusExpirationStore,

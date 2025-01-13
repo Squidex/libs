@@ -6,6 +6,7 @@
 // ==========================================================================
 
 using FakeItEasy;
+using Squidex.Assets.FTP;
 using Squidex.Hosting;
 using Xunit;
 
