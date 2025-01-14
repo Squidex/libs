@@ -15,9 +15,9 @@ public static class EFSchema
     {
         modelBuilder.Entity<EFEventCommit>(b =>
         {
-            b.HasIndex(nameof(EFEventCommit.EventStream), nameof(EFEventCommit.EventStreamOffset)).IsUnique();
-            b.HasIndex(nameof(EFEventCommit.EventStream), nameof(EFEventCommit.Position));
-            b.HasIndex(nameof(EFEventCommit.EventStream), nameof(EFEventCommit.Timestamp));
+            // b.HasIndex(nameof(EFEventCommit.EventStream), nameof(EFEventCommit.EventStreamOffset)).IsUnique();
+            // b.HasIndex(nameof(EFEventCommit.EventStream), nameof(EFEventCommit.Position));
+            // b.HasIndex(nameof(EFEventCommit.EventStream), nameof(EFEventCommit.Timestamp));
         });
 
         modelBuilder.Entity<EFPosition>();

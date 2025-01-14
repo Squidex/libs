@@ -45,9 +45,8 @@ BEGIN
 	-- Increment the position
 	UPDATE EventPosition
 	SET Position = Position + 1
+    OUTPUT Inserted.Position
 	WHERE Id = 1;
-
-	SELECT Position FROM EventPosition WHERE Id = 1;
 END;";
         await dbContext.Database.ExecuteSqlRawAsync(storedProdecure, ct);
 

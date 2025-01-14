@@ -81,11 +81,8 @@ public abstract class EFEventStoreTests : EventStoreTests
         for (var i = 0; i < 1000; i++)
         {
             await using var dbContext = await dbFactory.CreateDbContextAsync();
-            await using var dbTransaction = await dbContext.Database.BeginTransactionAsync();
 
-            var position = await dbAdapter.GetPositionAsync(dbContext, default);
-            await dbTransaction.CommitAsync();
-            values.Add(position);
+            values.Add(await dbAdapter.GetPositionAsync(dbContext, default));
         }
 
         Assert.Equal(1000, values.Count);
@@ -102,11 +99,8 @@ public abstract class EFEventStoreTests : EventStoreTests
         await Parallel.ForEachAsync(Enumerable.Range(0, 1000), async (_, ct) =>
         {
             await using var dbContext = await dbFactory.CreateDbContextAsync(ct);
-            await using var dbTransaction = await dbContext.Database.BeginTransactionAsync();
 
-            var position = await dbAdapter.GetPositionAsync(dbContext, default);
-            await dbTransaction.CommitAsync();
-            values.TryAdd(position, position);
+            values.TryAdd(await dbAdapter.GetPositionAsync(dbContext, default), 0);
         });
 
         Assert.Equal(1000, values.Count);

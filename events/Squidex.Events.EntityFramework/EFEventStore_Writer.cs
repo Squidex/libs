@@ -27,8 +27,9 @@ public sealed partial class EFEventStore<T>
         }
 
         await using var context = await dbContextFactory.CreateDbContextAsync(ct);
+        var commitSet = context.Set<EFEventCommit>();
 
-        var currentVersion = await GetEventStreamOffsetAsync(context, streamName);
+        var currentVersion = await GetEventStreamOffsetAsync(commitSet, streamName);
         if (expectedVersion >= -1 && expectedVersion != currentVersion)
         {
             throw new WrongEventVersionException(currentVersion, expectedVersion);
@@ -53,27 +54,17 @@ public sealed partial class EFEventStore<T>
         {
             try
             {
-                await context.Set<EFEventCommit>().AddAsync(commit, ct);
+                await commitSet.AddAsync(commit, ct);
                 await context.SaveChangesAsync(ct);
 
                 try
                 {
-                    await using var transaction = await context.Database.BeginTransactionAsync(ct);
-                    try
-                    {
-                        commit.Position = await adapter.GetPositionAsync(context, ct);
-                        await context.SaveChangesAsync(ct);
-                        await transaction.CommitAsync(ct);
-                    }
-                    catch (Exception)
-                    {
-                        await transaction.RollbackAsync(ct);
-                        throw;
-                    }
+                    commit.Position = await adapter.GetPositionAsync(context, ct);
+                    await context.SaveChangesAsync(ct);
                 }
                 catch
                 {
-                    context.Set<EFEventCommit>().Remove(commit);
+                    commitSet.Remove(commit);
                     await context.SaveChangesAsync(ct);
                     throw;
                 }
@@ -84,7 +75,7 @@ public sealed partial class EFEventStore<T>
             {
                 if (expectedVersion >= -1)
                 {
-                    currentVersion = await GetEventStreamOffsetAsync(context, streamName);
+                    currentVersion = await GetEventStreamOffsetAsync(commitSet, streamName);
 
                     throw new WrongEventVersionException(currentVersion, expectedVersion);
                 }
@@ -107,10 +98,9 @@ public sealed partial class EFEventStore<T>
         await query.ExecuteDeleteAsync(ct);
     }
 
-    private static async Task<long> GetEventStreamOffsetAsync(T context, string streamName)
+    private static async Task<long> GetEventStreamOffsetAsync(DbSet<EFEventCommit> commitSet, string streamName)
     {
-        var record = await context
-            .Set<EFEventCommit>()
+        var record = await commitSet
             .Where(x => x.EventStream == streamName)
             .OrderByDescending(x => x.EventStreamOffset)
             .Select(x => new { x.EventStreamOffset, x.EventsCount })
