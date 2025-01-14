@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Diagnostics;
 using Confluent.Kafka;
 using Confluent.Kafka.Admin;
 using Testcontainers.Kafka;
@@ -16,7 +17,7 @@ public class KafkaFixture : IAsyncLifetime
 {
     public KafkaContainer Kafka { get; } =
         new KafkaBuilder()
-            .WithReuse(true)
+            .WithReuse(Debugger.IsAttached)
             .WithLabel("reuse-id", "messaging-kafka")
             .Build();
 

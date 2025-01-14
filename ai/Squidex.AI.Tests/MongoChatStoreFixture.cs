@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using Squidex.AI.Mongo;
@@ -18,7 +19,7 @@ public sealed class MongoChatStoreFixture : IAsyncLifetime
 {
     private readonly MongoDbContainer mongoDb =
         new MongoDbBuilder()
-            .WithReuse(true)
+            .WithReuse(Debugger.IsAttached)
             .WithLabel("reuse-id", "chatstore-mongo")
         .Build();
 

@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -20,7 +21,7 @@ public sealed class EFChatStoreFixture : IAsyncLifetime
 {
     private readonly PostgreSqlContainer postgresSql =
         new PostgreSqlBuilder()
-            .WithReuse(true)
+            .WithReuse(Debugger.IsAttached)
             .WithLabel("reuse-id", "chatstore-postgres")
             .Build();
 

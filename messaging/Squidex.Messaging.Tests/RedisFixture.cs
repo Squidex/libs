@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Diagnostics;
 using StackExchange.Redis;
 using Testcontainers.Redis;
 using Xunit;
@@ -17,7 +18,7 @@ public class RedisFixture : IAsyncLifetime
 {
     private readonly RedisContainer redis =
         new RedisBuilder()
-            .WithReuse(true)
+            .WithReuse(Debugger.IsAttached)
             .WithLabel("reuse-id", "messaging-redis")
             .Build();
 

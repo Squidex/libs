@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Diagnostics;
 using Testcontainers.RabbitMq;
 using Xunit;
 
@@ -14,7 +15,7 @@ public class RabbitMqFixture : IAsyncLifetime
 {
     public RabbitMqContainer RabbitMq { get; } =
         new RabbitMqBuilder()
-            .WithReuse(true)
+            .WithReuse(Debugger.IsAttached)
             .WithLabel("reuse-id", "messaging-rabbit")
             .Build();
 

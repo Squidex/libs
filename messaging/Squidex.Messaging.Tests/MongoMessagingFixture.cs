@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Diagnostics;
 using MongoDB.Driver;
 using Testcontainers.MongoDb;
 using Xunit;
@@ -15,7 +16,7 @@ public sealed class MongoMessagingFixture : IAsyncLifetime
 {
     private readonly MongoDbContainer mongoDb =
         new MongoDbBuilder()
-            .WithReuse(true)
+            .WithReuse(Debugger.IsAttached)
             .WithLabel("reuse-id", "messaging-mongo")
             .Build();
 

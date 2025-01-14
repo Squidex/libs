@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Diagnostics;
 using MongoDB.Driver;
 using Squidex.Hosting;
 using Testcontainers.MongoDb;
@@ -16,7 +17,7 @@ public class MongoMessagingDataStoreFixture : IAsyncLifetime
 {
     private readonly MongoDbContainer mongoDb =
         new MongoDbBuilder()
-            .WithReuse(true)
+            .WithReuse(Debugger.IsAttached)
             .WithLabel("reuse-id", "messagingstore-mongo")
             .Build();
 

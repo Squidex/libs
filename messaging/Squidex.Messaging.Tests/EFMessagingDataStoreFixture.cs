@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -18,7 +19,7 @@ public class EFMessagingDataStoreFixture : IAsyncLifetime
 {
     private readonly PostgreSqlContainer postgresSql =
         new PostgreSqlBuilder()
-            .WithReuse(true)
+            .WithReuse(Debugger.IsAttached)
             .WithLabel("reuse-id", "messagingstore-kafka")
             .Build();
 

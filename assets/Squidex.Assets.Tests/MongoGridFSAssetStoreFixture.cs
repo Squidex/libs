@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Diagnostics;
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
 using Squidex.Assets.Mongo;
@@ -18,7 +19,7 @@ public sealed class MongoGridFSAssetStoreFixture : IAsyncLifetime
 {
     private readonly MongoDbContainer mongoDb =
         new MongoDbBuilder()
-            .WithReuse(true)
+            .WithReuse(Debugger.IsAttached)
             .WithLabel("reuse-id", "asset-postgres")
             .Build();
 
