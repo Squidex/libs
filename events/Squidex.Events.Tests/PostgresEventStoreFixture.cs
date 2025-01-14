@@ -49,7 +49,10 @@ public sealed class PostgresEventStoreFixture : IAsyncLifetime
             {
                b.UseNpgsql(postgresSql.GetConnectionString());
             })
-            .AddEntityFrameworkEventStore<TestContext>(TestHelpers.Configuration)
+            .AddEntityFrameworkEventStore<TestContext>(TestHelpers.Configuration, options =>
+            {
+                options.PollingInterval = TimeSpan.FromSeconds(0.1);
+            })
             .AddPostgresAdapter()
             .Services
             .BuildServiceProvider();

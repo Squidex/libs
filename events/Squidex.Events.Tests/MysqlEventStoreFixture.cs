@@ -50,7 +50,10 @@ public sealed class MySqlEventStoreFixture : IAsyncLifetime
             {
                 b.UseMySql(mysql.GetConnectionString(), ServerVersion.AutoDetect(mysql.GetConnectionString()));
             })
-            .AddEntityFrameworkEventStore<TestContext>(TestHelpers.Configuration)
+            .AddEntityFrameworkEventStore<TestContext>(TestHelpers.Configuration, options =>
+            {
+                options.PollingInterval = TimeSpan.FromSeconds(0.1);
+            })
             .AddMysqlAdapter()
             .Services
             .BuildServiceProvider();

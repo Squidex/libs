@@ -48,7 +48,10 @@ public sealed class SqlServerEventStoreFixture : IAsyncLifetime
             {
                 b.UseSqlServer(msSql.GetConnectionString());
             })
-            .AddEntityFrameworkEventStore<TestContext>(TestHelpers.Configuration)
+            .AddEntityFrameworkEventStore<TestContext>(TestHelpers.Configuration, options =>
+            {
+                options.PollingInterval = TimeSpan.FromSeconds(0.1);
+            })
             .AddSqlServerAdapter()
             .Services
             .BuildServiceProvider();

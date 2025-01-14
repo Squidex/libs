@@ -43,7 +43,10 @@ public sealed class MongoEventStoreReplicaFixture : IAsyncLifetime
         services = new ServiceCollection()
             .AddSingleton<IMongoClient>(_ => new MongoClient(mongoDb.GetConnectionString()))
             .AddSingleton(c => c.GetRequiredService<IMongoClient>().GetDatabase("Test"))
-            .AddMongoEventStore(TestHelpers.Configuration)
+            .AddMongoEventStore(TestHelpers.Configuration, options =>
+            {
+                options.PollingInterval = TimeSpan.FromSeconds(0.1);
+            })
             .Services
             .BuildServiceProvider();
 

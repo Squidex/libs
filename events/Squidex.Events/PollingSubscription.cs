@@ -27,10 +27,23 @@ public sealed class PollingSubscription : IEventSubscription
         {
             try
             {
-                await foreach (var storedEvent in eventStore.QueryAllAsync(streamFilter, streamPosition, ct: ct))
+                while (true)
                 {
-                    await eventSubscriber.OnNextAsync(this, storedEvent);
-                    streamPosition = storedEvent.EventPosition;
+                    var hasAddedEvent = false;
+                    await foreach (var storedEvent in eventStore.QueryAllAsync(streamFilter, streamPosition, ct: ct))
+                    {
+                        await eventSubscriber.OnNextAsync(this, storedEvent);
+
+                        streamPosition = storedEvent.EventPosition;
+                        hasAddedEvent = true;
+                    }
+
+                    if (!hasAddedEvent)
+                    {
+                        break;
+                    }
+
+                    await Task.Delay(100, ct);
                 }
             }
             catch (Exception ex)

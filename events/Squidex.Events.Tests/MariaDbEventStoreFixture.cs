@@ -50,7 +50,10 @@ public sealed class MariaDbEventStoreFixture : IAsyncLifetime
             {
                 b.UseMySql(mariaDb.GetConnectionString(), ServerVersion.AutoDetect(mariaDb.GetConnectionString()));
             })
-            .AddEntityFrameworkEventStore<TestContext>(TestHelpers.Configuration)
+            .AddEntityFrameworkEventStore<TestContext>(TestHelpers.Configuration, options =>
+            {
+                options.PollingInterval = TimeSpan.FromSeconds(0.1);
+            })
             .AddMysqlAdapter()
             .Services
             .BuildServiceProvider();
