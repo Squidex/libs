@@ -16,6 +16,7 @@ public sealed class Startup(IConfiguration configuration)
         var options = configuration.GetSection("images").Get<ImageResizeOptions>()!;
 
         services.AddHealthChecks();
+        services.AddHttpClient();
         services.AddDefaultForwardRules();
         services.AddDefaultWebServices(configuration);
         services.AddSingleton<ImageResizer>();
