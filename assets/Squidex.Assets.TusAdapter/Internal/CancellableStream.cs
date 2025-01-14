@@ -7,7 +7,7 @@
 
 #pragma warning disable CA1835 // Prefer the 'Memory'-based overloads for 'ReadAsync' and 'WriteAsync'
 
-namespace Squidex.Assets.Internal;
+namespace Squidex.Assets.TusAdapter.Internal;
 
 internal sealed class CancellableStream(Stream innerStream, CancellationToken cancellationToken)
     : DelegateStream(innerStream)

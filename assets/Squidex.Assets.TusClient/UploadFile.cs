@@ -7,7 +7,7 @@
 
 using HeyRed.Mime;
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.TusClient;
 
 public sealed class UploadFile(Stream stream, string fileName, string contentType, long contentLength)
 {

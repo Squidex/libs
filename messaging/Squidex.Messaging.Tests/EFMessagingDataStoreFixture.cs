@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -16,7 +17,12 @@ namespace Squidex.Messaging;
 
 public class EFMessagingDataStoreFixture : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer postgresSql = new PostgreSqlBuilder().Build();
+    private readonly PostgreSqlContainer postgresSql =
+        new PostgreSqlBuilder()
+            .WithReuse(Debugger.IsAttached)
+            .WithLabel("reuse-id", "messagingstore-kafka")
+            .Build();
+
     private IServiceProvider services;
 
     public IMessagingDataStore Store => services.GetRequiredService<IMessagingDataStore>();
@@ -55,15 +61,15 @@ public class EFMessagingDataStoreFixture : IAsyncLifetime
             .Services
             .BuildServiceProvider();
 
-        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
-        {
-            await service.InitializeAsync(default);
-        }
-
         var factory = services.GetRequiredService<IDbContextFactory<AppDbContext>>();
         var context = await factory.CreateDbContextAsync();
         var creator = (RelationalDatabaseCreator)context.Database.GetService<IDatabaseCreator>();
 
         await creator.EnsureCreatedAsync();
+
+        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
+        {
+            await service.InitializeAsync(default);
+        }
     }
 }

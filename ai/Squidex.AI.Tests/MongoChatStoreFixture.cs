@@ -5,10 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Microsoft.Extensions.Configuration;
+using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
-using Squidex.AI.Implementation;
 using Squidex.AI.Mongo;
 using Squidex.Hosting;
 using Testcontainers.MongoDb;
@@ -18,7 +17,12 @@ namespace Squidex.AI;
 
 public sealed class MongoChatStoreFixture : IAsyncLifetime
 {
-    private readonly MongoDbContainer mongoDb = new MongoDbBuilder().Build();
+    private readonly MongoDbContainer mongoDb =
+        new MongoDbBuilder()
+            .WithReuse(Debugger.IsAttached)
+            .WithLabel("reuse-id", "chatstore-mongo")
+        .Build();
+
     private IServiceProvider services;
 
     public MongoChatStore Store => services.GetRequiredService<MongoChatStore>();
@@ -40,7 +44,9 @@ public sealed class MongoChatStoreFixture : IAsyncLifetime
         services = new ServiceCollection()
             .AddSingleton<IMongoClient>(_ => new MongoClient(mongoDb.GetConnectionString()))
             .AddSingleton(c => c.GetRequiredService<IMongoClient>().GetDatabase("Test"))
-            .AddMongoChatStore(new ConfigurationBuilder().Build())
+            .AddAI()
+            .AddMongoChatStore(TestHelpers.Configuration)
+            .Services
             .BuildServiceProvider();
 
         foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())

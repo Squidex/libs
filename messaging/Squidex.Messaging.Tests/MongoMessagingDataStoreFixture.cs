@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Diagnostics;
 using MongoDB.Driver;
 using Squidex.Hosting;
 using Testcontainers.MongoDb;
@@ -14,7 +15,12 @@ namespace Squidex.Messaging;
 
 public class MongoMessagingDataStoreFixture : IAsyncLifetime
 {
-    private readonly MongoDbContainer mongoDb = new MongoDbBuilder().Build();
+    private readonly MongoDbContainer mongoDb =
+        new MongoDbBuilder()
+            .WithReuse(Debugger.IsAttached)
+            .WithLabel("reuse-id", "messagingstore-mongo")
+            .Build();
+
     private IServiceProvider services;
 
     public IMessagingDataStore Store => services.GetRequiredService<IMessagingDataStore>();
@@ -37,7 +43,7 @@ public class MongoMessagingDataStoreFixture : IAsyncLifetime
             .AddSingleton<IMongoClient>(_ => new MongoClient(mongoDb.GetConnectionString()))
             .AddSingleton(c => c.GetRequiredService<IMongoClient>().GetDatabase("Test"))
             .AddMessaging()
-            .AddMongoDataStore(new ConfigurationBuilder().Build())
+            .AddMongoDataStore(TestHelpers.Configuration)
             .Services
             .BuildServiceProvider();
 

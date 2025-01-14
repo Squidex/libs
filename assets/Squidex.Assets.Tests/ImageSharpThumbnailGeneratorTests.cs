@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Squidex.Assets.ImageSharp;
 using Xunit;
 
 namespace Squidex.Assets;

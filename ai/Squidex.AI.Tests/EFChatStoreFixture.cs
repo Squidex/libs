@@ -5,11 +5,11 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
-using Squidex.AI.Implementation;
 using Squidex.AI.Mongo;
 using Squidex.Hosting;
 using Testcontainers.PostgreSql;
@@ -19,7 +19,12 @@ namespace Squidex.AI;
 
 public sealed class EFChatStoreFixture : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer postgresSql = new PostgreSqlBuilder().Build();
+    private readonly PostgreSqlContainer postgresSql =
+        new PostgreSqlBuilder()
+            .WithReuse(Debugger.IsAttached)
+            .WithLabel("reuse-id", "chatstore-postgres")
+            .Build();
+
     private IServiceProvider services;
 
     public EFChatStore<AppDbContext> Store => services.GetRequiredService<EFChatStore<AppDbContext>>();
@@ -52,18 +57,20 @@ public sealed class EFChatStoreFixture : IAsyncLifetime
             {
                 b.UseNpgsql(postgresSql.GetConnectionString());
             })
+            .AddAI()
             .AddEntityFrameworkChatStore<AppDbContext>()
+            .Services
             .BuildServiceProvider();
-
-        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
-        {
-            await service.InitializeAsync(default);
-        }
 
         var factory = services.GetRequiredService<IDbContextFactory<AppDbContext>>();
         var context = await factory.CreateDbContextAsync();
         var creator = (RelationalDatabaseCreator)context.Database.GetService<IDatabaseCreator>();
 
         await creator.EnsureCreatedAsync();
+
+        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
+        {
+            await service.InitializeAsync(default);
+        }
     }
 }

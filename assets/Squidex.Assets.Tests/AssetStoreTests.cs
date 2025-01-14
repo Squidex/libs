@@ -8,8 +8,6 @@
 using System.IO.Compression;
 using Xunit;
 
-#pragma warning disable RECS0108 // Warns about static fields in generic types
-
 namespace Squidex.Assets;
 
 public abstract class AssetStoreTests
@@ -32,12 +30,12 @@ public abstract class AssetStoreTests
         FolderLinux
     }
 
-    public static readonly TheoryData<TestCase> FolderCases = new TheoryData<TestCase>
-    {
+    public static readonly TheoryData<TestCase> FolderCases =
+    [
         TestCase.NoFolder,
         TestCase.FolderWindows,
         TestCase.FolderLinux
-    };
+    ];
 
     [Theory]
     [InlineData("../{file}.png")]

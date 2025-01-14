@@ -6,6 +6,7 @@
 // ==========================================================================
 
 using Microsoft.AspNetCore.Mvc;
+using Squidex.Assets.TusAdapter;
 
 namespace Squidex.Assets;
 

@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Diagnostics;
 using MongoDB.Driver;
 using Testcontainers.MongoDb;
 using Xunit;
@@ -13,7 +14,11 @@ namespace Squidex.Messaging;
 
 public sealed class MongoMessagingFixture : IAsyncLifetime
 {
-    private readonly MongoDbContainer mongoDb = new MongoDbBuilder().Build();
+    private readonly MongoDbContainer mongoDb =
+        new MongoDbBuilder()
+            .WithReuse(Debugger.IsAttached)
+            .WithLabel("reuse-id", "messaging-mongo")
+            .Build();
 
     public IMongoDatabase Database { get; private set; }
 

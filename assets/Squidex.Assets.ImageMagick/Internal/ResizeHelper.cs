@@ -10,7 +10,7 @@ using System;
 #pragma warning disable MA0048 // File name must match type name
 #pragma warning disable SA1313 // Parameter names should begin with lower-case letter
 
-namespace Squidex.Assets.Internal;
+namespace Squidex.Assets.ImageMagick.Internal;
 
 public readonly record struct PointF(float X, float Y);
 

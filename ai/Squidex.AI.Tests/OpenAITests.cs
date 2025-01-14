@@ -23,6 +23,7 @@ public class OpenAITests
         var sut =
             new ServiceCollection()
                 .AddAI()
+                .Services
                 .BuildServiceProvider()
                 .GetRequiredService<IChatAgent>();
 
@@ -34,10 +35,12 @@ public class OpenAITests
     {
         var sut =
             new ServiceCollection()
+                .AddAI()
                 .AddOpenAIChat(TestHelpers.Configuration, options =>
                 {
                     options.ApiKey = "test";
                 })
+                .Services
                 .BuildServiceProvider()
                 .GetRequiredService<IChatAgent>();
 
@@ -50,10 +53,12 @@ public class OpenAITests
     {
         var sut =
             new ServiceCollection()
+                .AddAI()
                 .AddOpenAIChat(TestHelpers.Configuration, options =>
                 {
                     options.Model = "invalid";
                 })
+                .Services
                 .BuildServiceProvider()
                 .GetRequiredService<IChatAgent>();
 
@@ -71,10 +76,12 @@ public class OpenAITests
     {
         var sut =
             new ServiceCollection()
+                .AddAI()
                 .AddOpenAIChat(TestHelpers.Configuration, options =>
                 {
                     options.Model = "invalid";
                 })
+                .Services
                 .BuildServiceProvider()
                 .GetRequiredService<IChatAgent>();
 
@@ -342,12 +349,14 @@ public class OpenAITests
     {
         var services =
             new ServiceCollection()
+                .AddAI()
                 .AddTool<MathTool>()
                 .AddTool<WheatherTool>()
                 .AddOpenAIChat(TestHelpers.Configuration, options =>
                 {
                     options.Seed = 42;
                 })
+                .Services
                 .Configure<ChatOptions>(options =>
                 {
                     options.Defaults = new ChatConfiguration

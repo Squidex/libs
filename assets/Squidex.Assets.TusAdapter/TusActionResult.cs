@@ -8,7 +8,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.TusAdapter;
 
 internal sealed class TusActionResult(HttpResponse response) : IActionResult
 {

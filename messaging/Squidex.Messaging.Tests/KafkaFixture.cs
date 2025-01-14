@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Diagnostics;
 using Confluent.Kafka;
 using Confluent.Kafka.Admin;
 using Testcontainers.Kafka;
@@ -14,7 +15,11 @@ namespace Squidex.Messaging;
 
 public class KafkaFixture : IAsyncLifetime
 {
-    public KafkaContainer Kafka { get; } = new KafkaBuilder().Build();
+    public KafkaContainer Kafka { get; } =
+        new KafkaBuilder()
+            .WithReuse(Debugger.IsAttached)
+            .WithLabel("reuse-id", "messaging-kafka")
+            .Build();
 
     public async Task DisposeAsync()
     {

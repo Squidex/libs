@@ -38,6 +38,7 @@ public class PineconeTests
     {
         var services =
             new ServiceCollection()
+                .AddAI()
                 .AddOpenAIChat(TestHelpers.Configuration, options =>
                 {
                     options.Seed = 42;
@@ -47,6 +48,7 @@ public class PineconeTests
                 {
                     options.ToolDescription = "Answers questions about Squidex.";
                 })
+                .Services
                 .Configure<ChatOptions>(options =>
                 {
                     options.Defaults = new ChatConfiguration

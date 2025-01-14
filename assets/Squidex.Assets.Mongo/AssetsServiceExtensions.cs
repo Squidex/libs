@@ -7,6 +7,7 @@
 
 using MongoDB.Driver.GridFS;
 using Squidex.Assets;
+using Squidex.Assets.Mongo;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -14,10 +15,8 @@ public static class AssetsServiceExtensions
 {
     public static IServiceCollection AddMongoAssetStore(this IServiceCollection services, Func<IServiceProvider, IGridFSBucket<string>> bucketProvider)
     {
-        services.AddSingletonAs(c =>
-        {
-            return new MongoGridFsAssetStore(bucketProvider(c));
-        }).As<IAssetStore>().AsSelf();
+        services.AddSingletonAs(c => new MongoGridFsAssetStore(bucketProvider(c)))
+            .As<IAssetStore>().AsSelf();
 
         return services;
     }

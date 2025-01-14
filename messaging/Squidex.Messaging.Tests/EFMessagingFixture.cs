@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -15,7 +16,11 @@ namespace Squidex.Messaging;
 
 public sealed class EFMessagingFixture : IAsyncLifetime
 {
-    public PostgreSqlContainer PostgresSql { get; } = new PostgreSqlBuilder().Build();
+    public PostgreSqlContainer PostgresSql { get; } =
+        new PostgreSqlBuilder()
+            .WithReuse(Debugger.IsAttached)
+            .WithLabel("reuse-id", "messaging-postgres")
+            .Build();
 
     public sealed class AppDbContext(DbContextOptions options) : DbContext(options)
     {

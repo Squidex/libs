@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Squidex.Assets.S3;
 using Squidex.Hosting;
 using Xunit;
 

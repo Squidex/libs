@@ -8,7 +8,7 @@
 using System;
 using ImageMagick;
 
-namespace Squidex.Assets.Internal;
+namespace Squidex.Assets.ImageMagick.Internal;
 
 internal static class Extensions
 {

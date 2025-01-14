@@ -9,6 +9,7 @@ using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 using Microsoft.Extensions.DependencyInjection;
 using Squidex.Assets;
+using Squidex.Assets.ImageSharp;
 
 #pragma warning disable MA0048 // File name must match type name
 

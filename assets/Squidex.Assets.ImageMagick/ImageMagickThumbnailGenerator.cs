@@ -11,9 +11,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ImageMagick;
-using Squidex.Assets.Internal;
+using Squidex.Assets.ImageMagick.Internal;
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.ImageMagick;
 
 public sealed class ImageMagickThumbnailGenerator : AssetThumbnailGeneratorBase
 {

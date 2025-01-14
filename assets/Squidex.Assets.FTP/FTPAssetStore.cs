@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Squidex.Hosting;
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.FTP;
 
 [ExcludeFromCodeCoverage]
 public sealed class FTPAssetStore(IOptions<FTPAssetOptions> options, ILogger<FTPAssetStore> log) : IAssetStore, IInitializable
