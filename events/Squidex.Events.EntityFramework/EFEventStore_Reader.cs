@@ -14,9 +14,9 @@ namespace Squidex.Events.EntityFramework;
 
 public sealed partial class EFEventStore<T> : IEventStore
 {
-    public IEventSubscription CreateSubscription(IEventSubscriber<StoredEvent> eventSubscriber, StreamFilter filter, string? position = null)
+    public IEventSubscription CreateSubscription(IEventSubscriber<StoredEvent> eventSubscriber, StreamFilter filter = default, StreamPosition position = default)
     {
-        return new PollingSubscription(this, eventSubscriber, filter, options.Value.PollingInterval, position);
+        return new PollingSubscription(this, eventSubscriber, filter, position, options.Value.PollingInterval);
     }
 
     public async Task<IReadOnlyList<StoredEvent>> QueryStreamAsync(string streamName, long afterStreamPosition = -1,
@@ -31,7 +31,7 @@ public sealed partial class EFEventStore<T> : IEventStore
 
         var result = Convert(commits, afterStreamPosition);
 
-        if ((commits.Count == 0 || commits[0].EventStreamOffset != afterStreamPosition) && afterStreamPosition > EventVersion.Empty)
+        if ((commits.Count == 0 || commits[0].EventStreamOffset != afterStreamPosition) && afterStreamPosition > EtagVersion.Empty)
         {
             commits = await context.Set<EFEventCommit>()
                 .ByStream(StreamFilter.Name(streamName))
@@ -46,7 +46,7 @@ public sealed partial class EFEventStore<T> : IEventStore
         return result;
     }
 
-    public async IAsyncEnumerable<StoredEvent> QueryAllReverseAsync(StreamFilter filter, DateTime timestamp = default, int take = int.MaxValue,
+    public async IAsyncEnumerable<StoredEvent> QueryAllReverseAsync(StreamFilter filter = default, DateTime timestamp = default, int take = int.MaxValue,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
         if (take <= 0)
@@ -67,7 +67,7 @@ public sealed partial class EFEventStore<T> : IEventStore
         var taken = 0;
         foreach (var commit in query)
         {
-            foreach (var @event in commit.Filtered(EventVersion.Empty).Reverse())
+            foreach (var @event in commit.Filtered(EtagVersion.Empty).Reverse())
             {
                 yield return @event;
 
@@ -80,17 +80,17 @@ public sealed partial class EFEventStore<T> : IEventStore
         }
     }
 
-    public async IAsyncEnumerable<StoredEvent> QueryAllAsync(StreamFilter filter, string? position = null, int take = int.MaxValue,
+    public async IAsyncEnumerable<StoredEvent> QueryAllAsync(StreamFilter filter = default, StreamPosition position = default, int take = int.MaxValue,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
-        if (take <= 0)
+        if (take <= 0 || position.IsEnd)
         {
             yield break;
         }
 
         await using var context = await dbContextFactory.CreateDbContextAsync(ct);
 
-        StreamPosition streamPosition = position;
+        ParsedStreamPosition streamPosition = position;
         var query = context.Set<EFEventCommit>()
             .ByStream(filter)
             .ByPosition(streamPosition)

@@ -19,7 +19,7 @@ internal static class FilterBuilder
         return builder.Gte(x => x.EventStreamOffset, streamPosition);
     }
 
-    public static FilterDefinition<MongoEventCommit> ByPosition(StreamPosition streamPosition)
+    public static FilterDefinition<MongoEventCommit> ByPosition(ParsedStreamPosition streamPosition)
     {
         var builder = Builders<MongoEventCommit>.Filter;
 
@@ -67,7 +67,7 @@ internal static class FilterBuilder
         return builder.In(x => x.FullDocument.EventStream, filter.Prefixes);
     }
 
-    public static IEnumerable<StoredEvent> Filtered(this MongoEventCommit commit, StreamPosition position)
+    public static IEnumerable<StoredEvent> Filtered(this MongoEventCommit commit, ParsedStreamPosition position)
     {
         var eventStreamOffset = commit.EventStreamOffset;
 
@@ -81,7 +81,7 @@ internal static class FilterBuilder
             if (commitOffset > position.CommitOffset || commitTimestamp > position.Timestamp)
             {
                 var eventData = @event.ToEventData();
-                var eventPosition = new StreamPosition(commitTimestamp, commitOffset, commit.Events.Length);
+                var eventPosition = new ParsedStreamPosition(commitTimestamp, commitOffset, commit.Events.Length);
 
                 yield return new StoredEvent(commit.EventStream, eventPosition, eventStreamOffset, eventData);
             }
@@ -92,7 +92,7 @@ internal static class FilterBuilder
 
     public static IEnumerable<StoredEvent> Filtered(this MongoEventCommit commit)
     {
-        return commit.Filtered(EventVersion.Empty);
+        return commit.Filtered(EtagVersion.Empty);
     }
 
     public static IEnumerable<StoredEvent> Filtered(this MongoEventCommit commit, long position)
@@ -109,7 +109,7 @@ internal static class FilterBuilder
             if (eventStreamOffset > position)
             {
                 var eventData = @event.ToEventData();
-                var eventPosition = new StreamPosition(commitTimestamp, commitOffset, commit.Events.Length);
+                var eventPosition = new ParsedStreamPosition(commitTimestamp, commitOffset, commit.Events.Length);
 
                 yield return new StoredEvent(commit.EventStream, eventPosition, eventStreamOffset, eventData);
             }

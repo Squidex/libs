@@ -5,8 +5,13 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-#pragma warning disable SA1313 // Parameter names should begin with lower-case letter
-
 namespace Squidex.Events;
 
-public sealed record StoredEvent(string StreamName, StreamPosition EventPosition, long EventStreamNumber, EventData Data);
+public static class EtagVersion
+{
+    public const long Auto = -3;
+
+    public const long Any = -2;
+
+    public const long Empty = -1;
+}

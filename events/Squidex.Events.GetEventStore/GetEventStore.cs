@@ -10,6 +10,7 @@ using EventStore.Client;
 using Microsoft.Extensions.Options;
 using Squidex.Hosting;
 using Squidex.Hosting.Configuration;
+using ESStreamPosition = EventStore.Client.StreamPosition;
 
 namespace Squidex.Events.GetEventStore;
 
@@ -40,15 +41,15 @@ public sealed class GetEventStore(
         }
     }
 
-    public IEventSubscription CreateSubscription(IEventSubscriber<StoredEvent> subscriber, StreamFilter filter, string? position = null)
+    public IEventSubscription CreateSubscription(IEventSubscriber<StoredEvent> subscriber, StreamFilter filter = default, StreamPosition position = default)
     {
-        return new GetEventStoreSubscription(subscriber, client, projectionClient, position, options.Value.Prefix, filter);
+        return new GetEventStoreSubscription(subscriber, client, projectionClient, options.Value.Prefix, filter, position);
     }
 
-    public async IAsyncEnumerable<StoredEvent> QueryAllAsync(StreamFilter filter, string? position = null, int take = int.MaxValue,
+    public async IAsyncEnumerable<StoredEvent> QueryAllAsync(StreamFilter filter = default, StreamPosition position = default, int take = int.MaxValue,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
-        if (take <= 0)
+        if (take <= 0 || position.IsEnd)
         {
             yield break;
         }
@@ -62,7 +63,7 @@ public sealed class GetEventStore(
         }
     }
 
-    public async IAsyncEnumerable<StoredEvent> QueryAllReverseAsync(StreamFilter filter, DateTime timestamp = default, int take = int.MaxValue,
+    public async IAsyncEnumerable<StoredEvent> QueryAllReverseAsync(StreamFilter filter = default, DateTime timestamp = default, int take = int.MaxValue,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
         if (take <= 0)
@@ -71,7 +72,7 @@ public sealed class GetEventStore(
         }
 
         var streamName = await projectionClient.CreateProjectionAsync(filter, true, ct);
-        var streamEvents = QueryReverseAsync(streamName, StreamPosition.End, take, ct);
+        var streamEvents = QueryReverseAsync(streamName, ESStreamPosition.End, take, ct);
 
         await foreach (var storedEvent in streamEvents.IgnoreNotFound(ct).TakeWhile(x => x.Data.Headers.Timestamp() >= timestamp).WithCancellation(ct))
         {
@@ -79,14 +80,15 @@ public sealed class GetEventStore(
         }
     }
 
-    public async Task<IReadOnlyList<StoredEvent>> QueryStreamAsync(string streamName, long afterStreamPosition = EventVersion.Empty,
+    public async Task<IReadOnlyList<StoredEvent>> QueryStreamAsync(string streamName, long afterStreamPosition = EtagVersion.Empty,
         CancellationToken ct = default)
     {
         var result = new List<StoredEvent>();
 
-        var stream = QueryAsync(GetStreamName(streamName), afterStreamPosition.ToPositionBefore(), int.MaxValue, ct);
+        var streamPath = GetStreamName(streamName);
+        var streamEvents = QueryAsync(streamPath, afterStreamPosition.ToPositionBefore(), int.MaxValue, ct);
 
-        await foreach (var storedEvent in stream.IgnoreNotFound(ct))
+        await foreach (var storedEvent in streamEvents.IgnoreNotFound(ct))
         {
             result.Add(storedEvent);
         }
@@ -94,7 +96,7 @@ public sealed class GetEventStore(
         return result.ToList();
     }
 
-    private IAsyncEnumerable<StoredEvent> QueryAsync(string streamName, StreamPosition start, long count,
+    private IAsyncEnumerable<StoredEvent> QueryAsync(string streamName, ESStreamPosition start, long count,
         CancellationToken ct = default)
     {
         var result = client.ReadStreamAsync(
@@ -108,7 +110,7 @@ public sealed class GetEventStore(
         return result.Select(x => Formatter.Read(x, options.Value.Prefix));
     }
 
-    private IAsyncEnumerable<StoredEvent> QueryReverseAsync(string streamName, StreamPosition start, long count,
+    private IAsyncEnumerable<StoredEvent> QueryReverseAsync(string streamName, ESStreamPosition start, long count,
         CancellationToken ct = default)
     {
         var result = client.ReadStreamAsync(
@@ -171,7 +173,7 @@ public sealed class GetEventStore(
     {
         var streamName = await projectionClient.CreateProjectionAsync(filter, true, ct);
 
-        var events = client.ReadStreamAsync(Direction.Forwards, streamName, StreamPosition.Start, resolveLinkTos: true, cancellationToken: ct);
+        var events = client.ReadStreamAsync(Direction.Forwards, streamName, ESStreamPosition.Start, resolveLinkTos: true, cancellationToken: ct);
         if (await events.ReadState == ReadState.StreamNotFound)
         {
             return;

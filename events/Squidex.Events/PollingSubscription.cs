@@ -17,8 +17,8 @@ public sealed class PollingSubscription : IEventSubscription
         IEventStore eventStore,
         IEventSubscriber<StoredEvent> eventSubscriber,
         StreamFilter streamFilter,
-        TimeSpan intervalMs,
-        string? position)
+        StreamPosition streamPosition,
+        TimeSpan intervalMs)
     {
         ArgumentNullException.ThrowIfNull(eventStore);
         ArgumentNullException.ThrowIfNull(eventSubscriber);
@@ -27,11 +27,10 @@ public sealed class PollingSubscription : IEventSubscription
         {
             try
             {
-                await foreach (var storedEvent in eventStore.QueryAllAsync(streamFilter, position, ct: ct))
+                await foreach (var storedEvent in eventStore.QueryAllAsync(streamFilter, streamPosition, ct: ct))
                 {
                     await eventSubscriber.OnNextAsync(this, storedEvent);
-
-                    position = storedEvent.EventPosition;
+                    streamPosition = storedEvent.EventPosition;
                 }
             }
             catch (Exception ex)

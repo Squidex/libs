@@ -16,6 +16,8 @@ public sealed class GetEventStoreOptions : IValidatableOptions
 
     public string Prefix { get; set; } = "squidex";
 
+    public long ProgressDone { get; set; } = 95;
+
     public IEnumerable<ConfigurationError> Validate()
     {
         if (string.IsNullOrWhiteSpace(Prefix))

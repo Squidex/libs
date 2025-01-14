@@ -5,8 +5,11 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-#pragma warning disable SA1313 // Parameter names should begin with lower-case letter
+using System.Diagnostics;
 
 namespace Squidex.Events;
 
-public sealed record StoredEvent(string StreamName, StreamPosition EventPosition, long EventStreamNumber, EventData Data);
+public static class Telemetry
+{
+    public static readonly ActivitySource Activities = new ActivitySource("Squidex");
+}

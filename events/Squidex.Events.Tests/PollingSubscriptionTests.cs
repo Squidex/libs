@@ -75,7 +75,7 @@ public class PollingSubscriptionTests
     {
         var sut = await SubscribeAsync(true);
 
-        A.CallTo(() => eventStore.QueryAllAsync(filter, A<string>._, A<int>._, A<CancellationToken>._))
+        A.CallTo(() => eventStore.QueryAllAsync(filter, A<StreamPosition>._, A<int>._, A<CancellationToken>._))
             .MustHaveHappened(2, Times.Exactly);
     }
 
@@ -138,7 +138,7 @@ public class PollingSubscriptionTests
 
     private async Task<IEventSubscription> SubscribeAsync(bool wakeup = true)
     {
-        var sut = new PollingSubscription(eventStore, eventSubscriber, filter, TimeSpan.FromSeconds(5), position);
+        var sut = new PollingSubscription(eventStore, eventSubscriber, filter, position, TimeSpan.FromSeconds(5));
 
         try
         {

@@ -18,7 +18,7 @@ public static class Formatter
 
     public static StoredEvent Read(ResolvedEvent resolvedEvent, string? prefix)
     {
-        var @event = resolvedEvent.Event;
+        var @event = resolvedEvent.OriginalEvent;
 
         var eventPayload = Encoding.UTF8.GetString(@event.Data.Span);
         var eventHeaders = GetHeaders(@event);
@@ -30,7 +30,7 @@ public static class Formatter
         return new StoredEvent(
             streamName,
             resolvedEvent.OriginalEventNumber.ToInt64().ToString(CultureInfo.InvariantCulture),
-            resolvedEvent.Event.EventNumber.ToInt64(),
+            resolvedEvent.OriginalEvent.EventNumber.ToInt64(),
             eventData);
     }
 

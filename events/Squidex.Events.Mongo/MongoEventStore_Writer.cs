@@ -41,7 +41,7 @@ public partial class MongoEventStore
 
         var currentVersion = await GetEventStreamOffsetAsync(streamName, ct);
 
-        if (expectedVersion > EventVersion.Any && expectedVersion != currentVersion)
+        if (expectedVersion > EtagVersion.Any && expectedVersion != currentVersion)
         {
             throw new WrongEventVersionException(currentVersion, expectedVersion);
         }
@@ -59,7 +59,7 @@ public partial class MongoEventStore
             {
                 currentVersion = await GetEventStreamOffsetAsync(streamName, ct);
 
-                if (expectedVersion > EventVersion.Any)
+                if (expectedVersion > EtagVersion.Any)
                 {
                     throw new WrongEventVersionException(currentVersion, expectedVersion);
                 }
@@ -108,7 +108,7 @@ public partial class MongoEventStore
             return document[nameof(MongoEventCommit.EventStreamOffset)].ToInt64() + document[nameof(MongoEventCommit.EventsCount)].ToInt64();
         }
 
-        return EventVersion.Empty;
+        return EtagVersion.Empty;
     }
 
     private static MongoEventCommit BuildCommit(Guid commitId, string streamName, long expectedVersion, ICollection<EventData> events)

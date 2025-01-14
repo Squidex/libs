@@ -19,7 +19,7 @@ public sealed class MongoEventStoreSubscription : IEventSubscription
 
     public TimeProvider Clock { get; set; } = TimeProvider.System;
 
-    public MongoEventStoreSubscription(MongoEventStore eventStore, IEventSubscriber<StoredEvent> eventSubscriber, StreamFilter streamFilter, string? position)
+    public MongoEventStoreSubscription(MongoEventStore eventStore, IEventSubscriber<StoredEvent> eventSubscriber, StreamFilter streamFilter, StreamPosition position)
     {
         this.eventStore = eventStore;
         this.eventSubscriber = eventSubscriber;
@@ -27,24 +27,39 @@ public sealed class MongoEventStoreSubscription : IEventSubscription
         QueryAsync(streamFilter, position).Forget();
     }
 
-    private async Task QueryAsync(StreamFilter streamFilter, string? position)
+    private async Task QueryAsync(StreamFilter streamFilter, StreamPosition position)
     {
         try
         {
-            string? lastRawPosition = null;
+            StreamPosition lastRawPosition = default;
 
-            try
+            if (position.IsEnd)
             {
-                lastRawPosition = await QueryOldAsync(streamFilter, position);
-            }
-            catch (OperationCanceledException)
-            {
+                try
+                {
+                    lastRawPosition = await QueryOldAsync(streamFilter, position);
+                }
+                catch (OperationCanceledException)
+                {
+                }
             }
 
-            if (!stopToken.IsCancellationRequested)
+            if (stopToken.IsCancellationRequested)
             {
-                await QueryCurrentAsync(streamFilter, lastRawPosition);
+                return;
             }
+
+            ParsedStreamPosition parsedPosition;
+            if (lastRawPosition.IsEnd)
+            {
+                parsedPosition = Clock.GetUtcNow();
+            }
+            else
+            {
+                parsedPosition = lastRawPosition;
+            }
+
+            await QueryCurrentAsync(streamFilter, parsedPosition);
         }
         catch (Exception ex)
         {
@@ -52,7 +67,7 @@ public sealed class MongoEventStoreSubscription : IEventSubscription
         }
     }
 
-    private async Task QueryCurrentAsync(StreamFilter streamFilter, StreamPosition lastPosition)
+    private async Task QueryCurrentAsync(StreamFilter streamFilter, ParsedStreamPosition lastPosition)
     {
         BsonDocument? resumeToken = null;
 
@@ -80,7 +95,6 @@ public sealed class MongoEventStoreSubscription : IEventSubscription
             using (var cursor = eventStore.TypedCollection.Watch(changePipeline, changeOptions, stopToken.Token))
             {
                 var isRead = false;
-
                 await cursor.ForEachAsync(async change =>
                 {
                     if (change.OperationType == ChangeStreamOperationType.Insert)
@@ -104,7 +118,7 @@ public sealed class MongoEventStoreSubscription : IEventSubscription
         }
     }
 
-    private async Task<string?> QueryOldAsync(StreamFilter streamFilter, string? position)
+    private async Task<StreamPosition> QueryOldAsync(StreamFilter streamFilter, string? position)
     {
         string? lastRawPosition = null;
 
@@ -124,7 +138,6 @@ public sealed class MongoEventStoreSubscription : IEventSubscription
                     else
                     {
                         await eventSubscriber.OnNextAsync(this, storedEvent);
-
                         lastRawPosition = storedEvent.EventPosition;
                     }
                 }

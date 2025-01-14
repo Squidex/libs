@@ -30,7 +30,7 @@ internal static class FilterBuilder
 
     public static IQueryable<EFEventCommit> ByBeforeOffset(this IQueryable<EFEventCommit> q, long offset)
     {
-        if (offset <= EventVersion.Empty)
+        if (offset <= EtagVersion.Empty)
         {
             return q;
         }
@@ -40,7 +40,7 @@ internal static class FilterBuilder
 
     public static IQueryable<EFEventCommit> ByOffset(this IQueryable<EFEventCommit> q, long offset)
     {
-        if (offset <= EventVersion.Empty)
+        if (offset <= EtagVersion.Empty)
         {
             return q;
         }
@@ -48,7 +48,7 @@ internal static class FilterBuilder
         return q.Where(x => x.EventStreamOffset >= offset);
     }
 
-    public static IQueryable<EFEventCommit> ByPosition(this IQueryable<EFEventCommit> q, StreamPosition position)
+    public static IQueryable<EFEventCommit> ByPosition(this IQueryable<EFEventCommit> q, ParsedStreamPosition position)
     {
         if (position.IsEndOfCommit)
         {
@@ -83,7 +83,7 @@ internal static class FilterBuilder
         return q.Where(x => filter.Prefixes.Contains(x.EventStream));
     }
 
-    public static IEnumerable<StoredEvent> Filtered(this EFEventCommit commit, StreamPosition position)
+    public static IEnumerable<StoredEvent> Filtered(this EFEventCommit commit, ParsedStreamPosition position)
     {
         var eventStreamOffset = commit.EventStreamOffset;
 
@@ -97,7 +97,7 @@ internal static class FilterBuilder
             if (commitOffset > position.CommitOffset || commitPosition > position.Position)
             {
                 var eventData = EventData.DeserializeFromJson(@event);
-                var eventPosition = new StreamPosition(commitPosition, commitOffset, commit.Events.Length);
+                var eventPosition = new ParsedStreamPosition(commitPosition, commitOffset, commit.Events.Length);
 
                 yield return new StoredEvent(commit.EventStream, eventPosition, eventStreamOffset, eventData);
             }
@@ -120,7 +120,7 @@ internal static class FilterBuilder
             if (eventStreamOffset > position)
             {
                 var eventData = EventData.DeserializeFromJson(@event);
-                var eventPosition = new StreamPosition(commitPosition, commitOffset, commit.Events.Length);
+                var eventPosition = new ParsedStreamPosition(commitPosition, commitOffset, commit.Events.Length);
 
                 yield return new StoredEvent(commit.EventStream, eventPosition, eventStreamOffset, eventData);
             }

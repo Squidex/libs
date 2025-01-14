@@ -5,6 +5,8 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+#pragma warning disable MA0048 // File name must match type name
+
 namespace Squidex.Events;
 
 public readonly record struct StreamFilter
@@ -37,4 +39,10 @@ public readonly record struct StreamFilter
     {
         return default;
     }
+}
+
+public enum StreamFilterKind
+{
+    MatchFull,
+    MatchStart
 }

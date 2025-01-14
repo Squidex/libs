@@ -5,13 +5,11 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Events;
+namespace Squidex.Events.Mongo;
 
-public static class EventVersion
+public interface IVersionedEntity<T>
 {
-    public const long Auto = -3;
+    T DocumentId { get; }
 
-    public const long Any = -2;
-
-    public const long Empty = -1;
+    long Version { get; }
 }

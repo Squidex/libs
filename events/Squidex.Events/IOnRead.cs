@@ -7,8 +7,7 @@
 
 namespace Squidex.Events;
 
-public enum StreamFilterKind
+public interface IOnRead
 {
-    MatchFull,
-    MatchStart
+    ValueTask OnReadAsync();
 }

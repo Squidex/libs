@@ -5,7 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System.Collections.Concurrent;
 using EventStore.Client;
 using Microsoft.Extensions.Options;
 using Squidex.Text;
@@ -125,8 +124,9 @@ public sealed class EventStoreProjectionClient(
                 throw new InvalidOperationException("Projection is not running.");
             }
 
-            if (status?.Progress == 100)
+            if (status?.Progress >= options.Value.ProgressDone)
             {
+                await Task.Delay(100, ct);
                 break;
             }
 

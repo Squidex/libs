@@ -9,4 +9,19 @@
 
 namespace Squidex.Events;
 
-public sealed record StoredEvent(string StreamName, StreamPosition EventPosition, long EventStreamNumber, EventData Data);
+public record struct StreamPosition(string? Token, bool IsEnd)
+{
+    public static readonly StreamPosition Start = default;
+
+    public static readonly StreamPosition End = new StreamPosition(null, true);
+
+    public static implicit operator StreamPosition(string? value)
+    {
+        return new StreamPosition(value, false);
+    }
+
+    public static implicit operator string?(StreamPosition source)
+    {
+        return source.Token;
+    }
+}

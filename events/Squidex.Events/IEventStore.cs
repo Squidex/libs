@@ -9,13 +9,13 @@ namespace Squidex.Events;
 
 public interface IEventStore
 {
-    Task<IReadOnlyList<StoredEvent>> QueryStreamAsync(string streamName, long afterStreamPosition = EventVersion.Empty,
+    Task<IReadOnlyList<StoredEvent>> QueryStreamAsync(string streamName, long afterStreamPosition = EtagVersion.Empty,
         CancellationToken ct = default);
 
-    IAsyncEnumerable<StoredEvent> QueryAllReverseAsync(StreamFilter filter, DateTime timestamp = default, int take = int.MaxValue,
+    IAsyncEnumerable<StoredEvent> QueryAllReverseAsync(StreamFilter filter = default, DateTime timestamp = default, int take = int.MaxValue,
         CancellationToken ct = default);
 
-    IAsyncEnumerable<StoredEvent> QueryAllAsync(StreamFilter filter, string? position = null, int take = int.MaxValue,
+    IAsyncEnumerable<StoredEvent> QueryAllAsync(StreamFilter filter = default, StreamPosition position = default, int take = int.MaxValue,
         CancellationToken ct = default);
 
     Task AppendAsync(Guid commitId, string streamName, long expectedVersion, ICollection<EventData> events,
@@ -24,7 +24,7 @@ public interface IEventStore
     Task DeleteAsync(StreamFilter filter,
         CancellationToken ct = default);
 
-    IEventSubscription CreateSubscription(IEventSubscriber<StoredEvent> eventSubscriber, StreamFilter filter, string? position = null);
+    IEventSubscription CreateSubscription(IEventSubscriber<StoredEvent> eventSubscriber, StreamFilter filter = default, StreamPosition position = default);
 
     async Task AppendUnsafeAsync(IEnumerable<EventCommit> commits,
         CancellationToken ct = default)

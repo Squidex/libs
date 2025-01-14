@@ -14,13 +14,13 @@ using Squidex.Events.Utils;
 
 namespace Squidex.Events.Mongo;
 
-internal record struct StreamPosition(BsonTimestamp Timestamp, long CommitOffset, long CommitSize)
+internal record struct ParsedStreamPosition(BsonTimestamp Timestamp, long CommitOffset, long CommitSize)
 {
-    public static readonly StreamPosition Start = new StreamPosition(new BsonTimestamp(0, 0), -1, -1);
+    public static readonly ParsedStreamPosition Start = new ParsedStreamPosition(new BsonTimestamp(0, 0), -1, -1);
 
     public readonly bool IsEndOfCommit => CommitOffset == CommitSize - 1;
 
-    public static implicit operator string(StreamPosition position)
+    public static implicit operator StreamPosition(ParsedStreamPosition position)
     {
         var sb = DefaultPools.StringBuilder.Get();
         try
@@ -33,7 +33,7 @@ internal record struct StreamPosition(BsonTimestamp Timestamp, long CommitOffset
             sb.Append('-');
             sb.Append(position.CommitSize);
 
-            return sb.ToString();
+            return new StreamPosition(sb.ToString(), false);
         }
         finally
         {
@@ -41,14 +41,15 @@ internal record struct StreamPosition(BsonTimestamp Timestamp, long CommitOffset
         }
     }
 
-    public static implicit operator StreamPosition(string? value)
+    public static implicit operator ParsedStreamPosition(StreamPosition value)
     {
-        if (string.IsNullOrWhiteSpace(value))
+        var token = value.Token;
+        if (string.IsNullOrWhiteSpace(token))
         {
             return Start;
         }
 
-        var parts = value.Split('-');
+        var parts = token.Split('-');
         if (parts.Length != 4)
         {
             return Start;
@@ -63,22 +64,29 @@ internal record struct StreamPosition(BsonTimestamp Timestamp, long CommitOffset
             return default;
         }
 
-        return new StreamPosition(
+        return new ParsedStreamPosition(
             new BsonTimestamp(timestamp, increment),
             commitOffset,
             commitSize);
     }
 
-    public static implicit operator StreamPosition(DateTime timestamp)
+    public static implicit operator ParsedStreamPosition(DateTime timestamp)
     {
         if (timestamp == default)
         {
             return Start;
         }
 
-        return new StreamPosition(
-                new BsonTimestamp((int)new DateTimeOffset(timestamp, default).ToUnixTimeSeconds(), 0),
-                0,
-                0);
+        return new DateTimeOffset(timestamp, default);
+    }
+
+    public static implicit operator ParsedStreamPosition(DateTimeOffset timestamp)
+    {
+        if (timestamp == default)
+        {
+            return Start;
+        }
+
+        return new ParsedStreamPosition(new BsonTimestamp((int)timestamp.ToUnixTimeSeconds(), 0), 0, 0);
     }
 }

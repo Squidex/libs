@@ -20,7 +20,7 @@ public partial class MongoEventStore
     private static readonly FindOptions BatchingOptions =
         new FindOptions { BatchSize = 200 };
 
-    public IEventSubscription CreateSubscription(IEventSubscriber<StoredEvent> subscriber, StreamFilter filter, string? position = null)
+    public IEventSubscription CreateSubscription(IEventSubscriber<StoredEvent> subscriber, StreamFilter filter = default, StreamPosition position = default)
     {
         ArgumentNullException.ThrowIfNull(subscriber);
 
@@ -30,11 +30,11 @@ public partial class MongoEventStore
         }
         else
         {
-            return new PollingSubscription(this, subscriber, filter, options.Value.PollingInterval, position);
+            return new PollingSubscription(this, subscriber, filter, position, options.Value.PollingInterval);
         }
     }
 
-    public async Task<IReadOnlyList<StoredEvent>> QueryStreamAsync(string streamName, long afterStreamPosition = EventVersion.Empty,
+    public async Task<IReadOnlyList<StoredEvent>> QueryStreamAsync(string streamName, long afterStreamPosition = EtagVersion.Empty,
         CancellationToken ct = default)
     {
         var commits =
@@ -43,7 +43,7 @@ public partial class MongoEventStore
 
         var result = Convert(commits, afterStreamPosition);
 
-        if ((commits.Count == 0 || commits[0].EventStreamOffset != afterStreamPosition) && afterStreamPosition > EventVersion.Empty)
+        if ((commits.Count == 0 || commits[0].EventStreamOffset != afterStreamPosition) && afterStreamPosition > EtagVersion.Empty)
         {
             var filterBefore =
                 Builders<MongoEventCommit>.Filter.And(
@@ -60,7 +60,7 @@ public partial class MongoEventStore
         return result;
     }
 
-    public async IAsyncEnumerable<StoredEvent> QueryAllReverseAsync(StreamFilter filter, DateTime timestamp = default, int take = int.MaxValue,
+    public async IAsyncEnumerable<StoredEvent> QueryAllReverseAsync(StreamFilter filter = default, DateTime timestamp = default, int take = int.MaxValue,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
         if (take <= 0)
@@ -68,14 +68,14 @@ public partial class MongoEventStore
             yield break;
         }
 
-        StreamPosition lastPosition = timestamp;
-
-        var find =
-            collection.Find(CreateFilter(filter, lastPosition), BatchingOptions)
+        ParsedStreamPosition lastPosition = timestamp;
+        var findFilter = CreateFilter(filter, lastPosition);
+        var findQuery =
+            collection.Find(findFilter, BatchingOptions)
                 .Limit(take).Sort(Sort.Descending(x => x.Timestamp).Ascending(x => x.EventStream));
 
         var taken = 0;
-        using (var cursor = await find.ToCursorAsync(ct))
+        using (var cursor = await findQuery.ToCursorAsync(ct))
         {
             while (taken < take && await cursor.MoveNextAsync(ct))
             {
@@ -96,25 +96,23 @@ public partial class MongoEventStore
         }
     }
 
-    public async IAsyncEnumerable<StoredEvent> QueryAllAsync(StreamFilter filter, string? position = null, int take = int.MaxValue,
+    public async IAsyncEnumerable<StoredEvent> QueryAllAsync(StreamFilter filter = default, StreamPosition position = default, int take = int.MaxValue,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
-        if (take <= 0)
+        if (take <= 0 || position.IsEnd)
         {
             yield break;
         }
 
-        StreamPosition lastPosition = position;
-
-        var filterDefinition = CreateFilter(filter, lastPosition);
-
-        var find =
-            collection.Find(filterDefinition).SortBy(x => x.Timestamp).ThenByDescending(x => x.EventStream)
+        ParsedStreamPosition lastPosition = position;
+        var findFilter = CreateFilter(filter, lastPosition);
+        var findQuery =
+            collection.Find(findFilter).SortBy(x => x.Timestamp).ThenByDescending(x => x.EventStream)
                 .Limit(take);
 
         var taken = 0;
 
-        await foreach (var current in find.ToAsyncEnumerable(ct))
+        await foreach (var current in findQuery.ToAsyncEnumerable(ct))
         {
             foreach (var @event in current.Filtered(lastPosition))
             {
@@ -134,7 +132,7 @@ public partial class MongoEventStore
         return commits.OrderBy(x => x.EventStreamOffset).ThenBy(x => x.Timestamp).SelectMany(x => x.Filtered(streamPosition)).ToList();
     }
 
-    private static FilterDefinition<MongoEventCommit> CreateFilter(StreamFilter filter, StreamPosition streamPosition)
+    private static FilterDefinition<MongoEventCommit> CreateFilter(StreamFilter filter, ParsedStreamPosition streamPosition)
     {
         return Filter.And(FilterBuilder.ByPosition(streamPosition), FilterBuilder.ByStream(filter));
     }

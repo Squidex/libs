@@ -12,13 +12,13 @@ using System.Globalization;
 
 namespace Squidex.Events.EntityFramework;
 
-internal record struct StreamPosition(long Position, long CommitOffset, long CommitSize)
+internal record struct ParsedStreamPosition(long Position, long CommitOffset, long CommitSize)
 {
-    public static readonly StreamPosition Start = new StreamPosition(0, -1, -1);
+    public static readonly ParsedStreamPosition Start = new ParsedStreamPosition(0, -1, -1);
 
     public readonly bool IsEndOfCommit => CommitOffset == CommitSize - 1;
 
-    public static implicit operator string(StreamPosition position)
+    public static implicit operator StreamPosition(ParsedStreamPosition position)
     {
         var sb = DefaultPools.StringBuilder.Get();
         try
@@ -29,7 +29,7 @@ internal record struct StreamPosition(long Position, long CommitOffset, long Com
             sb.Append('-');
             sb.Append(position.CommitSize);
 
-            return sb.ToString();
+            return new StreamPosition(sb.ToString(), false);
         }
         finally
         {
@@ -37,14 +37,15 @@ internal record struct StreamPosition(long Position, long CommitOffset, long Com
         }
     }
 
-    public static implicit operator StreamPosition(string? value)
+    public static implicit operator ParsedStreamPosition(StreamPosition value)
     {
-        if (string.IsNullOrWhiteSpace(value))
+        var token = value.Token;
+        if (string.IsNullOrWhiteSpace(token))
         {
             return Start;
         }
 
-        var parts = value.Split('-');
+        var parts = token.Split('-');
         if (parts.Length != 3)
         {
             return Start;
@@ -58,6 +59,6 @@ internal record struct StreamPosition(long Position, long CommitOffset, long Com
             return default;
         }
 
-        return new StreamPosition(position, commitOffset, commitSize);
+        return new ParsedStreamPosition(position, commitOffset, commitSize);
     }
 }

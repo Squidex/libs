@@ -8,6 +8,7 @@
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using EventStore.Client;
+using ESStreamPosition = EventStore.Client.StreamPosition;
 
 namespace Squidex.Events.GetEventStore;
 
@@ -30,34 +31,34 @@ public static class Extensions
         return StreamRevision.FromInt64(version);
     }
 
-    public static StreamPosition ToPositionBefore(this long version)
+    public static ESStreamPosition ToPositionBefore(this long version)
     {
         if (version < 0)
         {
-            return StreamPosition.Start;
+            return ESStreamPosition.Start;
         }
 
-        return StreamPosition.FromInt64(version - 1);
+        return ESStreamPosition.FromInt64(version + 1);
     }
 
-    public static StreamPosition ToPosition(this string? position, bool inclusive)
+    public static ESStreamPosition ToPosition(this StreamPosition position, bool inclusive)
     {
         if (string.IsNullOrWhiteSpace(position))
         {
-            return StreamPosition.Start;
+            return ESStreamPosition.Start;
         }
 
-        if (long.TryParse(position, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedPosition))
+        if (long.TryParse(position.Token, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedPosition))
         {
             if (!inclusive)
             {
                 parsedPosition++;
             }
 
-            return StreamPosition.FromInt64(parsedPosition);
+            return ESStreamPosition.FromInt64(parsedPosition);
         }
 
-        return StreamPosition.Start;
+        return ESStreamPosition.Start;
     }
 
     public static async IAsyncEnumerable<StoredEvent> IgnoreNotFound(this IAsyncEnumerable<StoredEvent> source,

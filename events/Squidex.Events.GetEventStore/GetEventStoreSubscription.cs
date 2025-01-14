@@ -6,6 +6,7 @@
 // ==========================================================================
 
 using EventStore.Client;
+using Grpc.Core;
 
 namespace Squidex.Events.GetEventStore;
 
@@ -17,9 +18,9 @@ internal sealed class GetEventStoreSubscription : IEventSubscription
         IEventSubscriber<StoredEvent> eventSubscriber,
         EventStoreClient client,
         EventStoreProjectionClient projectionClient,
-        string? position,
         string? prefix,
-        StreamFilter filter)
+        StreamFilter filter,
+        StreamPosition position)
     {
         var ct = cts.Token;
 
@@ -29,29 +30,42 @@ internal sealed class GetEventStoreSubscription : IEventSubscription
             var streamName = await projectionClient.CreateProjectionAsync(filter, false, default);
 
             var start = FromStream.Start;
-            if (!string.IsNullOrWhiteSpace(position))
+            if (position.IsEnd)
+            {
+                start = FromStream.End;
+            }
+            else if (!string.IsNullOrWhiteSpace(position))
             {
                 start = FromStream.After(position.ToPosition(true));
             }
 
-            await using var subscription = client.SubscribeToStream(streamName, start, true, cancellationToken: ct);
-            try
+            while (true)
             {
-                await foreach (var message in subscription.Messages.WithCancellation(ct))
+                ct.ThrowIfCancellationRequested();
+
+                await using var subscription = client.SubscribeToStream(streamName, start, true, cancellationToken: ct);
+                try
                 {
-                    if (message is StreamMessage.Event @event)
+                    await foreach (var message in subscription.Messages.OfType<StreamMessage.Event>().WithCancellation(ct))
                     {
-                        var storedEvent = Formatter.Read(@event.ResolvedEvent, prefix);
+                        var storedEvent = Formatter.Read(message.ResolvedEvent, prefix);
 
                         await eventSubscriber.OnNextAsync(this, storedEvent);
+
+                        // In some cases we have to resubscribe again, therefore we need the position.
+                        start = FromStream.After(message.ResolvedEvent.OriginalEventNumber);
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                var inner = new InvalidOperationException($"Subscription closed.", ex);
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Aborted)
+                {
+                    // Consumer too slow.
+                }
+                catch (Exception ex)
+                {
+                    var inner = new InvalidOperationException($"Subscription closed.", ex);
 
-                await eventSubscriber.OnErrorAsync(this, ex);
+                    await eventSubscriber.OnErrorAsync(this, ex);
+                }
             }
         }, ct);
 #pragma warning restore MA0134 // Observe result of async calls
