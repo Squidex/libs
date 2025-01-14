@@ -93,18 +93,18 @@ public static class Extensions
 
     public static string ToRegex(this StreamFilter filter)
     {
-        if (filter.Prefixes == null)
+        if (filter.Prefixes == null || filter.Prefixes.Length == 0)
         {
             return ".*";
         }
 
         if (filter.Kind == StreamFilterKind.MatchStart)
         {
-            return $"^{string.Join('|', filter.Prefixes.Select(p => $"({p})"))}";
+            return $"^({string.Join('|', filter.Prefixes.Select(p => $"({p})"))})";
         }
         else
         {
-            return $"^{string.Join('|', filter.Prefixes.Select(p => $"({p})"))}$";
+            return $"^({string.Join('|', filter.Prefixes.Select(p => $"({p})"))})$";
         }
     }
 }

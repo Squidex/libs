@@ -18,19 +18,17 @@ public static class Formatter
 
     public static StoredEvent Read(ResolvedEvent resolvedEvent, string? prefix)
     {
-        var @event = resolvedEvent.OriginalEvent;
+        var eventSource = resolvedEvent.Event;
+        var eventPayload = Encoding.UTF8.GetString(eventSource.Data.Span);
+        var eventHeaders = GetHeaders(eventSource);
+        var eventData = new EventData(eventSource.EventType, eventHeaders, eventPayload);
 
-        var eventPayload = Encoding.UTF8.GetString(@event.Data.Span);
-        var eventHeaders = GetHeaders(@event);
-
-        var eventData = new EventData(@event.EventType, eventHeaders, eventPayload);
-
-        var streamName = GetStreamName(prefix, @event);
+        var streamName = GetStreamName(prefix, eventSource);
 
         return new StoredEvent(
             streamName,
             resolvedEvent.OriginalEventNumber.ToInt64().ToString(CultureInfo.InvariantCulture),
-            resolvedEvent.OriginalEvent.EventNumber.ToInt64(),
+            eventSource.EventNumber.ToInt64(),
             eventData);
     }
 
