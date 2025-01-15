@@ -59,8 +59,18 @@ public sealed partial class EFEventStore<T>
 
                 try
                 {
-                    commit.Position = await adapter.GetPositionAsync(context, ct);
-                    await context.SaveChangesAsync(ct);
+                    await using var transaction = await context.Database.BeginTransactionAsync(ct);
+                    try
+                    {
+                        commit.Position = await adapter.GetPositionAsync(context, ct);
+                        await context.SaveChangesAsync(ct);
+                        await transaction.CommitAsync(ct);
+                    }
+                    catch (Exception)
+                    {
+                        await transaction.RollbackAsync(ct);
+                        throw;
+                    }
                 }
                 catch
                 {

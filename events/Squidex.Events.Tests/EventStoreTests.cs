@@ -516,7 +516,7 @@ public abstract class EventStoreTests
         return new EventData($"Type{i}", headers, i.ToString(CultureInfo.InvariantCulture));
     }
 
-    private async Task<IReadOnlyList<StoredEvent>?> QueryWithSubscriptionAsync(
+    private async Task<IReadOnlyList<StoredEvent>> QueryWithSubscriptionAsync(
         IEventStore sut,
         StreamFilter streamFilter,
         int expectedCount,
@@ -546,14 +546,16 @@ public abstract class EventStoreTests
                     if (subscriber.LastEvents.Count >= expectedCount)
                     {
                         subscriptionPosition = subscriber.LastPosition;
-
                         return subscriber.LastEvents;
                     }
                 }
-
-                cts.Token.ThrowIfCancellationRequested();
-                return null;
             }
+
+            return subscriber.LastEvents;
+        }
+        catch (OperationCanceledException)
+        {
+            return subscriber.LastEvents;
         }
         finally
         {

@@ -72,7 +72,7 @@ public sealed class GetEventStore(
         }
 
         var streamName = await projectionClient.CreateProjectionAsync(filter, true, ct);
-        var streamEvents = QueryReverseAsync(streamName, ESStreamPosition.End, int.MaxValue, ct);
+        var streamEvents = QueryReverseAsync(streamName, take, ct);
 
         var query = streamEvents
             .IgnoreNotFound(ct)
@@ -115,13 +115,13 @@ public sealed class GetEventStore(
         return result.Select(x => Formatter.Read(x, options.Value.Prefix));
     }
 
-    private IAsyncEnumerable<StoredEvent> QueryReverseAsync(string streamName, ESStreamPosition start, long count,
+    private IAsyncEnumerable<StoredEvent> QueryReverseAsync(string streamName, long count,
         CancellationToken ct = default)
     {
         var result = client.ReadStreamAsync(
             Direction.Backwards,
             streamName,
-            start,
+            ESStreamPosition.End,
             count,
             true,
             cancellationToken: ct);

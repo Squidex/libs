@@ -12,6 +12,9 @@ namespace Squidex.Events;
 public sealed class PollingSubscription : IEventSubscription
 {
     private readonly CompletionTimer timer;
+#pragma warning disable IDE0052 // Remove unread private members
+    private int eventsTotal;
+#pragma warning restore IDE0052 // Remove unread private members
 
     public PollingSubscription(
         IEventStore eventStore,
@@ -29,16 +32,17 @@ public sealed class PollingSubscription : IEventSubscription
             {
                 while (true)
                 {
-                    var hasAddedEvent = false;
+                    var eventsInAttempt = 0;
                     await foreach (var storedEvent in eventStore.QueryAllAsync(streamFilter, streamPosition, ct: ct))
                     {
                         await eventSubscriber.OnNextAsync(this, storedEvent);
 
                         streamPosition = storedEvent.EventPosition;
-                        hasAddedEvent = true;
+                        eventsInAttempt++;
+                        eventsTotal++;
                     }
 
-                    if (!hasAddedEvent)
+                    if (eventsInAttempt == 0)
                     {
                         break;
                     }
