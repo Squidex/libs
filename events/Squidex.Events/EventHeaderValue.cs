@@ -32,7 +32,7 @@ public record HeaderBooleanValue(bool Value) : HeaderValue
 {
     public override string ToString()
     {
-        return Value.ToString();
+        return Value ? "true" : "false";
     }
 }
 

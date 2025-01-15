@@ -72,9 +72,14 @@ public sealed class GetEventStore(
         }
 
         var streamName = await projectionClient.CreateProjectionAsync(filter, true, ct);
-        var streamEvents = QueryReverseAsync(streamName, ESStreamPosition.End, take, ct);
+        var streamEvents = QueryReverseAsync(streamName, ESStreamPosition.End, int.MaxValue, ct);
 
-        await foreach (var storedEvent in streamEvents.IgnoreNotFound(ct).TakeWhile(x => x.Data.Headers.Timestamp() >= timestamp).WithCancellation(ct))
+        var query = streamEvents
+            .IgnoreNotFound(ct)
+            .TakeWhile(x => x.Data.Headers.Timestamp() >= timestamp)
+            .Take(take);
+
+        await foreach (var storedEvent in query.WithCancellation(ct))
         {
             yield return storedEvent;
         }
