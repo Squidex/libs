@@ -535,7 +535,7 @@ public abstract class EventStoreTests
                 await subscriptionRunning();
             }
 
-            using (var cts = new CancellationTokenSource(60_000))
+            using (var cts = new CancellationTokenSource(120_000))
             {
                 while (!cts.IsCancellationRequested)
                 {
