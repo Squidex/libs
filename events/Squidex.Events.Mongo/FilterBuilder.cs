@@ -92,7 +92,7 @@ internal static class FilterBuilder
 
     public static IEnumerable<StoredEvent> Filtered(this MongoEventCommit commit)
     {
-        return commit.Filtered(EtagVersion.Empty);
+        return commit.Filtered(EventsVersion.Empty);
     }
 
     public static IEnumerable<StoredEvent> Filtered(this MongoEventCommit commit, long position)

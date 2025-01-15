@@ -7,7 +7,7 @@
 
 namespace Squidex.Events;
 
-public static class EtagVersion
+public static class EventsVersion
 {
     public const long Auto = -3;
 

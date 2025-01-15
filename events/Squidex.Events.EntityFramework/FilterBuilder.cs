@@ -30,7 +30,7 @@ internal static class FilterBuilder
 
     public static IQueryable<EFEventCommit> ByBeforeOffset(this IQueryable<EFEventCommit> q, long offset)
     {
-        if (offset <= EtagVersion.Empty)
+        if (offset <= EventsVersion.Empty)
         {
             return q;
         }
@@ -40,7 +40,7 @@ internal static class FilterBuilder
 
     public static IQueryable<EFEventCommit> ByOffset(this IQueryable<EFEventCommit> q, long offset)
     {
-        if (offset <= EtagVersion.Empty)
+        if (offset <= EventsVersion.Empty)
         {
             return q;
         }

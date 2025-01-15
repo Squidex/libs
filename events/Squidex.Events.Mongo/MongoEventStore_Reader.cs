@@ -34,7 +34,7 @@ public partial class MongoEventStore
         }
     }
 
-    public async Task<IReadOnlyList<StoredEvent>> QueryStreamAsync(string streamName, long afterStreamPosition = EtagVersion.Empty,
+    public async Task<IReadOnlyList<StoredEvent>> QueryStreamAsync(string streamName, long afterStreamPosition = EventsVersion.Empty,
         CancellationToken ct = default)
     {
         var commits =
@@ -43,7 +43,7 @@ public partial class MongoEventStore
 
         var result = Convert(commits, afterStreamPosition);
 
-        if ((commits.Count == 0 || commits[0].EventStreamOffset != afterStreamPosition) && afterStreamPosition > EtagVersion.Empty)
+        if ((commits.Count == 0 || commits[0].EventStreamOffset != afterStreamPosition) && afterStreamPosition > EventsVersion.Empty)
         {
             var filterBefore =
                 Builders<MongoEventCommit>.Filter.And(
