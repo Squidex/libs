@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using FakeItEasy;
 using MongoDB.Bson.Serialization;
 using Squidex.Events.Mongo;
 using Xunit;
@@ -16,6 +17,138 @@ public class EnvelopeHeadersTests
     static EnvelopeHeadersTests()
     {
         BsonSerializer.TryRegisterSerializer(new HeaderValueSerializer());
+    }
+
+    [Fact]
+    public void Should_get_long()
+    {
+        var headers = new EnvelopeHeaders
+        {
+            ["long"] = 42
+        };
+
+        var result = headers.GetLong("long");
+        Assert.Equal(42, result);
+    }
+
+    [Fact]
+    public void Should_get_long_from_empty_key()
+    {
+        var headers = new EnvelopeHeaders
+        {
+        };
+
+        var result = headers.GetLong("long");
+        Assert.Equal(0, result);
+    }
+
+    [Theory]
+    [InlineData("9", 9)]
+    [InlineData("A", 0)]
+    [InlineData(" ", 0)]
+    public void Should_get_long_from_string(string source, long expected)
+    {
+        var headers = new EnvelopeHeaders
+        {
+            ["long"] = source
+        };
+
+        var result = headers.GetLong("long");
+        Assert.Equal(expected, result);
+    }
+
+    [Fact]
+    public void Should_get_string()
+    {
+        var headers = new EnvelopeHeaders
+        {
+            ["string"] = "Hello"
+        };
+
+        var result = headers.GetString("string");
+        Assert.Equal("Hello", result);
+    }
+
+    [Fact]
+    public void Should_get_string_from_empty_key()
+    {
+        var headers = new EnvelopeHeaders
+        {
+        };
+
+        var result = headers.GetString("string");
+        Assert.Equal(string.Empty, result);
+    }
+
+    [Fact]
+    public void Should_get_string_from_long()
+    {
+        var headers = new EnvelopeHeaders
+        {
+            ["string"] = 42
+        };
+
+        var result = headers.GetString("string");
+        Assert.Equal("42", result);
+    }
+
+    [Fact]
+    public void Should_get_string_from_bool()
+    {
+        var headers = new EnvelopeHeaders
+        {
+            ["string"] = true
+        };
+
+        var result = headers.GetString("string");
+        Assert.Equal("true", result);
+    }
+
+    [Fact]
+    public void Should_get_boolean()
+    {
+        var headers = new EnvelopeHeaders
+        {
+            ["bool"] = true
+        };
+
+        var result = headers.GetBoolean("bool");
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void Should_get_boolean_from_empty_key()
+    {
+        var headers = new EnvelopeHeaders
+        {
+        };
+
+        var result = headers.GetBoolean("bool");
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void Should_get_datetime()
+    {
+        var headers = new EnvelopeHeaders
+        {
+            ["date"] = "2023-12-11T10:09:08z"
+        };
+
+        var result = headers.GetDateTime("date");
+        Assert.Equal(new DateTime(2023, 12, 11, 10, 9, 8, DateTimeKind.Utc), result);
+    }
+
+    [Fact]
+    public void Should_get_datetime_with_millis()
+    {
+        var headers = new EnvelopeHeaders
+        {
+            ["date"] = "2023-12-11T10:09:08.765z"
+        };
+
+        var result = headers.GetDateTime("date");
+        Assert.Equal(new DateTime(2023, 12, 11, 10, 9, 8, 765, DateTimeKind.Utc), result);
     }
 
     [Fact]

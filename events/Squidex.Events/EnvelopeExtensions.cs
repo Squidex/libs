@@ -11,6 +11,24 @@ namespace Squidex.Events;
 
 public static class EnvelopeExtensions
 {
+    public static DateTime Timestamp(this EnvelopeHeaders obj)
+    {
+        return obj.GetDateTime(CoreHeaders.Timestamp);
+    }
+
+    public static DateTime GetDateTime(this EnvelopeHeaders obj, string key)
+    {
+        if (obj.TryGetValue(key, out var found))
+        {
+            if (found is HeaderStringValue s && DateTime.TryParse(s.Value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var dateTime))
+            {
+                return dateTime;
+            }
+        }
+
+        return default;
+    }
+
     public static long GetLong(this EnvelopeHeaders obj, string key)
     {
         if (obj.TryGetValue(key, out var found))
@@ -19,7 +37,8 @@ public static class EnvelopeExtensions
             {
                 return n.Value;
             }
-            else if (found is HeaderStringValue s && double.TryParse(s.Value, NumberStyles.Any, CultureInfo.InvariantCulture, out var result))
+
+            if (found is HeaderStringValue s && double.TryParse(s.Value, NumberStyles.Any, CultureInfo.InvariantCulture, out var result))
             {
                 return (long)result;
             }
