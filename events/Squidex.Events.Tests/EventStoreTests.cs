@@ -74,7 +74,7 @@ public abstract class EventStoreTests
             CreateEventData(2)
         };
 
-        await sut.AppendAsync(Guid.NewGuid(), streamName, EtagVersion.Any, commit);
+        await sut.AppendAsync(Guid.NewGuid(), streamName, EventsVersion.Any, commit);
 
         await Assert.ThrowsAsync<WrongEventVersionException>(() => sut.AppendAsync(Guid.NewGuid(), streamName, 0, commit));
     }
@@ -99,8 +99,8 @@ public abstract class EventStoreTests
             CreateEventData(2)
         };
 
-        await sut.AppendAsync(Guid.NewGuid(), streamName, EtagVersion.Any, commit1, ct);
-        await sut.AppendAsync(Guid.NewGuid(), streamName, EtagVersion.Any, commit2, ct);
+        await sut.AppendAsync(Guid.NewGuid(), streamName, EventsVersion.Any, commit1, ct);
+        await sut.AppendAsync(Guid.NewGuid(), streamName, EventsVersion.Any, commit2, ct);
 
         var readEvents1 = await sut.QueryStreamAsync(streamName, ct: ct);
         var readEvents2 = await sut.QueryAllAsync(streamFilter, ct: ct).ToListAsync();
@@ -169,8 +169,8 @@ public abstract class EventStoreTests
             CreateEventData(2)
         };
 
-        await sut.AppendAsync(Guid.NewGuid(), streamName, EtagVersion.Any, commit1, ct);
-        await sut.AppendAsync(Guid.NewGuid(), streamName, EtagVersion.Any, commit2, ct);
+        await sut.AppendAsync(Guid.NewGuid(), streamName, EventsVersion.Any, commit1, ct);
+        await sut.AppendAsync(Guid.NewGuid(), streamName, EventsVersion.Any, commit2, ct);
 
         var readEvents = await sut.QueryAllAsync(streamFilter, StreamPosition.End, ct: ct).ToListAsync();
 
@@ -193,7 +193,7 @@ public abstract class EventStoreTests
 
         var readEvents = await QueryWithSubscriptionAsync(sut, streamFilter, 1, async () =>
         {
-            await sut.AppendAsync(Guid.NewGuid(), streamName, EtagVersion.Any, commit1, ct);
+            await sut.AppendAsync(Guid.NewGuid(), streamName, EventsVersion.Any, commit1, ct);
         });
 
         var expected = new[]
@@ -222,7 +222,7 @@ public abstract class EventStoreTests
         // Append and read in parallel.
         await QueryWithSubscriptionAsync(sut, streamFilter, 1, async () =>
         {
-            await sut.AppendAsync(Guid.NewGuid(), streamName, EtagVersion.Any, commit1, ct);
+            await sut.AppendAsync(Guid.NewGuid(), streamName, EventsVersion.Any, commit1, ct);
         });
 
         var commit2 = new[]
@@ -234,7 +234,7 @@ public abstract class EventStoreTests
         // Append and read in parallel.
         var readEventsFromPosition = await QueryWithSubscriptionAsync(sut, streamFilter, 1, async () =>
         {
-            await sut.AppendAsync(Guid.NewGuid(), streamName, EtagVersion.Any, commit2, ct);
+            await sut.AppendAsync(Guid.NewGuid(), streamName, EventsVersion.Any, commit2, ct);
         });
 
         var expectedFromPosition = new[]
@@ -285,7 +285,7 @@ public abstract class EventStoreTests
                         CreateEventData(i * j)
                     };
 
-                    await sut.AppendAsync(Guid.NewGuid(), fullStreamName, EtagVersion.Any, commit, ct);
+                    await sut.AppendAsync(Guid.NewGuid(), fullStreamName, EventsVersion.Any, commit, ct);
                 }
             });
         });
@@ -313,8 +313,8 @@ public abstract class EventStoreTests
             CreateEventData(4)
         };
 
-        await sut.AppendAsync(Guid.NewGuid(), streamName1, EtagVersion.Any, stream1Commit, ct);
-        await sut.AppendAsync(Guid.NewGuid(), streamName2, EtagVersion.Any, stream2Commit, ct);
+        await sut.AppendAsync(Guid.NewGuid(), streamName1, EventsVersion.Any, stream1Commit, ct);
+        await sut.AppendAsync(Guid.NewGuid(), streamName2, EventsVersion.Any, stream2Commit, ct);
 
         var readEvents = await sut.QueryAllAsync(StreamFilter.Name(streamName1, streamName2), ct: ct).ToListAsync();
 
@@ -585,7 +585,7 @@ public abstract class EventStoreTests
         {
             var commit = events.Skip(i * commits).Take(commits).ToArray();
 
-            await sut.AppendAsync(Guid.NewGuid(), streamName, EtagVersion.Any, commit, ct);
+            await sut.AppendAsync(Guid.NewGuid(), streamName, EventsVersion.Any, commit, ct);
         }
 
         return events;

@@ -85,7 +85,7 @@ public sealed class GetEventStore(
         }
     }
 
-    public async Task<IReadOnlyList<StoredEvent>> QueryStreamAsync(string streamName, long afterStreamPosition = EtagVersion.Empty,
+    public async Task<IReadOnlyList<StoredEvent>> QueryStreamAsync(string streamName, long afterStreamPosition = EventsVersion.Empty,
         CancellationToken ct = default)
     {
         var result = new List<StoredEvent>();

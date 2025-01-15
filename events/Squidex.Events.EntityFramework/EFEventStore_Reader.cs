@@ -31,7 +31,7 @@ public sealed partial class EFEventStore<T> : IEventStore
 
         var result = Convert(commits, afterStreamPosition);
 
-        if ((commits.Count == 0 || commits[0].EventStreamOffset != afterStreamPosition) && afterStreamPosition > EtagVersion.Empty)
+        if ((commits.Count == 0 || commits[0].EventStreamOffset != afterStreamPosition) && afterStreamPosition > EventsVersion.Empty)
         {
             commits = await context.Set<EFEventCommit>()
                 .ByStream(StreamFilter.Name(streamName))
@@ -67,7 +67,7 @@ public sealed partial class EFEventStore<T> : IEventStore
         var taken = 0;
         foreach (var commit in query)
         {
-            foreach (var @event in commit.Filtered(EtagVersion.Empty).Reverse())
+            foreach (var @event in commit.Filtered(EventsVersion.Empty).Reverse())
             {
                 yield return @event;
 
