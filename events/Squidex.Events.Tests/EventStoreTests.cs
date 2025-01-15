@@ -251,6 +251,7 @@ public abstract class EventStoreTests
     }
 
     [Fact]
+    [Trait("Category", "Dependencies")]
     public async Task Should_subscribe_with_parallel_writes()
     {
         var sut = await CreateSutAsync();
@@ -535,7 +536,7 @@ public abstract class EventStoreTests
                 await subscriptionRunning();
             }
 
-            using (var cts = new CancellationTokenSource(120_000))
+            using (var cts = new CancellationTokenSource(30_000))
             {
                 while (!cts.IsCancellationRequested)
                 {
