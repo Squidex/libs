@@ -7,7 +7,6 @@
 
 using System.Globalization;
 using FluentAssertions;
-using Squidex.Events.EntityFramework;
 using Xunit;
 
 #pragma warning disable MA0040 // Forward the CancellationToken parameter to methods that take one

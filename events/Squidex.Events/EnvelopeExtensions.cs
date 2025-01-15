@@ -11,26 +11,6 @@ namespace Squidex.Events;
 
 public static class EnvelopeExtensions
 {
-    public static long EventStreamNumber(this EnvelopeHeaders headers)
-    {
-        return headers.GetLong(CommonHeaders.EventStreamNumber);
-    }
-
-    public static Guid CommitId(this EnvelopeHeaders headers)
-    {
-        return headers.GetGuid(CommonHeaders.CommitId);
-    }
-
-    public static Guid EventId(this EnvelopeHeaders headers)
-    {
-        return headers.GetGuid(CommonHeaders.EventId);
-    }
-
-    public static DateTime Timestamp(this EnvelopeHeaders headers)
-    {
-        return headers.GetInstant(CommonHeaders.Timestamp);
-    }
-
     public static long GetLong(this EnvelopeHeaders obj, string key)
     {
         if (obj.TryGetValue(key, out var found))
@@ -46,26 +26,6 @@ public static class EnvelopeExtensions
         }
 
         return 0;
-    }
-
-    public static Guid GetGuid(this EnvelopeHeaders obj, string key)
-    {
-        if (obj.TryGetValue(key, out var found) && found is HeaderStringValue s && Guid.TryParse(s.Value, out var guid))
-        {
-            return guid;
-        }
-
-        return default;
-    }
-
-    public static DateTime GetInstant(this EnvelopeHeaders obj, string key)
-    {
-        if (obj.TryGetValue(key, out var found) && found is HeaderStringValue s && DateTime.TryParseExact(s.Value, "o", CultureInfo.InvariantCulture, DateTimeStyles.None, out var instant))
-        {
-            return instant;
-        }
-
-        return default;
     }
 
     public static string GetString(this EnvelopeHeaders obj, string key)

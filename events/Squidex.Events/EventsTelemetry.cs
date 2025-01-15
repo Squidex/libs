@@ -5,9 +5,11 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Diagnostics;
+
 namespace Squidex.Events;
 
-public interface IOnRead
+public static class EventsTelemetry
 {
-    ValueTask OnReadAsync();
+    public static readonly ActivitySource Activities = new ActivitySource("Squidex");
 }
