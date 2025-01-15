@@ -15,6 +15,8 @@ namespace Squidex.Events;
 
 public abstract class EventStoreTests
 {
+    private readonly CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+    private readonly CancellationToken ct;
     private StreamPosition subscriptionPosition;
 
     public sealed class EventSubscriber : IEventSubscriber<StoredEvent>
@@ -37,6 +39,11 @@ public abstract class EventStoreTests
     }
 
     protected abstract Task<IEventStore> CreateSutAsync();
+
+    protected EventStoreTests()
+    {
+        ct = cts.Token;
+    }
 
     [Fact]
     public async Task Should_throw_exception_for_version_mismatch()
@@ -92,11 +99,11 @@ public abstract class EventStoreTests
             CreateEventData(2)
         };
 
-        await sut.AppendAsync(Guid.NewGuid(), streamName, EtagVersion.Any, commit1);
-        await sut.AppendAsync(Guid.NewGuid(), streamName, EtagVersion.Any, commit2);
+        await sut.AppendAsync(Guid.NewGuid(), streamName, EtagVersion.Any, commit1, ct);
+        await sut.AppendAsync(Guid.NewGuid(), streamName, EtagVersion.Any, commit2, ct);
 
-        var readEvents1 = await sut.QueryStreamAsync(streamName);
-        var readEvents2 = await sut.QueryAllAsync(streamFilter).ToListAsync();
+        var readEvents1 = await sut.QueryStreamAsync(streamName, ct: ct);
+        var readEvents2 = await sut.QueryAllAsync(streamFilter, ct: ct).ToListAsync();
 
         var expected = new[]
         {
@@ -127,10 +134,10 @@ public abstract class EventStoreTests
         await sut.AppendUnsafeAsync(
         [
             new EventCommit(Guid.NewGuid(), streamName, -1, commit1)
-        ]);
+        ], ct);
 
-        var readEvents1 = await sut.QueryStreamAsync(streamName);
-        var readEvents2 = await sut.QueryAllAsync(streamFilter).ToListAsync();
+        var readEvents1 = await sut.QueryStreamAsync(streamName, ct: ct);
+        var readEvents2 = await sut.QueryAllAsync(streamFilter, ct: ct).ToListAsync();
 
         var expected = new[]
         {
@@ -162,10 +169,10 @@ public abstract class EventStoreTests
             CreateEventData(2)
         };
 
-        await sut.AppendAsync(Guid.NewGuid(), streamName, EtagVersion.Any, commit1);
-        await sut.AppendAsync(Guid.NewGuid(), streamName, EtagVersion.Any, commit2);
+        await sut.AppendAsync(Guid.NewGuid(), streamName, EtagVersion.Any, commit1, ct);
+        await sut.AppendAsync(Guid.NewGuid(), streamName, EtagVersion.Any, commit2, ct);
 
-        var readEvents = await sut.QueryAllAsync(streamFilter, StreamPosition.End).ToListAsync();
+        var readEvents = await sut.QueryAllAsync(streamFilter, StreamPosition.End, ct: ct).ToListAsync();
 
         Assert.Empty(readEvents);
     }
@@ -186,7 +193,7 @@ public abstract class EventStoreTests
 
         var readEvents = await QueryWithSubscriptionAsync(sut, streamFilter, 1, async () =>
         {
-            await sut.AppendAsync(Guid.NewGuid(), streamName, EtagVersion.Any, commit1);
+            await sut.AppendAsync(Guid.NewGuid(), streamName, EtagVersion.Any, commit1, ct);
         });
 
         var expected = new[]
@@ -215,7 +222,7 @@ public abstract class EventStoreTests
         // Append and read in parallel.
         await QueryWithSubscriptionAsync(sut, streamFilter, 1, async () =>
         {
-            await sut.AppendAsync(Guid.NewGuid(), streamName, EtagVersion.Any, commit1);
+            await sut.AppendAsync(Guid.NewGuid(), streamName, EtagVersion.Any, commit1, ct);
         });
 
         var commit2 = new[]
@@ -227,7 +234,7 @@ public abstract class EventStoreTests
         // Append and read in parallel.
         var readEventsFromPosition = await QueryWithSubscriptionAsync(sut, streamFilter, 1, async () =>
         {
-            await sut.AppendAsync(Guid.NewGuid(), streamName, EtagVersion.Any, commit2);
+            await sut.AppendAsync(Guid.NewGuid(), streamName, EtagVersion.Any, commit2, ct);
         });
 
         var expectedFromPosition = new[]
@@ -278,7 +285,7 @@ public abstract class EventStoreTests
                         CreateEventData(i * j)
                     };
 
-                    await sut.AppendAsync(Guid.NewGuid(), fullStreamName, EtagVersion.Any, commit);
+                    await sut.AppendAsync(Guid.NewGuid(), fullStreamName, EtagVersion.Any, commit, ct);
                 }
             });
         });
@@ -306,10 +313,10 @@ public abstract class EventStoreTests
             CreateEventData(4)
         };
 
-        await sut.AppendAsync(Guid.NewGuid(), streamName1, EtagVersion.Any, stream1Commit);
-        await sut.AppendAsync(Guid.NewGuid(), streamName2, EtagVersion.Any, stream2Commit);
+        await sut.AppendAsync(Guid.NewGuid(), streamName1, EtagVersion.Any, stream1Commit, ct);
+        await sut.AppendAsync(Guid.NewGuid(), streamName2, EtagVersion.Any, stream2Commit, ct);
 
-        var readEvents = await sut.QueryAllAsync(StreamFilter.Name(streamName1, streamName2)).ToListAsync();
+        var readEvents = await sut.QueryAllAsync(StreamFilter.Name(streamName1, streamName2), ct: ct).ToListAsync();
 
         var expected1 = new[]
         {
@@ -341,9 +348,9 @@ public abstract class EventStoreTests
 
         var eventsWritten = await AppendEventsAsync(sut, streamName, count, commits);
 
-        var readEvents0 = await sut.QueryStreamAsync(streamName);
-        var readEvents1 = await sut.QueryStreamAsync(streamName, count - 2);
-        var readEvents2 = await sut.QueryAllAsync(streamFilter, readEvents0[^2].EventPosition).ToListAsync();
+        var readEvents0 = await sut.QueryStreamAsync(streamName, ct: ct);
+        var readEvents1 = await sut.QueryStreamAsync(streamName, count - 2, ct);
+        var readEvents2 = await sut.QueryAllAsync(streamFilter, readEvents0[^2].EventPosition, ct: ct).ToListAsync();
 
         var expected = new[]
         {
@@ -369,7 +376,7 @@ public abstract class EventStoreTests
 
         while (true)
         {
-            var read = await sut.QueryAllAsync(streamFilter, lastPosition, 1, default).ToListAsync();
+            var read = await sut.QueryAllAsync(streamFilter, lastPosition, 1, ct).ToListAsync();
             eventsRead += read.Count;
 
             if (read.Count == 0)
@@ -400,7 +407,7 @@ public abstract class EventStoreTests
         for (var take = 0; take < count; take += count / 10)
         {
             var eventsExpected = eventsStored.Reverse().Take(take).ToArray();
-            var eventsQueried = await sut.QueryAllReverseAsync(streamFilter, default, take).ToArrayAsync();
+            var eventsQueried = await sut.QueryAllReverseAsync(streamFilter, default, take, ct).ToArrayAsync();
 
             ShouldBeEquivalentTo(eventsQueried, eventsExpected);
         }
@@ -423,7 +430,7 @@ public abstract class EventStoreTests
         for (var take = 0; take < count; take += count / 10)
         {
             var eventsExpected = eventsStored.Reverse().Take(take).ToArray();
-            var eventsQueried = await sut.QueryAllReverseAsync(streamFilter, default, take).ToArrayAsync();
+            var eventsQueried = await sut.QueryAllReverseAsync(streamFilter, default, take, ct).ToArrayAsync();
 
             ShouldBeEquivalentTo(eventsQueried, eventsExpected);
         }
@@ -444,7 +451,7 @@ public abstract class EventStoreTests
 
         for (var take = 0; take < count; take += count / 10)
         {
-            var eventsQueried = await sut.QueryAllReverseAsync(streamFilter, default, take).ToArrayAsync();
+            var eventsQueried = await sut.QueryAllReverseAsync(streamFilter, default, take, ct).ToArrayAsync();
 
             Assert.Equal(take, eventsQueried.Length);
         }
@@ -466,7 +473,7 @@ public abstract class EventStoreTests
         {
             await sut.DeleteAsync(streamFilter);
 
-            readEvents = await sut.QueryStreamAsync(streamName);
+            readEvents = await sut.QueryStreamAsync(streamName, ct: ct);
             if (readEvents.Count == 0)
             {
                 break;
@@ -493,9 +500,9 @@ public abstract class EventStoreTests
 
         for (var i = 0; i < 5; i++)
         {
-            await sut.DeleteAsync(streamFilter);
+            await sut.DeleteAsync(streamFilter, ct);
 
-            readEvents = await sut.QueryStreamAsync(streamName);
+            readEvents = await sut.QueryStreamAsync(streamName, ct: ct);
             if (readEvents.Count == 0)
             {
                 break;
@@ -537,13 +544,13 @@ public abstract class EventStoreTests
                 await subscriptionRunning();
             }
 
-            using (var cts = new CancellationTokenSource(30_000))
+            using (var cts2 = new CancellationTokenSource(30_000))
             {
-                while (!cts.IsCancellationRequested)
+                while (!cts2.IsCancellationRequested)
                 {
                     subscription.WakeUp();
 
-                    await Task.Delay(2000, cts.Token);
+                    await Task.Delay(2000, cts2.Token);
 
                     if (subscriber.LastEvents.Count >= expectedCount)
                     {
@@ -565,7 +572,7 @@ public abstract class EventStoreTests
         }
     }
 
-    private static async Task<List<EventData>> AppendEventsAsync(IEventStore sut, string streamName, int count, int commits = 1)
+    private async Task<List<EventData>> AppendEventsAsync(IEventStore sut, string streamName, int count, int commits = 1)
     {
         var events = new List<EventData>();
 
@@ -578,7 +585,7 @@ public abstract class EventStoreTests
         {
             var commit = events.Skip(i * commits).Take(commits).ToArray();
 
-            await sut.AppendAsync(Guid.NewGuid(), streamName, EtagVersion.Any, commit);
+            await sut.AppendAsync(Guid.NewGuid(), streamName, EtagVersion.Any, commit, ct);
         }
 
         return events;

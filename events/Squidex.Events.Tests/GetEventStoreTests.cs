@@ -9,6 +9,7 @@ using Xunit;
 
 namespace Squidex.Events;
 
+[Trait("Category", "Dependencies")]
 public class GetEventStoreTests(GetEventStoreFixture fixture)
     : EventStoreTests, IClassFixture<GetEventStoreFixture>
 {
