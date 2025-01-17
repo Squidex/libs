@@ -60,7 +60,7 @@ internal static class FilterBuilder
 
     public static IQueryable<EFEventCommit> ByStream(this IQueryable<EFEventCommit> q, StreamFilter filter)
     {
-        if (filter.Prefixes == null || filter.Prefixes.Length == 0)
+        if (filter.Prefixes == null || filter.Prefixes.Count == 0)
         {
             return q;
         }

@@ -28,9 +28,9 @@ public sealed class EventStoreProjectionClient(
     public async Task<string> CreateProjectionAsync(StreamFilter filter, bool waitForCompletion,
         CancellationToken ct)
     {
-        if (filter.Kind == StreamFilterKind.MatchFull && filter.Prefixes?.Length == 1)
+        if (filter.Kind == StreamFilterKind.MatchFull && filter.Prefixes?.Count == 1)
         {
-            return $"{prefix}-{filter.Prefixes[0]}";
+            return $"{prefix}-{filter.Prefixes.First()}";
         }
 
         var projectionRegex = filter.ToRegex();
