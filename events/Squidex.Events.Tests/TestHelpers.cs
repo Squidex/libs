@@ -36,18 +36,23 @@ public static class TestHelpers
 
     public static T SerializeAndDeserializeBson<T>(this T value)
     {
+        return SerializeAndDeserializeBson<T, T>(value);
+    }
+
+    public static TOut SerializeAndDeserializeBson<TIn, TOut>(this TIn value)
+    {
         using var stream = new MemoryStream();
 
         using (var writer = new BsonBinaryWriter(stream))
         {
-            BsonSerializer.Serialize(writer, new ObjectHolder<T> { Value = value });
+            BsonSerializer.Serialize(writer, new ObjectHolder<TIn> { Value = value });
         }
 
         stream.Position = 0;
 
         using (var reader = new BsonBinaryReader(stream))
         {
-            return BsonSerializer.Deserialize<ObjectHolder<T>>(reader).Value;
+            return BsonSerializer.Deserialize<ObjectHolder<TOut>>(reader).Value;
         }
     }
 }

@@ -19,13 +19,18 @@ public sealed class HeaderValueSerializer : SerializerBase<HeaderValue>
         switch (reader.CurrentBsonType)
         {
             case BsonType.String:
-                return new HeaderStringValue(reader.ReadString());
+                return reader.ReadString();
             case BsonType.Int32:
-                return new HeaderNumberValue(reader.ReadInt32());
+                return reader.ReadInt32();
             case BsonType.Int64:
-                return new HeaderNumberValue(reader.ReadInt64());
+                return reader.ReadInt64();
+            case BsonType.Double:
+                return reader.ReadDouble();
             case BsonType.Boolean:
-                return new HeaderBooleanValue(reader.ReadBoolean());
+                return reader.ReadBoolean();
+            case BsonType.Null:
+                reader.ReadNull();
+                return default;
             default:
                 throw new BsonSerializationException($"Unsupported token '{reader.CurrentBsonType}'.");
         }
@@ -34,16 +39,19 @@ public sealed class HeaderValueSerializer : SerializerBase<HeaderValue>
     public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, HeaderValue value)
     {
         var writer = context.Writer;
-        switch (value)
+        switch (value.Value)
         {
-            case HeaderStringValue s:
-                writer.WriteString(s.Value);
+            case string s:
+                writer.WriteString(s);
                 break;
-            case HeaderNumberValue n:
-                writer.WriteInt64(n.Value);
+            case double n:
+                writer.WriteDouble(n);
                 break;
-            case HeaderBooleanValue b:
-                writer.WriteBoolean(b.Value);
+            case bool b:
+                writer.WriteBoolean(b);
+                break;
+            case null:
+                writer.WriteNull();
                 break;
             default:
                 throw new BsonSerializationException($"Unsupported value type '{value.GetType()}'.");

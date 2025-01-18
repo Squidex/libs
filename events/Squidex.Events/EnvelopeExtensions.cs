@@ -20,7 +20,7 @@ public static class EnvelopeExtensions
     {
         if (obj.TryGetValue(key, out var found))
         {
-            if (found is HeaderStringValue s && DateTime.TryParse(s.Value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var dateTime))
+            if (found.Value is string s && DateTime.TryParse(s, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var dateTime))
             {
                 return dateTime;
             }
@@ -33,12 +33,12 @@ public static class EnvelopeExtensions
     {
         if (obj.TryGetValue(key, out var found))
         {
-            if (found is HeaderNumberValue n)
+            if (found.Value is double n)
             {
-                return n.Value;
+                return (long)n;
             }
 
-            if (found is HeaderStringValue s && double.TryParse(s.Value, NumberStyles.Any, CultureInfo.InvariantCulture, out var result))
+            if (found.Value is string s && double.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out var result))
             {
                 return (long)result;
             }
@@ -59,9 +59,9 @@ public static class EnvelopeExtensions
 
     public static bool GetBoolean(this EnvelopeHeaders obj, string key)
     {
-        if (obj.TryGetValue(key, out var found) && found is HeaderBooleanValue b)
+        if (obj.TryGetValue(key, out var found) && found.Value is bool b)
         {
-            return b.Value;
+            return b;
         }
 
         return false;

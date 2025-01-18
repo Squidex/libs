@@ -6,6 +6,7 @@
 // ==========================================================================
 
 using FakeItEasy;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using Squidex.Events.Mongo;
 using Xunit;
@@ -211,7 +212,8 @@ public class EnvelopeHeadersTests
             ["key1"] = 13,
             ["key2"] = "Hello World",
             ["key3"] = true,
-            ["key4"] = false
+            ["key4"] = false,
+            ["key5"] = default
         };
 
         var json = source.SerializeToJsonBytes();
@@ -229,12 +231,37 @@ public class EnvelopeHeadersTests
             ["key1"] = 13,
             ["key2"] = "Hello World",
             ["key3"] = true,
-            ["key4"] = false
+            ["key4"] = false,
+            ["key5"] = default
         };
 
         var deserialized = source.SerializeAndDeserializeBson();
 
         CompareHeaders(deserialized, source);
+    }
+
+    [Fact]
+    public void Should_serialize_and_deserialize_bson_numbers()
+    {
+        var source = new BsonDocument
+        {
+            ["number1"] = 100,
+            ["number2"] = 200L,
+            ["number3"] = 300.5f,
+            ["number4"] = 400.5d
+        };
+
+        var expected = new EnvelopeHeaders
+        {
+            ["number1"] = 100,
+            ["number2"] = 200,
+            ["number3"] = 300.5,
+            ["number4"] = 400.5
+        };
+
+        var deserialized = source.SerializeAndDeserializeBson<BsonDocument, EnvelopeHeaders>();
+
+        CompareHeaders(deserialized, expected);
     }
 
     private static void CompareHeaders(EnvelopeHeaders lhs, EnvelopeHeaders rhs)

@@ -12,18 +12,20 @@ namespace Squidex.Events.Utils;
 
 public sealed class HeaderValueConverter : JsonConverter<HeaderValue>
 {
-    public override HeaderValue? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override HeaderValue Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         switch (reader.TokenType)
         {
             case JsonTokenType.String:
-                return new HeaderStringValue(reader.GetString()!);
+                return reader.GetString()!;
             case JsonTokenType.Number:
-                return new HeaderNumberValue(reader.GetInt64());
+                return reader.GetDouble();
+            case JsonTokenType.Null:
+                return default;
             case JsonTokenType.True:
-                return new HeaderBooleanValue(true);
+                return true;
             case JsonTokenType.False:
-                return new HeaderBooleanValue(false);
+                return false;
             default:
                 throw new JsonException($"Unsupported token '{reader.TokenType}'.");
         }
@@ -31,19 +33,22 @@ public sealed class HeaderValueConverter : JsonConverter<HeaderValue>
 
     public override void Write(Utf8JsonWriter writer, HeaderValue value, JsonSerializerOptions options)
     {
-        switch (value)
+        switch (value.Value)
         {
-            case HeaderStringValue s:
-                writer.WriteStringValue(s.Value);
+            case string s:
+                writer.WriteStringValue(s);
                 break;
-            case HeaderNumberValue n:
-                writer.WriteNumberValue(n.Value);
+            case double n:
+                writer.WriteNumberValue(n);
                 break;
-            case HeaderBooleanValue b:
-                writer.WriteBooleanValue(b.Value);
+            case bool b:
+                writer.WriteBooleanValue(b);
+                break;
+            case null:
+                writer.WriteNullValue();
                 break;
             default:
-                throw new JsonException($"Unsupported value type '{value.GetType()}'.");
+                throw new JsonException($"Unsupported value type '{value.Value.GetType()}'.");
         }
     }
 }

@@ -6,48 +6,45 @@
 // ==========================================================================
 
 #pragma warning disable MA0048 // File name must match type name
-#pragma warning disable SA1313 // Parameter names should begin with lower-case letter
 
 namespace Squidex.Events;
 
-public abstract record HeaderValue
+public readonly record struct HeaderValue
 {
-    public static implicit operator HeaderValue(string source)
+    public object? Value { get; }
+
+    private HeaderValue(object? value)
     {
-        return new HeaderStringValue(source);
+        Value = value;
     }
 
-    public static implicit operator HeaderValue(long source)
+    public static implicit operator HeaderValue(string source)
     {
-        return new HeaderNumberValue(source);
+        return new HeaderValue(source);
+    }
+
+    public static implicit operator HeaderValue(double source)
+    {
+        return new HeaderValue(source);
     }
 
     public static implicit operator HeaderValue(bool source)
     {
-        return new HeaderBooleanValue(source);
+        return new HeaderValue(source);
     }
-}
 
-public record HeaderBooleanValue(bool Value) : HeaderValue
-{
     public override string ToString()
     {
-        return Value ? "true" : "false";
-    }
-}
-
-public record HeaderNumberValue(long Value) : HeaderValue
-{
-    public override string ToString()
-    {
-        return Value.ToString();
-    }
-}
-
-public record HeaderStringValue(string Value) : HeaderValue
-{
-    public override string ToString()
-    {
-        return Value;
+        switch (Value)
+        {
+            case null:
+                return "null";
+            case true:
+                return "true";
+            case false:
+                return "false";
+            default:
+                return Value.ToString()!;
+        }
     }
 }
