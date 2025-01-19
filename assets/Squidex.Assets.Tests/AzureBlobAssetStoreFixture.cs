@@ -13,28 +13,28 @@ namespace Squidex.Assets;
 
 public sealed class AzureBlobAssetStoreFixture : IAsyncLifetime
 {
-    private IServiceProvider services;
+    public IServiceProvider Services { get; private set; }
 
-    public AzureBlobAssetStore Store => services.GetRequiredService<AzureBlobAssetStore>();
-
-    public async Task DisposeAsync()
-    {
-        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
-        {
-            await service.ReleaseAsync(default);
-        }
-    }
+    public AzureBlobAssetStore Store => Services.GetRequiredService<AzureBlobAssetStore>();
 
     public async Task InitializeAsync()
     {
-        services =
+        Services =
             new ServiceCollection()
                 .AddAzureBlobAssetStore(TestHelpers.Configuration)
                 .BuildServiceProvider();
 
-        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
+        foreach (var service in Services.GetRequiredService<IEnumerable<IInitializable>>())
         {
             await service.InitializeAsync(default);
+        }
+    }
+
+    public async Task DisposeAsync()
+    {
+        foreach (var service in Services.GetRequiredService<IEnumerable<IInitializable>>())
+        {
+            await service.ReleaseAsync(default);
         }
     }
 }

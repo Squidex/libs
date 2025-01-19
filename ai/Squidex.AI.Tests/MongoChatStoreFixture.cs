@@ -21,27 +21,17 @@ public sealed class MongoChatStoreFixture : IAsyncLifetime
         new MongoDbBuilder()
             .WithReuse(Debugger.IsAttached)
             .WithLabel("reuse-id", "chatstore-mongo")
-        .Build();
+            .Build();
 
-    private IServiceProvider services;
+    public IServiceProvider Services { get; private set; }
 
-    public MongoChatStore Store => services.GetRequiredService<MongoChatStore>();
-
-    public async Task DisposeAsync()
-    {
-        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
-        {
-            await service.ReleaseAsync(default);
-        }
-
-        await mongoDb.StopAsync();
-    }
+    public MongoChatStore Store => Services.GetRequiredService<MongoChatStore>();
 
     public async Task InitializeAsync()
     {
         await mongoDb.StartAsync();
 
-        services = new ServiceCollection()
+        Services = new ServiceCollection()
             .AddSingleton<IMongoClient>(_ => new MongoClient(mongoDb.GetConnectionString()))
             .AddSingleton(c => c.GetRequiredService<IMongoClient>().GetDatabase("Test"))
             .AddAI()
@@ -49,9 +39,19 @@ public sealed class MongoChatStoreFixture : IAsyncLifetime
             .Services
             .BuildServiceProvider();
 
-        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
+        foreach (var service in Services.GetRequiredService<IEnumerable<IInitializable>>())
         {
             await service.InitializeAsync(default);
         }
+    }
+
+    public async Task DisposeAsync()
+    {
+        foreach (var service in Services.GetRequiredService<IEnumerable<IInitializable>>())
+        {
+            await service.ReleaseAsync(default);
+        }
+
+        await mongoDb.StopAsync();
     }
 }

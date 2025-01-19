@@ -22,27 +22,15 @@ public sealed class SqlServerEventStoreFixture : IAsyncLifetime
             .WithReuse(true)
             .WithLabel("reuse-id", "eventstore-sqlserver").Build();
 
-    private IServiceProvider services;
+    public IServiceProvider Services { get; private set; }
 
-    public IEventStore Store => services.GetRequiredService<IEventStore>();
-
-    public IServiceProvider Services => services;
-
-    public async Task DisposeAsync()
-    {
-        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
-        {
-            await service.ReleaseAsync(default);
-        }
-
-        await msSql.StopAsync();
-    }
+    public IEventStore Store => Services.GetRequiredService<IEventStore>();
 
     public async Task InitializeAsync()
     {
         await msSql.StartAsync();
 
-        services = new ServiceCollection()
+        Services = new ServiceCollection()
             .AddDbContext<TestContext>(b =>
             {
                 b.UseSqlServer(msSql.GetConnectionString());
@@ -55,15 +43,25 @@ public sealed class SqlServerEventStoreFixture : IAsyncLifetime
             .Services
             .BuildServiceProvider();
 
-        var factory = services.GetRequiredService<IDbContextFactory<TestContext>>();
+        var factory = Services.GetRequiredService<IDbContextFactory<TestContext>>();
         var context = await factory.CreateDbContextAsync();
         var creator = (RelationalDatabaseCreator)context.Database.GetService<IDatabaseCreator>();
 
         await creator.EnsureCreatedAsync();
 
-        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
+        foreach (var service in Services.GetRequiredService<IEnumerable<IInitializable>>())
         {
             await service.InitializeAsync(default);
         }
+    }
+
+    public async Task DisposeAsync()
+    {
+        foreach (var service in Services.GetRequiredService<IEnumerable<IInitializable>>())
+        {
+            await service.ReleaseAsync(default);
+        }
+
+        await msSql.StopAsync();
     }
 }

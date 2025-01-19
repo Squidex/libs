@@ -25,9 +25,9 @@ public sealed class EFChatStoreFixture : IAsyncLifetime
             .WithLabel("reuse-id", "chatstore-postgres")
             .Build();
 
-    private IServiceProvider services;
+    public IServiceProvider Services { get; private set; }
 
-    public EFChatStore<AppDbContext> Store => services.GetRequiredService<EFChatStore<AppDbContext>>();
+    public EFChatStore<AppDbContext> Store => Services.GetRequiredService<EFChatStore<AppDbContext>>();
 
     public sealed class AppDbContext(DbContextOptions options) : DbContext(options)
     {
@@ -38,21 +38,11 @@ public sealed class EFChatStoreFixture : IAsyncLifetime
         }
     }
 
-    public async Task DisposeAsync()
-    {
-        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
-        {
-            await service.ReleaseAsync(default);
-        }
-
-        await postgresSql.StopAsync();
-    }
-
     public async Task InitializeAsync()
     {
         await postgresSql.StartAsync();
 
-        services = new ServiceCollection()
+        Services = new ServiceCollection()
             .AddDbContext<AppDbContext>(b =>
             {
                 b.UseNpgsql(postgresSql.GetConnectionString());
@@ -62,15 +52,25 @@ public sealed class EFChatStoreFixture : IAsyncLifetime
             .Services
             .BuildServiceProvider();
 
-        var factory = services.GetRequiredService<IDbContextFactory<AppDbContext>>();
+        var factory = Services.GetRequiredService<IDbContextFactory<AppDbContext>>();
         var context = await factory.CreateDbContextAsync();
         var creator = (RelationalDatabaseCreator)context.Database.GetService<IDatabaseCreator>();
 
         await creator.EnsureCreatedAsync();
 
-        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
+        foreach (var service in Services.GetRequiredService<IEnumerable<IInitializable>>())
         {
             await service.InitializeAsync(default);
         }
+    }
+
+    public async Task DisposeAsync()
+    {
+        foreach (var service in Services.GetRequiredService<IEnumerable<IInitializable>>())
+        {
+            await service.ReleaseAsync(default);
+        }
+
+        await postgresSql.StopAsync();
     }
 }
