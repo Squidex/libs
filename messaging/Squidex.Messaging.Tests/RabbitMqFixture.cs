@@ -19,13 +19,13 @@ public class RabbitMqFixture : IAsyncLifetime
             .WithLabel("reuse-id", "messaging-rabbit")
             .Build();
 
-    public async Task DisposeAsync()
-    {
-        await RabbitMq.StopAsync();
-    }
-
     public async Task InitializeAsync()
     {
         await RabbitMq.StartAsync();
+    }
+
+    public async Task DisposeAsync()
+    {
+        await RabbitMq.StopAsync();
     }
 }

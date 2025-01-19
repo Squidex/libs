@@ -32,11 +32,6 @@ public sealed class EFMessagingFixture : IAsyncLifetime
         }
     }
 
-    public async Task DisposeAsync()
-    {
-        await PostgresSql.StopAsync();
-    }
-
     public async Task InitializeAsync()
     {
         await PostgresSql.StartAsync();
@@ -53,5 +48,10 @@ public sealed class EFMessagingFixture : IAsyncLifetime
         var creator = (RelationalDatabaseCreator)context.Database.GetService<IDatabaseCreator>();
 
         await creator.EnsureCreatedAsync();
+    }
+
+    public async Task DisposeAsync()
+    {
+        await PostgresSql.StopAsync();
     }
 }

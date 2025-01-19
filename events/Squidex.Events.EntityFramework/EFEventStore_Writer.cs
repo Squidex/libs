@@ -103,9 +103,8 @@ public sealed partial class EFEventStore<T>
     {
         await using var context = await dbContextFactory.CreateDbContextAsync(ct);
 
-        var query = context.Set<EFEventCommit>().ByStream(filter);
-
-        await query.ExecuteDeleteAsync(ct);
+        await context.Set<EFEventCommit>().ByStream(filter)
+            .ExecuteDeleteAsync(ct);
     }
 
     private static async Task<long> GetEventStreamOffsetAsync(DbSet<EFEventCommit> commitSet, string streamName)

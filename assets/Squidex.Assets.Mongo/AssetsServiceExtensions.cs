@@ -23,6 +23,7 @@ public static class AssetsServiceExtensions
 
     public static IServiceCollection AddMongoAssetKeyValueStore(this IServiceCollection services)
     {
+        services.AddSingleton(typeof(MongoAssetKeyValueStore<>));
         services.AddSingleton(typeof(IAssetKeyValueStore<>), typeof(MongoAssetKeyValueStore<>));
 
         return services;

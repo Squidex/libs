@@ -21,11 +21,6 @@ public class KafkaFixture : IAsyncLifetime
             .WithLabel("reuse-id", "messaging-kafka")
             .Build();
 
-    public async Task DisposeAsync()
-    {
-        await Kafka.StopAsync();
-    }
-
     public async Task InitializeAsync()
     {
         await Kafka.StartAsync();
@@ -38,5 +33,10 @@ public class KafkaFixture : IAsyncLifetime
         await adminClient.CreateTopicsAsync([
             new TopicSpecification { Name = "dev" }
         ]);
+    }
+
+    public async Task DisposeAsync()
+    {
+        await Kafka.StopAsync();
     }
 }

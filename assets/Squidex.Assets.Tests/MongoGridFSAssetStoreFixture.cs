@@ -20,28 +20,18 @@ public sealed class MongoGridFSAssetStoreFixture : IAsyncLifetime
     private readonly MongoDbContainer mongoDb =
         new MongoDbBuilder()
             .WithReuse(Debugger.IsAttached)
-            .WithLabel("reuse-id", "asset-postgres")
+            .WithLabel("reuse-id", "asset-mongodb")
             .Build();
 
-    private IServiceProvider services;
+    public IServiceProvider Services { get; private set; }
 
-    public MongoGridFsAssetStore Store => services.GetRequiredService<MongoGridFsAssetStore>();
-
-    public async Task DisposeAsync()
-    {
-        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
-        {
-            await service.ReleaseAsync(default);
-        }
-
-        await mongoDb.StopAsync();
-    }
+    public MongoGridFsAssetStore Store => Services.GetRequiredService<MongoGridFsAssetStore>();
 
     public async Task InitializeAsync()
     {
         await mongoDb.StartAsync();
 
-        services =
+        Services =
             new ServiceCollection()
                 .AddSingleton<IMongoClient>(_ => new MongoClient(mongoDb.GetConnectionString()))
                 .AddSingleton(c => c.GetRequiredService<IMongoClient>().GetDatabase("Test"))
@@ -56,9 +46,19 @@ public sealed class MongoGridFSAssetStoreFixture : IAsyncLifetime
                 })
                 .BuildServiceProvider();
 
-        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
+        foreach (var service in Services.GetRequiredService<IEnumerable<IInitializable>>())
         {
             await service.InitializeAsync(default);
         }
+    }
+
+    public async Task DisposeAsync()
+    {
+        foreach (var service in Services.GetRequiredService<IEnumerable<IInitializable>>())
+        {
+            await service.ReleaseAsync(default);
+        }
+
+        await mongoDb.StopAsync();
     }
 }

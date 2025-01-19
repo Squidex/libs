@@ -23,9 +23,9 @@ public class EFMessagingDataStoreFixture : IAsyncLifetime
             .WithLabel("reuse-id", "messagingstore-kafka")
             .Build();
 
-    private IServiceProvider services;
+    public IServiceProvider Services { get; private set; }
 
-    public IMessagingDataStore Store => services.GetRequiredService<IMessagingDataStore>();
+    public IMessagingDataStore Store => Services.GetRequiredService<IMessagingDataStore>();
 
     public sealed class AppDbContext(DbContextOptions options) : DbContext(options)
     {
@@ -38,7 +38,7 @@ public class EFMessagingDataStoreFixture : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
+        foreach (var service in Services.GetRequiredService<IEnumerable<IInitializable>>())
         {
             await service.ReleaseAsync(default);
         }
@@ -50,7 +50,7 @@ public class EFMessagingDataStoreFixture : IAsyncLifetime
     {
         await postgresSql.StartAsync();
 
-        services = new ServiceCollection()
+        Services = new ServiceCollection()
             .AddDbContext<AppDbContext>(b =>
             {
                 b.UseNpgsql(postgresSql.GetConnectionString());
@@ -61,13 +61,13 @@ public class EFMessagingDataStoreFixture : IAsyncLifetime
             .Services
             .BuildServiceProvider();
 
-        var factory = services.GetRequiredService<IDbContextFactory<AppDbContext>>();
+        var factory = Services.GetRequiredService<IDbContextFactory<AppDbContext>>();
         var context = await factory.CreateDbContextAsync();
         var creator = (RelationalDatabaseCreator)context.Database.GetService<IDatabaseCreator>();
 
         await creator.EnsureCreatedAsync();
 
-        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
+        foreach (var service in Services.GetRequiredService<IEnumerable<IInitializable>>())
         {
             await service.InitializeAsync(default);
         }

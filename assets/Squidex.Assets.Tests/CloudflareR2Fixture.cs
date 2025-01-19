@@ -25,13 +25,13 @@ public sealed class CloudflareR2Fixture : IAsyncLifetime
         Store = services.GetRequiredService<AmazonS3AssetStore>();
     }
 
-    public async Task DisposeAsync()
-    {
-        await Store.ReleaseAsync(default);
-    }
-
     public async Task InitializeAsync()
     {
         await Store.InitializeAsync(default);
+    }
+
+    public async Task DisposeAsync()
+    {
+        await Store.ReleaseAsync(default);
     }
 }

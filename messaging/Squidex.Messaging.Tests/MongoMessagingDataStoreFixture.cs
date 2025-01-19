@@ -21,25 +21,15 @@ public class MongoMessagingDataStoreFixture : IAsyncLifetime
             .WithLabel("reuse-id", "messagingstore-mongo")
             .Build();
 
-    private IServiceProvider services;
+    public IServiceProvider Services { get; private set; }
 
-    public IMessagingDataStore Store => services.GetRequiredService<IMessagingDataStore>();
-
-    public async Task DisposeAsync()
-    {
-        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
-        {
-            await service.ReleaseAsync(default);
-        }
-
-        await mongoDb.StopAsync();
-    }
+    public IMessagingDataStore Store => Services.GetRequiredService<IMessagingDataStore>();
 
     public async Task InitializeAsync()
     {
         await mongoDb.StartAsync();
 
-        services = new ServiceCollection()
+        Services = new ServiceCollection()
             .AddSingleton<IMongoClient>(_ => new MongoClient(mongoDb.GetConnectionString()))
             .AddSingleton(c => c.GetRequiredService<IMongoClient>().GetDatabase("Test"))
             .AddMessaging()
@@ -47,9 +37,19 @@ public class MongoMessagingDataStoreFixture : IAsyncLifetime
             .Services
             .BuildServiceProvider();
 
-        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
+        foreach (var service in Services.GetRequiredService<IEnumerable<IInitializable>>())
         {
             await service.InitializeAsync(default);
         }
+    }
+
+    public async Task DisposeAsync()
+    {
+        foreach (var service in Services.GetRequiredService<IEnumerable<IInitializable>>())
+        {
+            await service.ReleaseAsync(default);
+        }
+
+        await mongoDb.StopAsync();
     }
 }
