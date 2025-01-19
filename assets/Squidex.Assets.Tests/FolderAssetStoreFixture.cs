@@ -12,28 +12,15 @@ namespace Squidex.Assets;
 
 public sealed class FolderAssetStoreFixture : IAsyncLifetime
 {
-    private IServiceProvider services;
+    public IServiceProvider Services { get; private set; }
 
     public string TestFolder { get; } = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
 
-    public FolderAssetStore Store => services.GetRequiredService<FolderAssetStore>();
-
-    public async Task DisposeAsync()
-    {
-        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
-        {
-            await service.ReleaseAsync(default);
-        }
-
-        if (Directory.Exists(TestFolder))
-        {
-            Directory.Delete(TestFolder, true);
-        }
-    }
+    public FolderAssetStore Store => Services.GetRequiredService<FolderAssetStore>();
 
     public async Task InitializeAsync()
     {
-        services =
+        Services =
             new ServiceCollection()
                 .AddFolderAssetStore(TestHelpers.Configuration, config =>
                 {
@@ -42,9 +29,22 @@ public sealed class FolderAssetStoreFixture : IAsyncLifetime
                 .AddLogging()
                 .BuildServiceProvider();
 
-        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
+        foreach (var service in Services.GetRequiredService<IEnumerable<IInitializable>>())
         {
             await service.InitializeAsync(default);
+        }
+    }
+
+    public async Task DisposeAsync()
+    {
+        foreach (var service in Services.GetRequiredService<IEnumerable<IInitializable>>())
+        {
+            await service.ReleaseAsync(default);
+        }
+
+        if (Directory.Exists(TestFolder))
+        {
+            Directory.Delete(TestFolder, true);
         }
     }
 }

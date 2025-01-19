@@ -8,41 +8,44 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.Extensions.DependencyInjection;
+using Squidex.Assets.EntityFramework;
 using Squidex.Hosting;
-using Testcontainers.MySql;
+using Testcontainers.PostgreSql;
 using Xunit;
 
-namespace Squidex.Events;
+namespace Squidex.Assets.KeyValueStore;
 
-public sealed class MySqlEventStoreFixture : IAsyncLifetime
+public class PostgresKeyValueStoreFixture : IAsyncLifetime
 {
-    private readonly MySqlContainer mysql =
-        new MySqlBuilder()
+    private readonly PostgreSqlContainer postgresSql =
+        new PostgreSqlBuilder()
             .WithReuse(true)
-            .WithLabel("reuse-id", "eventstore-mysql")
-            .WithUsername("root")
+            .WithLabel("reuse-id", "assets-kvp-postgres")
             .Build();
+
+    public class TestContext(DbContextOptions options) : DbContext(options)
+    {
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.AddAssetKeyValueStore<TestValue>();
+            base.OnModelCreating(modelBuilder);
+        }
+    }
 
     public IServiceProvider Services { get; private set; }
 
-    public IEventStore Store => Services.GetRequiredService<IEventStore>();
+    public EFAssetKeyValueStore<TestContext, TestValue> Store => Services.GetRequiredService<EFAssetKeyValueStore<TestContext, TestValue>>();
 
     public async Task InitializeAsync()
     {
-        await mysql.StartAsync();
+        await postgresSql.StartAsync();
 
         Services = new ServiceCollection()
             .AddDbContext<TestContext>(b =>
             {
-                b.UseMySql(mysql.GetConnectionString(), ServerVersion.AutoDetect(mysql.GetConnectionString()));
+                b.UseNpgsql(postgresSql.GetConnectionString());
             })
-            .AddEntityFrameworkEventStore<TestContext>(TestHelpers.Configuration, options =>
-            {
-                options.PollingInterval = TimeSpan.FromSeconds(0.1);
-            })
-            .AddMysqlAdapter()
-            .Services
+            .AddEntityFrameworkAssetKeyValueStore<TestContext, TestValue>()
             .BuildServiceProvider();
 
         var factory = Services.GetRequiredService<IDbContextFactory<TestContext>>();
@@ -64,6 +67,6 @@ public sealed class MySqlEventStoreFixture : IAsyncLifetime
             await service.ReleaseAsync(default);
         }
 
-        await mysql.StopAsync();
+        await postgresSql.StopAsync();
     }
 }

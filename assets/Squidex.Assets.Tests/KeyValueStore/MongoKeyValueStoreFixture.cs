@@ -5,39 +5,37 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics;
 using MongoDB.Driver;
+using Squidex.Assets.Mongo;
 using Squidex.Hosting;
 using Testcontainers.MongoDb;
 using Xunit;
 
-namespace Squidex.Events;
+namespace Squidex.Assets.KeyValueStore;
 
-public sealed class MongoEventStoreStandaloneFixture : IAsyncLifetime
+public class MongoKeyValueStoreFixture : IAsyncLifetime
 {
     private readonly MongoDbContainer mongoDb =
         new MongoDbBuilder()
-            .WithReuse(true)
-            .WithLabel("reuse-id", "eventstore-mongo-standalone")
+            .WithReuse(Debugger.IsAttached)
+            .WithLabel("reuse-id", "asset-kvp-mongo")
             .Build();
 
     public IServiceProvider Services { get; private set; }
 
-    public IEventStore Store => Services.GetRequiredService<IEventStore>();
+    public MongoAssetKeyValueStore<TestValue> Store => Services.GetRequiredService<MongoAssetKeyValueStore<TestValue>>();
 
     public async Task InitializeAsync()
     {
         await mongoDb.StartAsync();
 
-        Services = new ServiceCollection()
-            .AddSingleton<IMongoClient>(_ => new MongoClient(mongoDb.GetConnectionString()))
-            .AddSingleton(c => c.GetRequiredService<IMongoClient>().GetDatabase("Test"))
-            .AddMongoEventStore(TestHelpers.Configuration, options =>
-            {
-                options.PollingInterval = TimeSpan.FromSeconds(0.1);
-            })
-            .Services
-            .BuildServiceProvider();
+        Services =
+            new ServiceCollection()
+                .AddSingleton<IMongoClient>(_ => new MongoClient(mongoDb.GetConnectionString()))
+                .AddSingleton(c => c.GetRequiredService<IMongoClient>().GetDatabase("Test"))
+                .AddMongoAssetKeyValueStore()
+                .BuildServiceProvider();
 
         foreach (var service in Services.GetRequiredService<IEnumerable<IInitializable>>())
         {

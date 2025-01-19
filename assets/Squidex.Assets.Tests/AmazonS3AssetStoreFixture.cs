@@ -13,29 +13,29 @@ namespace Squidex.Assets;
 
 public sealed class AmazonS3AssetStoreFixture : IAsyncLifetime
 {
-    private IServiceProvider services;
+    public IServiceProvider Services { get; private set; }
 
-    public AmazonS3AssetStore Store => services.GetRequiredService<AmazonS3AssetStore>();
-
-    public async Task DisposeAsync()
-    {
-        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
-        {
-            await service.ReleaseAsync(default);
-        }
-    }
+    public AmazonS3AssetStore Store => Services.GetRequiredService<AmazonS3AssetStore>();
 
     public async Task InitializeAsync()
     {
         // From: https://console.aws.amazon.com/iam/home?region=eu-central-1#/users/s3?section=security_credentials
-        services =
+        Services =
             new ServiceCollection()
                 .AddAmazonS3AssetStore(TestHelpers.Configuration)
                 .BuildServiceProvider();
 
-        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
+        foreach (var service in Services.GetRequiredService<IEnumerable<IInitializable>>())
         {
             await service.InitializeAsync(default);
+        }
+    }
+
+    public async Task DisposeAsync()
+    {
+        foreach (var service in Services.GetRequiredService<IEnumerable<IInitializable>>())
+        {
+            await service.ReleaseAsync(default);
         }
     }
 }

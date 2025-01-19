@@ -14,29 +14,29 @@ namespace Squidex.Assets;
 
 public sealed class FTPAssetStoreFixture : IAsyncLifetime
 {
-    private IServiceProvider services;
+    public IServiceProvider Services { get; private set; }
 
-    public FTPAssetStore Store => services.GetRequiredService<FTPAssetStore>();
-
-    public async Task DisposeAsync()
-    {
-        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
-        {
-            await service.ReleaseAsync(default);
-        }
-    }
+    public FTPAssetStore Store => Services.GetRequiredService<FTPAssetStore>();
 
     public async Task InitializeAsync()
     {
-        services =
+        Services =
             new ServiceCollection()
                 .AddSingleton(A.Fake<ILogger<FTPAssetStore>>())
                 .AddFTPAssetStore(TestHelpers.Configuration)
                 .BuildServiceProvider();
 
-        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
+        foreach (var service in Services.GetRequiredService<IEnumerable<IInitializable>>())
         {
             await service.InitializeAsync(default);
+        }
+    }
+
+    public async Task DisposeAsync()
+    {
+        foreach (var service in Services.GetRequiredService<IEnumerable<IInitializable>>())
+        {
+            await service.ReleaseAsync(default);
         }
     }
 }

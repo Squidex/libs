@@ -99,11 +99,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squidex.Events", "events\Sq
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squidex.Events.EntityFramework", "events\Squidex.Events.EntityFramework\Squidex.Events.EntityFramework.csproj", "{5F4B51E1-0ADD-4C03-A93A-401BA86D08BA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squidex.Events.Tests", "events\Squidex.Events.Tests\Squidex.Events.Tests.csproj", "{1E9B31E9-EA9D-4A82-B207-00E8B275EFD4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squidex.Events.Tests", "events\Squidex.Events.Tests\Squidex.Events.Tests.csproj", "{1E9B31E9-EA9D-4A82-B207-00E8B275EFD4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squidex.Events.Mongo", "events\Squidex.Events.Mongo\Squidex.Events.Mongo.csproj", "{E36DAC0D-8A2D-49AA-B9C4-E74CAB0660B0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squidex.Events.Mongo", "events\Squidex.Events.Mongo\Squidex.Events.Mongo.csproj", "{E36DAC0D-8A2D-49AA-B9C4-E74CAB0660B0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squidex.Events.GetEventStore", "events\Squidex.Events.GetEventStore\Squidex.Events.GetEventStore.csproj", "{98156A5E-1B4A-46EF-AA84-019868425D80}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squidex.Events.GetEventStore", "events\Squidex.Events.GetEventStore\Squidex.Events.GetEventStore.csproj", "{98156A5E-1B4A-46EF-AA84-019868425D80}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squidex.Assets.EntityFramework", "assets\Squidex.Assets.EntityFramework\Squidex.Assets.EntityFramework.csproj", "{C3D35ED4-8C81-449B-B732-3F0EE1FD6C7A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -283,6 +285,10 @@ Global
 		{98156A5E-1B4A-46EF-AA84-019868425D80}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{98156A5E-1B4A-46EF-AA84-019868425D80}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{98156A5E-1B4A-46EF-AA84-019868425D80}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C3D35ED4-8C81-449B-B732-3F0EE1FD6C7A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3D35ED4-8C81-449B-B732-3F0EE1FD6C7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C3D35ED4-8C81-449B-B732-3F0EE1FD6C7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3D35ED4-8C81-449B-B732-3F0EE1FD6C7A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -331,6 +337,7 @@ Global
 		{1E9B31E9-EA9D-4A82-B207-00E8B275EFD4} = {94285572-6875-4A9C-AFC4-987758DC9088}
 		{E36DAC0D-8A2D-49AA-B9C4-E74CAB0660B0} = {94285572-6875-4A9C-AFC4-987758DC9088}
 		{98156A5E-1B4A-46EF-AA84-019868425D80} = {94285572-6875-4A9C-AFC4-987758DC9088}
+		{C3D35ED4-8C81-449B-B732-3F0EE1FD6C7A} = {C857F3ED-A6AE-47C6-A115-87ECCB36AC02}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {060512DD-34DA-4929-A67F-2E473577FBF5}

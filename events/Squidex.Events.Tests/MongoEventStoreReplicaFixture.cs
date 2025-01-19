@@ -22,25 +22,15 @@ public sealed class MongoEventStoreReplicaFixture : IAsyncLifetime
             .WithReplicaSet()
             .Build();
 
-    private IServiceProvider services;
+    public IServiceProvider Services { get; private set; }
 
-    public IEventStore Store => services.GetRequiredService<IEventStore>();
-
-    public async Task DisposeAsync()
-    {
-        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
-        {
-            await service.ReleaseAsync(default);
-        }
-
-        await mongoDb.StopAsync();
-    }
+    public IEventStore Store => Services.GetRequiredService<IEventStore>();
 
     public async Task InitializeAsync()
     {
         await mongoDb.StartAsync();
 
-        services = new ServiceCollection()
+        Services = new ServiceCollection()
             .AddSingleton<IMongoClient>(_ => new MongoClient(mongoDb.GetConnectionString()))
             .AddSingleton(c => c.GetRequiredService<IMongoClient>().GetDatabase("Test"))
             .AddMongoEventStore(TestHelpers.Configuration, options =>
@@ -50,9 +40,19 @@ public sealed class MongoEventStoreReplicaFixture : IAsyncLifetime
             .Services
             .BuildServiceProvider();
 
-        foreach (var service in services.GetRequiredService<IEnumerable<IInitializable>>())
+        foreach (var service in Services.GetRequiredService<IEnumerable<IInitializable>>())
         {
             await service.InitializeAsync(default);
         }
+    }
+
+    public async Task DisposeAsync()
+    {
+        foreach (var service in Services.GetRequiredService<IEnumerable<IInitializable>>())
+        {
+            await service.ReleaseAsync(default);
+        }
+
+        await mongoDb.StopAsync();
     }
 }
