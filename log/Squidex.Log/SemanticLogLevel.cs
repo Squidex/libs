@@ -14,5 +14,5 @@ public enum SemanticLogLevel
     Information,
     Warning,
     Error,
-    Fatal
+    Fatal,
 }

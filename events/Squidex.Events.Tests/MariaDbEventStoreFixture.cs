@@ -33,7 +33,7 @@ public sealed class MariaDbEventStoreFixture : IAsyncLifetime
         await mariaDb.StartAsync();
 
         Services = new ServiceCollection()
-            .AddDbContext<TestContext>(b =>
+            .AddDbContextFactory<TestContext>(b =>
             {
                 b.UseMySql(mariaDb.GetConnectionString(), ServerVersion.AutoDetect(mariaDb.GetConnectionString()));
             })

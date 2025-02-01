@@ -47,7 +47,7 @@ public sealed partial class EFEventStore<T>
             EventStreamOffset = newOffset,
             EventsCount = events.Count,
             Events = events.Select(e => e.SerializeToJsonString()).ToArray(),
-            Timestamp = timeProvider.GetUtcNow().UtcDateTime
+            Timestamp = timeProvider.GetUtcNow().UtcDateTime,
         };
 
         for (var attempt = 1; attempt <= MaxWriteAttempts; attempt++)

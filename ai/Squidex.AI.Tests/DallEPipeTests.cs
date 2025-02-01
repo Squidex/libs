@@ -60,7 +60,7 @@ public class DalLEPipeTests
                         SystemMessages =
                         [
                             "You are a fiendly agent. Always use the result from the tool if you have called one.",
-                            "When you are asked to generate content such as articles, add placeholders for image, describe and use the following pattern: <IMG>{description}</IMG>. {description} is the generated image description."
+                            "When you are asked to generate content such as articles, add placeholders for image, describe and use the following pattern: <IMG>{description}</IMG>. {description} is the generated image description.",
                         ],
                     };
                 })

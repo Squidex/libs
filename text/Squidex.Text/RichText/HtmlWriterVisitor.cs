@@ -23,7 +23,7 @@ public sealed class HtmlWriterVisitor : Visitor
             "h3",
             "h4",
             "h5",
-            "h6"
+            "h6",
         ];
 
     private readonly List<(string Key, string? Value)> attributes = [];
@@ -44,7 +44,7 @@ public sealed class HtmlWriterVisitor : Visitor
             0 => string.Empty,
             2 => Indent2,
             4 => Indent4,
-            _ => new string(' ', options.Indentation)
+            _ => new string(' ', options.Indentation),
         };
 
         IWriter newWriter = options.Indentation > 0 ? new IndentedWriter(stringBuilder) : new PlainWriter(stringBuilder);

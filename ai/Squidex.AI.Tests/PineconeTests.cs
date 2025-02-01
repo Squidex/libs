@@ -56,7 +56,7 @@ public class PineconeTests
                         SystemMessages =
                         [
                             "You are a fiendly agent. Always use the result from the tool if you have called one.",
-                            "Say hello to the user."
+                            "Say hello to the user.",
                         ],
                     };
                 })

@@ -31,7 +31,7 @@ public class KafkaFixture : IAsyncLifetime
             .Build();
 
         await adminClient.CreateTopicsAsync([
-            new TopicSpecification { Name = "dev" }
+            new TopicSpecification { Name = "dev" },
         ]);
     }
 

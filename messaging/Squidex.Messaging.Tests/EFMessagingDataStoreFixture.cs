@@ -27,7 +27,7 @@ public class EFMessagingDataStoreFixture : IAsyncLifetime
 
     public IMessagingDataStore Store => Services.GetRequiredService<IMessagingDataStore>();
 
-    public sealed class AppDbContext(DbContextOptions options) : DbContext(options)
+    public sealed class TestContext(DbContextOptions options) : DbContext(options)
     {
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -51,17 +51,17 @@ public class EFMessagingDataStoreFixture : IAsyncLifetime
         await postgresSql.StartAsync();
 
         Services = new ServiceCollection()
-            .AddDbContext<AppDbContext>(b =>
+            .AddDbContextFactory<TestContext>(b =>
             {
                 b.UseNpgsql(postgresSql.GetConnectionString());
             })
             .AddLogging()
             .AddMessaging()
-            .AddEntityFrameworkDataStore<AppDbContext>(TestHelpers.Configuration)
+            .AddEntityFrameworkDataStore<TestContext>(TestHelpers.Configuration)
             .Services
             .BuildServiceProvider();
 
-        var factory = Services.GetRequiredService<IDbContextFactory<AppDbContext>>();
+        var factory = Services.GetRequiredService<IDbContextFactory<TestContext>>();
         var context = await factory.CreateDbContextAsync();
         var creator = (RelationalDatabaseCreator)context.Database.GetService<IDatabaseCreator>();
 

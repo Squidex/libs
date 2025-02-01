@@ -54,7 +54,7 @@ public sealed class MongoTransport(
         {
             var value = new MongoSubscriptionValue
             {
-                InstanceName = instanceName
+                InstanceName = instanceName,
             };
 
             subscription = await messagingDataProvider.StoreAsync(channelName, instanceName, value, this.options.SubscriptionExpiration, ct);
@@ -110,7 +110,7 @@ public sealed class MongoTransport(
                 QueueName = queueName,
                 MessageData = transportMessage.Data,
                 MessageHeaders = transportMessage.Headers,
-                TimeToLive = transportMessage.Headers.GetTimeToLive(timeProvider)
+                TimeToLive = transportMessage.Headers.GetTimeToLive(timeProvider),
             };
 
             await channelCollection.InsertOneAsync(mongoMessage, null, ct);
@@ -156,8 +156,8 @@ public sealed class MongoTransport(
                                 .Ascending(x => x.TimeToLive),
                             new CreateIndexOptions
                             {
-                                ExpireAfter = TimeSpan.Zero
-                            })
+                                ExpireAfter = TimeSpan.Zero,
+                            }),
                     ],
                     default);
 

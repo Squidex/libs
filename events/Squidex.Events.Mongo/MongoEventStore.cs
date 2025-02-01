@@ -59,8 +59,8 @@ public partial class MongoEventStore(
                     .Descending(x => x.EventStreamOffset),
                 new CreateIndexOptions
                 {
-                    Unique = true
-                })
+                    Unique = true,
+                }),
         ], ct);
 
         var clusterVersion = await database.GetMajorVersionAsync(ct);

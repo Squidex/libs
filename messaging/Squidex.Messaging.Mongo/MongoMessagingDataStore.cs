@@ -50,8 +50,8 @@ public sealed class MongoMessagingDataStore(
                         .Ascending(x => x.Expiration),
                     new CreateIndexOptions
                     {
-                        ExpireAfter = TimeSpan.Zero
-                    })
+                        ExpireAfter = TimeSpan.Zero,
+                    }),
             ], ct);
     }
 
@@ -94,7 +94,7 @@ public sealed class MongoMessagingDataStore(
                     .Set(x => x.ValueFormat, value.Format)
                     .Set(x => x.ValueData, value.Data))
             {
-                IsUpsert = true
+                IsUpsert = true,
             });
         }
 

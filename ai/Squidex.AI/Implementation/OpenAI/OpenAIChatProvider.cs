@@ -75,7 +75,7 @@ public sealed class OpenAIChatProvider(IOptions<OpenAIChatOptions> options) : IC
             observer.OnNext(new ChatFinishEvent
             {
                 NumInputTokens = numInputTokens,
-                NumOutputTokens = numOutputTokens
+                NumOutputTokens = numOutputTokens,
             });
         }
 
@@ -199,7 +199,7 @@ public sealed class OpenAIChatProvider(IOptions<OpenAIChatOptions> options) : IC
                     Arguments = args,
                     ChatAgent = request.ChatAgent,
                     Context = request.Context,
-                    ToolData = request.ToolData
+                    ToolData = request.ToolData,
                 };
 
                 var result = await job.Tool.ExecuteAsync(toolContext, ct);

@@ -84,5 +84,5 @@ public readonly struct StreamFilter(StreamFilterKind kind, IReadOnlySet<string>?
 public enum StreamFilterKind
 {
     MatchFull,
-    MatchStart
+    MatchStart,
 }

@@ -31,7 +31,7 @@ public sealed class SqlServerEventStoreFixture : IAsyncLifetime
         await msSql.StartAsync();
 
         Services = new ServiceCollection()
-            .AddDbContext<TestContext>(b =>
+            .AddDbContextFactory<TestContext>(b =>
             {
                 b.UseSqlServer(msSql.GetConnectionString());
             })

@@ -54,7 +54,7 @@ public class Resizing
         await generator.CreateThumbnailAsync(source, "image/png", destination, new ResizeOptions
         {
             TargetHeight = 100,
-            TargetWidth = 100
+            TargetWidth = 100,
         });
     }
 
@@ -86,7 +86,7 @@ public static class Program
                     await generator.CreateThumbnailAsync(source, "image/png", destination, new ResizeOptions
                     {
                         TargetHeight = 100,
-                        TargetWidth = 100
+                        TargetWidth = 100,
                     });
                 }
             }

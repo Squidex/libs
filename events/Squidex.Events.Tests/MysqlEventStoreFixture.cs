@@ -33,7 +33,7 @@ public sealed class MySqlEventStoreFixture : IAsyncLifetime
         await mysql.StartAsync();
 
         Services = new ServiceCollection()
-            .AddDbContext<TestContext>(b =>
+            .AddDbContextFactory<TestContext>(b =>
             {
                 b.UseMySql(mysql.GetConnectionString(), ServerVersion.AutoDetect(mysql.GetConnectionString()));
             })

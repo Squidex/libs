@@ -32,9 +32,9 @@ public sealed class DallETool(
             {
                 ["query"] = new ToolStringArgumentSpec("The query.")
                 {
-                    IsRequired = true
-                }
-            }
+                    IsRequired = true,
+                },
+            },
         };
 
     public async Task CleanupAsync(Dictionary<string, string> toolData,
@@ -57,12 +57,12 @@ public sealed class DallETool(
         {
             Arguments = new Dictionary<string, ToolValue>
             {
-                ["query"] = new ToolStringValue(request.Query)
+                ["query"] = new ToolStringValue(request.Query),
             },
             ChatAgent = request.ChatAgent,
             Context = request.Context,
             ToolTag = true,
-            ToolData = request.ToolData
+            ToolData = request.ToolData,
         };
 
         return toolContext;
@@ -161,7 +161,7 @@ public sealed class DallETool(
 
         var resizeOptions = new ResizeOptions
         {
-            Format = ImageFormat.WEBP
+            Format = ImageFormat.WEBP,
         };
 
         await assetThumbnailGenerator.CreateThumbnailAsync(imageSource, mimeType, imageFile, resizeOptions, ct);

@@ -22,7 +22,7 @@ public static class WordBoundary
         '\u000D', // Carriage Return
         '\u0085', // Next Line
         '\u2028', // Line Separator
-        '\u2029' // Paragraph Separator
+        '\u2029', // Paragraph Separator
     ];
 
     private static readonly HashSet<char> MidLetter =
@@ -36,7 +36,7 @@ public static class WordBoundary
         '\u2027', // Hyphenation Point
         '\uFE13', // Presentation form for vertical colon
         '\uFE55', // Small Colon
-        '\uFF1A' // Full Width Colon
+        '\uFF1A', // Full Width Colon
     ];
 
     /// <summary>

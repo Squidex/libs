@@ -39,7 +39,7 @@ public static class MessagingServiceExtensions
             ["Redis"] = () =>
             {
                 builder.AddRedisTransport(config);
-            }
+            },
         });
 
         return builder;

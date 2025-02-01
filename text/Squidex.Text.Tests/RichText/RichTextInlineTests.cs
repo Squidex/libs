@@ -23,9 +23,9 @@ public class RichTextInlineTests
             [
                 new Mark
                 {
-                    Type = MarkType.Bold
+                    Type = MarkType.Bold,
                 },
-            ]
+            ],
         };
 
         RenderUtils.AssertNode(source,
@@ -48,9 +48,9 @@ public class RichTextInlineTests
             [
                 new Mark
                 {
-                    Type = MarkType.Italic
+                    Type = MarkType.Italic,
                 },
-            ]
+            ],
         };
 
         RenderUtils.AssertNode(source,
@@ -73,9 +73,9 @@ public class RichTextInlineTests
             [
                 new Mark
                 {
-                    Type = MarkType.Underline
+                    Type = MarkType.Underline,
                 },
-            ]
+            ],
         };
 
         RenderUtils.AssertNode(source,
@@ -98,9 +98,9 @@ Text1",
             [
                 new Mark
                 {
-                    Type = MarkType.Code
+                    Type = MarkType.Code,
                 },
-            ]
+            ],
         };
 
         RenderUtils.AssertNode(source,
@@ -126,10 +126,10 @@ Text1",
                     Type = MarkType.ClassName,
                     Attributes = new Attributes
                     {
-                        ["className"] = "text-left"
-                    }
+                        ["className"] = "text-left",
+                    },
                 },
-            ]
+            ],
         };
 
         RenderUtils.AssertNode(source,
@@ -152,21 +152,21 @@ Text1",
             [
                 new Mark
                 {
-                    Type = MarkType.Bold
+                    Type = MarkType.Bold,
                 },
                 new Mark
                 {
-                    Type = MarkType.Underline
+                    Type = MarkType.Underline,
                 },
                 new Mark
                 {
-                    Type = MarkType.Italic
+                    Type = MarkType.Italic,
                 },
                 new Mark
                 {
-                    Type = MarkType.Code
+                    Type = MarkType.Code,
                 },
-            ]
+            ],
         };
 
         RenderUtils.AssertNode(source,

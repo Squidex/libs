@@ -43,7 +43,7 @@ public sealed class EFChatStoreFixture : IAsyncLifetime
         await postgresSql.StartAsync();
 
         Services = new ServiceCollection()
-            .AddDbContext<AppDbContext>(b =>
+            .AddDbContextFactory<AppDbContext>(b =>
             {
                 b.UseNpgsql(postgresSql.GetConnectionString());
             })

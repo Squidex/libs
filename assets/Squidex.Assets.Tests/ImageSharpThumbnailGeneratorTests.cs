@@ -20,7 +20,7 @@ public class ImageSharpThumbnailGeneratorTests : AssetThumbnailGeneratorTests
         ImageFormat.JPEG,
         ImageFormat.TGA,
         ImageFormat.TIFF,
-        ImageFormat.WEBP
+        ImageFormat.WEBP,
     ];
 
     protected override string Name()
@@ -63,7 +63,7 @@ public class ImageSharpThumbnailGeneratorTests : AssetThumbnailGeneratorTests
             await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
             {
                 WatermarkAnchor = anchor,
-                WatermarkUrl = "https://github.com/Squidex/squidex/blob/master/media/logo-wide.png?raw=true"
+                WatermarkUrl = "https://github.com/Squidex/squidex/blob/master/media/logo-wide.png?raw=true",
             });
 
             Assert.True(target.Length > source.Length);
@@ -85,7 +85,7 @@ public class ImageSharpThumbnailGeneratorTests : AssetThumbnailGeneratorTests
             await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
             {
                 WatermarkAnchor = anchor,
-                WatermarkUrl = "https://github.com/Squidex/squidex/blob/master/media/logo-wide.png?raw=true"
+                WatermarkUrl = "https://github.com/Squidex/squidex/blob/master/media/logo-wide.png?raw=true",
             });
 
             Assert.True(target.Length > source.Length);

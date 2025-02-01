@@ -22,7 +22,7 @@ public sealed class EFMessagingFixture : IAsyncLifetime
             .WithLabel("reuse-id", "messaging-postgres")
             .Build();
 
-    public sealed class AppDbContext(DbContextOptions options) : DbContext(options)
+    public sealed class TestContext(DbContextOptions options) : DbContext(options)
     {
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -37,13 +37,13 @@ public sealed class EFMessagingFixture : IAsyncLifetime
         await PostgresSql.StartAsync();
 
         var services = new ServiceCollection()
-            .AddDbContextFactory<AppDbContext>(b =>
+            .AddDbContextFactory<TestContext>(b =>
             {
                 b.UseNpgsql(PostgresSql.GetConnectionString());
             })
             .BuildServiceProvider();
 
-        var factory = services.GetRequiredService<IDbContextFactory<AppDbContext>>();
+        var factory = services.GetRequiredService<IDbContextFactory<TestContext>>();
         var context = await factory.CreateDbContextAsync();
         var creator = (RelationalDatabaseCreator)context.Database.GetService<IDatabaseCreator>();
 

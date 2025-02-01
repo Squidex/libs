@@ -15,13 +15,13 @@ public class EFMessagingTests(EFMessagingFixture fixture)
 {
     protected override void Configure(MessagingBuilder builder)
     {
-        builder.Services.AddDbContext<EFMessagingFixture.AppDbContext>(b =>
+        builder.Services.AddDbContextFactory<EFMessagingFixture.TestContext>(b =>
         {
             b.UseNpgsql(fixture.PostgresSql.GetConnectionString());
         });
 
-        builder.AddEntityFrameworkDataStore<EFMessagingFixture.AppDbContext>(TestHelpers.Configuration);
-        builder.AddEntityFrameworkTransport<EFMessagingFixture.AppDbContext>(TestHelpers.Configuration, options =>
+        builder.AddEntityFrameworkDataStore<EFMessagingFixture.TestContext>(TestHelpers.Configuration);
+        builder.AddEntityFrameworkTransport<EFMessagingFixture.TestContext>(TestHelpers.Configuration, options =>
         {
             options.PollingInterval = TimeSpan.FromSeconds(0.1);
             options.UpdateInterval = TimeSpan.FromSeconds(0.1);

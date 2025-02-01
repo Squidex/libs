@@ -25,7 +25,7 @@ public class EnvelopeHeadersTests
     {
         var headers = new EnvelopeHeaders
         {
-            ["long"] = 42
+            ["long"] = 42,
         };
 
         var result = headers.GetLong("long");
@@ -51,7 +51,7 @@ public class EnvelopeHeadersTests
     {
         var headers = new EnvelopeHeaders
         {
-            ["long"] = source
+            ["long"] = source,
         };
 
         var result = headers.GetLong("long");
@@ -63,7 +63,7 @@ public class EnvelopeHeadersTests
     {
         var headers = new EnvelopeHeaders
         {
-            ["string"] = "Hello"
+            ["string"] = "Hello",
         };
 
         var result = headers.GetString("string");
@@ -86,7 +86,7 @@ public class EnvelopeHeadersTests
     {
         var headers = new EnvelopeHeaders
         {
-            ["string"] = 42
+            ["string"] = 42,
         };
 
         var result = headers.GetString("string");
@@ -98,7 +98,7 @@ public class EnvelopeHeadersTests
     {
         var headers = new EnvelopeHeaders
         {
-            ["string"] = true
+            ["string"] = true,
         };
 
         var result = headers.GetString("string");
@@ -110,7 +110,7 @@ public class EnvelopeHeadersTests
     {
         var headers = new EnvelopeHeaders
         {
-            ["bool"] = true
+            ["bool"] = true,
         };
 
         var result = headers.GetBoolean("bool");
@@ -133,7 +133,7 @@ public class EnvelopeHeadersTests
     {
         var headers = new EnvelopeHeaders
         {
-            ["date"] = "2023-12-11T10:09:08z"
+            ["date"] = "2023-12-11T10:09:08z",
         };
 
         var result = headers.GetDateTime("date");
@@ -145,7 +145,7 @@ public class EnvelopeHeadersTests
     {
         var headers = new EnvelopeHeaders
         {
-            ["date"] = "2023-12-11T10:09:08.765z"
+            ["date"] = "2023-12-11T10:09:08.765z",
         };
 
         var result = headers.GetDateTime("date");
@@ -165,7 +165,7 @@ public class EnvelopeHeadersTests
     {
         var source = new EnvelopeHeaders
         {
-            ["key1"] = 13
+            ["key1"] = 13,
         };
 
         var headers = new EnvelopeHeaders(source);
@@ -178,7 +178,7 @@ public class EnvelopeHeadersTests
     {
         var source = new EnvelopeHeaders
         {
-            ["key1"] = 13
+            ["key1"] = 13,
         };
 
         var headers = source.CloneHeaders();
@@ -194,7 +194,7 @@ public class EnvelopeHeadersTests
             ["key1"] = 13,
             ["key2"] = "Hello World",
             ["key3"] = true,
-            ["key4"] = false
+            ["key4"] = false,
         };
 
         var json = source.SerializeToJsonString();
@@ -213,7 +213,7 @@ public class EnvelopeHeadersTests
             ["key2"] = "Hello World",
             ["key3"] = true,
             ["key4"] = false,
-            ["key5"] = default
+            ["key5"] = default,
         };
 
         var json = source.SerializeToJsonBytes();
@@ -232,7 +232,7 @@ public class EnvelopeHeadersTests
             ["key2"] = "Hello World",
             ["key3"] = true,
             ["key4"] = false,
-            ["key5"] = default
+            ["key5"] = default,
         };
 
         var deserialized = source.SerializeAndDeserializeBson();
@@ -248,7 +248,7 @@ public class EnvelopeHeadersTests
             ["number1"] = 100,
             ["number2"] = 200L,
             ["number3"] = 300.5f,
-            ["number4"] = 400.5d
+            ["number4"] = 400.5d,
         };
 
         var expected = new EnvelopeHeaders
@@ -256,7 +256,7 @@ public class EnvelopeHeadersTests
             ["number1"] = 100,
             ["number2"] = 200,
             ["number3"] = 300.5,
-            ["number4"] = 400.5
+            ["number4"] = 400.5,
         };
 
         var deserialized = source.SerializeAndDeserializeBson<BsonDocument, EnvelopeHeaders>();

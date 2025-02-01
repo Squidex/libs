@@ -274,7 +274,7 @@ public static class HtmlEntity
     private enum ParserState
     {
         Text,
-        EntityStart
+        EntityStart,
     }
 
     public static void Decode(ReadOnlyMemory<char> source, StringBuilder target)

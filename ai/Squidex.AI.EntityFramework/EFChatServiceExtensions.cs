@@ -20,8 +20,6 @@ public static class EFChatServiceExtensions
         builder.Services.AddSingletonAs<EFChatStore<T>>()
             .As<IChatStore>();
 
-        builder.Services.AddDbContextFactory<T>();
-
         return builder;
     }
 }

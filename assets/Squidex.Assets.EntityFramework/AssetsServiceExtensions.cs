@@ -22,7 +22,6 @@ public static class AssetsServiceExtensions
         services.AddSingletonAs<EFAssetKeyValueStore<TContext, TEntity>>()
             .As<IAssetKeyValueStore<TEntity>>().AsSelf();
 
-        services.AddDbContextFactory<TContext>();
         services.TryAddSingleton(JsonSerializerOptions.Default);
 
         return services;

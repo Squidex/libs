@@ -69,7 +69,7 @@ public sealed class KafkaTransport(
 
         var message = new Message<string, byte[]>
         {
-            Value = transportMessage.Data
+            Value = transportMessage.Data,
         };
 
         if (transportMessage.Headers.Count > 0)

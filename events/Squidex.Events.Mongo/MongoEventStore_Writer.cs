@@ -120,7 +120,7 @@ public partial class MongoEventStore
             EventsCount = events.Count,
             EventStream = streamName,
             EventStreamOffset = expectedVersion,
-            Timestamp = EmptyTimestamp
+            Timestamp = EmptyTimestamp,
         };
 
         return mongoCommit;

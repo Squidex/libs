@@ -37,7 +37,7 @@ public sealed class AssetTusRunner
                 {
                     eventContext.HttpContext.Items[TusFile] = file;
                 }
-            }
+            },
         };
 
         middleware = new TusCoreMiddleware(Next, ctx =>
@@ -53,7 +53,7 @@ public sealed class AssetTusRunner
                 Events = events,
 
                 // Get the url from the controller that is temporarily stored in the items.
-                UrlPath = ctx.Items[TusUrl]!.ToString()
+                UrlPath = ctx.Items[TusUrl]!.ToString(),
             };
 
             return Task.FromResult(configuration);
@@ -102,7 +102,7 @@ public sealed class AssetTusRunner
             PathBase = existingRequestFeature.PathBase,
             Protocol = existingRequestFeature.Protocol,
             QueryString = existingRequestFeature.QueryString,
-            Scheme = existingRequestFeature.Scheme
+            Scheme = existingRequestFeature.Scheme,
         };
 
         var responseFeature = new HttpResponseFeature();

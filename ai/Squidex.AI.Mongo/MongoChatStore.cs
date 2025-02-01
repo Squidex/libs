@@ -68,7 +68,7 @@ public sealed class MongoChatStore(IMongoDatabase database, IOptions<MongoChatSt
                 .Set(x => x.LastUpdated, now),
             new UpdateOptions
             {
-                IsUpsert = true
+                IsUpsert = true,
             },
             ct);
     }

@@ -27,14 +27,14 @@ public abstract class AssetStoreTests
     {
         NoFolder,
         FolderWindows,
-        FolderLinux
+        FolderLinux,
     }
 
     public static readonly TheoryData<TestCase> FolderCases =
     [
         TestCase.NoFolder,
         TestCase.FolderWindows,
-        TestCase.FolderLinux
+        TestCase.FolderLinux,
     ];
 
     [Theory]

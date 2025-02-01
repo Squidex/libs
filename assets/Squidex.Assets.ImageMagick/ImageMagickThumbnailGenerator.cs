@@ -69,7 +69,7 @@ public sealed class ImageMagickThumbnailGenerator : AssetThumbnailGeneratorBase
 
                     var sourceRectangle = new MagickGeometry((uint)pad.Width, (uint)pad.Height)
                     {
-                        IgnoreAspectRatio = true
+                        IgnoreAspectRatio = true,
                     };
 
                     clone.Resize(sourceRectangle);
@@ -131,7 +131,7 @@ public sealed class ImageMagickThumbnailGenerator : AssetThumbnailGeneratorBase
             {
                 image.Ping(source, new MagickReadSettings
                 {
-                    Format = GetFormat(mimeType)
+                    Format = GetFormat(mimeType),
                 });
 
                 var hasSensitiveMetadata =

@@ -64,7 +64,7 @@ public class ChatCleanerTests
                 new[]
                 {
                     (conversationId1, conversation1),
-                    (conversationId2, conversation2)
+                    (conversationId2, conversation2),
                 }.ToAsyncEnumerable());
 
         await sut.CleanupAsync(default);
@@ -91,7 +91,7 @@ public class ChatCleanerTests
                 new[]
                 {
                     (conversationId1, conversation1),
-                    (conversationId2, conversation2)
+                    (conversationId2, conversation2),
                 }.ToAsyncEnumerable());
 
         await sut.CleanupAsync(default);

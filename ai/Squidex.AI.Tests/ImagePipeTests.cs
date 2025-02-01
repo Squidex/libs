@@ -29,7 +29,7 @@ public class ImagePipeTests
             History = [],
             Tool = null,
             ToolData = [],
-            Tools = []
+            Tools = [],
         };
 
         sut = new ImagePipe(tool);
@@ -75,7 +75,7 @@ public class ImagePipeTests
         {
             CreateEvents("<IMG>Small "),
             [new ToolStartEvent { Tool = null!, Arguments = null! }],
-            CreateEvents("Puppet</IMG>")
+            CreateEvents("Puppet</IMG>"),
         }.SelectMany(x => x).ToAsyncEnumerable();
 
         var resultStream = await sut.StreamAsync(source, request).ToListAsync();
@@ -140,17 +140,17 @@ public class ImagePipeTests
                     Tool = tool,
                     Arguments = new Dictionary<string, ToolValue>
                     {
-                        ["query"] = new ToolStringValue("Puppy")
-                    }
+                        ["query"] = new ToolStringValue("Puppy"),
+                    },
                 },
                 new ToolEndEvent
                 {
                     Tool = tool,
-                    Result = "URL_TO_PUPPY_IMAGE"
+                    Result = "URL_TO_PUPPY_IMAGE",
                 },
             ],
             [new ChunkEvent { Content = "URL_TO_PUPPY_IMAGE" }],
-            CreateEvents(" Text After")
+            CreateEvents(" Text After"),
         }.SelectMany(x => x).ToList();
 
         resultStream.Should().BeEquivalentTo(expectedStream,
@@ -189,7 +189,7 @@ public class ImagePipeTests
             },
             ChatAgent = null!,
             Context = request.Context,
-            ToolData = request.ToolData
+            ToolData = request.ToolData,
         };
     }
 }

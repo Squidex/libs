@@ -215,12 +215,12 @@ public static class SvgAttributes
         "y2",
         "yChannelSelector",
         "z",
-        "zoomAndPan"
+        "zoomAndPan",
     }.Select(x => x.AsMemory()).ToHashSet(ReadOnlyMemoryCharComparer.OrdinalIgnoreCase);
 
     public static readonly HashSet<ReadOnlyMemory<char>> Urls = new string[]
     {
         "href",
-        "src"
+        "src",
     }.Select(x => x.AsMemory()).ToHashSet(ReadOnlyMemoryCharComparer.OrdinalIgnoreCase);
 }

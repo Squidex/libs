@@ -69,7 +69,7 @@ public sealed class EFChatStore<T>(IDbContextFactory<T> dbContextFactory) : ICha
                 Id = conversationId,
                 LastUpdated = now,
                 Version = Guid.NewGuid(),
-                Value = json
+                Value = json,
             };
 
             await context.Set<EFChatEntity>().AddAsync(entity, ct);

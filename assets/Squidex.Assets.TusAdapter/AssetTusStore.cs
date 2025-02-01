@@ -35,7 +35,7 @@ public sealed class AssetTusStore(IAssetStore assetStore, IAssetKeyValueStore<Tu
             Created = true,
             UploadLength = uploadLength,
             UploadMetadata = metadata,
-            Expires = DateTimeOffset.UtcNow.Add(DefaultExpiration)
+            Expires = DateTimeOffset.UtcNow.Add(DefaultExpiration),
         };
 
         await SetMetadataAsync(id, metadataObj, cancellationToken);

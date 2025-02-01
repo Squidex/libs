@@ -41,7 +41,7 @@ public class DalLETests
             },
             ChatAgent = null!,
             Context = new ChatContext(),
-            ToolData = []
+            ToolData = [],
         };
 
         var result = await sut.ExecuteAsync(ctx, default);
@@ -129,7 +129,7 @@ public class DalLETests
                         SystemMessages =
                         [
                             "You are a fiendly agent. Always use the result from the tool if you have called one.",
-                            "Say hello to the user."
+                            "Say hello to the user.",
                         ],
                     };
                 })

@@ -24,7 +24,7 @@ public class FolderAssetStoreTests(FolderAssetStoreFixture fixture)
     {
         var options = Options.Create(new FolderAssetOptions
         {
-            Path = CreateInvalidPath()
+            Path = CreateInvalidPath(),
         });
 
         await Assert.ThrowsAsync<AssetStoreException>(() => new FolderAssetStore(options, A.Dummy<ILogger<FolderAssetStore>>()).InitializeAsync(default));

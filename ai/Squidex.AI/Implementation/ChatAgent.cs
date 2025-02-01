@@ -151,7 +151,7 @@ public sealed class ChatAgent(
                         CostsInEUR = streamCosts,
                         NumInputTokens = f.NumInputTokens,
                         NumOutputTokens = f.NumOutputTokens,
-                    }
+                    },
                 };
             }
 

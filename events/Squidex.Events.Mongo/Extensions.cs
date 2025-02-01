@@ -20,7 +20,7 @@ internal static class Extensions
         var command =
             new BsonDocumentCommand<BsonDocument>(new BsonDocument
             {
-                { "buildInfo", 1 }
+                { "buildInfo", 1 },
             });
 
         var document = await database.RunCommandAsync(command, cancellationToken: ct);

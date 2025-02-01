@@ -32,7 +32,7 @@ public sealed class PostgresEventStoreFixture : IAsyncLifetime
         await postgresSql.StartAsync();
 
         Services = new ServiceCollection()
-            .AddDbContext<TestContext>(b =>
+            .AddDbContextFactory<TestContext>(b =>
             {
                b.UseNpgsql(postgresSql.GetConnectionString());
             })

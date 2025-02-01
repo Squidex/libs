@@ -19,15 +19,15 @@ public class AzureBlobAssetStore(IOptions<AzureBlobAssetOptions> options) : IAss
     {
         Conditions = new BlobRequestConditions
         {
-            IfNoneMatch = new ETag("*")
-        }
+            IfNoneMatch = new ETag("*"),
+        },
     };
     private static readonly BlobCopyFromUriOptions NoOverwriteCopy = new BlobCopyFromUriOptions
     {
         DestinationConditions = new BlobRequestConditions
         {
-            IfNoneMatch = new ETag("*")
-        }
+            IfNoneMatch = new ETag("*"),
+        },
     };
     private readonly AzureBlobAssetOptions options = options.Value;
     private BlobContainerClient blobContainer;

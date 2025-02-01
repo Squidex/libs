@@ -44,7 +44,7 @@ public sealed class EFTransport<T>(
         {
             var value = new EFSubscriptionValue
             {
-                InstanceName = instanceName
+                InstanceName = instanceName,
             };
 
             subscription = await messagingDataProvider.StoreAsync(channelName, instanceName, value, this.options.SubscriptionExpiration, ct);
@@ -100,7 +100,7 @@ public sealed class EFTransport<T>(
                 QueueName = queueName,
                 MessageData = transportMessage.Data,
                 MessageHeaders = transportMessage.Headers.Serialize(),
-                TimeToLive = transportMessage.Headers.GetTimeToLive(timeProvider)
+                TimeToLive = transportMessage.Headers.GetTimeToLive(timeProvider),
             };
 
             await context.Set<EFMessage>().AddAsync(message, ct);

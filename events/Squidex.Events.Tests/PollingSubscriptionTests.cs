@@ -131,7 +131,7 @@ public class PollingSubscriptionTests
                 "type",
                 new EnvelopeHeaders
                 {
-                    ["EventId"] = Guid.NewGuid().ToString()
+                    ["EventId"] = Guid.NewGuid().ToString(),
                 },
                 "payload"));
     }

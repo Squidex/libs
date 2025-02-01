@@ -41,7 +41,7 @@ public sealed class MongoGridFSAssetStoreFixture : IAsyncLifetime
 
                     return new GridFSBucket<string>(mongoDatabase, new GridFSBucketOptions
                     {
-                        BucketName = "TestBucket"
+                        BucketName = "TestBucket",
                     });
                 })
                 .BuildServiceProvider();

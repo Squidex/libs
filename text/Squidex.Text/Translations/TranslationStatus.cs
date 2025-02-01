@@ -14,5 +14,5 @@ public enum TranslationStatus
     NotTranslated,
     NotConfigured,
     Unauthorized,
-    Failed
+    Failed,
 }

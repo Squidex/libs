@@ -55,7 +55,7 @@ public abstract class EventStoreTests
         var commit = new[]
         {
             CreateEventData(1),
-            CreateEventData(2)
+            CreateEventData(2),
         };
 
         await Assert.ThrowsAsync<WrongEventVersionException>(() => sut.AppendAsync(Guid.NewGuid(), streamName, 0, commit));
@@ -71,7 +71,7 @@ public abstract class EventStoreTests
         var commit = new[]
         {
             CreateEventData(1),
-            CreateEventData(2)
+            CreateEventData(2),
         };
 
         await sut.AppendAsync(Guid.NewGuid(), streamName, EventsVersion.Any, commit);
@@ -90,13 +90,13 @@ public abstract class EventStoreTests
         var commit1 = new[]
         {
             CreateEventData(1),
-            CreateEventData(2)
+            CreateEventData(2),
         };
 
         var commit2 = new[]
         {
             CreateEventData(1),
-            CreateEventData(2)
+            CreateEventData(2),
         };
 
         await sut.AppendAsync(Guid.NewGuid(), streamName, EventsVersion.Any, commit1, ct);
@@ -110,7 +110,7 @@ public abstract class EventStoreTests
             new StoredEvent(streamName, "Position", 0, commit1[0]),
             new StoredEvent(streamName, "Position", 1, commit1[1]),
             new StoredEvent(streamName, "Position", 2, commit2[0]),
-            new StoredEvent(streamName, "Position", 3, commit2[1])
+            new StoredEvent(streamName, "Position", 3, commit2[1]),
         };
 
         ShouldBeEquivalentTo(readEvents1, expected);
@@ -128,12 +128,12 @@ public abstract class EventStoreTests
         var commit1 = new[]
         {
             CreateEventData(1),
-            CreateEventData(2)
+            CreateEventData(2),
         };
 
         await sut.AppendUnsafeAsync(
         [
-            new EventCommit(Guid.NewGuid(), streamName, -1, commit1)
+            new EventCommit(Guid.NewGuid(), streamName, -1, commit1),
         ], ct);
 
         var readEvents1 = await sut.QueryStreamAsync(streamName, ct: ct);
@@ -142,7 +142,7 @@ public abstract class EventStoreTests
         var expected = new[]
         {
             new StoredEvent(streamName, "Position", 0, commit1[0]),
-            new StoredEvent(streamName, "Position", 1, commit1[1])
+            new StoredEvent(streamName, "Position", 1, commit1[1]),
         };
 
         ShouldBeEquivalentTo(readEvents1, expected);
@@ -160,13 +160,13 @@ public abstract class EventStoreTests
         var commit1 = new[]
         {
             CreateEventData(1),
-            CreateEventData(2)
+            CreateEventData(2),
         };
 
         var commit2 = new[]
         {
             CreateEventData(1),
-            CreateEventData(2)
+            CreateEventData(2),
         };
 
         await sut.AppendAsync(Guid.NewGuid(), streamName, EventsVersion.Any, commit1, ct);
@@ -188,7 +188,7 @@ public abstract class EventStoreTests
         var commit1 = new[]
         {
             CreateEventData(1),
-            CreateEventData(2)
+            CreateEventData(2),
         };
 
         var readEvents = await QueryWithSubscriptionAsync(sut, streamFilter, 1, async () =>
@@ -199,7 +199,7 @@ public abstract class EventStoreTests
         var expected = new[]
         {
             new StoredEvent(streamName, "Position", 0, commit1[0]),
-            new StoredEvent(streamName, "Position", 1, commit1[1])
+            new StoredEvent(streamName, "Position", 1, commit1[1]),
         };
 
         ShouldBeEquivalentTo(readEvents, expected);
@@ -216,7 +216,7 @@ public abstract class EventStoreTests
         var commit1 = new[]
         {
             CreateEventData(1),
-            CreateEventData(2)
+            CreateEventData(2),
         };
 
         // Append and read in parallel.
@@ -228,7 +228,7 @@ public abstract class EventStoreTests
         var commit2 = new[]
         {
             CreateEventData(1),
-            CreateEventData(2)
+            CreateEventData(2),
         };
 
         // Append and read in parallel.
@@ -240,7 +240,7 @@ public abstract class EventStoreTests
         var expectedFromPosition = new[]
         {
             new StoredEvent(streamName, "Position", 2, commit2[0]),
-            new StoredEvent(streamName, "Position", 3, commit2[1])
+            new StoredEvent(streamName, "Position", 3, commit2[1]),
         };
 
         var readEventsFromBeginning = await QueryWithSubscriptionAsync(sut, streamFilter, 1, fromBeginning: true);
@@ -250,7 +250,7 @@ public abstract class EventStoreTests
             new StoredEvent(streamName, "Position", 0, commit1[0]),
             new StoredEvent(streamName, "Position", 1, commit1[1]),
             new StoredEvent(streamName, "Position", 2, commit2[0]),
-            new StoredEvent(streamName, "Position", 3, commit2[1])
+            new StoredEvent(streamName, "Position", 3, commit2[1]),
         };
 
         ShouldBeEquivalentTo(readEventsFromPosition?.TakeLast(2), expectedFromPosition);
@@ -282,7 +282,7 @@ public abstract class EventStoreTests
                 {
                     var commit = new[]
                     {
-                        CreateEventData(i * j)
+                        CreateEventData(i * j),
                     };
 
                     await sut.AppendAsync(Guid.NewGuid(), fullStreamName, EventsVersion.Any, commit, ct);
@@ -304,13 +304,13 @@ public abstract class EventStoreTests
         var stream1Commit = new[]
         {
             CreateEventData(1),
-            CreateEventData(2)
+            CreateEventData(2),
         };
 
         var stream2Commit = new[]
         {
             CreateEventData(3),
-            CreateEventData(4)
+            CreateEventData(4),
         };
 
         await sut.AppendAsync(Guid.NewGuid(), streamName1, EventsVersion.Any, stream1Commit, ct);
@@ -321,13 +321,13 @@ public abstract class EventStoreTests
         var expected1 = new[]
         {
             new StoredEvent(streamName1, "Position", 0, stream1Commit[0]),
-            new StoredEvent(streamName1, "Position", 1, stream1Commit[1])
+            new StoredEvent(streamName1, "Position", 1, stream1Commit[1]),
         };
 
         var expected2 = new[]
         {
             new StoredEvent(streamName2, "Position", 0, stream2Commit[0]),
-            new StoredEvent(streamName2, "Position", 1, stream2Commit[1])
+            new StoredEvent(streamName2, "Position", 1, stream2Commit[1]),
         };
 
         ShouldBeEquivalentTo(readEvents.Where(x => x.StreamName == streamName1), expected1);
@@ -354,7 +354,7 @@ public abstract class EventStoreTests
 
         var expected = new[]
         {
-            new StoredEvent(streamName, "Position", count - 1, eventsWritten[^1])
+            new StoredEvent(streamName, "Position", count - 1, eventsWritten[^1]),
         };
 
         ShouldBeEquivalentTo(readEvents1, expected);
@@ -519,7 +519,7 @@ public abstract class EventStoreTests
     {
         var headers = new EnvelopeHeaders
         {
-            ["EventId"] = Guid.NewGuid().ToString()
+            ["EventId"] = Guid.NewGuid().ToString(),
         };
 
         return new EventData($"Type{i}", headers, i.ToString(CultureInfo.InvariantCulture));

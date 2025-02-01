@@ -49,9 +49,9 @@ public static class Utils
                         {
                             await fileStream.CopyToAsync(stream, eventContext.CancellationToken);
                         }
-                    }
+                    },
                 },
-                FileLockProvider = new AssetFileLockProvider(store)
+                FileLockProvider = new AssetFileLockProvider(store),
             };
         });
     }

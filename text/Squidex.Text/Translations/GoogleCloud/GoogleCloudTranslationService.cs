@@ -44,7 +44,7 @@ public sealed class GoogleCloudTranslationService(IOptions<GoogleCloudTranslatio
 
         var request = new TranslateTextRequest
         {
-            Parent = $"projects/{options.ProjectId}"
+            Parent = $"projects/{options.ProjectId}",
         };
 
         foreach (var text in textsArray)

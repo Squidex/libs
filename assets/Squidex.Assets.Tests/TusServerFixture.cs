@@ -39,7 +39,7 @@ public class TusServerFixture
 
                 var gridFSBucket = new GridFSBucket<string>(mongoDatabase, new GridFSBucketOptions
                 {
-                    BucketName = "fs"
+                    BucketName = "fs",
                 });
 
                 services.AddSingleton(mongoDatabase);
@@ -62,9 +62,9 @@ public class TusServerFixture
                             var file = (AssetTusFile)(await eventContext.GetFileAsync());
 
                             Files.Add(file);
-                        }
+                        },
                     },
-                    UrlPath = "/files/middleware"
+                    UrlPath = "/files/middleware",
                 });
 
                 app.UseRouting();

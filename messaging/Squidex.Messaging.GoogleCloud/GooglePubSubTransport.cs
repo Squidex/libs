@@ -160,7 +160,7 @@ public sealed class GooglePubSubTransport(
 
         var pubSubMessage = new PubsubMessage
         {
-            Data = ByteString.CopyFrom(transportMessage.Data)
+            Data = ByteString.CopyFrom(transportMessage.Data),
         };
 
         foreach (var (key, value) in transportMessage.Headers)
@@ -205,9 +205,9 @@ public sealed class GooglePubSubTransport(
             SubscriptionName = subscriptionName,
             ExpirationPolicy = new ExpirationPolicy
             {
-                Ttl = Duration.FromTimeSpan(TimeSpan.FromDays(2))
+                Ttl = Duration.FromTimeSpan(TimeSpan.FromDays(2)),
             },
-            TopicAsTopicName = publisherClient.TopicName
+            TopicAsTopicName = publisherClient.TopicName,
         };
 
         await subscriptionApi.CreateSubscriptionAsync(request, ct);

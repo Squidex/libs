@@ -10,5 +10,5 @@ namespace Squidex.Messaging;
 public enum ChannelType
 {
     Queue,
-    Topic
+    Topic,
 }

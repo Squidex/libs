@@ -16,7 +16,7 @@ public sealed class MongoAssetKeyValueStore<T> : IAssetKeyValueStore<T>, IInitia
 {
     private readonly UpdateOptions upsert = new UpdateOptions
     {
-        IsUpsert = true
+        IsUpsert = true,
     };
     private readonly IMongoCollection<MongoAssetKeyValueEntity<T>> collection;
 

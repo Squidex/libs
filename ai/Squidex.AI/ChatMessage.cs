@@ -22,5 +22,5 @@ public enum ChatMessageType
 {
     System,
     Assistant,
-    User
+    User,
 }

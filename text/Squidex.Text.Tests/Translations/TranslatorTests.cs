@@ -25,7 +25,7 @@ public class TranslatorTests
         sut = new Translator(
         [
             service1,
-            service2
+            service2,
         ]);
     }
 
@@ -44,7 +44,7 @@ public class TranslatorTests
         var sut2 = new Translator(
         [
             service1,
-            service2
+            service2,
         ]);
 
         Assert.True(sut2.IsConfigured);
@@ -59,7 +59,7 @@ public class TranslatorTests
         var sut2 = new Translator(
         [
             service1,
-            service2
+            service2,
         ]);
 
         Assert.True(sut2.IsConfigured);
@@ -76,7 +76,7 @@ public class TranslatorTests
         var sut2 = new Translator(
         [
             service1,
-            service2
+            service2,
         ]);
 
         Assert.True(sut2.IsConfigured);
@@ -104,7 +104,7 @@ public class TranslatorTests
 
         Assert.Equal(
         [
-            TranslationResult.Success("TextA", "en", 10)
+            TranslationResult.Success("TextA", "en", 10),
         ], results);
 
         A.CallTo(() => service2.TranslateAsync(A<IEnumerable<string>>._, A<string>._, A<string>._, ct))
@@ -124,7 +124,7 @@ public class TranslatorTests
 
         Assert.Equal(
         [
-            TranslationResult.Success("TextA", "en", 13)
+            TranslationResult.Success("TextA", "en", 13),
         ], results);
     }
 
@@ -137,14 +137,14 @@ public class TranslatorTests
                 TranslationResult.Success("TextA", "en", 13),
                 TranslationResult.Failed(),
                 TranslationResult.Failed(),
-                TranslationResult.Success("TextD", "en", 6)
+                TranslationResult.Success("TextD", "en", 6),
             ]);
 
         A.CallTo(() => service2.TranslateAsync(IsRequest("KeyB", "KeyC"), "de", null!, ct))
             .Returns(
             [
                 TranslationResult.Success("TextB", "en", 17),
-                TranslationResult.Success("TextC", "en", 11)
+                TranslationResult.Success("TextC", "en", 11),
             ]);
 
         var results = await sut.TranslateAsync(["KeyA", "KeyB", "KeyC", "KeyD"], "de", ct: ct);
@@ -154,7 +154,7 @@ public class TranslatorTests
             TranslationResult.Success("TextA", "en", 13),
             TranslationResult.Success("TextB", "en", 17),
             TranslationResult.Success("TextC", "en", 11),
-            TranslationResult.Success("TextD", "en", 6)
+            TranslationResult.Success("TextD", "en", 6),
         ], results);
     }
 

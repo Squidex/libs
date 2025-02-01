@@ -50,8 +50,8 @@ public abstract class ChatStoreTests
             ],
             ToolData = new Dictionary<string, string>
             {
-                ["Key"] = "Value"
-            }
+                ["Key"] = "Value",
+            },
         };
 
         await sut.StoreAsync(conversationId, conversation, DateTime.UtcNow, default);
@@ -87,8 +87,8 @@ public abstract class ChatStoreTests
             ],
             ToolData = new Dictionary<string, string>
             {
-                ["Key"] = "Value"
-            }
+                ["Key"] = "Value",
+            },
         };
 
         await sut.StoreAsync(conversationId, conversation0, DateTime.UtcNow, default);

@@ -15,7 +15,7 @@ public static class SvgExtensions
     public static readonly HashSet<string> AllowedUriSchemes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
         "http",
-        "https"
+        "https",
     };
 
     public static bool IsValidSvg(this string html)

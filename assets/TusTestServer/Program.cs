@@ -26,7 +26,7 @@ var mongoDatabase = mongoClient.GetDatabase("TusTest");
 
 var gridFSBucket = new GridFSBucket<string>(mongoDatabase, new GridFSBucketOptions
 {
-    BucketName = "fs"
+    BucketName = "fs",
 });
 
 builder.Services.AddMvc();

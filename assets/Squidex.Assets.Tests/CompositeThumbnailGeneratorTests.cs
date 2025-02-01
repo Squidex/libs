@@ -28,7 +28,7 @@ public class CompositeThumbnailGeneratorTests : AssetThumbnailGeneratorTests
         return new CompositeThumbnailGenerator(
         [
             new ImageSharpThumbnailGenerator(httpClientFactory),
-            new ImageMagickThumbnailGenerator()
+            new ImageMagickThumbnailGenerator(),
         ]);
     }
 }

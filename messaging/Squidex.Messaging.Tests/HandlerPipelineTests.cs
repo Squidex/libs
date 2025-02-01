@@ -91,7 +91,7 @@ public sealed class HandlerPipelineTests
              A.Fake<IMessageHandler<Base2>>(),
              A.Fake<IMessageHandler<IInterface1>>(),
              A.Fake<IMessageHandler<IInterface2>>(),
-             A.Fake<IMessageHandler<object>>()
+             A.Fake<IMessageHandler<object>>(),
         };
 
         var sut = new HandlerPipeline(handlers);

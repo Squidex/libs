@@ -18,13 +18,12 @@ namespace Microsoft.Extensions.DependencyInjection;
 public static class EventsServiceExtensions
 {
     public static EventStoreBuilder AddEntityFrameworkEventStore<T>(this IServiceCollection services, IConfiguration config, Action<EFEventStoreOptions>? configure = null,
-        string configPath = "eventStore:ef") where T : DbContext
+        string configPath = "eventStore:sql") where T : DbContext
     {
         services.Configure(config, configPath, configure);
 
         services.AddSingletonAs<EFEventStore<T>>()
             .As<IEventStore>();
-        services.AddDbContextFactory<T>();
         services.AddSingleton(TimeProvider.System);
 
         return new EventStoreBuilder(services);

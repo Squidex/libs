@@ -51,7 +51,7 @@ public sealed class Startup(IConfiguration configuration)
                 html = html.Replace("<body>", "<body><script>console.log('I have been transformed.')</script>", StringComparison.OrdinalIgnoreCase);
 
                 return new ValueTask<string>(html);
-            }
+            },
         });
 
         app.UseRouting();
