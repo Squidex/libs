@@ -417,12 +417,37 @@ public abstract class EventStoreTests
     [InlineData(5, 30)]
     [InlineData(5, 300)]
     [InlineData(5, 3000)]
-    public async Task Should_query_all_reverse_by_filter(int commits, int count)
+    public async Task Should_query_all_reverse_by_prefix(int commits, int count)
     {
         var sut = await CreateSutAsync();
 
-        var streamName = $"test-{Guid.NewGuid()}-suffix";
+        var randomPart = Guid.NewGuid();
+        var streamName = $"test-{randomPart}-suffix";
         var streamFilter = StreamFilter.Prefix(streamName[..^7], "invalid");
+
+        var eventsWritten = await AppendEventsAsync(sut, streamName, count, commits);
+        var eventsStored = eventsWritten.Select((x, i) => new StoredEvent(streamName, "Position", i, x)).ToArray();
+
+        for (var take = 0; take < count; take += count / 10)
+        {
+            var eventsExpected = eventsStored.Reverse().Take(take).ToArray();
+            var eventsQueried = await sut.QueryAllReverseAsync(streamFilter, default, take, ct).ToArrayAsync();
+
+            ShouldBeEquivalentTo(eventsQueried, eventsExpected);
+        }
+    }
+
+    [Theory]
+    [InlineData(5, 30)]
+    [InlineData(5, 300)]
+    [InlineData(5, 3000)]
+    public async Task Should_query_all_reverse_by_wildcard_prefix(int commits, int count)
+    {
+        var sut = await CreateSutAsync();
+
+        var randomPart = Guid.NewGuid();
+        var streamName = $"test-{randomPart}-suffix";
+        var streamFilter = StreamFilter.Prefix($"%-{randomPart}", "invalid");
 
         var eventsWritten = await AppendEventsAsync(sut, streamName, count, commits);
         var eventsStored = eventsWritten.Select((x, i) => new StoredEvent(streamName, "Position", i, x)).ToArray();

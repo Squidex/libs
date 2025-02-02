@@ -44,10 +44,20 @@ internal static class FilterBuilder
 
         if (filter.Kind == StreamFilterKind.MatchStart)
         {
-            return builder.Or(filter.Prefixes.Select(p => builder.Regex(x => x.EventStream, $"^{p}")));
+            return builder.Or(filter.Prefixes.Select(p => Buildregex(p, builder)));
         }
 
         return builder.In(x => x.EventStream, filter.Prefixes);
+    }
+
+    private static FilterDefinition<MongoEventCommit> Buildregex(string prefix, FilterDefinitionBuilder<MongoEventCommit> builder)
+    {
+        if (prefix.StartsWith('%'))
+        {
+            prefix = $"([a-zA-Z0-9]+){prefix[1..]}";
+        }
+
+        return builder.Regex(x => x.EventStream, $"^{prefix}");
     }
 
     public static FilterDefinition<ChangeStreamDocument<MongoEventCommit>>? ByChangeInStream(StreamFilter filter)
