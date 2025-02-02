@@ -31,7 +31,7 @@ public class EFMessagingDataStoreFixture : IAsyncLifetime
     {
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.AddMessagingDataStore();
+            modelBuilder.UseMessagingDataStore();
             base.OnModelCreating(modelBuilder);
         }
     }

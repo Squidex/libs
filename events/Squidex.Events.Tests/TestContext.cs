@@ -19,7 +19,7 @@ public class TestContext(DbContextOptions options) : DbContext(options)
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.AddEventStore();
+        modelBuilder.UseEventStore();
         base.OnModelCreating(modelBuilder);
     }
 }

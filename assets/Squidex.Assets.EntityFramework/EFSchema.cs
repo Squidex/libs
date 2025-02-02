@@ -11,7 +11,7 @@ namespace Microsoft.EntityFrameworkCore;
 
 public static class EFSchema
 {
-    public static ModelBuilder AddAssetKeyValueStore<T>(this ModelBuilder modelBuilder) where T : class
+    public static ModelBuilder UseAssetKeyValueStore<T>(this ModelBuilder modelBuilder) where T : class
     {
         modelBuilder.Entity<EFAssetKeyValueEntity<T>>(b =>
         {

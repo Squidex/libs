@@ -11,7 +11,7 @@ namespace Microsoft.EntityFrameworkCore;
 
 public static class EFSchema
 {
-    public static ModelBuilder AddMessagingDataStore(this ModelBuilder modelBuilder)
+    public static ModelBuilder UseMessagingDataStore(this ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<EFMessagingDataEntity>(b =>
         {
@@ -24,7 +24,7 @@ public static class EFSchema
         return modelBuilder;
     }
 
-    public static ModelBuilder AddMessagingTransport(this ModelBuilder modelBuilder)
+    public static ModelBuilder UseMessagingTransport(this ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<EFMessage>(b =>
         {

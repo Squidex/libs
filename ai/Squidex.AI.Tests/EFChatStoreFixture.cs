@@ -33,7 +33,7 @@ public sealed class EFChatStoreFixture : IAsyncLifetime
     {
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.AddChatStore();
+            modelBuilder.UseChatStore();
             base.OnModelCreating(modelBuilder);
         }
     }

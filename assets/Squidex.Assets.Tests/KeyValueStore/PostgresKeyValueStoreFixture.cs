@@ -27,7 +27,7 @@ public class PostgresKeyValueStoreFixture : IAsyncLifetime
     {
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.AddAssetKeyValueStore<TestValue>();
+            modelBuilder.UseAssetKeyValueStore<TestValue>();
             base.OnModelCreating(modelBuilder);
         }
     }

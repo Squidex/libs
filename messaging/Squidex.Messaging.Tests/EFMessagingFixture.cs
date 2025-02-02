@@ -26,8 +26,8 @@ public sealed class EFMessagingFixture : IAsyncLifetime
     {
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.AddMessagingDataStore();
-            modelBuilder.AddMessagingTransport();
+            modelBuilder.UseMessagingDataStore();
+            modelBuilder.UseMessagingTransport();
             base.OnModelCreating(modelBuilder);
         }
     }

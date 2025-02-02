@@ -11,7 +11,7 @@ namespace Microsoft.EntityFrameworkCore;
 
 public static class EFSchema
 {
-    public static ModelBuilder AddChatStore(this ModelBuilder modelBuilder)
+    public static ModelBuilder UseChatStore(this ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<EFChatEntity>(b =>
         {
