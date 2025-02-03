@@ -18,7 +18,12 @@ internal static class FilterBuilder
     private static readonly MethodInfo DbLikeMethod = typeof(DbFunctionsExtensions).GetMethod("Like", [typeof(DbFunctions), typeof(string), typeof(string)])!;
     private static readonly ConstantExpression DbFunctions = Expression.Constant(EF.Functions);
 
-    public static IQueryable<EFEventCommit> ByTimestamp(this IQueryable<EFEventCommit> q, DateTime timestamp)
+    public static IQueryable<EFEventCommit> WhereCommited(this IQueryable<EFEventCommit> q)
+    {
+        return q.Where(x => x.Position != null);
+    }
+
+    public static IQueryable<EFEventCommit> WhereTimestampAfter(this IQueryable<EFEventCommit> q, DateTime timestamp)
     {
         if (timestamp == default)
         {
@@ -28,7 +33,7 @@ internal static class FilterBuilder
         return q.Where(x => x.Timestamp >= timestamp);
     }
 
-    public static IQueryable<EFEventCommit> ByBeforeOffset(this IQueryable<EFEventCommit> q, long offset)
+    public static IQueryable<EFEventCommit> WherePositionBefore(this IQueryable<EFEventCommit> q, long offset)
     {
         if (offset <= EventsVersion.Empty)
         {
@@ -38,7 +43,7 @@ internal static class FilterBuilder
         return q.Where(x => x.EventStreamOffset < offset);
     }
 
-    public static IQueryable<EFEventCommit> ByOffset(this IQueryable<EFEventCommit> q, long offset)
+    public static IQueryable<EFEventCommit> WherePositionAfter(this IQueryable<EFEventCommit> q, long offset)
     {
         if (offset <= EventsVersion.Empty)
         {
@@ -48,7 +53,7 @@ internal static class FilterBuilder
         return q.Where(x => x.EventStreamOffset >= offset);
     }
 
-    public static IQueryable<EFEventCommit> ByPosition(this IQueryable<EFEventCommit> q, ParsedStreamPosition position)
+    public static IQueryable<EFEventCommit> WherePositionAfter(this IQueryable<EFEventCommit> q, ParsedStreamPosition position)
     {
         if (position.IsEndOfCommit)
         {
@@ -58,7 +63,7 @@ internal static class FilterBuilder
         return q.Where(x => x.Position >= position.Position);
     }
 
-    public static IQueryable<EFEventCommit> ByStream(this IQueryable<EFEventCommit> q, StreamFilter filter)
+    public static IQueryable<EFEventCommit> WhereStreamMatches(this IQueryable<EFEventCommit> q, StreamFilter filter)
     {
         if (filter.Prefixes == null || filter.Prefixes.Count == 0)
         {
@@ -85,9 +90,14 @@ internal static class FilterBuilder
 
     public static IEnumerable<StoredEvent> Filtered(this EFEventCommit commit, ParsedStreamPosition position)
     {
+        if (!commit.Position.HasValue)
+        {
+            yield break;
+        }
+
         var eventStreamOffset = commit.EventStreamOffset;
 
-        var commitPosition = commit.Position!.Value;
+        var commitPosition = commit.Position.Value;
         var commitOffset = 0;
 
         foreach (var @event in commit.Events)
@@ -108,9 +118,14 @@ internal static class FilterBuilder
 
     public static IEnumerable<StoredEvent> Filtered(this EFEventCommit commit, long position)
     {
+        if (!commit.Position.HasValue)
+        {
+            yield break;
+        }
+
         var eventStreamOffset = commit.EventStreamOffset;
 
-        var commitPosition = commit.Position!.Value;
+        var commitPosition = commit.Position.Value;
         var commitOffset = 0;
 
         foreach (var @event in commit.Events)

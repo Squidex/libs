@@ -24,21 +24,25 @@ public sealed partial class EFEventStore<T> : IEventStore
     {
         await using var context = await dbContextFactory.CreateDbContextAsync(ct);
 
-        var commits = await context.Set<EFEventCommit>()
-            .ByStream(StreamFilter.Name(streamName))
-            .ByOffset(afterStreamPosition)
-            .ToListAsync(ct);
+        var commits =
+            await context.Set<EFEventCommit>()
+                .WhereStreamMatches(StreamFilter.Name(streamName))
+                .WherePositionAfter(afterStreamPosition)
+                .WhereCommited()
+                .ToListAsync(ct);
 
         var result = Convert(commits, afterStreamPosition);
 
         if ((commits.Count == 0 || commits[0].EventStreamOffset != afterStreamPosition) && afterStreamPosition > EventsVersion.Empty)
         {
-            commits = await context.Set<EFEventCommit>()
-                .ByStream(StreamFilter.Name(streamName))
-                .ByBeforeOffset(afterStreamPosition)
-                .OrderByDescending(x => x.EventStreamOffset)
-                .Take(1)
-                .ToListAsync(ct);
+            commits =
+                await context.Set<EFEventCommit>()
+                    .WhereStreamMatches(StreamFilter.Name(streamName))
+                    .WherePositionBefore(afterStreamPosition)
+                    .WhereCommited()
+                    .OrderByDescending(x => x.EventStreamOffset)
+                    .Take(1)
+                    .ToListAsync(ct);
 
             result = Convert(commits, afterStreamPosition).ToList();
         }
@@ -57,12 +61,14 @@ public sealed partial class EFEventStore<T> : IEventStore
         await using var context = await dbContextFactory.CreateDbContextAsync(ct);
 
         DateTime streamTime = timestamp;
-        var query = await context.Set<EFEventCommit>()
-            .ByStream(filter)
-            .ByTimestamp(streamTime)
-            .OrderByDescending(x => x.Position).ThenBy(x => x.EventStream)
-            .Take(take)
-            .ToListAsync(ct);
+        var query =
+            await context.Set<EFEventCommit>()
+                .WhereStreamMatches(filter)
+                .WhereTimestampAfter(streamTime)
+                .WhereCommited()
+                .OrderByDescending(x => x.Position).ThenBy(x => x.EventStream)
+                .Take(take)
+                .ToListAsync(ct);
 
         var taken = 0;
         foreach (var commit in query)
@@ -91,11 +97,13 @@ public sealed partial class EFEventStore<T> : IEventStore
         await using var context = await dbContextFactory.CreateDbContextAsync(ct);
 
         ParsedStreamPosition streamPosition = position;
-        var query = context.Set<EFEventCommit>()
-            .ByStream(filter)
-            .ByPosition(streamPosition)
-            .OrderBy(x => x.Position).ThenBy(x => x.EventStream)
-            .Take(take);
+        var query =
+            context.Set<EFEventCommit>()
+                .WhereStreamMatches(filter)
+                .WherePositionAfter(streamPosition)
+                .WhereCommited()
+                .OrderBy(x => x.Position).ThenBy(x => x.EventStream)
+                .Take(take);
 
         var taken = 0;
         await foreach (var commit in query.AsAsyncEnumerable().WithCancellation(ct))
