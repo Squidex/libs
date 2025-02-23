@@ -7,7 +7,7 @@
 
 using tusdotnet.Interfaces;
 
-namespace Squidex.Assets.Internal;
+namespace Squidex.Assets.TusAdapter.Internal;
 
 public sealed class AssetFileLockProvider(IAssetStore assetStore) : ITusFileLockProvider
 {

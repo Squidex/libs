@@ -14,7 +14,7 @@ using Amazon.S3.Util;
 using Microsoft.Extensions.Options;
 using Squidex.Hosting;
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.S3;
 
 public sealed class AmazonS3AssetStore(IOptions<AmazonS3AssetOptions> options) : IAssetStore, IInitializable
 {
@@ -96,7 +96,7 @@ public sealed class AmazonS3AssetStore(IOptions<AmazonS3AssetOptions> options) :
             var request = new GetObjectMetadataRequest
             {
                 BucketName = options.Bucket,
-                Key = key
+                Key = key,
             };
 
             var metadata = await s3Client.GetObjectMetadataAsync(request, ct);
@@ -137,7 +137,7 @@ public sealed class AmazonS3AssetStore(IOptions<AmazonS3AssetOptions> options) :
                 var request = new GetObjectRequest
                 {
                     BucketName = options.Bucket,
-                    Key = keySource
+                    Key = keySource,
                 };
 
                 using (var downloadRequest = await s3Client.GetObjectAsync(request, ct))
@@ -153,7 +153,7 @@ public sealed class AmazonS3AssetStore(IOptions<AmazonS3AssetOptions> options) :
                     Key = keyTarget,
                     DisablePayloadSigning = options.DisablePayloadSigning,
                     DisableDefaultChecksumValidation = false,
-                    InputStream = teamStream
+                    InputStream = teamStream,
                 };
 
                 await s3Transfer.UploadAsync(uploadRequest, ct);
@@ -184,7 +184,7 @@ public sealed class AmazonS3AssetStore(IOptions<AmazonS3AssetOptions> options) :
                 SourceBucket = options.Bucket,
                 SourceKey = keySource,
                 DestinationBucket = options.Bucket,
-                DestinationKey = keyTarget
+                DestinationKey = keyTarget,
             };
 
             await s3Client.CopyObjectAsync(request, ct);
@@ -211,7 +211,7 @@ public sealed class AmazonS3AssetStore(IOptions<AmazonS3AssetOptions> options) :
             var request = new GetObjectRequest
             {
                 BucketName = options.Bucket,
-                Key = key
+                Key = key,
             };
 
             if (range.IsDefined)
@@ -249,7 +249,7 @@ public sealed class AmazonS3AssetStore(IOptions<AmazonS3AssetOptions> options) :
                 BucketName = options.Bucket,
                 Key = key,
                 DisablePayloadSigning = options.DisablePayloadSigning,
-                DisableDefaultChecksumValidation = false
+                DisableDefaultChecksumValidation = false,
             };
 
             if (stream.GetLengthOrZero() <= 0)
@@ -288,7 +288,7 @@ public sealed class AmazonS3AssetStore(IOptions<AmazonS3AssetOptions> options) :
         {
             var request = new DeleteObjectRequest
             {
-                BucketName = options.Bucket
+                BucketName = options.Bucket,
             };
 
             string? continuationToken = null;
@@ -299,7 +299,7 @@ public sealed class AmazonS3AssetStore(IOptions<AmazonS3AssetOptions> options) :
                 {
                     BucketName = options.Bucket,
                     Prefix = key,
-                    ContinuationToken = continuationToken
+                    ContinuationToken = continuationToken,
                 }, ct);
 
                 foreach (var item in items.S3Objects)
@@ -340,7 +340,7 @@ public sealed class AmazonS3AssetStore(IOptions<AmazonS3AssetOptions> options) :
             var request = new DeleteObjectRequest
             {
                 BucketName = options.Bucket,
-                Key = key
+                Key = key,
             };
 
             await s3Client.DeleteObjectAsync(request, ct);

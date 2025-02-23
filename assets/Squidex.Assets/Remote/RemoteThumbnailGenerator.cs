@@ -34,7 +34,7 @@ public sealed class RemoteThumbnailGenerator(IHttpClientFactory httpClientFactor
         using var httpClient = httpClientFactory.CreateClient("Resize");
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"/blur?{BuildQueryString(options)}")
         {
-            Content = new StreamContent(source)
+            Content = new StreamContent(source),
         };
 
         httpRequest.Content.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
@@ -59,7 +59,7 @@ public sealed class RemoteThumbnailGenerator(IHttpClientFactory httpClientFactor
         using var httpClient = httpClientFactory.CreateClient("Resize");
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"/resize{BuildQueryString(options)}")
         {
-            Content = new StreamContent(source)
+            Content = new StreamContent(source),
         };
 
         httpRequest.Content.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
@@ -77,7 +77,7 @@ public sealed class RemoteThumbnailGenerator(IHttpClientFactory httpClientFactor
         using var httpClient = httpClientFactory.CreateClient("Resize");
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/orient")
         {
-            Content = new StreamContent(source)
+            Content = new StreamContent(source),
         };
 
         httpRequest.Content.Headers.ContentType = new MediaTypeHeaderValue(mimeType);

@@ -30,7 +30,7 @@ public class RichTextComplexTests
                         new Node
                         {
                             Type = NodeType.Text,
-                            Text = "Paragraph1"
+                            Text = "Paragraph1",
                         },
                     ],
                 },
@@ -42,7 +42,7 @@ public class RichTextComplexTests
                         new Node
                         {
                             Type = NodeType.Text,
-                            Text = "Paragraph2"
+                            Text = "Paragraph2",
                         },
                         new Node
                         {
@@ -61,10 +61,10 @@ public class RichTextComplexTests
                                             [
                                                 new Mark
                                                 {
-                                                    Type = MarkType.Bold
+                                                    Type = MarkType.Bold,
                                                 },
                                             ],
-                                            Text = "Item1"
+                                            Text = "Item1",
                                         },
                                     ],
                                 },
@@ -76,7 +76,7 @@ public class RichTextComplexTests
                                         new Node
                                         {
                                             Type = NodeType.Text,
-                                            Text = "Item2"
+                                            Text = "Item2",
                                         },
                                     ],
                                 },
@@ -88,15 +88,15 @@ public class RichTextComplexTests
                                         new Node
                                         {
                                             Type = NodeType.Text,
-                                            Text = "Item3"
+                                            Text = "Item3",
                                         },
                                     ],
                                 },
-                            ]
+                            ],
                         },
                     ],
                 },
-            ]
+            ],
         };
 
         RenderUtils.AssertNode(source,
@@ -137,7 +137,7 @@ Paragraph2
                         new JsonObject
                         {
                             ["type"] = "text",
-                            ["text"] = "Paragraph1"
+                            ["text"] = "Paragraph1",
                         },
                     },
                 },
@@ -149,7 +149,7 @@ Paragraph2
                         new JsonObject
                         {
                             ["type"] = "text",
-                            ["text"] = "Paragraph2"
+                            ["text"] = "Paragraph2",
                         },
                         new JsonObject
                         {
@@ -168,10 +168,10 @@ Paragraph2
                                             {
                                                 new JsonObject
                                                 {
-                                                    ["type"] = "bold"
+                                                    ["type"] = "bold",
                                                 },
                                             },
-                                            ["text"] = "Item1"
+                                            ["text"] = "Item1",
                                         },
                                     },
                                 },
@@ -183,7 +183,7 @@ Paragraph2
                                         new JsonObject
                                         {
                                             ["type"] = "text",
-                                            ["text"] = "Item2"
+                                            ["text"] = "Item2",
                                         },
                                     },
                                 },
@@ -195,15 +195,15 @@ Paragraph2
                                         new JsonObject
                                         {
                                             ["type"] = "text",
-                                            ["text"] = "Item3"
+                                            ["text"] = "Item3",
                                         },
                                     },
                                 },
-                            }
-                        }
-                    }
+                            },
+                        },
+                    },
                 },
-            }
+            },
         };
 
         var node = new JsonNode();

@@ -20,7 +20,7 @@ public sealed class ConfigureForwardedHeaders(IOptions<UrlOptions> urlOptions, I
     {
         options.AllowedHosts =
         [
-            urlGenerator.BuildHost().ToString()
+            urlGenerator.BuildHost().ToString(),
         ];
 
         options.ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;

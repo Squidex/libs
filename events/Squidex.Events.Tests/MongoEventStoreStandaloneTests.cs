@@ -5,19 +5,15 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
+using Xunit;
 
-namespace Squidex.Assets;
+namespace Squidex.Events;
 
-internal sealed class MongoAssetEntity<T>
+public class MongoEventStoreStandaloneTests(MongoEventStoreStandaloneFixture fixture)
+    : EventStoreTests, IClassFixture<MongoEventStoreStandaloneFixture>
 {
-    [BsonId]
-    public string Key { get; set; }
-
-    [BsonIgnoreIfDefault]
-    public T Value { get; set; }
-
-    [BsonRepresentation(BsonType.String)]
-    public DateTime Expires { get; set; }
+    protected override Task<IEventStore> CreateSutAsync()
+    {
+        return Task.FromResult(fixture.Store);
+    }
 }

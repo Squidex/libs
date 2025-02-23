@@ -38,6 +38,7 @@ public class PineconeTests
     {
         var services =
             new ServiceCollection()
+                .AddAI()
                 .AddOpenAIChat(TestHelpers.Configuration, options =>
                 {
                     options.Seed = 42;
@@ -47,6 +48,7 @@ public class PineconeTests
                 {
                     options.ToolDescription = "Answers questions about Squidex.";
                 })
+                .Services
                 .Configure<ChatOptions>(options =>
                 {
                     options.Defaults = new ChatConfiguration
@@ -54,7 +56,7 @@ public class PineconeTests
                         SystemMessages =
                         [
                             "You are a fiendly agent. Always use the result from the tool if you have called one.",
-                            "Say hello to the user."
+                            "Say hello to the user.",
                         ],
                     };
                 })

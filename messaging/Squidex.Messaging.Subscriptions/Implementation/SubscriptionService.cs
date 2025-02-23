@@ -20,7 +20,8 @@ public sealed class SubscriptionService(
     IMessageBus messageBus,
     IMessagingDataProvider messagingDataProvider,
     IOptions<SubscriptionOptions> options,
-    ILogger<SubscriptionService> log) : ISubscriptionService, IMessageHandler<PayloadMessageBase>
+    ILogger<SubscriptionService> log)
+    : ISubscriptionService, IMessageHandler<PayloadMessageBase>
 {
     private readonly ConcurrentDictionary<string, LocalSubscription> localSubscriptions = [];
     private readonly SubscriptionOptions options = options.Value;

@@ -514,7 +514,7 @@ public static partial class SlugifyExtensions
         ['♥'] = "love",
         ['元'] = "yuan",
         ['円'] = "yen",
-        ['﷼'] = "rial"
+        ['﷼'] = "rial",
     };
 
     static SlugifyExtensions()

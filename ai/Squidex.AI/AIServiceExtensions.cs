@@ -16,101 +16,94 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class AIServiceExtensions
 {
-    public static IServiceCollection AddAI(this IServiceCollection services)
+    public static AIBuilder AddAI(this IServiceCollection services)
     {
         services.AddHttpClient();
         services.AddOptions<ChatOptions>();
         services.TryAddSingleton(TimeProvider.System);
-        services.TryAddSingleton<IChatStore, MemoryChatStore>();
+        services.TryAddSingleton<IChatStore, InMemoryChatStore>();
         services.TryAddSingleton<IChatAgent, ChatAgent>();
         services.TryAddSingleton<IChatProvider, NoopChatProvider>();
 
-        return services;
+        return new AIBuilder(services);
     }
 
-    public static IServiceCollection AddAICleaner(this IServiceCollection services)
+    public static AIBuilder AddCleaner(this AIBuilder builder)
     {
-        services.AddSingletonAs<ChatCleaner>()
+        builder.Services.AddSingletonAs<ChatCleaner>()
             .AsSelf();
 
-        return services;
+        return builder;
     }
 
-    public static IServiceCollection AddAIPipe<T>(this IServiceCollection services) where T : class, IChatPipe
+    public static AIBuilder AddAIPipe<T>(this AIBuilder builder) where T : class, IChatPipe
     {
-        services.AddSingletonAs<T>()
+        builder.Services.AddSingletonAs<T>()
             .As<IChatPipe>();
 
-        return services;
+        return builder;
     }
 
-    public static IServiceCollection AddTool<T>(this IServiceCollection services) where T : class, IChatTool
+    public static AIBuilder AddTool<T>(this AIBuilder builder) where T : class, IChatTool
     {
-        services.AddSingletonAs<T>()
+        builder.Services.AddSingletonAs<T>()
             .AsSelf();
 
-        services.AddSingletonAs<SingleChatToolProvider<T>>()
+        builder.Services.AddSingletonAs<SingleChatToolProvider<T>>()
             .As<IChatToolProvider>();
 
-        return services;
+        return builder;
     }
 
-    public static IServiceCollection AddDallE(this IServiceCollection services, IConfiguration config, Action<DallEOptions>? configure = null,
+    public static AIBuilder AddDallE(this AIBuilder builder, IConfiguration config, Action<DallEOptions>? configure = null,
         string configPath = "chatBot:dallE")
     {
-        services.Configure(config, configPath, configure);
+        builder.Services.Configure(config, configPath, configure);
 
-        services.AddAI();
-
-        services.AddSingletonAs<DallETool>()
+        builder.Services.AddSingletonAs<DallETool>()
             .AsSelf().As<IImageTool>();
 
-        services.AddSingletonAs<SingleChatToolProvider<DallETool>>()
+        builder.Services.AddSingletonAs<SingleChatToolProvider<DallETool>>()
             .As<IChatToolProvider>();
 
-        return services;
+        return builder;
     }
 
-    public static IServiceCollection AddAIImagePipe(this IServiceCollection services)
+    public static AIBuilder AddAIImagePipe(this AIBuilder builder)
     {
-        services.AddAI();
-        services.AddAIPipe<ImagePipe>();
+        builder.AddAIPipe<ImagePipe>();
 
-        return services;
+        return builder;
     }
 
-    public static IServiceCollection AddPineconeTool(this IServiceCollection services, IConfiguration config, Action<PineconeOptions>? configure = null,
+    public static AIBuilder AddPineconeTool(this AIBuilder builder, IConfiguration config, Action<PineconeOptions>? configure = null,
         string configPath = "chatBot:pinecone")
     {
-        services.Configure(config, configPath, configure);
+        builder.Services.Configure(config, configPath, configure);
+        builder.AddTool<PineconeTool>();
 
-        services.AddAI();
-        services.AddTool<PineconeTool>();
-
-        return services;
+        return builder;
     }
 
-    public static IServiceCollection AddOpenAIChat(this IServiceCollection services, IConfiguration config, Action<OpenAIChatOptions>? configure = null,
+    public static AIBuilder AddOpenAIChat(this AIBuilder builder, IConfiguration config, Action<OpenAIChatOptions>? configure = null,
         string configPath = "chatBot:openai")
     {
-        services.Configure(config, configPath, configure);
+        builder.Services.Configure(config, configPath, configure);
 
-        services.AddAI();
-        services.AddSingletonAs<OpenAIChatProvider>()
+        builder.Services.AddSingletonAs<OpenAIChatProvider>()
             .As<IChatProvider>().AsSelf();
 
-        return services;
+        return builder;
     }
 
-    public static IServiceCollection AddOpenAIEmbeddings(this IServiceCollection services, IConfiguration config, Action<OpenAIEmbeddingsOptions>? configure = null,
+    public static AIBuilder AddOpenAIEmbeddings(this AIBuilder builder, IConfiguration config, Action<OpenAIEmbeddingsOptions>? configure = null,
         string configPath = "chatBot:openaiEmbeddings")
     {
-        services.Configure(config, configPath, configure);
+        builder.Services.Configure(config, configPath, configure);
 
-        services.AddAI();
-        services.AddSingletonAs<OpenAIEmbeddings>()
+        builder.Services.AddSingletonAs<OpenAIEmbeddings>()
             .As<IEmbeddings>().AsSelf();
 
-        return services;
+        return builder;
     }
 }

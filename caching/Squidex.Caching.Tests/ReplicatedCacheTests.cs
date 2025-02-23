@@ -51,7 +51,7 @@ public class ReplicatedCacheTests
         await sut.RemoveAsync(
             [
                 "Key1",
-                "Key2"
+                "Key2",
             ]);
 
         AssertCache(sut, "Key1", null, false);

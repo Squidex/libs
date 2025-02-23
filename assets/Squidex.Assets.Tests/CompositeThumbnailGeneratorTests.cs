@@ -5,6 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Squidex.Assets.ImageMagick;
+using Squidex.Assets.ImageSharp;
+
 namespace Squidex.Assets;
 
 public class CompositeThumbnailGeneratorTests : AssetThumbnailGeneratorTests
@@ -25,7 +28,7 @@ public class CompositeThumbnailGeneratorTests : AssetThumbnailGeneratorTests
         return new CompositeThumbnailGenerator(
         [
             new ImageSharpThumbnailGenerator(httpClientFactory),
-            new ImageMagickThumbnailGenerator()
+            new ImageMagickThumbnailGenerator(),
         ]);
     }
 }

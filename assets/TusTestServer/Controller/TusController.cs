@@ -7,6 +7,8 @@
 
 using Microsoft.AspNetCore.Mvc;
 using Squidex.Assets;
+using Squidex.Assets.TusAdapter;
+using Squidex.Assets.TusClient;
 
 namespace TusTestServer.Controller;
 

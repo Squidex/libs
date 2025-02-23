@@ -8,6 +8,7 @@
 using Microsoft.AspNetCore.TestHost;
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
+using Squidex.Assets.TusAdapter;
 using tusdotnet;
 using tusdotnet.Interfaces;
 using tusdotnet.Models;
@@ -38,7 +39,7 @@ public class TusServerFixture
 
                 var gridFSBucket = new GridFSBucket<string>(mongoDatabase, new GridFSBucketOptions
                 {
-                    BucketName = "fs"
+                    BucketName = "fs",
                 });
 
                 services.AddSingleton(mongoDatabase);
@@ -61,9 +62,9 @@ public class TusServerFixture
                             var file = (AssetTusFile)(await eventContext.GetFileAsync());
 
                             Files.Add(file);
-                        }
+                        },
                     },
-                    UrlPath = "/files/middleware"
+                    UrlPath = "/files/middleware",
                 });
 
                 app.UseRouting();

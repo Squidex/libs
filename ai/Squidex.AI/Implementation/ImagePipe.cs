@@ -62,7 +62,7 @@ public sealed class ImagePipe(IImageTool imageGenerator) : IChatPipe
                                 Query = description,
                                 ChatAgent = request.ChatAgent,
                                 Context = request.Context,
-                                ToolData = request.ToolData
+                                ToolData = request.ToolData,
                             };
 
                             var toolContext = tool.CreateRequest(imageRequest);
@@ -71,7 +71,7 @@ public sealed class ImagePipe(IImageTool imageGenerator) : IChatPipe
                             yield return new ToolStartEvent
                             {
                                 Tool = tool,
-                                Arguments = toolContext.Arguments
+                                Arguments = toolContext.Arguments,
                             };
 
                             result = await tool.ExecuteAsync(toolContext, ct);
@@ -80,7 +80,7 @@ public sealed class ImagePipe(IImageTool imageGenerator) : IChatPipe
                             yield return new ToolEndEvent
                             {
                                 Tool = tool,
-                                Result = result
+                                Result = result,
                             };
                         }
 

@@ -18,7 +18,7 @@ using SixLabors.ImageSharp.Processing;
 using ImageSharpMode = SixLabors.ImageSharp.Processing.ResizeMode;
 using ImageSharpOptions = SixLabors.ImageSharp.Processing.ResizeOptions;
 
-namespace Squidex.Assets.Internal;
+namespace Squidex.Assets.ImageSharp.Internal;
 
 internal static class Extensions
 {
@@ -44,7 +44,7 @@ internal static class Extensions
         {
             encoder = new PngEncoder
             {
-                ColorType = PngColorType.RgbWithAlpha
+                ColorType = PngColorType.RgbWithAlpha,
             };
         }
 
@@ -54,7 +54,7 @@ internal static class Extensions
         {
             encoder = new JpegEncoder
             {
-                Quality = quality
+                Quality = quality,
             };
         }
 
@@ -62,7 +62,7 @@ internal static class Extensions
         {
             encoder = new WebpEncoder
             {
-                Quality = quality
+                Quality = quality,
             };
         }
 

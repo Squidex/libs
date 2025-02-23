@@ -16,5 +16,5 @@ public enum ImageFormat
     PNG,
     TGA,
     TIFF,
-    WEBP
+    WEBP,
 }

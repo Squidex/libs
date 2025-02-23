@@ -61,7 +61,7 @@ public sealed class DeepLTranslationService(IHttpClientFactory httpClientFactory
 
         var parameters = new List<KeyValuePair<string, string>>
         {
-            new KeyValuePair<string, string>("target_lang", GetLanguageCode(targetLanguage))
+            new KeyValuePair<string, string>("target_lang", GetLanguageCode(targetLanguage)),
         };
 
         foreach (var text in textsArray)
@@ -82,7 +82,7 @@ public sealed class DeepLTranslationService(IHttpClientFactory httpClientFactory
         using var httpClient = CreateClient();
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, url)
         {
-             Content = new FormUrlEncodedContent(parameters!)
+             Content = new FormUrlEncodedContent(parameters!),
         };
 
         using var httpResponse = await httpClient.SendAsync(httpRequest, ct);

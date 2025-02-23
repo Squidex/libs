@@ -8,20 +8,12 @@
 using System.IO.Compression;
 using Xunit;
 
-#pragma warning disable RECS0108 // Warns about static fields in generic types
-
 namespace Squidex.Assets;
 
-public abstract class AssetStoreTests<T> where T : IAssetStore
+public abstract class AssetStoreTests
 {
     private readonly MemoryStream assetLarge = CreateFile(4 * 1024 * 1024);
     private readonly MemoryStream assetSmall = CreateFile(4);
-    private readonly Lazy<T> sut;
-
-    protected T Sut
-    {
-        get { return sut.Value; }
-    }
 
     protected string FileName { get; } = Guid.NewGuid().ToString();
 
@@ -29,26 +21,21 @@ public abstract class AssetStoreTests<T> where T : IAssetStore
 
     protected virtual bool CanDeleteAssetsWithPrefix => true;
 
-    protected AssetStoreTests()
-    {
-        sut = new Lazy<T>(CreateStore);
-    }
-
-    public abstract T CreateStore();
+    public abstract Task<IAssetStore> CreateSutAsync();
 
     public enum TestCase
     {
         NoFolder,
         FolderWindows,
-        FolderLinux
+        FolderLinux,
     }
 
-    public static readonly TheoryData<TestCase> FolderCases = new TheoryData<TestCase>
-    {
+    public static readonly TheoryData<TestCase> FolderCases =
+    [
         TestCase.NoFolder,
         TestCase.FolderWindows,
-        TestCase.FolderLinux
-    };
+        TestCase.FolderLinux,
+    ];
 
     [Theory]
     [InlineData("../{file}.png")]
@@ -57,50 +44,62 @@ public abstract class AssetStoreTests<T> where T : IAssetStore
     [InlineData("folder/../../{file}.png")]
     public async Task Should_not_be_able_to_store_files_in_parent_folder(string path)
     {
+        var sut = await CreateSutAsync();
+
         path = path.Replace("{file}", Guid.NewGuid().ToString(), StringComparison.Ordinal);
 
         var data = new MemoryStream([0x1, 0x2, 0x3, 0x4, 0x5]);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => Sut.UploadAsync(path, data, true));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.UploadAsync(path, data, true));
     }
 
     [Theory]
     [MemberData(nameof(FolderCases))]
     public virtual async Task Should_throw_exception_if_asset_to_get_size_is_not_found(TestCase testCase)
     {
+        var sut = await CreateSutAsync();
+
         var path = GetPath(testCase);
 
-        await Assert.ThrowsAsync<AssetNotFoundException>(() => Sut.GetSizeAsync(path));
+        await Assert.ThrowsAsync<AssetNotFoundException>(() => sut.GetSizeAsync(path));
     }
 
     [Theory]
     [MemberData(nameof(FolderCases))]
     public virtual async Task Should_throw_exception_if_asset_to_download_is_not_found(TestCase testCase)
     {
+        var sut = await CreateSutAsync();
+
         var path = GetPath(testCase);
 
-        await Assert.ThrowsAsync<AssetNotFoundException>(() => Sut.DownloadAsync(path, new MemoryStream()));
+        await Assert.ThrowsAsync<AssetNotFoundException>(() => sut.DownloadAsync(path, new MemoryStream()));
     }
 
     [Theory]
     [MemberData(nameof(FolderCases))]
     public async Task Should_throw_exception_if_asset_to_copy_is_not_found(TestCase testCase)
     {
+        var sut = await CreateSutAsync();
+
         var path = GetPath(testCase);
 
-        await Assert.ThrowsAsync<AssetNotFoundException>(() => Sut.CopyAsync(path, Guid.NewGuid().ToString()));
+        await Assert.ThrowsAsync<AssetNotFoundException>(() => sut.CopyAsync(path, Guid.NewGuid().ToString()));
     }
 
     [Fact]
     public async Task Should_throw_exception_if_stream_to_download_is_null()
     {
-        await Assert.ThrowsAsync<ArgumentNullException>(() => Sut.DownloadAsync("File", null!));
+        var sut = await CreateSutAsync();
+
+        await Assert.ThrowsAsync<ArgumentNullException>(() => sut.DownloadAsync("File", null!));
     }
 
     [Fact]
     public async Task Should_throw_exception_if_stream_to_upload_is_null()
     {
-        await Assert.ThrowsAsync<ArgumentNullException>(() => Sut.UploadAsync("File", null!));
+        var sut = await CreateSutAsync();
+
+        await Assert.ThrowsAsync<ArgumentNullException>(() => sut.UploadAsync("File", null!));
     }
 
     [Theory]
@@ -109,7 +108,9 @@ public abstract class AssetStoreTests<T> where T : IAssetStore
     [InlineData(" ")]
     public async Task Should_throw_exception_if_source_file_name_to_copy_is_empty(string? input)
     {
-        await Assert.ThrowsAnyAsync<ArgumentException>(() => Sut.CopyAsync(input!, "Target"));
+        var sut = await CreateSutAsync();
+
+        await Assert.ThrowsAnyAsync<ArgumentException>(() => sut.CopyAsync(input!, "Target"));
     }
 
     [Theory]
@@ -118,7 +119,9 @@ public abstract class AssetStoreTests<T> where T : IAssetStore
     [InlineData(" ")]
     public async Task Should_throw_exception_if_target_file_name_to_copy_is_empty(string? input)
     {
-        await Assert.ThrowsAnyAsync<ArgumentException>(() => Sut.CopyAsync("Source", input!));
+        var sut = await CreateSutAsync();
+
+        await Assert.ThrowsAnyAsync<ArgumentException>(() => sut.CopyAsync("Source", input!));
     }
 
     [Theory]
@@ -127,7 +130,9 @@ public abstract class AssetStoreTests<T> where T : IAssetStore
     [InlineData(" ")]
     public async Task Should_throw_exception_if_file_name_to_delete_is_empty(string? input)
     {
-        await Assert.ThrowsAnyAsync<ArgumentException>(() => Sut.DeleteAsync(input!));
+        var sut = await CreateSutAsync();
+
+        await Assert.ThrowsAnyAsync<ArgumentException>(() => sut.DeleteAsync(input!));
     }
 
     [Theory]
@@ -136,7 +141,9 @@ public abstract class AssetStoreTests<T> where T : IAssetStore
     [InlineData(" ")]
     public async Task Should_throw_exception_if_file_name_to_download_is_empty(string? input)
     {
-        await Assert.ThrowsAnyAsync<ArgumentException>(() => Sut.DownloadAsync(input!, new MemoryStream()));
+        var sut = await CreateSutAsync();
+
+        await Assert.ThrowsAnyAsync<ArgumentException>(() => sut.DownloadAsync(input!, new MemoryStream()));
     }
 
     [Theory]
@@ -145,19 +152,21 @@ public abstract class AssetStoreTests<T> where T : IAssetStore
     [InlineData(" ")]
     public async Task Should_throw_exception_if_file_name_to_upload_is_empty(string? input)
     {
-        await Assert.ThrowsAnyAsync<ArgumentException>(() => Sut.UploadAsync(input!, new MemoryStream()));
+        var sut = await CreateSutAsync();
+
+        await Assert.ThrowsAnyAsync<ArgumentException>(() => sut.UploadAsync(input!, new MemoryStream()));
     }
 
     [Fact]
     public async Task Should_unify_folders2()
     {
-        var folder = Guid.NewGuid().ToString();
+        var sut = await CreateSutAsync();
 
-        await Sut.UploadAsync(GetPath(TestCase.FolderLinux, folder, folder), assetSmall);
+        var folder = Guid.NewGuid().ToString();
+        await sut.UploadAsync(GetPath(TestCase.FolderLinux, folder, folder), assetSmall);
 
         var readData = new MemoryStream();
-
-        await Sut.DownloadAsync(GetPath(TestCase.FolderWindows, folder, folder), readData);
+        await sut.DownloadAsync(GetPath(TestCase.FolderWindows, folder, folder), readData);
 
         Assert.Equal(assetSmall.ToArray(), readData.ToArray());
     }
@@ -165,13 +174,13 @@ public abstract class AssetStoreTests<T> where T : IAssetStore
     [Fact]
     public async Task Should_unify_folders1()
     {
-        var folder = Guid.NewGuid().ToString();
+        var sut = await CreateSutAsync();
 
-        await Sut.UploadAsync(GetPath(TestCase.FolderLinux, folder, folder), assetSmall);
+        var folder = Guid.NewGuid().ToString();
+        await sut.UploadAsync(GetPath(TestCase.FolderLinux, folder, folder), assetSmall);
 
         var readData = new MemoryStream();
-
-        await Sut.DownloadAsync(GetPath(TestCase.FolderWindows, folder, folder), readData);
+        await sut.DownloadAsync(GetPath(TestCase.FolderWindows, folder, folder), readData);
 
         Assert.Equal(assetSmall.ToArray(), readData.ToArray());
     }
@@ -180,6 +189,8 @@ public abstract class AssetStoreTests<T> where T : IAssetStore
     [MemberData(nameof(FolderCases))]
     public async Task Should_upload_compressed_file(TestCase testCase)
     {
+        var sut = await CreateSutAsync();
+
         var path = GetPath(testCase);
 
         if (!CanUploadStreamsWithoutLength)
@@ -188,12 +199,10 @@ public abstract class AssetStoreTests<T> where T : IAssetStore
         }
 
         var source = CreateDeflateStream(20_000);
-
-        await Sut.UploadAsync(path, source);
+        await sut.UploadAsync(path, source);
 
         var readData = new MemoryStream();
-
-        await Sut.DownloadAsync(path, readData);
+        await sut.DownloadAsync(path, readData);
 
         Assert.True(readData.Length > 0);
     }
@@ -202,13 +211,14 @@ public abstract class AssetStoreTests<T> where T : IAssetStore
     [MemberData(nameof(FolderCases))]
     public async Task Should_write_and_read_file(TestCase testCase)
     {
+        var sut = await CreateSutAsync();
+
         var path = GetPath(testCase);
 
-        await Sut.UploadAsync(path, assetSmall);
+        await sut.UploadAsync(path, assetSmall);
 
         var readData = new MemoryStream();
-
-        await Sut.DownloadAsync(path, readData);
+        await sut.DownloadAsync(path, readData);
 
         Assert.Equal(assetSmall.ToArray(), readData.ToArray());
     }
@@ -217,13 +227,14 @@ public abstract class AssetStoreTests<T> where T : IAssetStore
     [MemberData(nameof(FolderCases))]
     public async Task Should_write_and_read_large_file(TestCase testCase)
     {
+        var sut = await CreateSutAsync();
+
         var path = GetPath(testCase);
 
-        await Sut.UploadAsync(path, assetLarge);
+        await sut.UploadAsync(path, assetLarge);
 
         var readData = new MemoryStream();
-
-        await Sut.DownloadAsync(path, readData);
+        await sut.DownloadAsync(path, readData);
 
         Assert.Equal(assetLarge.ToArray(), readData.ToArray());
     }
@@ -232,13 +243,14 @@ public abstract class AssetStoreTests<T> where T : IAssetStore
     [MemberData(nameof(FolderCases))]
     public async Task Should_write_and_read_file_with_range(TestCase testCase)
     {
+        var sut = await CreateSutAsync();
+
         var path = GetPath(testCase);
 
-        await Sut.UploadAsync(path, assetLarge, true);
+        await sut.UploadAsync(path, assetLarge, true);
 
         var readData = new MemoryStream();
-
-        await Sut.DownloadAsync(path, readData, new BytesRange(2, 5));
+        await sut.DownloadAsync(path, readData, new BytesRange(2, 5));
 
         Assert.Equal(assetLarge.ToArray().AsSpan().Slice(2, 4).ToArray(), readData.ToArray());
     }
@@ -247,24 +259,25 @@ public abstract class AssetStoreTests<T> where T : IAssetStore
     [MemberData(nameof(FolderCases))]
     public async Task Should_copy_and_read_file(TestCase testCase)
     {
+        var sut = await CreateSutAsync();
+
         var path = GetPath(testCase);
 
         var tempFile = Guid.NewGuid().ToString();
 
-        await Sut.UploadAsync(tempFile, assetSmall);
+        await sut.UploadAsync(tempFile, assetSmall);
         try
         {
-            await Sut.CopyAsync(tempFile, path);
+            await sut.CopyAsync(tempFile, path);
 
             var readData = new MemoryStream();
-
-            await Sut.DownloadAsync(path, readData);
+            await sut.DownloadAsync(path, readData);
 
             Assert.Equal(assetSmall.ToArray(), readData.ToArray());
         }
         finally
         {
-            await Sut.DeleteAsync(tempFile);
+            await sut.DeleteAsync(tempFile);
         }
     }
 
@@ -272,11 +285,13 @@ public abstract class AssetStoreTests<T> where T : IAssetStore
     [MemberData(nameof(FolderCases))]
     public async Task Should_write_and_and_get_size(TestCase testCase)
     {
+        var sut = await CreateSutAsync();
+
         var path = GetPath(testCase);
 
-        await Sut.UploadAsync(path, assetSmall, true);
+        await sut.UploadAsync(path, assetSmall, true);
 
-        var size = await Sut.GetSizeAsync(path);
+        var size = await sut.GetSizeAsync(path);
 
         Assert.Equal(assetSmall.Length, size);
     }
@@ -285,13 +300,14 @@ public abstract class AssetStoreTests<T> where T : IAssetStore
     [MemberData(nameof(FolderCases))]
     public async Task Should_write_and_read_file_and_overwrite_non_existing(TestCase testCase)
     {
+        var sut = await CreateSutAsync();
+
         var path = GetPath(testCase);
 
-        await Sut.UploadAsync(path, assetSmall, true);
+        await sut.UploadAsync(path, assetSmall, true);
 
         var readData = new MemoryStream();
-
-        await Sut.DownloadAsync(path, readData);
+        await sut.DownloadAsync(path, readData);
 
         Assert.Equal(assetSmall.ToArray(), readData.ToArray());
     }
@@ -300,16 +316,17 @@ public abstract class AssetStoreTests<T> where T : IAssetStore
     [MemberData(nameof(FolderCases))]
     public async Task Should_write_and_read_overrided_file(TestCase testCase)
     {
+        var sut = await CreateSutAsync();
+
         var path = GetPath(testCase);
 
         var oldData = new MemoryStream([0x1, 0x2, 0x3, 0x4, 0x5]);
 
-        await Sut.UploadAsync(path, oldData);
-        await Sut.UploadAsync(path, assetSmall, true);
+        await sut.UploadAsync(path, oldData);
+        await sut.UploadAsync(path, assetSmall, true);
 
         var readData = new MemoryStream();
-
-        await Sut.DownloadAsync(path, readData);
+        await sut.DownloadAsync(path, readData);
 
         Assert.Equal(assetSmall.ToArray(), readData.ToArray());
     }
@@ -318,75 +335,87 @@ public abstract class AssetStoreTests<T> where T : IAssetStore
     [MemberData(nameof(FolderCases))]
     public async Task Should_throw_exception_when_file_to_write_already_exists(TestCase testCase)
     {
+        var sut = await CreateSutAsync();
+
         var path = GetPath(testCase);
 
-        await Sut.UploadAndResetAsync(path, assetSmall);
+        await sut.UploadAndResetAsync(path, assetSmall);
 
-        await Assert.ThrowsAsync<AssetAlreadyExistsException>(() => Sut.UploadAsync(path, assetSmall));
+        await Assert.ThrowsAsync<AssetAlreadyExistsException>(() => sut.UploadAsync(path, assetSmall));
     }
 
     [Theory]
     [MemberData(nameof(FolderCases))]
     public async Task Should_throw_exception_when_target_file_to_copy_to_already_exists(TestCase testCase)
     {
+        var sut = await CreateSutAsync();
+
         var path = GetPath(testCase);
 
         var tempFile = Guid.NewGuid().ToString();
 
-        await Sut.UploadAsync(tempFile, assetSmall);
-        await Sut.CopyAsync(tempFile, path);
+        await sut.UploadAsync(tempFile, assetSmall);
+        await sut.CopyAsync(tempFile, path);
 
-        await Assert.ThrowsAsync<AssetAlreadyExistsException>(() => Sut.CopyAsync(tempFile, path));
+        await Assert.ThrowsAsync<AssetAlreadyExistsException>(() => sut.CopyAsync(tempFile, path));
     }
 
     [Theory]
     [MemberData(nameof(FolderCases))]
     public async Task Should_ignore_when_deleting_deleted_file(TestCase testCase)
     {
+        var sut = await CreateSutAsync();
+
         var path = GetPath(testCase);
 
-        await Sut.UploadAsync(path, assetSmall);
-        await Sut.DeleteAsync(path);
-        await Sut.DeleteAsync(path);
+        await sut.UploadAsync(path, assetSmall);
+        await sut.DeleteAsync(path);
+        await sut.DeleteAsync(path);
     }
 
     [Theory]
     [MemberData(nameof(FolderCases))]
     public async Task Should_ignore_when_deleting_not_existing_file(TestCase testCase)
     {
+        var sut = await CreateSutAsync();
+
         var path = GetPath(testCase);
 
-        await Sut.DeleteAsync(path);
+        await sut.DeleteAsync(path);
     }
 
     [Fact]
     public async Task Should_delete_by_prefix_name_if_asset_exists()
     {
+        var sut = await CreateSutAsync();
+
         var name = Guid.NewGuid().ToString();
 
-        await Sut.UploadAndResetAsync(name, assetSmall);
-        await Sut.DeleteByPrefixAsync(name);
+        await sut.UploadAndResetAsync(name, assetSmall);
+        await sut.DeleteByPrefixAsync(name);
     }
 
     [Fact]
     public async Task Should_delete_folder_prefix()
     {
+        var sut = await CreateSutAsync();
+
         var folder1 = Guid.NewGuid().ToString();
         var folder2 = Guid.NewGuid().ToString();
 
-        await Sut.UploadAndResetAsync($"{folder1}/file1.txt", assetSmall);
-        await Sut.UploadAndResetAsync($"{folder1}/file2.txt", assetSmall);
+        await sut.UploadAndResetAsync($"{folder1}/file1.txt", assetSmall);
+        await sut.UploadAndResetAsync($"{folder1}/file2.txt", assetSmall);
 
-        await Sut.UploadAndResetAsync($"{folder2}/file1.txt", assetSmall);
-        await Sut.UploadAndResetAsync($"{folder2}/file2.txt", assetSmall);
+        await sut.UploadAndResetAsync($"{folder2}/file1.txt", assetSmall);
+        await sut.UploadAndResetAsync($"{folder2}/file2.txt", assetSmall);
 
-        await Sut.DeleteByPrefixAsync(folder1);
+        await sut.DeleteByPrefixAsync(folder1);
 
-        await Assert.ThrowsAsync<AssetNotFoundException>(() => Sut.GetSizeAsync($"{folder1}/file1.txt"));
-        await Assert.ThrowsAsync<AssetNotFoundException>(() => Sut.GetSizeAsync($"{folder1}/file2.txt"));
+        await Assert.ThrowsAsync<AssetNotFoundException>(() => sut.GetSizeAsync($"{folder1}/file1.txt"));
+        await Assert.ThrowsAsync<AssetNotFoundException>(() => sut.GetSizeAsync($"{folder1}/file2.txt"));
 
-        Assert.True(await Sut.GetSizeAsync($"{folder2}/file1.txt") > 0);
-        Assert.True(await Sut.GetSizeAsync($"{folder2}/file2.txt") > 0);
+        Assert.True(await sut.GetSizeAsync($"{folder2}/file1.txt") > 0);
+        Assert.True(await sut.GetSizeAsync($"{folder2}/file2.txt") > 0);
     }
 
     [Fact]
@@ -397,22 +426,24 @@ public abstract class AssetStoreTests<T> where T : IAssetStore
             return;
         }
 
+        var sut = await CreateSutAsync();
+
         var folder1 = Guid.NewGuid().ToString();
         var folder2 = Guid.NewGuid().ToString();
 
-        await Sut.UploadAndResetAsync($"{folder1}/prefix1-file1.txt", assetSmall);
-        await Sut.UploadAndResetAsync($"{folder1}/prefix1-file2.txt", assetSmall);
+        await sut.UploadAndResetAsync($"{folder1}/prefix1-file1.txt", assetSmall);
+        await sut.UploadAndResetAsync($"{folder1}/prefix1-file2.txt", assetSmall);
 
-        await Sut.UploadAndResetAsync($"{folder2}/prefix2-file1.txt", assetSmall);
-        await Sut.UploadAndResetAsync($"{folder2}/prefix2-file2.txt", assetSmall);
+        await sut.UploadAndResetAsync($"{folder2}/prefix2-file1.txt", assetSmall);
+        await sut.UploadAndResetAsync($"{folder2}/prefix2-file2.txt", assetSmall);
 
-        await Sut.DeleteByPrefixAsync($"{folder1}/prefix1");
+        await sut.DeleteByPrefixAsync($"{folder1}/prefix1");
 
-        await Assert.ThrowsAsync<AssetNotFoundException>(() => Sut.GetSizeAsync($"{folder1}/prefix1-file1.txt"));
-        await Assert.ThrowsAsync<AssetNotFoundException>(() => Sut.GetSizeAsync($"{folder1}/prefix1-file2.txt"));
+        await Assert.ThrowsAsync<AssetNotFoundException>(() => sut.GetSizeAsync($"{folder1}/prefix1-file1.txt"));
+        await Assert.ThrowsAsync<AssetNotFoundException>(() => sut.GetSizeAsync($"{folder1}/prefix1-file2.txt"));
 
-        Assert.True(await Sut.GetSizeAsync($"{folder2}/prefix2-file1.txt") > 0);
-        Assert.True(await Sut.GetSizeAsync($"{folder2}/prefix2-file2.txt") > 0);
+        Assert.True(await sut.GetSizeAsync($"{folder2}/prefix2-file1.txt") > 0);
+        Assert.True(await sut.GetSizeAsync($"{folder2}/prefix2-file2.txt") > 0);
     }
 
     private static MemoryStream CreateFile(int length)

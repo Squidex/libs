@@ -11,7 +11,7 @@ using Azure.Storage.Blobs.Models;
 using Microsoft.Extensions.Options;
 using Squidex.Hosting;
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.Azure;
 
 public class AzureBlobAssetStore(IOptions<AzureBlobAssetOptions> options) : IAssetStore, IInitializable
 {
@@ -19,15 +19,15 @@ public class AzureBlobAssetStore(IOptions<AzureBlobAssetOptions> options) : IAss
     {
         Conditions = new BlobRequestConditions
         {
-            IfNoneMatch = new ETag("*")
-        }
+            IfNoneMatch = new ETag("*"),
+        },
     };
     private static readonly BlobCopyFromUriOptions NoOverwriteCopy = new BlobCopyFromUriOptions
     {
         DestinationConditions = new BlobRequestConditions
         {
-            IfNoneMatch = new ETag("*")
-        }
+            IfNoneMatch = new ETag("*"),
+        },
     };
     private readonly AzureBlobAssetOptions options = options.Value;
     private BlobContainerClient blobContainer;

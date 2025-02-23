@@ -21,5 +21,5 @@ public enum NodeType
     OrderedList,
     Paragraph,
     Heading,
-    Text
+    Text,
 }

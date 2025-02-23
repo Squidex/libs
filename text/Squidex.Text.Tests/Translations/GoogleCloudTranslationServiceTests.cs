@@ -73,7 +73,7 @@ public class GoogleCloudTranslationServiceTests : TranslationServiceTestsBase
 
         Assert.Equal(
         [
-            TranslationResult.Success("세계", "en", 0.0001m)
+            TranslationResult.Success("세계", "en", 0.0001m),
         ], results);
     }
 
@@ -87,7 +87,7 @@ public class GoogleCloudTranslationServiceTests : TranslationServiceTestsBase
 
         Assert.Equal(
         [
-            TranslationResult.Success("עוֹלָם", "en", 0.0001m)
+            TranslationResult.Success("עוֹלָם", "en", 0.0001m),
         ], results);
     }
 }

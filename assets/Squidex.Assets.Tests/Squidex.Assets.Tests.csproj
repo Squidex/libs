@@ -37,8 +37,11 @@
     </PackageReference>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.8" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
     <PackageReference Include="RefactoringEssentials" Version="5.6.0" PrivateAssets="all" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" PrivateAssets="all" />
+    <PackageReference Include="Testcontainers.MongoDb" Version="4.1.0" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.1.0" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
       <PrivateAssets>all</PrivateAssets>
@@ -72,6 +75,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Squidex.Assets.Azure\Squidex.Assets.Azure.csproj" />
+    <ProjectReference Include="..\Squidex.Assets.EntityFramework\Squidex.Assets.EntityFramework.csproj" />
     <ProjectReference Include="..\Squidex.Assets.FTP\Squidex.Assets.FTP.csproj" />
     <ProjectReference Include="..\Squidex.Assets.GoogleCloud\Squidex.Assets.GoogleCloud.csproj" />
     <ProjectReference Include="..\Squidex.Assets.ImageMagick\Squidex.Assets.ImageMagick.csproj" />

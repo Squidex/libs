@@ -23,6 +23,7 @@ public class OpenAITests
         var sut =
             new ServiceCollection()
                 .AddAI()
+                .Services
                 .BuildServiceProvider()
                 .GetRequiredService<IChatAgent>();
 
@@ -34,10 +35,12 @@ public class OpenAITests
     {
         var sut =
             new ServiceCollection()
+                .AddAI()
                 .AddOpenAIChat(TestHelpers.Configuration, options =>
                 {
                     options.ApiKey = "test";
                 })
+                .Services
                 .BuildServiceProvider()
                 .GetRequiredService<IChatAgent>();
 
@@ -50,16 +53,18 @@ public class OpenAITests
     {
         var sut =
             new ServiceCollection()
+                .AddAI()
                 .AddOpenAIChat(TestHelpers.Configuration, options =>
                 {
                     options.Model = "invalid";
                 })
+                .Services
                 .BuildServiceProvider()
                 .GetRequiredService<IChatAgent>();
 
         var request = new ChatRequest
         {
-            Prompt = "Hello"
+            Prompt = "Hello",
         };
 
         await Assert.ThrowsAsync<ChatException>(() => sut.PromptAsync(request, context));
@@ -71,16 +76,18 @@ public class OpenAITests
     {
         var sut =
             new ServiceCollection()
+                .AddAI()
                 .AddOpenAIChat(TestHelpers.Configuration, options =>
                 {
                     options.Model = "invalid";
                 })
+                .Services
                 .BuildServiceProvider()
                 .GetRequiredService<IChatAgent>();
 
         var request = new ChatRequest
         {
-            Prompt = "Hello"
+            Prompt = "Hello",
         };
 
         await Assert.ThrowsAsync<ChatException>(() => sut.StreamAsync(request, context).ToListAsync().AsTask());
@@ -125,7 +132,7 @@ public class OpenAITests
         var request1 = new ChatRequest
         {
             Prompt = string.Empty,
-            Configuration = "images"
+            Configuration = "images",
         };
 
         var message1 = await sut.PromptAsync(request1, context);
@@ -140,7 +147,7 @@ public class OpenAITests
 
         var request1 = new ChatRequest
         {
-            Prompt = "Write an interesting article about Paris in 5 words."
+            Prompt = "Write an interesting article about Paris in 5 words.",
         };
 
         var message1 = await sut.PromptAsync(request1, context);
@@ -206,7 +213,7 @@ public class OpenAITests
         var request1 = new ChatRequest
         {
             Prompt = "What is the current temperature in Berlin?",
-            Configuration = "notool"
+            Configuration = "notool",
         };
 
         var message1 = await sut.PromptAsync(request1, context);
@@ -287,8 +294,8 @@ public class OpenAITests
                 Arguments = new Dictionary<string, ToolValue>
                 {
                     ["lhs"] = new ToolNumberValue(10),
-                    ["rhs"] = new ToolNumberValue(42)
-                }
+                    ["rhs"] = new ToolNumberValue(42),
+                },
             },
             new ToolEndEvent
             {
@@ -314,9 +321,9 @@ public class OpenAITests
                 {
                     CostsInEUR = 0.001175M,
                     NumInputTokens = 349,
-                    NumOutputTokens = 32
-                }
-            }
+                    NumOutputTokens = 32,
+                },
+            },
         };
 
         stream1.Should().BeEquivalentTo(expectedStream,
@@ -342,12 +349,14 @@ public class OpenAITests
     {
         var services =
             new ServiceCollection()
+                .AddAI()
                 .AddTool<MathTool>()
                 .AddTool<WheatherTool>()
                 .AddOpenAIChat(TestHelpers.Configuration, options =>
                 {
                     options.Seed = 42;
                 })
+                .Services
                 .Configure<ChatOptions>(options =>
                 {
                     options.Defaults = new ChatConfiguration
@@ -355,7 +364,7 @@ public class OpenAITests
                         SystemMessages =
                         [
                             "You are a fiendly agent. Always use the result from the tool if you have called one.",
-                            "Say hello to the user."
+                            "Say hello to the user.",
                         ],
                     };
                     options.Configurations = new Dictionary<string, ChatConfiguration>
@@ -365,12 +374,12 @@ public class OpenAITests
                             SystemMessages =
                             [
                                 "You are a bot to generate images. Tell the user about your capabilities in a single, short sentence.",
-                            ]
+                            ],
                         },
                         ["notool"] = new ChatConfiguration
                         {
                             Tools = [],
-                        }
+                        },
                     };
                 })
                 .BuildServiceProvider();

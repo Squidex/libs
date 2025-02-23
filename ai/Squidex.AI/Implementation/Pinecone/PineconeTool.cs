@@ -17,7 +17,7 @@ public sealed class PineconeTool : IChatTool, IInitializable
 {
     private readonly JsonSerializerOptions serializerOptions = new JsonSerializerOptions
     {
-        WriteIndented = true
+        WriteIndented = true,
     };
 
     private readonly PineconeClient client;
@@ -40,9 +40,9 @@ public sealed class PineconeTool : IChatTool, IInitializable
             {
                 ["query"] = new ToolStringArgumentSpec("The request query.")
                 {
-                    IsRequired = true
-                }
-            }
+                    IsRequired = true,
+                },
+            },
         };
     }
 

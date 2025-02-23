@@ -5,6 +5,8 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Squidex.Assets.ImageMagick;
+using Squidex.Assets.ImageSharp;
 using Squidex.Assets.Remote;
 using Xunit;
 
@@ -21,7 +23,7 @@ public class RemoteThumbnailGeneratorTests : AssetThumbnailGeneratorTests
         ImageFormat.JPEG,
         ImageFormat.TGA,
         ImageFormat.TIFF,
-        ImageFormat.WEBP
+        ImageFormat.WEBP,
     ];
 
     protected override string Name()
@@ -44,7 +46,7 @@ public class RemoteThumbnailGeneratorTests : AssetThumbnailGeneratorTests
         var inner = new CompositeThumbnailGenerator(
         [
             new ImageSharpThumbnailGenerator(httpClientFactory),
-            new ImageMagickThumbnailGenerator()
+            new ImageMagickThumbnailGenerator(),
         ]);
 
         return new RemoteThumbnailGenerator(httpClientFactory, inner);

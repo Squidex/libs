@@ -15,5 +15,5 @@ public enum MarkType
     Code,
     Italic,
     Link,
-    Underline
+    Underline,
 }

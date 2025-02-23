@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Squidex.AI.Implementation.OpenAI;
 using Squidex.AI.Utils;
 using Squidex.Assets;
+using Squidex.Assets.ImageSharp;
 using Squidex.Hosting;
 using Xunit;
 
@@ -41,6 +42,7 @@ public class DalLEPipeTests
                 .AddSingleton<IHttpImageEndpoint, ImageEndpoint>()
                 .AddSingleton<IAssetStore, MemoryAssetStore>()
                 .AddSingleton<IAssetThumbnailGenerator, ImageSharpThumbnailGenerator>()
+                .AddAI()
                 .AddDallE(TestHelpers.Configuration, options =>
                 {
                     options.DownloadImage = downloadImage;
@@ -50,6 +52,7 @@ public class DalLEPipeTests
                     options.Seed = 42;
                 })
                 .AddAIImagePipe()
+                .Services
                 .Configure<ChatOptions>(options =>
                 {
                     options.Defaults = new ChatConfiguration
@@ -57,7 +60,7 @@ public class DalLEPipeTests
                         SystemMessages =
                         [
                             "You are a fiendly agent. Always use the result from the tool if you have called one.",
-                            "When you are asked to generate content such as articles, add placeholders for image, describe and use the following pattern: <IMG>{description}</IMG>. {description} is the generated image description."
+                            "When you are asked to generate content such as articles, add placeholders for image, describe and use the following pattern: <IMG>{description}</IMG>. {description} is the generated image description.",
                         ],
                     };
                 })

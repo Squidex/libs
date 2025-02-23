@@ -12,5 +12,5 @@ public enum AttributeKind
     Null,
     String,
     Boolean,
-    Number
+    Number,
 }

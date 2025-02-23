@@ -10,21 +10,21 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using Squidex.Hosting;
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.Mongo;
 
 public sealed class MongoAssetKeyValueStore<T> : IAssetKeyValueStore<T>, IInitializable
 {
     private readonly UpdateOptions upsert = new UpdateOptions
     {
-        IsUpsert = true
+        IsUpsert = true,
     };
-    private readonly IMongoCollection<MongoAssetEntity<T>> collection;
+    private readonly IMongoCollection<MongoAssetKeyValueEntity<T>> collection;
 
     public MongoAssetKeyValueStore(IMongoDatabase database)
     {
         var collectionName = $"AssetKeyValueStore_{typeof(T).Name}";
 
-        collection = database.GetCollection<MongoAssetEntity<T>>(collectionName);
+        collection = database.GetCollection<MongoAssetKeyValueEntity<T>>(collectionName);
     }
 
     public Task InitializeAsync(
@@ -37,23 +37,31 @@ public sealed class MongoAssetKeyValueStore<T> : IAssetKeyValueStore<T>, IInitia
         });
 
         return collection.Indexes.CreateOneAsync(
-            new CreateIndexModel<MongoAssetEntity<T>>(
-                Builders<MongoAssetEntity<T>>.IndexKeys.Ascending(x => x.Expires)),
+            new CreateIndexModel<MongoAssetKeyValueEntity<T>>(
+                Builders<MongoAssetKeyValueEntity<T>>.IndexKeys.Ascending(x => x.Expires)),
             cancellationToken: ct);
     }
 
     public Task DeleteAsync(string key,
         CancellationToken ct = default)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(key);
+
         return collection.DeleteOneAsync(x => x.Key == key, ct);
     }
 
-    public async Task<T> GetAsync(string key,
+    public async Task<T?> GetAsync(string key,
         CancellationToken ct = default)
     {
-        var entity = await collection.Find(x => x.Key == key).FirstOrDefaultAsync(ct);
+        ArgumentException.ThrowIfNullOrWhiteSpace(key);
 
-        return entity != null ? entity.Value! : default!;
+        var entity = await collection.Find(x => x.Key == key).FirstOrDefaultAsync(ct);
+        if (entity == null)
+        {
+            return default;
+        }
+
+        return entity.Value;
     }
 
     public async IAsyncEnumerable<(string Key, T Value)> GetExpiredEntriesAsync(DateTimeOffset now,
@@ -75,10 +83,12 @@ public sealed class MongoAssetKeyValueStore<T> : IAssetKeyValueStore<T>, IInitia
     public Task SetAsync(string key, T value, DateTimeOffset expires,
         CancellationToken ct = default)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(key);
+
         var utcExpires = expires.UtcDateTime;
 
         return collection.UpdateOneAsync(x => x.Key == key,
-            Builders<MongoAssetEntity<T>>.Update
+            Builders<MongoAssetKeyValueEntity<T>>.Update
                 .Set(x => x.Expires, utcExpires)
                 .Set(x => x.Value, value),
             upsert, ct);

@@ -22,7 +22,7 @@ public sealed class MathTool : IChatTool
                 {
                     IsRequired = true,
                 },
-            }
+            },
         };
 
     public async Task<string> ExecuteAsync(ToolContext toolContext,

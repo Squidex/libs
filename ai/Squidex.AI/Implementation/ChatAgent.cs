@@ -16,7 +16,8 @@ public sealed class ChatAgent(
     IChatStore chatStore,
     IEnumerable<IChatPipe> chatPipes,
     IEnumerable<IChatToolProvider> chatToolProviders,
-    IOptions<ChatOptions> options) : IChatAgent
+    IOptions<ChatOptions> options)
+    : IChatAgent
 {
     private readonly ChatOptions options = options.Value;
 
@@ -150,7 +151,7 @@ public sealed class ChatAgent(
                         CostsInEUR = streamCosts,
                         NumInputTokens = f.NumInputTokens,
                         NumOutputTokens = f.NumOutputTokens,
-                    }
+                    },
                 };
             }
 
@@ -203,7 +204,7 @@ public sealed class ChatAgent(
     private Task StoreHistoryAsync(string conversationId, Conversation conversation,
         CancellationToken ct)
     {
-        return chatStore.StoreAsync(conversationId, conversation, ct);
+        return chatStore.StoreAsync(conversationId, conversation, DateTime.UtcNow, ct);
     }
 
     private async Task<Conversation> GetOrCreateConversationAsync(ChatRequest request, ChatConfiguration configuration,

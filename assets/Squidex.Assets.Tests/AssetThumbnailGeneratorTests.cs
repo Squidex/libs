@@ -119,7 +119,7 @@ public abstract class AssetThumbnailGeneratorTests
             {
                 TargetWidth = 1000,
                 TargetHeight = 1000,
-                Mode = ResizeMode.Stretch
+                Mode = ResizeMode.Stretch,
             });
 
             Assert.True(target.Length > source.Length);
@@ -137,7 +137,7 @@ public abstract class AssetThumbnailGeneratorTests
             {
                 TargetWidth = 100,
                 TargetHeight = 100,
-                Mode = ResizeMode.Stretch
+                Mode = ResizeMode.Stretch,
             });
 
             Assert.True(target.Length < source.Length);
@@ -153,7 +153,7 @@ public abstract class AssetThumbnailGeneratorTests
         {
             await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
             {
-                Quality = 10
+                Quality = 10,
             });
 
             Assert.True(target.Length < source.Length);
@@ -170,7 +170,7 @@ public abstract class AssetThumbnailGeneratorTests
             await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
             {
                 Quality = 10,
-                Format = ImageFormat.JPEG
+                Format = ImageFormat.JPEG,
             });
 
             Assert.True(target.Length < source.Length);
@@ -260,7 +260,7 @@ public abstract class AssetThumbnailGeneratorTests
                 Background = color,
                 TargetWidth = w,
                 TargetHeight = h,
-                Mode = mode
+                Mode = mode,
             });
 
             target.Position = 0;
@@ -314,7 +314,7 @@ public abstract class AssetThumbnailGeneratorTests
             {
                 TargetWidth = 1000,
                 TargetHeight = 200,
-                Mode = ResizeMode.Stretch
+                Mode = ResizeMode.Stretch,
             });
         }
     }
@@ -330,7 +330,7 @@ public abstract class AssetThumbnailGeneratorTests
             {
                 TargetWidth = 400,
                 TargetHeight = 0,
-                Mode = ResizeMode.Max
+                Mode = ResizeMode.Max,
             });
         }
     }
@@ -346,7 +346,7 @@ public abstract class AssetThumbnailGeneratorTests
             {
                 TargetWidth = 100,
                 TargetHeight = 0,
-                Mode = ResizeMode.Min
+                Mode = ResizeMode.Min,
             });
         }
     }
@@ -362,7 +362,7 @@ public abstract class AssetThumbnailGeneratorTests
             {
                 TargetWidth = 300,
                 TargetHeight = 300,
-                Mode = ResizeMode.BoxPad
+                Mode = ResizeMode.BoxPad,
             });
         }
     }
@@ -378,7 +378,7 @@ public abstract class AssetThumbnailGeneratorTests
             {
                 TargetWidth = 100,
                 TargetHeight = 100,
-                Mode = ResizeMode.Crop
+                Mode = ResizeMode.Crop,
             });
         }
     }
@@ -394,7 +394,7 @@ public abstract class AssetThumbnailGeneratorTests
             {
                 TargetWidth = 600,
                 TargetHeight = 600,
-                Mode = ResizeMode.CropUpsize
+                Mode = ResizeMode.CropUpsize,
             });
         }
     }
@@ -410,7 +410,7 @@ public abstract class AssetThumbnailGeneratorTests
             {
                 TargetWidth = 50,
                 TargetHeight = 0,
-                Mode = ResizeMode.Pad
+                Mode = ResizeMode.Pad,
             });
         }
     }

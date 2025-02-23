@@ -9,10 +9,11 @@ using System.Globalization;
 using System.Net;
 using System.Text;
 using Squidex.Assets.Internal;
+using Squidex.Assets.TusClient.Internal;
 
 #pragma warning disable MA0098 // Use indexer instead of LINQ methods
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.TusClient;
 
 public static class UploadHttpClientExtension
 {

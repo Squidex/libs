@@ -68,7 +68,7 @@ public class SemanticLogTests
     {
         var now = DateTime.UtcNow;
 
-        appenders.Add(new TimestampLogAppender(() => now));
+        appenders.Add(new TimestampLogAppender(GetTimeProvider(new DateTimeOffset(now, default))));
 
         Log.LogFatal(w => { /* Do Nothing */ });
 
@@ -508,6 +508,16 @@ public class SemanticLogTests
         Log.LogWarning(w => w.WriteProperty("Property", "Value"));
 
         Assert.Equal(string.Empty, output);
+    }
+
+    private static TimeProvider GetTimeProvider(DateTimeOffset now)
+    {
+        var timeProvider = A.Fake<TimeProvider>();
+
+        A.CallTo(() => timeProvider.GetUtcNow())
+            .Returns(now);
+
+        return timeProvider;
     }
 
     private static string LogTest(Action<IObjectWriter> writer)

@@ -28,7 +28,7 @@ public class RichTextListTests
                         new Node
                         {
                             Type = NodeType.Text,
-                            Text = "Item1"
+                            Text = "Item1",
                         },
                     ],
                 },
@@ -40,11 +40,11 @@ public class RichTextListTests
                         new Node
                         {
                             Type = NodeType.Text,
-                            Text = "Item2"
+                            Text = "Item2",
                         },
                     ],
                 },
-            ]
+            ],
         };
 
         RenderUtils.AssertNode(source,
@@ -77,7 +77,7 @@ public class RichTextListTests
                         new Node
                         {
                             Type = NodeType.Text,
-                            Text = "Item1"
+                            Text = "Item1",
                         },
                     ],
                 },
@@ -89,11 +89,11 @@ public class RichTextListTests
                         new Node
                         {
                             Type = NodeType.Text,
-                            Text = "Item2"
+                            Text = "Item2",
                         },
                     ],
                 },
-            ]
+            ],
         };
 
         RenderUtils.AssertNode(source,
@@ -125,7 +125,7 @@ public class RichTextListTests
                         new Node
                         {
                             Type = NodeType.Text,
-                            Text = "Item1"
+                            Text = "Item1",
                         },
                     ],
                 },
@@ -137,7 +137,7 @@ public class RichTextListTests
                         new Node
                         {
                             Type = NodeType.Text,
-                            Text = "Item2"
+                            Text = "Item2",
                         },
                         new Node
                         {
@@ -152,7 +152,7 @@ public class RichTextListTests
                                         new Node
                                         {
                                             Type = NodeType.Text,
-                                            Text = "Item2_1"
+                                            Text = "Item2_1",
                                         },
                                     ],
                                 },
@@ -164,15 +164,15 @@ public class RichTextListTests
                                         new Node
                                         {
                                             Type = NodeType.Text,
-                                            Text = "Item2_2"
+                                            Text = "Item2_2",
                                         },
                                     ],
                                 },
-                            ]
+                            ],
                         },
                     ],
                 },
-            ]
+            ],
         };
 
         RenderUtils.AssertNode(source,

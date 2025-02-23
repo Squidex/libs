@@ -10,7 +10,7 @@ using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
 using Squidex.Hosting;
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.Mongo;
 
 public sealed class MongoGridFsAssetStore(IGridFSBucket<string> bucket) : IAssetStore, IInitializable
 {

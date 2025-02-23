@@ -45,6 +45,7 @@ public static class MessagingServiceExtensions
         services.AddSingletonAs<MessagingDataProvider>()
             .AsSelf();
 
+        services.AddMemoryCache();
         services.AddSingletonAs<IMessagingDataProvider>(c =>
             {
                 var inner = c.GetRequiredService<MessagingDataProvider>();

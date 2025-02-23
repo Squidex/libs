@@ -9,7 +9,7 @@ namespace Squidex.Assets;
 
 public interface IAssetKeyValueStore<T>
 {
-    Task<T> GetAsync(string key,
+    Task<T?> GetAsync(string key,
         CancellationToken ct = default);
 
     Task SetAsync(string key, T value, DateTimeOffset expiration,

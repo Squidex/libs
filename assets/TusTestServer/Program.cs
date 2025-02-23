@@ -8,6 +8,10 @@
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
 using Squidex.Assets;
+using Squidex.Assets.Azure;
+using Squidex.Assets.GoogleCloud;
+using Squidex.Assets.Mongo;
+using Squidex.Assets.S3;
 using TusTestServer;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,7 +26,7 @@ var mongoDatabase = mongoClient.GetDatabase("TusTest");
 
 var gridFSBucket = new GridFSBucket<string>(mongoDatabase, new GridFSBucketOptions
 {
-    BucketName = "fs"
+    BucketName = "fs",
 });
 
 builder.Services.AddMvc();

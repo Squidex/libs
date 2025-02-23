@@ -13,5 +13,5 @@ public enum WatermarkAnchor
     TopRight,
     BottomLeft,
     BottomRight,
-    Center
+    Center,
 }

@@ -6,6 +6,8 @@
 // ==========================================================================
 
 using Microsoft.AspNetCore.Http.Features;
+using Squidex.Assets.ImageMagick;
+using Squidex.Assets.ImageSharp;
 
 namespace Squidex.Assets.ResizeService;
 
@@ -16,6 +18,7 @@ public sealed class Startup(IConfiguration configuration)
         var options = configuration.GetSection("images").Get<ImageResizeOptions>()!;
 
         services.AddHealthChecks();
+        services.AddHttpClient();
         services.AddDefaultForwardRules();
         services.AddDefaultWebServices(configuration);
         services.AddSingleton<ImageResizer>();

@@ -12,8 +12,10 @@ using Squidex.Messaging.Internal;
 
 namespace Squidex.Messaging.Kafka;
 
-public sealed class KafkaTransport(KafkaOwner owner,
-    ILogger<KafkaTransport> log) : IMessagingTransport
+public sealed class KafkaTransport(
+    KafkaOwner owner,
+    ILogger<KafkaTransport> log)
+    : IMessagingTransport
 {
     private IProducer<string, byte[]>? producer;
 
@@ -67,7 +69,7 @@ public sealed class KafkaTransport(KafkaOwner owner,
 
         var message = new Message<string, byte[]>
         {
-            Value = transportMessage.Data
+            Value = transportMessage.Data,
         };
 
         if (transportMessage.Headers.Count > 0)

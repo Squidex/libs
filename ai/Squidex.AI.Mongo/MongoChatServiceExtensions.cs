@@ -6,6 +6,7 @@
 // ==========================================================================
 
 using Microsoft.Extensions.Configuration;
+using Squidex.AI;
 using Squidex.AI.Implementation;
 using Squidex.AI.Mongo;
 
@@ -13,14 +14,14 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class MongoChatServiceExtensions
 {
-    public static IServiceCollection AddMongoChatStore(this IServiceCollection sevices, IConfiguration config, Action<MongoChatStoreOptions>? configure = null,
+    public static AIBuilder AddMongoChatStore(this AIBuilder builder, IConfiguration config, Action<MongoChatStoreOptions>? configure = null,
         string configPath = "chatBot:mongoDb")
     {
-        sevices.ConfigureAndValidate(config, configPath, configure);
+        builder.Services.ConfigureAndValidate(config, configPath, configure);
 
-        sevices.AddSingletonAs<MongoChatStore>()
+        builder.Services.AddSingletonAs<MongoChatStore>()
             .As<IChatStore>();
 
-        return sevices;
+        return builder;
     }
 }

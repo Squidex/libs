@@ -13,7 +13,6 @@ using Xunit;
 
 namespace Squidex.Messaging;
 
-[Trait("Category", "Dependencies")]
 public abstract class MessagingTestsBase
 {
     private readonly Guid testIdentifier = Guid.NewGuid();
@@ -216,7 +215,6 @@ public abstract class MessagingTestsBase
                     {
                         options.Expires = TimeSpan.FromDays(1);
                     })
-                    .AddSubscriptions()
                     .AddOverride(Configure)
                     .AddHandler(handler)
                     .Services

@@ -16,8 +16,10 @@ using GooglePushConfig = Google.Cloud.PubSub.V1.PushConfig;
 
 namespace Squidex.Messaging.GoogleCloud;
 
-public sealed class GooglePubSubTransport(IOptions<GooglePubSubTransportOptions> options,
-    ILogger<GooglePubSubTransport> log) : IMessagingTransport
+public sealed class GooglePubSubTransport(
+    IOptions<GooglePubSubTransportOptions> options,
+    ILogger<GooglePubSubTransport> log)
+    : IMessagingTransport
 {
     private readonly Dictionary<string, Task<PublisherClient>> publishers = [];
     private readonly GooglePubSubTransportOptions options = options.Value;
@@ -158,7 +160,7 @@ public sealed class GooglePubSubTransport(IOptions<GooglePubSubTransportOptions>
 
         var pubSubMessage = new PubsubMessage
         {
-            Data = ByteString.CopyFrom(transportMessage.Data)
+            Data = ByteString.CopyFrom(transportMessage.Data),
         };
 
         foreach (var (key, value) in transportMessage.Headers)
@@ -203,9 +205,9 @@ public sealed class GooglePubSubTransport(IOptions<GooglePubSubTransportOptions>
             SubscriptionName = subscriptionName,
             ExpirationPolicy = new ExpirationPolicy
             {
-                Ttl = Duration.FromTimeSpan(TimeSpan.FromDays(2))
+                Ttl = Duration.FromTimeSpan(TimeSpan.FromDays(2)),
             },
-            TopicAsTopicName = publisherClient.TopicName
+            TopicAsTopicName = publisherClient.TopicName,
         };
 
         await subscriptionApi.CreateSubscriptionAsync(request, ct);

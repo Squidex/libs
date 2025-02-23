@@ -28,9 +28,9 @@ public static class ToolExtensions
                 new ChatMessage
                 {
                     Type = ChatMessageType.System,
-                    Content = prompt
+                    Content = prompt,
                 },
-            ]
+            ],
         };
 
         var stream = chatProvider.StreamAsync(request, ct);

@@ -41,7 +41,6 @@ public sealed class MongoChatStore(IMongoDatabase database, IOptions<MongoChatSt
         ArgumentException.ThrowIfNullOrWhiteSpace(conversationId);
 
         var document = await collection.Find(x => x.Id == conversationId).FirstOrDefaultAsync(ct);
-
         if (document == null)
         {
             return null;
@@ -53,7 +52,7 @@ public sealed class MongoChatStore(IMongoDatabase database, IOptions<MongoChatSt
         return conversation;
     }
 
-    public Task StoreAsync(string conversationId, Conversation conversation,
+    public Task StoreAsync(string conversationId, Conversation conversation, DateTime now,
         CancellationToken ct)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(conversationId);
@@ -66,10 +65,10 @@ public sealed class MongoChatStore(IMongoDatabase database, IOptions<MongoChatSt
             Builders<MongoChatEntity>.Update
                 .SetOnInsert(x => x.Id, conversationId)
                 .Set(x => x.Value, json)
-                .Set(x => x.LastUpdated, DateTime.UtcNow),
+                .Set(x => x.LastUpdated, now),
             new UpdateOptions
             {
-                IsUpsert = true
+                IsUpsert = true,
             },
             ct);
     }
@@ -77,7 +76,11 @@ public sealed class MongoChatStore(IMongoDatabase database, IOptions<MongoChatSt
     public async IAsyncEnumerable<(string Id, Conversation Value)> QueryAsync(DateTime olderThan,
         [EnumeratorCancellation] CancellationToken ct)
     {
-        var cursor = await collection.Find(x => x.LastUpdated < olderThan).ToCursorAsync(ct);
+        var cursor =
+            await collection
+                .Find(x => x.LastUpdated < olderThan)
+                .SortBy(x => x.LastUpdated)
+                .ToCursorAsync(ct);
 
         while (await cursor.MoveNextAsync(ct))
         {

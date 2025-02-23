@@ -5,7 +5,6 @@
     <LangVersion>Latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>Squidex.Assets</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

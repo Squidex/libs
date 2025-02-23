@@ -17,28 +17,25 @@ public sealed class ChatCleaner(
     IEnumerable<IChatTool> chatTools,
     IOptions<ChatOptions> options,
     TimeProvider timeProvider,
-    ILogger<ChatCleaner> log) : IBackgroundProcess
+    ILogger<ChatCleaner> log)
+    : IBackgroundProcess
 {
-    private readonly ChatOptions options = options.Value;
-    private SimpleTimer? cleanupTimer;
+    private SimpleTimer? timer;
 
     public Task StartAsync(
         CancellationToken ct)
     {
-        // Just a guard when this method is called twice.
-        cleanupTimer ??= new SimpleTimer(CleanupAsync, options.CleanupTime, log);
-
+        timer = new SimpleTimer(CleanupAsync, options.Value.CleanupTime, log);
         return Task.CompletedTask;
     }
 
     public async Task StopAsync(
         CancellationToken ct)
     {
-        if (cleanupTimer != null)
+        if (timer != null)
         {
-            await cleanupTimer.DisposeAsync();
-
-            cleanupTimer = null;
+            await timer.DisposeAsync();
+            timer = null;
         }
     }
 
@@ -50,7 +47,7 @@ public sealed class ChatCleaner(
             return;
         }
 
-        var maxAge = timeProvider.GetUtcNow() - options.ConversationLifetime;
+        var maxAge = timeProvider.GetUtcNow() - options.Value.ConversationLifetime;
 
         await foreach (var (id, conversation) in chatStore.QueryAsync(maxAge.UtcDateTime, ct))
         {

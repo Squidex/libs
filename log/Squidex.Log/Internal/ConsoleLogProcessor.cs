@@ -33,7 +33,7 @@ public sealed class ConsoleLogProcessor : IDisposable
         outputThread = new Thread(ProcessLogQueue)
         {
             IsBackground = true,
-            Name = "Logging"
+            Name = "Logging",
         };
 
         outputThread.Start();

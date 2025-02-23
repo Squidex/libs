@@ -7,7 +7,7 @@
 
 using System.Net;
 
-namespace Squidex.Assets.Internal;
+namespace Squidex.Assets.TusClient.Internal;
 
 internal sealed class ProgressableStreamContent(Stream content, int uploadBufferSize, Func<long, Task> uploadProgress) : HttpContent
 {

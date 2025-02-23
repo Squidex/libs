@@ -10,7 +10,7 @@ using tusdotnet.Interfaces;
 using tusdotnet.Models;
 using tusdotnet.Parsers;
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.TusAdapter;
 
 public sealed class AssetTusFile(
     string id,
@@ -18,7 +18,8 @@ public sealed class AssetTusFile(
     Dictionary<string, string> metadata,
     Dictionary<string, Metadata> metadataRaw,
     Stream stream,
-    Action<AssetTusFile> disposed) : IAssetFile, ITusFile, IAsyncDisposable, IDisposable
+    Action<AssetTusFile> disposed)
+    : IAssetFile, ITusFile, IAsyncDisposable, IDisposable
 {
     public string Id { get; } = id;
 

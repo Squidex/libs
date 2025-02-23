@@ -5,11 +5,14 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Squidex.Assets.S3;
+using Xunit;
+
 namespace Squidex.Assets;
 
-public sealed class CloudflareR2Fixture
+public sealed class CloudflareR2Fixture : IAsyncLifetime
 {
-    public AmazonS3AssetStore AssetStore { get; }
+    public AmazonS3AssetStore Store { get; }
 
     public CloudflareR2Fixture()
     {
@@ -19,7 +22,16 @@ public sealed class CloudflareR2Fixture
                 .AddAmazonS3AssetStore(TestHelpers.Configuration, null, "assetStore:r2")
                 .BuildServiceProvider();
 
-        AssetStore = services.GetRequiredService<AmazonS3AssetStore>();
-        AssetStore.InitializeAsync(default).Wait();
+        Store = services.GetRequiredService<AmazonS3AssetStore>();
+    }
+
+    public async Task InitializeAsync()
+    {
+        await Store.InitializeAsync(default);
+    }
+
+    public async Task DisposeAsync()
+    {
+        await Store.ReleaseAsync(default);
     }
 }

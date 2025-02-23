@@ -19,7 +19,7 @@ public sealed class ParallelScheduler : IScheduler
         {
             MaxMessagesPerTask = 1,
             MaxDegreeOfParallelism = maxDegreeOfParallelism,
-            BoundedCapacity = 1
+            BoundedCapacity = 1,
         });
     }
 

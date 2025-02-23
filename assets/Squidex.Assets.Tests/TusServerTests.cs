@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Squidex.Assets.TusClient;
 using Xunit;
 
 #pragma warning disable SA1300 // Element should begin with upper-case letter
@@ -43,8 +44,8 @@ public class TusServerTests : IClassFixture<TusServerFixture>
 
                         fileId = @event.FileId;
                         return Task.CompletedTask;
-                    }
-                }
+                    },
+                },
             });
 
         Assert.IsType<HttpRequestException>(reportedException);
@@ -90,8 +91,8 @@ public class TusServerTests : IClassFixture<TusServerFixture>
 
                         fileId = @event.FileId;
                         return Task.CompletedTask;
-                    }
-                }
+                    },
+                },
             });
 
         Assert.True(reportedCompleted);
@@ -130,9 +131,9 @@ public class TusServerTests : IClassFixture<TusServerFixture>
                         {
                             uploaded = true;
                             return Task.CompletedTask;
-                        }
+                        },
                     },
-                    FileId = fileId
+                    FileId = fileId,
                 });
 
             pausingStream.Reset();
@@ -171,9 +172,9 @@ public class TusServerTests : IClassFixture<TusServerFixture>
                             fileId = @event.FileId;
                             fileIds.Add(@event.FileId);
                             return Task.CompletedTask;
-                        }
+                        },
                     },
-                    FileId = fileId
+                    FileId = fileId,
                 });
 
             pausingStream.Reset(0.25);

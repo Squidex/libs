@@ -20,14 +20,14 @@ public class OpenApiFunctionParserTests
     {
         var arg = new ToolStringArgumentSpec("My String")
         {
-            IsRequired = true
+            IsRequired = true,
         };
 
         var spec = BuildSpec("string", arg);
 
         var call = new FunctionCall
         {
-            Arguments = "{ \"string\": null }"
+            Arguments = "{ \"string\": null }",
         };
 
         Assert.Throws<ChatException>(() => call.ParseArguments(spec));
@@ -38,14 +38,14 @@ public class OpenApiFunctionParserTests
     {
         var arg = new ToolStringArgumentSpec("My String")
         {
-            IsRequired = true
+            IsRequired = true,
         };
 
         var spec = BuildSpec("string", arg);
 
         var call = new FunctionCall
         {
-            Arguments = "{ \"string\": null }"
+            Arguments = "{ \"string\": null }",
         };
 
         Assert.Throws<ChatException>(() => call.ParseArguments(spec));
@@ -56,14 +56,14 @@ public class OpenApiFunctionParserTests
     {
         var arg = new ToolStringArgumentSpec("My String")
         {
-            IsRequired = true
+            IsRequired = true,
         };
 
         var spec = BuildSpec("string", arg);
 
         var call = new FunctionCall
         {
-            Arguments = "{ \"string\": 42 }"
+            Arguments = "{ \"string\": 42 }",
         };
 
         Assert.Throws<ChatException>(() => call.ParseArguments(spec));
@@ -78,14 +78,14 @@ public class OpenApiFunctionParserTests
 
         var call = new FunctionCall
         {
-            Arguments = "{ \"string\": null }"
+            Arguments = "{ \"string\": null }",
         };
 
         var parsed = call.ParseArguments(spec);
 
         parsed.Should().BeEquivalentTo(new Dictionary<string, ToolValue>
         {
-            ["string"] = new ToolNullValue()
+            ["string"] = new ToolNullValue(),
         }, opts => opts.ExcludeToolValuesAs());
     }
 
@@ -98,14 +98,14 @@ public class OpenApiFunctionParserTests
 
         var call = new FunctionCall
         {
-            Arguments = "{ \"string\": \"Hello\" }"
+            Arguments = "{ \"string\": \"Hello\" }",
         };
 
         var parsed = call.ParseArguments(spec);
 
         parsed.Should().BeEquivalentTo(new Dictionary<string, ToolValue>
         {
-            ["string"] = new ToolStringValue("Hello")
+            ["string"] = new ToolStringValue("Hello"),
         }, opts => opts.ExcludeToolValuesAs());
     }
 
@@ -118,14 +118,14 @@ public class OpenApiFunctionParserTests
 
         var call = new FunctionCall
         {
-            Arguments = "{ \"boolean\": true }"
+            Arguments = "{ \"boolean\": true }",
         };
 
         var parsed = call.ParseArguments(spec);
 
         parsed.Should().BeEquivalentTo(new Dictionary<string, ToolValue>
         {
-            ["boolean"] = new ToolBooleanValue(true)
+            ["boolean"] = new ToolBooleanValue(true),
         }, opts => opts.ExcludeToolValuesAs());
     }
 
@@ -138,14 +138,14 @@ public class OpenApiFunctionParserTests
 
         var call = new FunctionCall
         {
-            Arguments = "{ \"boolean\": false }"
+            Arguments = "{ \"boolean\": false }",
         };
 
         var parsed = call.ParseArguments(spec);
 
         parsed.Should().BeEquivalentTo(new Dictionary<string, ToolValue>
         {
-            ["boolean"] = new ToolBooleanValue(false)
+            ["boolean"] = new ToolBooleanValue(false),
         }, opts => opts.ExcludeToolValuesAs());
     }
 
@@ -158,14 +158,14 @@ public class OpenApiFunctionParserTests
 
         var call = new FunctionCall
         {
-            Arguments = "{ \"number\": 42 }"
+            Arguments = "{ \"number\": 42 }",
         };
 
         var parsed = call.ParseArguments(spec);
 
         parsed.Should().BeEquivalentTo(new Dictionary<string, ToolValue>
         {
-            ["number"] = new ToolNumberValue(42)
+            ["number"] = new ToolNumberValue(42),
         }, opts => opts.ExcludeToolValuesAs());
     }
 
@@ -174,21 +174,21 @@ public class OpenApiFunctionParserTests
     {
         var arg = new ToolEnumArgumentSpec("My Enum")
         {
-            Values = ["A", "B"]
+            Values = ["A", "B"],
         };
 
         var spec = BuildSpec("enum", arg);
 
         var call = new FunctionCall
         {
-            Arguments = "{ \"enum\": \"A\" }"
+            Arguments = "{ \"enum\": \"A\" }",
         };
 
         var parsed = call.ParseArguments(spec);
 
         parsed.Should().BeEquivalentTo(new Dictionary<string, ToolValue>
         {
-            ["enum"] = new ToolStringValue("A")
+            ["enum"] = new ToolStringValue("A"),
         }, opts => opts.ExcludeToolValuesAs());
     }
 
@@ -197,14 +197,14 @@ public class OpenApiFunctionParserTests
     {
         var arg = new ToolEnumArgumentSpec("My Enum")
         {
-            Values = ["A", "B"]
+            Values = ["A", "B"],
         };
 
         var spec = BuildSpec("enum", arg);
 
         var call = new FunctionCall
         {
-            Arguments = "{ \"enum\": \"C\" }"
+            Arguments = "{ \"enum\": \"C\" }",
         };
 
         Assert.Throws<ChatException>(() => call.ParseArguments(spec));
@@ -216,8 +216,8 @@ public class OpenApiFunctionParserTests
         {
             Arguments =
             {
-                [name] = spec
-            }
+                [name] = spec,
+            },
         };
     }
 }

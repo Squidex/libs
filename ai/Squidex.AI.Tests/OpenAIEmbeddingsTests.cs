@@ -28,7 +28,9 @@ public class OpenAIEmbeddingsTests
     {
         var services =
             new ServiceCollection()
+                .AddAI()
                 .AddOpenAIEmbeddings(TestHelpers.Configuration)
+                .Services
                 .BuildServiceProvider();
 
         var initializables = services.GetRequiredService<IEnumerable<IInitializable>>();

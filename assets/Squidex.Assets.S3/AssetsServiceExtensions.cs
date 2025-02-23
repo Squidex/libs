@@ -7,6 +7,7 @@
 
 using Microsoft.Extensions.Configuration;
 using Squidex.Assets;
+using Squidex.Assets.S3;
 
 namespace Microsoft.Extensions.DependencyInjection;
 

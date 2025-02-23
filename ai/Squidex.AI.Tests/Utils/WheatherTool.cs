@@ -17,8 +17,8 @@ public sealed class WheatherTool : IChatTool
                 ["location"] = new ToolStringArgumentSpec("The location")
                 {
                     IsRequired = true,
-                }
-            }
+                },
+            },
         };
 
     public async Task<string> ExecuteAsync(ToolContext toolContext,

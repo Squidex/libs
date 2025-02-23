@@ -23,7 +23,7 @@ public class RichTextTests
                 new Node
                 {
                     Type = NodeType.Text,
-                    Text = "Paragraph1"
+                    Text = "Paragraph1",
                 },
             ],
         };
@@ -55,7 +55,7 @@ Paragraph1");
                         new Node
                         {
                             Type = NodeType.Text,
-                            Text = "Paragraph1"
+                            Text = "Paragraph1",
                         },
                     ],
                 },
@@ -67,11 +67,11 @@ Paragraph1");
                         new Node
                         {
                             Type = NodeType.Text,
-                            Text = "Paragraph2"
+                            Text = "Paragraph2",
                         },
                     ],
                 },
-            ]
+            ],
         };
 
         RenderUtils.AssertNode(source,
@@ -99,18 +99,18 @@ Paragraph1 Paragraph2");
                 new Node
                 {
                     Type = NodeType.Text,
-                    Text = "Paragraph1"
+                    Text = "Paragraph1",
                 },
                 new Node
                 {
-                    Type = NodeType.HardBreak
+                    Type = NodeType.HardBreak,
                 },
                 new Node
                 {
                     Type = NodeType.Text,
-                    Text = "Paragraph2"
+                    Text = "Paragraph2",
                 },
-            ]
+            ],
         };
 
         RenderUtils.AssertNode(source,
@@ -132,7 +132,7 @@ Paragraph2",
     {
         var source = new Node
         {
-            Type = NodeType.HorizontalRule
+            Type = NodeType.HorizontalRule,
         };
 
         RenderUtils.AssertNode(source,
@@ -165,9 +165,9 @@ Paragraph2",
                                 new Node
                                 {
                                     Type = NodeType.Text,
-                                    Text = "Text1"
+                                    Text = "Text1",
                                 },
-                            ]
+                            ],
                         },
                     ],
                 },
@@ -179,11 +179,11 @@ Paragraph2",
                         new Node
                         {
                             Type = NodeType.Text,
-                            Text = "Text2"
+                            Text = "Text2",
                         },
-                    ]
+                    ],
                 },
-            ]
+            ],
         };
 
         RenderUtils.AssertNode(source,
@@ -208,25 +208,25 @@ Text2",
             Type = NodeType.CodeBlock,
             Attributes = new Attributes
             {
-                ["language"] = "html"
+                ["language"] = "html",
             },
             Content =
             [
                 new Node
                 {
                     Type = NodeType.Text,
-                    Text = "Paragraph1"
+                    Text = "Paragraph1",
                 },
                 new Node
                 {
-                    Type = NodeType.HardBreak
+                    Type = NodeType.HardBreak,
                 },
                 new Node
                 {
                     Type = NodeType.Text,
-                    Text = "Paragraph2"
+                    Text = "Paragraph2",
                 },
-            ]
+            ],
         };
 
         RenderUtils.AssertNode(source,
@@ -258,18 +258,18 @@ Paragraph2
                 new Node
                 {
                     Type = NodeType.Text,
-                    Text = "Paragraph1"
+                    Text = "Paragraph1",
                 },
                 new Node
                 {
-                    Type = NodeType.HardBreak
+                    Type = NodeType.HardBreak,
                 },
                 new Node
                 {
                     Type = NodeType.Text,
-                    Text = "Paragraph2"
+                    Text = "Paragraph2",
                 },
-            ]
+            ],
         };
 
         RenderUtils.AssertNode(source,
@@ -304,11 +304,11 @@ Paragraph2
                     Attributes = new Attributes
                     {
                         ["href"] = "https://squidex.io",
-                        ["target"] = "_blank"
-                    }
+                        ["target"] = "_blank",
+                    },
                 },
             ],
-            Text = "Link Text"
+            Text = "Link Text",
         };
 
         RenderUtils.AssertNode(source,
@@ -330,10 +330,10 @@ Paragraph2
             [
                 new Mark
                 {
-                    Type = MarkType.Link
+                    Type = MarkType.Link,
                 },
             ],
-            Text = "Link Text"
+            Text = "Link Text",
         };
 
         RenderUtils.AssertNode(source,
@@ -355,8 +355,8 @@ Link Text",
             {
                 ["src"] = "https://squidex.io/logo.png",
                 ["alt"] = "Logo",
-                ["title"] = "Website Logo"
-            }
+                ["title"] = "Website Logo",
+            },
         };
 
         RenderUtils.AssertNode(source,
@@ -376,8 +376,8 @@ Link Text",
             Type = NodeType.Image,
             Attributes = new Attributes
             {
-                ["src"] = "https://squidex.io/logo.png"
-            }
+                ["src"] = "https://squidex.io/logo.png",
+            },
         };
 
         RenderUtils.AssertNode(source,
@@ -401,7 +401,7 @@ Link Text",
                     Type = NodeType.Text,
                     Text = "Heading 1",
                 },
-            ]
+            ],
         };
 
         RenderUtils.AssertNode(source,
@@ -421,7 +421,7 @@ Link Text",
             Type = NodeType.Heading,
             Attributes = new Attributes
             {
-                ["level"] = 1
+                ["level"] = 1,
             },
             Content = [
                 new Node
@@ -429,7 +429,7 @@ Link Text",
                     Type = NodeType.Text,
                     Text = "Heading 1",
                 },
-            ]
+            ],
         };
 
         RenderUtils.AssertNode(source,
@@ -449,7 +449,7 @@ Link Text",
             Type = NodeType.Heading,
             Attributes = new Attributes
             {
-                ["level"] = 2
+                ["level"] = 2,
             },
             Content = [
                 new Node
@@ -457,7 +457,7 @@ Link Text",
                     Type = NodeType.Text,
                     Text = "Heading 2",
                 },
-            ]
+            ],
         };
 
         RenderUtils.AssertNode(source,
@@ -475,7 +475,7 @@ Link Text",
         var source = new Node
         {
             Type = NodeType.Text,
-            Text = "Paragraph1"
+            Text = "Paragraph1",
         };
 
         var actual = RenderUtils.RenderText(source, 4);

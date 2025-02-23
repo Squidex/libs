@@ -9,6 +9,7 @@ using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 using Microsoft.Extensions.DependencyInjection;
 using Squidex.Assets;
+using Squidex.Assets.ImageSharp;
 
 #pragma warning disable MA0048 // File name must match type name
 
@@ -53,7 +54,7 @@ public class Resizing
         await generator.CreateThumbnailAsync(source, "image/png", destination, new ResizeOptions
         {
             TargetHeight = 100,
-            TargetWidth = 100
+            TargetWidth = 100,
         });
     }
 
@@ -85,7 +86,7 @@ public static class Program
                     await generator.CreateThumbnailAsync(source, "image/png", destination, new ResizeOptions
                     {
                         TargetHeight = 100,
-                        TargetWidth = 100
+                        TargetWidth = 100,
                     });
                 }
             }
