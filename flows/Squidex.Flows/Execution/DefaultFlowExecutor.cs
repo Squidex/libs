@@ -107,7 +107,7 @@ public sealed class DefaultFlowExecutor<TContext>(
             InstanceId = Guid.NewGuid(),
             NextRun = Clock.GetCurrentInstant(),
             NextStep = definition.InitialStep,
-            OwnerId = ownerId
+            OwnerId = ownerId,
         };
 
         return Task.FromResult(state);

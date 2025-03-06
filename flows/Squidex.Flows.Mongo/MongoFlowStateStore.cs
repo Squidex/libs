@@ -74,7 +74,7 @@ public sealed class MongoFlowStateStore<TContext>(IMongoDatabase database, JsonS
     {
         var filters = new List<FilterDefinition<MongoFlowStateEntity>>
         {
-            Builders<MongoFlowStateEntity>.Filter.Eq(x => x.OwnerId, ownerId)
+            Builders<MongoFlowStateEntity>.Filter.Eq(x => x.OwnerId, ownerId),
         };
 
         if (definitionId != null)
@@ -131,10 +131,10 @@ public sealed class MongoFlowStateStore<TContext>(IMongoDatabase database, JsonS
                         DefinitionId = state.DefinitionId,
                         DueTime = state.NextRun?.ToDateTimeOffset(),
                         OwnerId = state.OwnerId,
-                        State = JsonSerializer.Serialize(state, jsonSerializerOptions)
+                        State = JsonSerializer.Serialize(state, jsonSerializerOptions),
                     })
                 {
-                    IsUpsert = true
+                    IsUpsert = true,
                 });
         }
 

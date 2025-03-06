@@ -24,7 +24,7 @@ public sealed class ExecutionStepState
     {
         var attempt = new ExecutionStepAttempt
         {
-            Started = started
+            Started = started,
         };
 
         Attempts.Add(attempt);

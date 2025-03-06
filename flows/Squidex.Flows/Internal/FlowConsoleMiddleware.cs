@@ -11,7 +11,7 @@ namespace Squidex.Flows.Internal;
 
 internal class FlowConsoleMiddleware : IFlowMiddleware
 {
-    public async ValueTask<FlowStepResult> InvokeStepAsync(FlowContext context, FlowExecutionContext executionContext, IFlowStep step, NextStepDelegate next,
+    public async ValueTask<FlowStepResult> InvokeAsync(FlowContext context, FlowExecutionContext executionContext, IFlowStep step, NextStepDelegate next,
         CancellationToken ct)
     {
         FlowConsole.Output = executionContext.Log;

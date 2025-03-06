@@ -62,7 +62,7 @@ public sealed class FlowStepRegistry(IOptions<FlowOptions> options) : IInitializ
                     Name = property.Name,
                     IsFormattable = property.GetCustomAttribute<ExpressionAttribute>() != null,
                     IsObsolete = stepType.GetCustomAttribute<ObsoleteAttribute>() != null,
-                    IsScript = property.GetCustomAttribute<ScriptAttribute>() != null
+                    IsScript = property.GetCustomAttribute<ScriptAttribute>() != null,
                 };
 
                 var display = property.GetCustomAttribute<DisplayAttribute>();

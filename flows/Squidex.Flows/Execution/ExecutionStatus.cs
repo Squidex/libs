@@ -13,5 +13,5 @@ public enum ExecutionStatus
     Scheduled,
     Completed,
     Failed,
-    Running
+    Running,
 }

@@ -12,5 +12,5 @@ public enum ExpressionFallback
     None,
     Context,
     Event,
-    Envelope
+    Envelope,
 }

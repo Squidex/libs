@@ -33,7 +33,7 @@ public sealed class MongoEventStoreSubscription : IEventSubscription
         {
             StreamPosition lastRawPosition = default;
 
-            if (position.IsEnd)
+            if (!position.IsEnd)
             {
                 try
                 {
@@ -65,6 +65,10 @@ public sealed class MongoEventStoreSubscription : IEventSubscription
         {
             await eventSubscriber.OnErrorAsync(this, ex);
         }
+        finally
+        {
+            stopToken.Dispose();
+        }
     }
 
     private async Task QueryCurrentAsync(StreamFilter streamFilter, ParsedStreamPosition lastPosition)
@@ -92,7 +96,7 @@ public sealed class MongoEventStoreSubscription : IEventSubscription
                 changeOptions.StartAtOperationTime = changeStart;
             }
 
-            using (var cursor = eventStore.TypedCollection.Watch(changePipeline, changeOptions, stopToken.Token))
+            using (var cursor = await eventStore.TypedCollection.WatchAsync(changePipeline, changeOptions, stopToken.Token))
             {
                 var isRead = false;
                 await cursor.ForEachAsync(async change =>
@@ -166,7 +170,13 @@ public sealed class MongoEventStoreSubscription : IEventSubscription
 
     public void Dispose()
     {
-        stopToken.Cancel();
+        try
+        {
+            stopToken.Cancel();
+        }
+        catch (ObjectDisposedException)
+        {
+        }
     }
 
     public ValueTask CompleteAsync()

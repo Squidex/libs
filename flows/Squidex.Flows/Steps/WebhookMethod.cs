@@ -13,5 +13,5 @@ public enum WebhookMethod
     PUT,
     GET,
     DELETE,
-    PATCH
+    PATCH,
 }
