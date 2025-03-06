@@ -33,7 +33,7 @@ public sealed class MongoEventStoreSubscription : IEventSubscription
         {
             StreamPosition lastRawPosition = default;
 
-            if (position.IsEnd)
+            if (!position.IsEnd)
             {
                 try
                 {

@@ -206,6 +206,33 @@ public abstract class EventStoreTests
     }
 
     [Fact]
+    public async Task Should_subscribe_to_events_after_commit()
+    {
+        var sut = await CreateSutAsync();
+
+        var streamName = $"test-{Guid.NewGuid()}";
+        var streamFilter = StreamFilter.Name(streamName);
+
+        var commit1 = new[]
+        {
+            CreateEventData(1),
+            CreateEventData(2),
+        };
+
+        await sut.AppendAsync(Guid.NewGuid(), streamName, EventsVersion.Any, commit1, ct);
+
+        var readEvents = await QueryWithSubscriptionAsync(sut, streamFilter, 1);
+
+        var expected = new[]
+        {
+            new StoredEvent(streamName, "Position", 0, commit1[0]),
+            new StoredEvent(streamName, "Position", 1, commit1[1]),
+        };
+
+        ShouldBeEquivalentTo(readEvents, expected);
+    }
+
+    [Fact]
     public async Task Should_subscribe_to_next_events()
     {
         var sut = await CreateSutAsync();
