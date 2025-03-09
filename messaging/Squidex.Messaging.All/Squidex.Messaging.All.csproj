@@ -31,7 +31,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Squidex.Messaging.EntityFramework\Squidex.Messaging.EntityFramework.csproj" />
     <ProjectReference Include="..\Squidex.Messaging.GoogleCloud\Squidex.Messaging.GoogleCloud.csproj" />
-    <ProjectReference Include="..\Squidex.Messaging.Kafka\Squidex.Messaging.Kafka.csproj" />
     <ProjectReference Include="..\Squidex.Messaging.Mongo\Squidex.Messaging.Mongo.csproj" />
     <ProjectReference Include="..\Squidex.Messaging.RabbitMq\Squidex.Messaging.RabbitMq.csproj" />
     <ProjectReference Include="..\Squidex.Messaging.Redis\Squidex.Messaging.Redis.csproj" />
