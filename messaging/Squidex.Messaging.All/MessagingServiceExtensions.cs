@@ -12,9 +12,9 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class MessagingServiceExtensions
 {
-    public static MessagingBuilder AddTransport(this MessagingBuilder builder, IConfiguration config)
+    public static MessagingBuilder AddTransport(this MessagingBuilder builder, IConfiguration config, Alternatives? custom = null)
     {
-        config.ConfigureByOption("messaging:type", new Alternatives
+        var options = new Alternatives
         {
             ["MongoDb"] = () =>
             {
@@ -28,10 +28,6 @@ public static class MessagingServiceExtensions
             {
                 builder.AddGooglePubSubTransport(config);
             },
-            ["Kafka"] = () =>
-            {
-                builder.AddKafkaTransport(config);
-            },
             ["RabbitMq"] = () =>
             {
                 builder.AddRabbitMqTransport(config);
@@ -40,7 +36,17 @@ public static class MessagingServiceExtensions
             {
                 builder.AddRedisTransport(config);
             },
-        });
+        };
+
+        if (custom != null)
+        {
+            foreach (var (key, configure) in custom)
+            {
+                options[key] = configure;
+            }
+        }
+
+        config.ConfigureByOption("messaging:type", options);
 
         return builder;
     }

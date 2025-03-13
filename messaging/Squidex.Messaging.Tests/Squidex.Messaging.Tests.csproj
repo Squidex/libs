@@ -45,6 +45,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Squidex.Messaging.All\Squidex.Messaging.All.csproj" />
     <ProjectReference Include="..\Squidex.Messaging.EntityFramework\Squidex.Messaging.EntityFramework.csproj" />
+    <ProjectReference Include="..\Squidex.Messaging.Kafka\Squidex.Messaging.Kafka.csproj" />
     <ProjectReference Include="..\Squidex.Messaging.Subscriptions\Squidex.Messaging.Subscriptions.csproj" />
   </ItemGroup>
 

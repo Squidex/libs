@@ -206,7 +206,7 @@ public abstract class EventStoreTests
     }
 
     [Fact]
-    public async Task Should_subscribe_to_events_after_insert()
+    public async Task Should_subscribe_to_events_after_commit()
     {
         var sut = await CreateSutAsync();
 
