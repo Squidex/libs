@@ -7,7 +7,6 @@
 
 using System.Text;
 using Squidex.Text.RichText.Model;
-using Xunit;
 
 namespace Squidex.Text.RichText;
 

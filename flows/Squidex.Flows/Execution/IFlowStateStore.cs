@@ -12,7 +12,7 @@ namespace Squidex.Flows.Execution;
 public interface IFlowStateStore<TContext> where TContext : FlowContext
 {
     Task StoreAsync(List<FlowExecutionState<TContext>> states,
-        CancellationToken ct);
+        CancellationToken ct = default);
 
     Task EnqueueAsync(Guid instanceId, Instant nextAttempt,
         CancellationToken ct = default);

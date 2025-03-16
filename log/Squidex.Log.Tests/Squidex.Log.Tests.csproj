@@ -28,6 +28,11 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
+	
+  <ItemGroup>
+    <Using Include="FakeItEasy" />
+    <Using Include="Xunit" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Squidex.Log\Squidex.Log.csproj" />

@@ -13,11 +13,11 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class FlowServiceExtensions
 {
-    public static IServiceCollection AddMongoFlowStore<TContext>(this IServiceCollection services) where TContext : FlowContext
+    public static FlowsBuilder AddMongoFlowStore<TContext>(this FlowsBuilder builder) where TContext : FlowContext
     {
-        services.AddSingletonAs<MongoFlowStateStore<TContext>>()
+        builder.Services.AddSingletonAs<MongoFlowStateStore<TContext>>()
             .As<IFlowStateStore<TContext>>();
 
-        return services;
+        return builder;
     }
 }

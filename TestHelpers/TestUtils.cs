@@ -7,13 +7,13 @@
 
 using Microsoft.Extensions.Configuration;
 
-namespace Squidex.AI;
+namespace TestHelpers;
 
-public static class TestHelpers
+public static class TestUtils
 {
     public static IConfiguration Configuration { get; }
 
-    static TestHelpers()
+    static TestUtils()
     {
         var basePath = Path.GetFullPath("../../../");
 

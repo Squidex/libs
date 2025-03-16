@@ -12,4 +12,10 @@ public class FlowOptions
     public TimeSpan JobQueryInterval { get; set; } = TimeSpan.FromSeconds(10);
 
     public List<Type> Steps { get; set; } = [];
+
+    public void AddStepIfNotExist(Type stepType)
+    {
+        Steps.Remove(stepType);
+        Steps.Add(stepType);
+    }
 }

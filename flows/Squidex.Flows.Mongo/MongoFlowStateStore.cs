@@ -99,12 +99,12 @@ public sealed class MongoFlowStateStore<TContext>(IMongoDatabase database, JsonS
     public async IAsyncEnumerable<FlowExecutionState<TContext>> QueryPendingAsync(Instant now,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
-        var entitiesLimit = now.ToDateTimeOffset();
-        var entitiesItems = await collection.Find(x => x.DueTime < entitiesLimit).ToCursorAsync(ct);
+        var queryLimit = now.ToDateTimeOffset();
+        var queryItems = await collection.Find(x => x.DueTime != null && x.DueTime < queryLimit).ToCursorAsync(ct);
 
-        while (await entitiesItems.MoveNextAsync(ct))
+        while (await queryItems.MoveNextAsync(ct))
         {
-            foreach (var item in entitiesItems.Current)
+            foreach (var item in queryItems.Current)
             {
                 yield return ParseState(item);
             }
@@ -143,6 +143,17 @@ public sealed class MongoFlowStateStore<TContext>(IMongoDatabase database, JsonS
 
     private FlowExecutionState<TContext> ParseState(MongoFlowStateEntity entity)
     {
-        return JsonSerializer.Deserialize<FlowExecutionState<TContext>>(entity.State, jsonSerializerOptions)!;
+        var state = JsonSerializer.Deserialize<FlowExecutionState<TContext>>(entity.State, jsonSerializerOptions)!;
+
+        if (entity.DueTime != null)
+        {
+            state.NextRun = Instant.FromDateTimeOffset(entity.DueTime.Value);
+        }
+        else
+        {
+            state.NextRun = null;
+        }
+
+        return state;
     }
 }

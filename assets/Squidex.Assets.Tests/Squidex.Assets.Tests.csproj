@@ -48,6 +48,11 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
+	
+  <ItemGroup>
+    <Using Include="FakeItEasy" />
+    <Using Include="Xunit" />
+  </ItemGroup>
 
   <ItemGroup>
     <AdditionalFiles Include="..\..\stylecop.json" Link="stylecop.json" />
@@ -74,6 +79,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\TestHelpers\TestHelpers.csproj" />
     <ProjectReference Include="..\Squidex.Assets.Azure\Squidex.Assets.Azure.csproj" />
     <ProjectReference Include="..\Squidex.Assets.EntityFramework\Squidex.Assets.EntityFramework.csproj" />
     <ProjectReference Include="..\Squidex.Assets.FTP\Squidex.Assets.FTP.csproj" />

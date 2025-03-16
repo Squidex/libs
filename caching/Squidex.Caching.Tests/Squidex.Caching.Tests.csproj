@@ -28,6 +28,11 @@
     </PackageReference>
     <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" PrivateAssets="all" />
   </ItemGroup>
+	
+  <ItemGroup>
+    <Using Include="FakeItEasy" />
+    <Using Include="Xunit" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Squidex.Caching\Squidex.Caching.csproj" />

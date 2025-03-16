@@ -6,11 +6,8 @@
 // ==========================================================================
 
 using System.Text;
-using FakeItEasy;
-using FluentAssertions;
 using Squidex.AI.Implementation;
 using Squidex.AI.Utils;
-using Xunit;
 
 namespace Squidex.AI;
 

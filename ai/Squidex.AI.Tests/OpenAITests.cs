@@ -5,11 +5,10 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Squidex.AI.Utils;
 using Squidex.Hosting;
-using Xunit;
+using TestHelpers;
 
 namespace Squidex.AI;
 
@@ -36,7 +35,7 @@ public class OpenAITests
         var sut =
             new ServiceCollection()
                 .AddAI()
-                .AddOpenAIChat(TestHelpers.Configuration, options =>
+                .AddOpenAIChat(TestUtils.Configuration, options =>
                 {
                     options.ApiKey = "test";
                 })
@@ -54,7 +53,7 @@ public class OpenAITests
         var sut =
             new ServiceCollection()
                 .AddAI()
-                .AddOpenAIChat(TestHelpers.Configuration, options =>
+                .AddOpenAIChat(TestUtils.Configuration, options =>
                 {
                     options.Model = "invalid";
                 })
@@ -77,7 +76,7 @@ public class OpenAITests
         var sut =
             new ServiceCollection()
                 .AddAI()
-                .AddOpenAIChat(TestHelpers.Configuration, options =>
+                .AddOpenAIChat(TestUtils.Configuration, options =>
                 {
                     options.Model = "invalid";
                 })
@@ -352,7 +351,7 @@ public class OpenAITests
                 .AddAI()
                 .AddTool<MathTool>()
                 .AddTool<WheatherTool>()
-                .AddOpenAIChat(TestHelpers.Configuration, options =>
+                .AddOpenAIChat(TestUtils.Configuration, options =>
                 {
                     options.Seed = 42;
                 })

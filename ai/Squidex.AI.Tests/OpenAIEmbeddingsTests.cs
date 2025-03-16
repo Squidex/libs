@@ -7,7 +7,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Squidex.Hosting;
-using Xunit;
+using TestHelpers;
 
 namespace Squidex.AI;
 
@@ -29,7 +29,7 @@ public class OpenAIEmbeddingsTests
         var services =
             new ServiceCollection()
                 .AddAI()
-                .AddOpenAIEmbeddings(TestHelpers.Configuration)
+                .AddOpenAIEmbeddings(TestUtils.Configuration)
                 .Services
                 .BuildServiceProvider();
 

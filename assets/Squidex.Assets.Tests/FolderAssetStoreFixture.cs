@@ -6,7 +6,6 @@
 // ==========================================================================
 
 using Squidex.Hosting;
-using Xunit;
 
 namespace Squidex.Assets;
 

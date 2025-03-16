@@ -11,7 +11,7 @@ using MongoDB.Driver;
 using Squidex.Events.GetEventStore;
 using Squidex.Hosting;
 using Testcontainers.EventStoreDb;
-using Xunit;
+using TestHelpers;
 
 namespace Squidex.Events;
 
@@ -35,7 +35,7 @@ public sealed class GetEventStoreFixture : IAsyncLifetime
         Services = new ServiceCollection()
             .AddSingleton(_ => EventStoreClientSettings.Create(eventStore.GetConnectionString()))
             .AddSingleton(c => c.GetRequiredService<IMongoClient>().GetDatabase("Test"))
-            .AddGetEventStore(TestHelpers.Configuration)
+            .AddGetEventStore(TestUtils.Configuration)
             .Services
             .BuildServiceProvider();
 

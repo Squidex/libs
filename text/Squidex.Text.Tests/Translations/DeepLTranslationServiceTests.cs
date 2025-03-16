@@ -6,7 +6,7 @@
 // ==========================================================================
 
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
+using TestHelpers;
 
 namespace Squidex.Text.Translations;
 
@@ -16,7 +16,7 @@ public class DeepLTranslationServiceTests : TranslationServiceTestsBase
     {
         var services =
             new ServiceCollection()
-                .AddDeepLTranslations(TestHelpers.Configuration)
+                .AddDeepLTranslations(TestUtils.Configuration)
                 .BuildServiceProvider();
 
         return services.GetRequiredService<ITranslationService>();
@@ -27,7 +27,7 @@ public class DeepLTranslationServiceTests : TranslationServiceTestsBase
     {
         var sut =
             new ServiceCollection()
-                .AddDeepLTranslations(TestHelpers.Configuration, c => c.AuthKey = null!)
+                .AddDeepLTranslations(TestUtils.Configuration, c => c.AuthKey = null!)
                 .BuildServiceProvider()
                 .GetRequiredService<ITranslationService>();
 

@@ -5,12 +5,10 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using FakeItEasy;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Squidex.Log.Adapter;
-using Xunit;
 
 #pragma warning disable CA2253 // Named placeholders should not be numeric values
 

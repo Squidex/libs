@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Squidex.Events;
 
-public class TestContext(DbContextOptions options) : DbContext(options)
+public class TestDbContext(DbContextOptions options) : DbContext(options)
 {
     public DbSet<TestEntity> Tests { get; set; }
 

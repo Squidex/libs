@@ -5,7 +5,8 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Xunit;
+using MongoDB.Driver;
+using TestHelpers;
 
 namespace Squidex.Messaging;
 
@@ -15,8 +16,8 @@ public class MongoSubscriptionStoreTests(MongoMessagingFixture fixture)
 {
     protected override void Configure(MessagingBuilder builder)
     {
-        builder.Services.AddSingleton(fixture.Database);
+        builder.Services.AddSingleton(fixture.Services.GetRequiredService<IMongoDatabase>());
 
-        builder.AddMongoDataStore(TestHelpers.Configuration);
+        builder.AddMongoDataStore(TestUtils.Configuration);
     }
 }

@@ -5,8 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Xunit;
-
 #pragma warning disable RECS0015 // If an extension method is called as static method convert it to method syntax
 
 namespace Squidex.Text;

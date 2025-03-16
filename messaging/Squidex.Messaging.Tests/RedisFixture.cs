@@ -8,7 +8,6 @@
 using System.Diagnostics;
 using StackExchange.Redis;
 using Testcontainers.Redis;
-using Xunit;
 
 #pragma warning disable MA0040 // Forward the CancellationToken parameter to methods that take one
 

@@ -5,7 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Xunit;
+using TestHelpers;
 
 namespace Squidex.Messaging;
 
@@ -18,6 +18,6 @@ public class GoogleCloudTests : MessagingTestsBase
 
     protected override void Configure(MessagingBuilder builder)
     {
-        builder.AddGooglePubSubTransport(TestHelpers.Configuration);
+        builder.AddGooglePubSubTransport(TestUtils.Configuration);
     }
 }

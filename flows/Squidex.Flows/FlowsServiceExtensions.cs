@@ -5,7 +5,11 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Text.Json;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using NodaTime;
+using NodaTime.Serialization.SystemTextJson;
 using Squidex.Flows;
 using Squidex.Flows.Execution;
 using Squidex.Flows.Internal;
@@ -15,7 +19,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class FlowsServiceExtensions
 {
-    public static IServiceCollection AddFlows<TContext>(this IServiceCollection services, IConfiguration config,
+    public static FlowsBuilder AddFlows<TContext>(this IServiceCollection services, IConfiguration config,
         Action<FlowOptions>? configure = null, string configPath = "flows")
         where TContext : FlowContext
     {
@@ -33,23 +37,27 @@ public static class FlowsServiceExtensions
         services.AddSingletonAs<FlowStepRegistry>()
             .As<IFlowStepRegistry>();
 
+        services.TryAddSingleton(
+            new JsonSerializerOptions(JsonSerializerOptions.Default)
+                .ConfigureForNodaTime(DateTimeZoneProviders.Tzdb));
+
         services.Configure<FlowOptions>(options =>
         {
-            options.Steps.Add(typeof(DelayStep));
-            options.Steps.Add(typeof(IfStep));
-            options.Steps.Add(typeof(ScriptStep));
-            options.Steps.Add(typeof(WebhookStep));
+            options.AddStepIfNotExist(typeof(DelayStep));
+            options.AddStepIfNotExist(typeof(IfStep));
+            options.AddStepIfNotExist(typeof(ScriptStep));
+            options.AddStepIfNotExist(typeof(WebhookStep));
         });
 
-        return services;
+        return new FlowsBuilder(services);
     }
 
-    public static IServiceCollection AddFlowWorker<TContext>(this IServiceCollection services)
+    public static FlowsBuilder AddWorker<TContext>(this FlowsBuilder builder)
         where TContext : FlowContext
     {
-        services.AddSingletonAs<FlowExecutionWorker<TContext>>()
+        builder.Services.AddSingletonAs<FlowExecutionWorker<TContext>>()
             .AsSelf();
 
-        return services;
+        return builder;
     }
 }

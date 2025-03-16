@@ -6,7 +6,6 @@
 // ==========================================================================
 
 using Squidex.Assets.S3;
-using Xunit;
 
 namespace Squidex.Assets;
 

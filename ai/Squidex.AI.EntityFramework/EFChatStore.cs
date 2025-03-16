@@ -83,7 +83,7 @@ public sealed class EFChatStore<T>(IDbContextFactory<T> dbContextFactory) : ICha
     {
         await using var context = await dbContextFactory.CreateDbContextAsync(ct);
 
-        var records = context.Set<EFChatEntity>().Where(x => x.LastUpdated < olderThan).ToAsyncEnumerable();
+        var records = context.Set<EFChatEntity>().Where(x => x.LastUpdated < olderThan).AsAsyncEnumerable();
 
         await foreach (var entity in records.WithCancellation(ct))
         {

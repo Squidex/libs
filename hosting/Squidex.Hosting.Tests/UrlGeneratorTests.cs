@@ -7,7 +7,6 @@
 
 using Microsoft.Extensions.Options;
 using Squidex.Hosting.Web;
-using Xunit;
 
 namespace Squidex.Hosting;
 

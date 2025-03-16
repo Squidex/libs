@@ -8,7 +8,6 @@
 using Squidex.Assets.ImageMagick;
 using Squidex.Assets.ImageSharp;
 using Squidex.Assets.Remote;
-using Xunit;
 
 namespace Squidex.Assets;
 

@@ -5,15 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Xunit;
-
 namespace Squidex.Assets.KeyValueStore;
 
-public class PostgresKeyValueStoreTests(PostgresKeyValueStoreFixture fixture)
-    : KeyValueStoreTests, IClassFixture<PostgresKeyValueStoreFixture>
+public sealed class KeyValueTestData
 {
-    protected override Task<IAssetKeyValueStore<TestValue>> CreateSutAsync()
-    {
-        return Task.FromResult<IAssetKeyValueStore<TestValue>>(fixture.Store);
-    }
+    public string Value { get; set; }
 }

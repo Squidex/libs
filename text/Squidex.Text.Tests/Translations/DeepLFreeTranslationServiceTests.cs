@@ -6,7 +6,7 @@
 // ==========================================================================
 
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
+using TestHelpers;
 
 namespace Squidex.Text.Translations;
 
@@ -16,7 +16,7 @@ public class DeepLFreeTranslationServiceTests : TranslationServiceTestsBase
     {
         var services =
             new ServiceCollection()
-                .AddDeepLTranslations(TestHelpers.Configuration, null, "translations:deeplFree")
+                .AddDeepLTranslations(TestUtils.Configuration, null, "translations:deeplFree")
                 .BuildServiceProvider();
 
         return services.GetRequiredService<ITranslationService>();
@@ -30,7 +30,7 @@ public class DeepLFreeTranslationServiceTests : TranslationServiceTestsBase
     {
         var sut =
             new ServiceCollection()
-                .AddDeepLTranslations(TestHelpers.Configuration, c => c.AuthKey = authKey!)
+                .AddDeepLTranslations(TestUtils.Configuration, c => c.AuthKey = authKey!)
                 .BuildServiceProvider()
                 .GetRequiredService<ITranslationService>();
 
@@ -42,7 +42,7 @@ public class DeepLFreeTranslationServiceTests : TranslationServiceTestsBase
     {
         var sut =
             new ServiceCollection()
-                .AddDeepLTranslations(TestHelpers.Configuration, c => c.AuthKey = "My Auth Key")
+                .AddDeepLTranslations(TestUtils.Configuration, c => c.AuthKey = "My Auth Key")
                 .BuildServiceProvider()
                 .GetRequiredService<ITranslationService>();
 
@@ -54,7 +54,7 @@ public class DeepLFreeTranslationServiceTests : TranslationServiceTestsBase
     {
         var sut =
             new ServiceCollection()
-                .AddDeepLTranslations(TestHelpers.Configuration, c => c.AuthKey = null!)
+                .AddDeepLTranslations(TestUtils.Configuration, c => c.AuthKey = null!)
                 .BuildServiceProvider()
                 .GetRequiredService<ITranslationService>();
 

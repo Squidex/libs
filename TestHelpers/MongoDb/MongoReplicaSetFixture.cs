@@ -5,46 +5,50 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using Squidex.Hosting;
 using Testcontainers.MongoDb;
-using Xunit;
 
-namespace Squidex.Events;
+namespace TestHelpers.MongoDb;
 
-public sealed class MongoEventStoreReplicaFixture : IAsyncLifetime
+public abstract class MongoReplicaSetFixture(string reuseId = "libs-mongodb") : IAsyncLifetime
 {
-    private readonly MongoDbContainer mongoDb =
+    public MongoDbContainer MongoDb { get; } =
         new MongoDbBuilder()
-            .WithReuse(true)
-            .WithLabel("reuse-id", "eventstore-mongo-replica")
+            .WithReuse(Debugger.IsAttached)
+            .WithLabel("reuse-id", reuseId)
             .WithReplicaSet()
             .Build();
 
     public IServiceProvider Services { get; private set; }
 
-    public IEventStore Store => Services.GetRequiredService<IEventStore>();
+    public IMongoClient MongoClient
+        => Services.GetRequiredService<IMongoClient>();
+
+    public IMongoDatabase MongoDatabase
+        => Services.GetRequiredService<IMongoDatabase>();
 
     public async Task InitializeAsync()
     {
-        await mongoDb.StartAsync();
+        await MongoDb.StartAsync();
 
-        Services = new ServiceCollection()
-            .AddSingleton<IMongoClient>(_ => new MongoClient(mongoDb.GetConnectionString()))
-            .AddSingleton(c => c.GetRequiredService<IMongoClient>().GetDatabase("Test"))
-            .AddMongoEventStore(TestHelpers.Configuration, options =>
-            {
-                options.PollingInterval = TimeSpan.FromSeconds(0.1);
-            })
-            .Services
-            .BuildServiceProvider();
+        var serviceCollection = new ServiceCollection()
+            .AddSingleton<IMongoClient>(_ => new MongoClient(MongoDb.GetConnectionString()))
+            .AddSingleton(c => c.GetRequiredService<IMongoClient>().GetDatabase("Test"));
+
+        AddServices(serviceCollection);
+
+        Services = serviceCollection.BuildServiceProvider();
 
         foreach (var service in Services.GetRequiredService<IEnumerable<IInitializable>>())
         {
             await service.InitializeAsync(default);
         }
     }
+
+    protected abstract void AddServices(IServiceCollection services);
 
     public async Task DisposeAsync()
     {
@@ -53,6 +57,6 @@ public sealed class MongoEventStoreReplicaFixture : IAsyncLifetime
             await service.ReleaseAsync(default);
         }
 
-        await mongoDb.StopAsync();
+        await MongoDb.StopAsync();
     }
 }
