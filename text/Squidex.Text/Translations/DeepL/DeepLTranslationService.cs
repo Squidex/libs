@@ -104,40 +104,38 @@ public sealed class DeepLTranslationService(IHttpClientFactory httpClientFactory
             parameters.Add(new KeyValuePair<string, string>("source_lang", GetLanguageCode(sourceLanguage)));
         }
 
+        var url =
+            options.AuthKey.EndsWith(":fx", StringComparison.Ordinal) ?
+            UrlFree :
+            UrlPaid;
+
+        using var httpClient = CreateClient();
+
         if (!string.IsNullOrWhiteSpace(options.GlossaryByName) && string.IsNullOrWhiteSpace(options.GlossaryById))
         {
-            var gl_url =
-                (options.AuthKey.EndsWith(":fx", StringComparison.Ordinal) ?
-                UrlFree :
-                UrlPaid).Replace("/translate", "/glossaries");
+            var gl_url = url.Replace("/translate", "/glossaries");
+            using var gl_httpRequest = new HttpRequestMessage(HttpMethod.Get, gl_url);
+            using var gl_httpResponse = await httpClient.SendAsync(gl_httpRequest, ct);
 
-            var gl_requestMessage = new HttpRequestMessage(HttpMethod.Get, gl_url);
-            gl_requestMessage.Headers.Add("Authorization", $"DeepL-Auth-Key {options.AuthKey}");
-            var gl_httpClient = httpClientFactory.CreateClient("DeepL");
-
-            using (var gl_response = await gl_httpClient.SendAsync(gl_requestMessage, ct))
+            try
             {
-                try
+                gl_httpResponse.EnsureSuccessStatusCode();
+
+                var gl_jsonString = await gl_httpResponse.Content.ReadAsStringAsync(ct);
+                var gl_jsonResponse = JsonSerializer.Deserialize<GlossariesDto>(gl_jsonString)!;
+
+                foreach (var glossary in gl_jsonResponse.Glossaries)
                 {
-                    gl_response.EnsureSuccessStatusCode();
-
-                    var jsonString = await gl_response.Content.ReadAsStringAsync(ct);
-                    var jsonResponse = JsonSerializer.Deserialize<GlossariesDto>(jsonString)!;
-
-                    var index = 0;
-                    foreach (var glossary in jsonResponse.Glossaries)
+                    if (options.GlossaryByName.Equals(glossary.Name, StringComparison.Ordinal))
                     {
-                        if (options.GlossaryByName.Equals(glossary.Name, StringComparison.Ordinal))
-                        {
-                            options.GlossaryById = glossary.GlossaryId;
-                            break;
-                        }
+                        options.GlossaryById = glossary.GlossaryId;
+                        break;
                     }
                 }
-                catch (Exception ex)
-                {
-                    AddError(TranslationResult.Failed(ex));
-                }
+            }
+            catch (Exception ex)
+            {
+                AddError(TranslationResult.Failed(ex));
             }
         }
 
@@ -151,12 +149,6 @@ public sealed class DeepLTranslationService(IHttpClientFactory httpClientFactory
             parameters.Add(new KeyValuePair<string, string>("tag_handling", options.TagHandling));
         }
 
-        var url =
-            options.AuthKey.EndsWith(":fx", StringComparison.Ordinal) ?
-            UrlFree :
-            UrlPaid;
-
-        using var httpClient = CreateClient();
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, url)
         {
              Content = new FormUrlEncodedContent(parameters!),
