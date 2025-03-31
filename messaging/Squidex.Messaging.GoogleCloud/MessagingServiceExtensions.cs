@@ -13,14 +13,14 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class MessagingServiceExtensions
 {
-    public static IServiceCollection AddGooglePubSubTransport(this IServiceCollection services, IConfiguration config, Action<GooglePubSubTransportOptions>? configure = null,
+    public static MessagingBuilder AddGooglePubSubTransport(this MessagingBuilder builder, IConfiguration config, Action<GooglePubSubTransportOptions>? configure = null,
         string configPath = "messaging:googlePubSub")
     {
-        services.ConfigureAndValidate(config, configPath, configure);
+        builder.Services.ConfigureAndValidate(config, configPath, configure);
 
-        services.AddSingletonAs<GooglePubSubTransport>()
+        builder.Services.AddSingletonAs<GooglePubSubTransport>()
             .As<IMessagingTransport>();
 
-        return services;
+        return builder;
     }
 }

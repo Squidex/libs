@@ -7,15 +7,8 @@
 
 namespace Squidex.Messaging.Internal;
 
-public sealed class AggregateAsyncDisposable : IAsyncDisposable
+public sealed class AggregateAsyncDisposable(params IAsyncDisposable[] inners) : IAsyncDisposable
 {
-    private readonly IAsyncDisposable[] inners;
-
-    public AggregateAsyncDisposable(params IAsyncDisposable[] inners)
-    {
-        this.inners = inners;
-    }
-
     public async ValueTask DisposeAsync()
     {
         foreach (var inner in inners)

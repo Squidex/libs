@@ -6,25 +6,13 @@
 // ==========================================================================
 
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Options;
 using Squidex.Messaging;
 
 namespace Squidex.Caching;
 
-public sealed class ReplicatedCache : IReplicatedCache, IMessageHandler<CacheInvalidateMessage>
+public sealed class ReplicatedCache(IMemoryCache memoryCache, IMessageBus messageBus) : IReplicatedCache, IMessageHandler<CacheInvalidateMessage>
 {
-    private readonly IMemoryCache memoryCache;
-    private readonly IMessageBus messageBus;
-    private readonly ReplicatedCacheOptions options;
-
     public Guid InstanceId { get; } = Guid.NewGuid();
-
-    public ReplicatedCache(IMemoryCache memoryCache, IMessageBus messageBus, IOptions<ReplicatedCacheOptions> options)
-    {
-        this.memoryCache = memoryCache;
-        this.messageBus = messageBus;
-        this.options = options.Value;
-    }
 
     public Task HandleAsync(CacheInvalidateMessage message,
         CancellationToken ct)
@@ -46,7 +34,9 @@ public sealed class ReplicatedCache : IReplicatedCache, IMessageHandler<CacheInv
     public Task AddAsync(string key, object? value, TimeSpan expiration,
         CancellationToken ct = default)
     {
-        if (!options.Enable)
+        ArgumentNullException.ThrowIfNull(key);
+
+        if (expiration <= TimeSpan.Zero)
         {
             return Task.CompletedTask;
         }
@@ -59,7 +49,9 @@ public sealed class ReplicatedCache : IReplicatedCache, IMessageHandler<CacheInv
     public Task AddAsync(IEnumerable<KeyValuePair<string, object?>> items, TimeSpan expiration,
         CancellationToken ct = default)
     {
-        if (!options.Enable)
+        ArgumentNullException.ThrowIfNull(items);
+
+        if (expiration <= TimeSpan.Zero)
         {
             return Task.CompletedTask;
         }
@@ -75,22 +67,24 @@ public sealed class ReplicatedCache : IReplicatedCache, IMessageHandler<CacheInv
     public Task RemoveAsync(string key,
         CancellationToken ct = default)
     {
-        return RemoveAsync(new[] { key }, ct);
+        ArgumentNullException.ThrowIfNull(key);
+
+        return RemoveAsync([key], ct);
     }
 
     public Task RemoveAsync(string key1, string key2,
         CancellationToken ct = default)
     {
-        return RemoveAsync(new[] { key1, key2 }, ct);
+        ArgumentNullException.ThrowIfNull(key1);
+        ArgumentNullException.ThrowIfNull(key2);
+
+        return RemoveAsync([key1, key2], ct);
     }
 
     public async Task RemoveAsync(string[] keys,
         CancellationToken ct = default)
     {
-        if (!options.Enable)
-        {
-            return;
-        }
+        ArgumentNullException.ThrowIfNull(keys);
 
         foreach (var key in keys)
         {
@@ -105,12 +99,7 @@ public sealed class ReplicatedCache : IReplicatedCache, IMessageHandler<CacheInv
 
     public bool TryGetValue(string key, out object? value)
     {
-        if (!options.Enable)
-        {
-            value = null;
-
-            return false;
-        }
+        ArgumentNullException.ThrowIfNull(key);
 
         return memoryCache.TryGetValue(key, out value);
     }
@@ -118,6 +107,8 @@ public sealed class ReplicatedCache : IReplicatedCache, IMessageHandler<CacheInv
     private Task InvalidateAsync(string[] keys,
         CancellationToken ct)
     {
+        ArgumentNullException.ThrowIfNull(keys);
+
         return messageBus.PublishAsync(new CacheInvalidateMessage { Keys = keys, Source = InstanceId }, ct: ct);
     }
 }

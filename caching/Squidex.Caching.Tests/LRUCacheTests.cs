@@ -75,7 +75,7 @@ public class LRUCacheTests
         cache.Set(4, 4);
         cache.Set(5, 5);
 
-        Assert.Equal(new List<int> { 2, 3 }, evicted);
+        Assert.Equal([2, 3], evicted);
     }
 
     [Fact]

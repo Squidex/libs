@@ -7,7 +7,7 @@
 
 using Squidex.Hosting.Configuration;
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.S3;
 
 public sealed class AmazonS3AssetOptions : IValidatableOptions
 {

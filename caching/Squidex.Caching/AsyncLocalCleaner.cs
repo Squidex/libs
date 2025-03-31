@@ -7,15 +7,8 @@
 
 namespace Squidex.Caching;
 
-internal sealed class AsyncLocalCleaner<T> : IDisposable
+internal sealed class AsyncLocalCleaner<T>(AsyncLocal<T> asyncLocal) : IDisposable
 {
-    private readonly AsyncLocal<T> asyncLocal;
-
-    public AsyncLocalCleaner(AsyncLocal<T> asyncLocal)
-    {
-        this.asyncLocal = asyncLocal;
-    }
-
     public void Dispose()
     {
         asyncLocal.Value = default!;

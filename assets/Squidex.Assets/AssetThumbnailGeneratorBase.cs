@@ -6,7 +6,6 @@
 // ==========================================================================
 
 using System.Diagnostics.CodeAnalysis;
-using Squidex.Assets.Internal;
 
 namespace Squidex.Assets;
 
@@ -24,8 +23,8 @@ public abstract class AssetThumbnailGeneratorBase : IAssetThumbnailGenerator
 
     public virtual bool IsResizable(string mimeType, ResizeOptions options, [MaybeNullWhen(false)] out string? destinationMimeType)
     {
-        Guard.NotNull(options, nameof(options));
-        Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
+        ArgumentException.ThrowIfNullOrWhiteSpace(mimeType);
+        ArgumentNullException.ThrowIfNull(options);
 
         destinationMimeType = null;
 
@@ -50,7 +49,11 @@ public abstract class AssetThumbnailGeneratorBase : IAssetThumbnailGenerator
             targetMimeType = null;
         }
 
-        if (options.TargetWidth > 0 || options.TargetHeight > 0 || options.Quality > 0 || targetMimeType != null)
+        if (options.TargetWidth > 0 ||
+            options.TargetHeight > 0 ||
+            options.Quality > 0 ||
+            targetMimeType != null ||
+            Uri.IsWellFormedUriString(options.WatermarkUrl, UriKind.Absolute))
         {
             destinationMimeType = targetMimeType ?? mimeType;
 
@@ -63,8 +66,8 @@ public abstract class AssetThumbnailGeneratorBase : IAssetThumbnailGenerator
     public async Task<ImageInfo?> GetImageInfoAsync(Stream source, string mimeType,
         CancellationToken ct = default)
     {
-        Guard.NotNull(source, nameof(source));
-        Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentException.ThrowIfNullOrWhiteSpace(mimeType);
 
         // If we cannot read or write from the mime type we can just stop here.
         if (!CanReadAndWrite(mimeType))
@@ -81,9 +84,9 @@ public abstract class AssetThumbnailGeneratorBase : IAssetThumbnailGenerator
     public async Task<string?> ComputeBlurHashAsync(Stream source, string mimeType, BlurOptions options,
         CancellationToken ct = default)
     {
-        Guard.NotNull(source, nameof(source));
-        Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
-        Guard.NotNull(options, nameof(options));
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentException.ThrowIfNullOrWhiteSpace(mimeType);
+        ArgumentNullException.ThrowIfNull(options);
 
         // If we cannot read or write from the mime type we can just stop here.
         if (!CanReadAndWrite(mimeType))
@@ -100,9 +103,9 @@ public abstract class AssetThumbnailGeneratorBase : IAssetThumbnailGenerator
     public async Task FixAsync(Stream source, string mimeType, Stream destination,
         CancellationToken ct = default)
     {
-        Guard.NotNull(source, nameof(source));
-        Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
-        Guard.NotNull(destination, nameof(destination));
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentException.ThrowIfNullOrWhiteSpace(mimeType);
+        ArgumentNullException.ThrowIfNull(destination);
 
         // If we cannot read or write from the mime type we can just stop here.
         if (!CanReadAndWrite(mimeType))
@@ -120,10 +123,10 @@ public abstract class AssetThumbnailGeneratorBase : IAssetThumbnailGenerator
     public async Task CreateThumbnailAsync(Stream source, string mimeType, Stream destination, ResizeOptions options,
         CancellationToken ct = default)
     {
-        Guard.NotNull(source, nameof(source));
-        Guard.NotNullOrEmpty(mimeType, nameof(mimeType));
-        Guard.NotNull(destination, nameof(destination));
-        Guard.NotNull(options, nameof(options));
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentException.ThrowIfNullOrWhiteSpace(mimeType);
+        ArgumentNullException.ThrowIfNull(destination);
+        ArgumentNullException.ThrowIfNull(options);
 
         if (!IsResizable(mimeType, options, out _))
         {

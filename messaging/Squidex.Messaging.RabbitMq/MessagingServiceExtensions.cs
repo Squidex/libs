@@ -13,17 +13,17 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class MessagingServiceExtensions
 {
-    public static IServiceCollection AddRabbitMqTransport(this IServiceCollection services, IConfiguration config, Action<RabbitMqTransportOptions>? configure = null,
+    public static MessagingBuilder AddRabbitMqTransport(this MessagingBuilder builder, IConfiguration config, Action<RabbitMqTransportOptions>? configure = null,
         string configPath = "messaging:rabbitMq")
     {
-        services.ConfigureAndValidate(config, configPath, configure);
+        builder.Services.ConfigureAndValidate(config, configPath, configure);
 
-        services.AddSingletonAs<RabbitMqOwner>()
+        builder.Services.AddSingletonAs<RabbitMqOwner>()
             .AsSelf();
 
-        services.AddSingletonAs<RabbitMqTransport>()
+        builder.Services.AddSingletonAs<RabbitMqTransport>()
             .As<IMessagingTransport>();
 
-        return services;
+        return builder;
     }
 }

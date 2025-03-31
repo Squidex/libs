@@ -11,8 +11,8 @@ namespace Squidex.Messaging.Implementation;
 
 public sealed class HandlerPipeline
 {
-    private readonly HashSet<Func<object, CancellationToken, Task>> emptyHandlers = new HashSet<Func<object, CancellationToken, Task>>();
-    private readonly Dictionary<Type, List<Func<object, CancellationToken, Task>>> handlersByType = new Dictionary<Type, List<Func<object, CancellationToken, Task>>>();
+    private readonly HashSet<Func<object, CancellationToken, Task>> emptyHandlers = [];
+    private readonly Dictionary<Type, List<Func<object, CancellationToken, Task>>> handlersByType = [];
 
     public bool HasHandlers => handlersByType.Count > 0;
 
@@ -35,13 +35,13 @@ public sealed class HandlerPipeline
                 var messageType = method.GetParameters()[0].ParameterType;
                 var messageBuilder = GetType().GetMethod(nameof(BuildCaller), BindingFlags.NonPublic | BindingFlags.Static)!.MakeGenericMethod(messageType);
 
-                var builtDelegate = messageBuilder.Invoke(null, new object[] { handler });
+                var builtDelegate = messageBuilder.Invoke(null, [handler]);
 
                 if (builtDelegate is Func<object, CancellationToken, Task> typed)
                 {
                     if (!handlersByType.TryGetValue(messageType, out var list))
                     {
-                        list = new List<Func<object, CancellationToken, Task>>();
+                        list = [];
 
                         handlersByType.Add(messageType, list);
                     }
@@ -60,7 +60,7 @@ public sealed class HandlerPipeline
         {
             if (type.IsAssignableTo(item.Key))
             {
-                result ??= new HashSet<Func<object, CancellationToken, Task>>();
+                result ??= [];
 
                 foreach (var handler in item.Value)
                 {

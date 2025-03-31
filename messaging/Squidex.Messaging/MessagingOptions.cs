@@ -9,11 +9,11 @@ namespace Squidex.Messaging;
 
 public sealed class MessagingOptions
 {
-    public RoutingCollection Routing { get; set; } = new RoutingCollection();
+    public RoutingCollection Routing { get; set; } = [];
 
-    public RoutingCollection Topics { get; set; } = new RoutingCollection();
+    public RoutingCollection Topics { get; set; } = [];
 
-    public TimeSpan SubscriptionUpdateInterval { get; set; } = TimeSpan.FromSeconds(30);
+    public TimeSpan DataCacheDuration { get; set; } = TimeSpan.FromSeconds(30);
 
-    public TimeSpan SubscriptionCleanupInterval { get; set; } = TimeSpan.FromSeconds(60);
+    public TimeSpan DataAliveUpdateInterval { get; set; } = TimeSpan.FromSeconds(30);
 }

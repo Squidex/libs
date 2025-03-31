@@ -27,31 +27,27 @@ public static class CachingServiceExtensions
         return services;
     }
 
-    public static IServiceCollection AddReplicatedCache(this IServiceCollection services, Action<ReplicatedCacheOptions>? configureOptions = null)
+    public static IServiceCollection AddReplicatedCache(this IServiceCollection services)
     {
-        services.ConfigureOptional(configureOptions!);
-        services.AddSingleton<ReplicatedCache>();
+        services.AddMemoryCache();
 
-        services.TryAddSingleton<IReplicatedCache>(
-            c => c.GetRequiredService<ReplicatedCache>());
-
-        services.TryAddSingleton<IMessageHandler<CacheInvalidateMessage>>(
-            c => c.GetRequiredService<ReplicatedCache>());
+        services.AddSingletonAs<ReplicatedCache>()
+            .As<IReplicatedCache>().As<IMessageHandler<CacheInvalidateMessage>>();
 
         return services;
     }
 
-    public static IServiceCollection AddReplicatedCacheMessaging(this IServiceCollection services, bool consume = true, Action<ChannelOptions>? configure = null, string channelName = "caching")
+    public static MessagingBuilder AddReplicatedCache(this MessagingBuilder builder, bool consume = true, Action<ChannelOptions>? configure = null, string channelName = "caching")
     {
         var channel = new ChannelName(channelName, ChannelType.Topic);
 
-        services.AddMessaging(channel, consume, configure);
-
-        services.Configure<MessagingOptions>(options =>
+        builder.AddChannel(channel, consume, configure);
+        builder.Services.AddReplicatedCache();
+        builder.Services.Configure<MessagingOptions>(options =>
         {
             options.Routing.Add(x => x is CacheInvalidateMessage, channel);
         });
 
-        return services;
+        return builder;
     }
 }

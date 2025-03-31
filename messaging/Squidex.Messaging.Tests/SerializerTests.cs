@@ -6,17 +6,13 @@
 // ==========================================================================
 
 using Squidex.Messaging.Implementation;
+using Squidex.Messaging.Internal;
 using Xunit;
 
 namespace Squidex.Messaging;
 
 public class SerializerTests
 {
-    private class TestObject
-    {
-        public string Value { get; set; }
-    }
-
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
@@ -78,19 +74,19 @@ public class SerializerTests
 
     private static void ThrowExceptionWhenDeserializingInvalidType(IMessagingSerializer serializer)
     {
-        var input = new SerializedObject(Array.Empty<byte>(), "Invalid", "format");
+        var input = new SerializedObject([], "Invalid", "format");
 
         Assert.Throws<ArgumentException>(() => serializer.Deserialize(input!));
     }
 
     private static void SerializeAndDeserialize(IMessagingSerializer serializer)
     {
-        var source = new TestObject { Value = Guid.NewGuid().ToString() };
+        var source = new TestValue(Guid.NewGuid().ToString());
 
         var valueWritten = serializer.Serialize(source);
         var valueRead = serializer.Deserialize(valueWritten);
 
         Assert.Equal(source.GetType(), valueRead.Type);
-        Assert.Equal(source.Value, ((TestObject)valueRead.Message).Value);
+        Assert.Equal(source.Value, ((TestValue)valueRead.Message).Value);
     }
 }

@@ -10,15 +10,8 @@ using Microsoft.Extensions.Logging;
 
 namespace Squidex.Log.Adapter;
 
-internal sealed class SemanticLogLogger : ILogger
+internal sealed class SemanticLogLogger(ISemanticLog semanticLog) : ILogger
 {
-    private readonly ISemanticLog semanticLog;
-
-    public SemanticLogLogger(ISemanticLog semanticLog)
-    {
-        this.semanticLog = semanticLog;
-    }
-
     public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
     {
         SemanticLogLevel semanticLogLevel;

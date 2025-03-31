@@ -8,32 +8,36 @@
 using System.Linq.Expressions;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
-using Squidex.Messaging.Internal;
+using Squidex.Hosting;
 
 namespace Squidex.Messaging.Mongo;
 
 internal sealed class MongoSubscription : IAsyncDisposable, IMessageAck
 {
     private static readonly UpdateDefinitionBuilder<MongoMessage> Update = Builders<MongoMessage>.Update;
-    private readonly string? collectionName;
+    private readonly string? channelName;
     private readonly string? queueFilter;
     private readonly IMongoCollection<MongoMessage> collection;
     private readonly MongoTransportOptions options;
-    private readonly IClock clock;
-    private readonly ILogger log;
+    private readonly TimeProvider timeProvider;
     private readonly SimpleTimer timer;
+    private readonly ILogger log;
 
-    public MongoSubscription(MessageTransportCallback callback, IMongoCollection<MongoMessage> collection,
-        string? collectionName,
+    public MongoSubscription(
+        MessageTransportCallback callback,
+        IMongoCollection<MongoMessage> collection,
+        string? channelName,
         string? queueFilter,
-        MongoTransportOptions options, IClock clock, ILogger log)
+        MongoTransportOptions options,
+        TimeProvider timeProvider,
+        ILogger log)
     {
-        this.queueFilter = queueFilter;
-        this.collectionName = collectionName;
+        this.channelName = channelName;
         this.collection = collection;
-        this.options = options;
-        this.clock = clock;
         this.log = log;
+        this.options = options;
+        this.queueFilter = queueFilter;
+        this.timeProvider = timeProvider;
 
         timer = new SimpleTimer(async ct =>
         {
@@ -51,16 +55,14 @@ internal sealed class MongoSubscription : IAsyncDisposable, IMessageAck
         {
             return PollNormalAsync(callback, ct);
         }
-        else
-        {
-            return PollPrefetchAsync(callback, ct);
-        }
+
+        return PollPrefetchAsync(callback, ct);
     }
 
     private async Task<bool> PollNormalAsync(MessageTransportCallback callback,
         CancellationToken ct)
     {
-        var now = clock.UtcNow;
+        var now = timeProvider.GetUtcNow().UtcDateTime;
 
         // We can fetch an document in one go with this operation.
         var mongoMessage =
@@ -81,7 +83,7 @@ internal sealed class MongoSubscription : IAsyncDisposable, IMessageAck
     private async Task<bool> PollPrefetchAsync(MessageTransportCallback callback,
         CancellationToken ct)
     {
-        var now = clock.UtcNow;
+        var now = timeProvider.GetUtcNow().UtcDateTime;
 
         // There is no way to limit the updates, therefore we have to query candidates first.
         var candidates =
@@ -173,7 +175,7 @@ internal sealed class MongoSubscription : IAsyncDisposable, IMessageAck
         }
         catch (Exception ex)
         {
-            log.LogError(ex, "Failed to put the message back into the queue '{queue}'.", collectionName);
+            log.LogError(ex, "Failed to put the message back into the queue '{queue}'.", channelName);
         }
     }
 
@@ -197,7 +199,7 @@ internal sealed class MongoSubscription : IAsyncDisposable, IMessageAck
         }
         catch (Exception ex)
         {
-            log.LogError(ex, "Failed to remove message from queue '{queue}'.", collectionName);
+            log.LogError(ex, "Failed to remove message from queue '{queue}'.", channelName);
         }
     }
 }

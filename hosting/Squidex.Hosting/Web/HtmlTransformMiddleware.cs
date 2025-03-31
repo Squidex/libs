@@ -11,22 +11,12 @@ using Microsoft.IO;
 
 namespace Squidex.Hosting.Web;
 
-public sealed class HtmlTransformMiddleware
+public sealed class HtmlTransformMiddleware(HtmlTransformOptions options, RequestDelegate next)
 {
-    private readonly HtmlTransformOptions options;
-    private readonly RequestDelegate next;
-
-    public HtmlTransformMiddleware(HtmlTransformOptions options, RequestDelegate next)
-    {
-        this.options = options;
-        this.next = next;
-    }
-
-    private sealed class BufferStream : Stream
+    private sealed class BufferStream(HttpContext context) : Stream
     {
         private static readonly RecyclableMemoryStreamManager Buffers = new RecyclableMemoryStreamManager();
-        private readonly Stream originalBody;
-        private readonly HttpContext context;
+        private readonly Stream originalBody = context.Response.Body;
         private bool writingStarted;
         private MemoryStream? memoryStream;
 
@@ -43,14 +33,6 @@ public sealed class HtmlTransformMiddleware
         private Stream ActualStream
         {
             get => memoryStream ?? originalBody;
-        }
-
-        public BufferStream(HttpContext context)
-        {
-            this.context = context;
-
-            // Keep an instance of the original body, because the body will be replaced later.
-            this.originalBody = context.Response.Body;
         }
 
         public async Task CompleteAsync(HtmlTransformOptions options)
@@ -85,7 +67,7 @@ public sealed class HtmlTransformMiddleware
             }
             finally
             {
-                this.context.Response.Body = originalBody;
+                context.Response.Body = originalBody;
             }
         }
 

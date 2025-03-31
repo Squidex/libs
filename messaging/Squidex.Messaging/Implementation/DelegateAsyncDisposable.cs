@@ -7,15 +7,8 @@
 
 namespace Squidex.Messaging.Implementation;
 
-public sealed class DelegateAsyncDisposable : IAsyncDisposable
+public sealed class DelegateAsyncDisposable(Func<ValueTask> action) : IAsyncDisposable
 {
-    private readonly Func<ValueTask> action;
-
-    public DelegateAsyncDisposable(Func<ValueTask> action)
-    {
-        this.action = action;
-    }
-
     public ValueTask DisposeAsync()
     {
         return action();

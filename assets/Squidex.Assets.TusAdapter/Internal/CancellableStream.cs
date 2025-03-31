@@ -7,12 +7,11 @@
 
 #pragma warning disable CA1835 // Prefer the 'Memory'-based overloads for 'ReadAsync' and 'WriteAsync'
 
-namespace Squidex.Assets.Internal;
+namespace Squidex.Assets.TusAdapter.Internal;
 
-internal sealed class CancellableStream : DelegateStream
+internal sealed class CancellableStream(Stream innerStream, CancellationToken cancellationToken)
+    : DelegateStream(innerStream)
 {
-    private readonly CancellationToken cancellationToken;
-
     public override long Length
     {
         get => throw new NotSupportedException();
@@ -21,13 +20,6 @@ internal sealed class CancellableStream : DelegateStream
     public override bool CanWrite
     {
         get => false;
-    }
-
-    public CancellableStream(Stream innerStream,
-        CancellationToken cancellationToken)
-        : base(innerStream)
-    {
-        this.cancellationToken = cancellationToken;
     }
 
     public override int Read(byte[] buffer, int offset, int count)

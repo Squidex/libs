@@ -5,32 +5,30 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Squidex.Messaging;
 using Squidex.Messaging.Subscriptions;
+using Squidex.Messaging.Subscriptions.Implementation;
 using Squidex.Messaging.Subscriptions.Messages;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
 public static class SubscriptionsServiceExtensions
 {
-    public static IServiceCollection AddMessagingSubscriptions(this IServiceCollection services, bool consume = true, Action<ChannelOptions>? configure = null, string channelName = "subscriptions")
+    public static MessagingBuilder AddSubscriptions(this MessagingBuilder builder, bool consume = true, Action<ChannelOptions>? configure = null, string channelName = "subscriptions")
     {
         var channel = new ChannelName(channelName, ChannelType.Topic);
 
-        services.AddSingletonAs<SubscriptionService>()
+        builder.Services.AddMemoryCache();
+        builder.AddChannel(channel, consume, configure);
+
+        builder.Services.AddSingletonAs<SubscriptionService>()
             .As<ISubscriptionService>().As<IMessageHandler>();
 
-        services.TryAddSingleton<IMessageEvaluator,
-            DefaultMessageEvaluator>();
-
-        services.AddMessaging(channel, consume, configure);
-
-        services.Configure<MessagingOptions>(options =>
+        builder.Services.Configure<MessagingOptions>(options =>
         {
-            options.Routing.Add(x => x is SubscriptionsMessageBase, channel);
+            options.Routing.Add(x => x is PayloadMessageBase, channel);
         });
 
-        return services;
+        return builder;
     }
 }

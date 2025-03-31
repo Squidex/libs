@@ -10,20 +10,30 @@ using tusdotnet.Interfaces;
 using tusdotnet.Models;
 using tusdotnet.Parsers;
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.TusAdapter;
 
-public sealed class AssetTusFile : AssetFile, ITusFile, IDisposable, IAsyncDisposable
+public sealed class AssetTusFile(
+    string id,
+    TusMetadata tusMetadata,
+    Dictionary<string, string> metadata,
+    Dictionary<string, Metadata> metadataRaw,
+    Stream stream,
+    Action<AssetTusFile> disposed)
+    : IAssetFile, ITusFile, IAsyncDisposable, IDisposable
 {
-    private readonly Stream stream;
-    private readonly Action<AssetTusFile> disposed;
+    public string Id { get; } = id;
 
-    public string Id { get; }
+    public string FileName { get; } = GetFileName(metadata);
 
-    public Dictionary<string, string> Metadata { get; }
+    public string MimeType { get; } = GetMimeType(metadata);
 
-    public Dictionary<string, Metadata> MetadataRaw { get; }
+    public long FileSize { get; } = stream.Length;
 
-    internal TusMetadata TusMetadata { get; }
+    public Dictionary<string, string> Metadata { get; } = metadata;
+
+    public Dictionary<string, Metadata> MetadataRaw { get; } = metadataRaw;
+
+    internal TusMetadata TusMetadata { get; } = tusMetadata;
 
     public static AssetTusFile Create(string id, TusMetadata tusMetadata, Stream stream, Action<AssetTusFile> disposed)
     {
@@ -37,26 +47,6 @@ public sealed class AssetTusFile : AssetFile, ITusFile, IDisposable, IAsyncDispo
         }
 
         return new AssetTusFile(id, tusMetadata, metadata, metadataRaw, stream, disposed);
-    }
-
-    public AssetTusFile(
-        string id,
-        TusMetadata tusMetadata,
-        Dictionary<string, string> metadata,
-        Dictionary<string, Metadata> metadataRaw,
-        Stream stream,
-        Action<AssetTusFile> disposed)
-        : base(GetFileName(metadata), GetMimeType(metadata), stream.Length)
-    {
-        Id = id;
-
-        this.stream = stream;
-
-        Metadata = metadata;
-        MetadataRaw = metadataRaw;
-        TusMetadata = tusMetadata;
-
-        this.disposed = disposed;
     }
 
     private static string GetFileName(Dictionary<string, string> metadata)
@@ -90,21 +80,21 @@ public sealed class AssetTusFile : AssetFile, ITusFile, IDisposable, IAsyncDispo
         return "application/octet-stream";
     }
 
-    public override void Dispose()
+    public void Dispose()
     {
         disposed(this);
 
         stream.Dispose();
     }
 
-    public override ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
         disposed(this);
 
         return stream.DisposeAsync();
     }
 
-    public override Stream OpenRead()
+    public Stream OpenRead()
     {
         return new NonDisposingStream(stream);
     }

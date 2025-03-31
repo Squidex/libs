@@ -17,8 +17,8 @@ namespace Squidex.Log;
 
 public class SemanticLogTests
 {
-    private readonly List<ILogAppender> appenders = new List<ILogAppender>();
-    private readonly List<ILogChannel> channels = new List<ILogChannel>();
+    private readonly List<ILogAppender> appenders = [];
+    private readonly List<ILogChannel> channels = [];
     private readonly IOptions<SemanticLogOptions> options = Options.Create(new SemanticLogOptions());
     private readonly Lazy<SemanticLog> log;
     private readonly ILogChannel channel = A.Fake<ILogChannel>();
@@ -68,7 +68,7 @@ public class SemanticLogTests
     {
         var now = DateTime.UtcNow;
 
-        appenders.Add(new TimestampLogAppender(() => now));
+        appenders.Add(new TimestampLogAppender(GetTimeProvider(new DateTimeOffset(now, default))));
 
         Log.LogFatal(w => { /* Do Nothing */ });
 
@@ -485,7 +485,7 @@ public class SemanticLogTests
         A.CallTo(() => channel1.Log(A<SemanticLogLevel>._, A<string>._)).Throws(exception1);
         A.CallTo(() => channel2.Log(A<SemanticLogLevel>._, A<string>._)).Throws(exception2);
 
-        var sut = new SemanticLog(options, new[] { channel1, channel2 }, Enumerable.Empty<ILogAppender>(), JsonLogWriterFactory.Default());
+        var sut = new SemanticLog(options, [channel1, channel2], [], JsonLogWriterFactory.Default());
 
         try
         {
@@ -508,6 +508,16 @@ public class SemanticLogTests
         Log.LogWarning(w => w.WriteProperty("Property", "Value"));
 
         Assert.Equal(string.Empty, output);
+    }
+
+    private static TimeProvider GetTimeProvider(DateTimeOffset now)
+    {
+        var timeProvider = A.Fake<TimeProvider>();
+
+        A.CallTo(() => timeProvider.GetUtcNow())
+            .Returns(now);
+
+        return timeProvider;
     }
 
     private static string LogTest(Action<IObjectWriter> writer)

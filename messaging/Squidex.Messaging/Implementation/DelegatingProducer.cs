@@ -11,29 +11,16 @@ using IMessagingTransports = System.Collections.Generic.IEnumerable<Squidex.Mess
 
 namespace Squidex.Messaging.Implementation;
 
-public sealed class DelegatingProducer : IInternalMessageProducer
+public sealed class DelegatingProducer(
+    IInstanceNameProvider instanceName,
+    IMessagingTransports messagingTransports,
+    IMessagingSerializer messagingSerializer,
+    IOptionsMonitor<ChannelOptions> channelOptions,
+    TimeProvider timeProvider) : IInternalMessageProducer
 {
-    private readonly HashSet<string> initializedChannels = new HashSet<string>();
+    private readonly HashSet<string> initializedChannels = [];
     private readonly SemaphoreSlim semaphore = new SemaphoreSlim(1);
-    private readonly string instanceName;
-    private readonly IMessagingTransports messagingTransports;
-    private readonly IMessagingSerializer messagingSerializer;
-    private readonly IOptionsMonitor<ChannelOptions> channelOptions;
-    private readonly IClock clock;
-
-    public DelegatingProducer(
-        IInstanceNameProvider instanceName,
-        IMessagingTransports messagingTransports,
-        IMessagingSerializer messagingSerializer,
-        IOptionsMonitor<ChannelOptions> channelOptions,
-        IClock clock)
-    {
-        this.channelOptions = channelOptions;
-        this.instanceName = instanceName.Name;
-        this.messagingTransports = messagingTransports;
-        this.messagingSerializer = messagingSerializer;
-        this.clock = clock;
-    }
+    private readonly string instanceName = instanceName.Name;
 
     public async Task ProduceAsync(ChannelName channel, object message, string? key = null,
         CancellationToken ct = default)
@@ -75,7 +62,7 @@ public sealed class DelegatingProducer : IInternalMessageProducer
                 .Set(HeaderNames.Format, format)
                 .Set(HeaderNames.TimeExpires, options.Expires)
                 .Set(HeaderNames.TimeTimeout, options.Timeout)
-                .Set(HeaderNames.TimeCreated, clock.UtcNow);
+                .Set(HeaderNames.TimeCreated, timeProvider.GetUtcNow().UtcDateTime);
 
             var transportMessage = new TransportMessage(data, key, headers);
 

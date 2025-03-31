@@ -56,10 +56,7 @@ public abstract class DelegateStream : Stream
 
     protected DelegateStream(Stream innerStream)
     {
-        if (innerStream == Null)
-        {
-            throw new ArgumentNullException(nameof(innerStream));
-        }
+        ArgumentNullException.ThrowIfNull(innerStream);
 
         this.innerStream = innerStream;
     }

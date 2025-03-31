@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Text;
 using Xunit;
 
 namespace Squidex.Text;
@@ -59,6 +60,31 @@ public class HtmlExtensionsTests
         var text = html.Html2Text();
 
         Assert.Equal(string.Empty, text);
+    }
+
+    [Theory]
+    [InlineData("1 &lt; 2", "1 < 2")]
+    [InlineData("1 &xt; 2", "1 &xt; 2")]
+    [InlineData("1 &#60; 2", "1 < 2")]
+    [InlineData("1 &#x3C; 2", "1 < 2")]
+    [InlineData("1 &; 2", "1 &; 2")]
+    public void Should_convert_entity(string source, string expected)
+    {
+        var sb = new StringBuilder();
+
+        HtmlEntity.Decode(source.AsMemory(), sb);
+
+        Assert.Equal(expected, sb.ToString());
+    }
+
+    [Fact]
+    public void Should_extract_metadata()
+    {
+        var svg = File.ReadAllText(Path.Combine("TestFiles", "SvgValid.svg"));
+
+        var metadata = svg.GetSvgMetadata();
+
+        Assert.Equal(new SvgMetadata("50", "30", "0 0 100 100"), metadata);
     }
 
     private static string BuildText(string text)

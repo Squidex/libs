@@ -10,17 +10,9 @@ using Squidex.Messaging.Internal;
 
 namespace Squidex.Messaging.Implementation;
 
-internal sealed class DefaultMessageBus : IMessageBus
+internal sealed class DefaultMessageBus(IInternalMessageProducer internalProducer, IOptions<MessagingOptions> options) : IMessageBus
 {
-    private readonly IInternalMessageProducer internalProducer;
-    private readonly RoutingCollection routing;
-
-    public DefaultMessageBus(IInternalMessageProducer internalProducer, IOptions<MessagingOptions> options)
-    {
-        this.internalProducer = internalProducer;
-
-        routing = new RoutingCollection(options.Value.Routing);
-    }
+    private readonly RoutingCollection routing = new RoutingCollection(options.Value.Routing);
 
     public async Task PublishAsync(object message, string? key = null,
         CancellationToken ct = default)
@@ -47,6 +39,6 @@ internal sealed class DefaultMessageBus : IMessageBus
     {
         Guard.NotNull(message, nameof(message));
 
-        return internalProducer.ProduceAsync(channel,  message, key, ct);
+        return internalProducer.ProduceAsync(channel, message, key, ct);
     }
 }

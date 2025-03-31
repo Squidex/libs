@@ -91,17 +91,17 @@ public sealed class HandlerPipelineTests
              A.Fake<IMessageHandler<Base2>>(),
              A.Fake<IMessageHandler<IInterface1>>(),
              A.Fake<IMessageHandler<IInterface2>>(),
-             A.Fake<IMessageHandler<object>>()
+             A.Fake<IMessageHandler<object>>(),
         };
 
         var sut = new HandlerPipeline(handlers);
 
-        Assert.Equal(6, sut.GetHandlers(typeof(Concrete)).Count());
+        Assert.Equal(6, sut.GetHandlers(typeof(Concrete)).Count);
     }
 
     private static void IsValidHandler(IMessageHandler handler)
     {
-        var sut = new HandlerPipeline(new[] { handler });
+        var sut = new HandlerPipeline([handler]);
 
         Assert.NotNull(sut.GetHandlers(typeof(Concrete)).Single());
     }

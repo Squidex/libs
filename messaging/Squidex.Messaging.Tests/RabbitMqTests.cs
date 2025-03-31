@@ -5,21 +5,22 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Xunit;
+
 namespace Squidex.Messaging;
 
-public class RabbitMqTests : MessagingTestsBase
+public class RabbitMqTests(RabbitMqFixture fixture)
+    : MessagingTestsBase, IClassFixture<RabbitMqFixture>
 {
     protected override string TopicOrQueueName => "dev";
 
     protected override bool CanHandleAndSimulateTimeout => false;
 
-    protected override void ConfigureServices(IServiceCollection services, ChannelName channel, bool consume)
+    protected override void Configure(MessagingBuilder builder)
     {
-        services
-            .AddRabbitMqTransport(TestHelpers.Configuration)
-            .AddMessaging(channel, consume, options =>
-            {
-                options.Expires = TimeSpan.FromDays(1);
-            });
+        builder.AddRabbitMqTransport(TestHelpers.Configuration, options =>
+        {
+            options.Uri = new Uri(fixture.RabbitMq.GetConnectionString());
+        });
     }
 }

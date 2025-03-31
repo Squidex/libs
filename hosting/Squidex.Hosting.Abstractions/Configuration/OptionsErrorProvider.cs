@@ -10,17 +10,8 @@ using Microsoft.Extensions.Options;
 
 namespace Squidex.Hosting.Configuration;
 
-public sealed class OptionsErrorProvider<T> : IErrorProvider, IValidateOptions<T> where T : class, IValidatableOptions
+public sealed class OptionsErrorProvider<T>(IOptions<T> options, string prefix) : IErrorProvider, IValidateOptions<T> where T : class, IValidatableOptions
 {
-    private readonly IOptions<T> options;
-    private readonly string prefix;
-
-    public OptionsErrorProvider(IOptions<T> options, string prefix)
-    {
-        this.options = options;
-        this.prefix = prefix;
-    }
-
     public IEnumerable<ConfigurationError> GetErrors()
     {
         return GetErrors(options.Value);

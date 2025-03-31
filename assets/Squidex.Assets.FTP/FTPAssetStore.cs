@@ -10,31 +10,20 @@ using FluentFTP;
 using FluentFTP.Exceptions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Squidex.Assets.Internal;
 using Squidex.Hosting;
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.FTP;
 
 [ExcludeFromCodeCoverage]
-public sealed class FTPAssetStore : IAssetStore, IInitializable
+public sealed class FTPAssetStore(IOptions<FTPAssetOptions> options, ILogger<FTPAssetStore> log) : IAssetStore, IInitializable
 {
-    private readonly ILogger<FTPAssetStore> log;
-    private readonly FTPClientPool pool;
-    private readonly FTPAssetOptions options;
-
-    public FTPAssetStore(IOptions<FTPAssetOptions> options, ILogger<FTPAssetStore> log)
-    {
-        this.options = options.Value;
-
-        this.log = log;
-
-        pool = new FTPClientPool(
+    private readonly FTPClientPool pool = new FTPClientPool(
             () => new AsyncFtpClient(
                 options.Value.ServerHost,
                 options.Value.Username,
                 options.Value.Password,
                 options.Value.ServerPort), 1);
-    }
+    private readonly FTPAssetOptions options = options.Value;
 
     public async Task InitializeAsync(
         CancellationToken ct)
@@ -119,7 +108,7 @@ public sealed class FTPAssetStore : IAssetStore, IInitializable
     public async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default,
         CancellationToken ct = default)
     {
-        Guard.NotNull(stream, nameof(stream));
+        ArgumentNullException.ThrowIfNull(stream);
 
         var name = GetFileName(fileName, nameof(fileName));
 
@@ -144,7 +133,7 @@ public sealed class FTPAssetStore : IAssetStore, IInitializable
     public async Task<long> UploadAsync(string fileName, Stream stream, bool overwrite = false,
         CancellationToken ct = default)
     {
-        Guard.NotNull(stream, nameof(stream));
+        ArgumentNullException.ThrowIfNull(stream);
 
         var name = GetFileName(fileName, nameof(fileName));
 
@@ -222,9 +211,9 @@ public sealed class FTPAssetStore : IAssetStore, IInitializable
 
     private static string GetFileName(string fileName, string parameterName)
     {
-        Guard.NotNullOrEmpty(fileName, parameterName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(fileName, parameterName);
 
-        return fileName.Replace('\\', '/');
+        return FilePathHelper.EnsureThatPathIsChildOf(fileName.Replace('\\', '/'), "./");
     }
 
     private async Task<IAsyncFtpClient> GetClientAsync(

@@ -11,10 +11,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ImageMagick;
-using SixLabors.ImageSharp;
-using Squidex.Assets.Internal;
+using Squidex.Assets.ImageMagick.Internal;
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.ImageMagick;
 
 public sealed class ImageMagickThumbnailGenerator : AssetThumbnailGeneratorBase
 {
@@ -55,46 +54,27 @@ public sealed class ImageMagickThumbnailGenerator : AssetThumbnailGeneratorBase
             foreach (var image in images)
             {
                 var clone = image.Clone();
-
                 var color = options.ParseColor();
-
                 if (w > 0 || h > 0)
                 {
-                    var isCropUpsize = options.Mode == ResizeMode.CropUpsize;
+                    var resizeMode = GetResizeMode(options, w, h, image);
+                    var resizeAnchor = GetResizeAnchor(options);
 
-                    var resizeMode = options.Mode;
+                    var (size, pad) = ResizeHelper.CalculateTargetLocationAndBounds(
+                        resizeMode,
+                        new Size((int)image.Width, (int)image.Height),
+                        w,
+                        h,
+                        resizeAnchor);
 
-                    if (isCropUpsize)
+                    var sourceRectangle = new MagickGeometry((uint)pad.Width, (uint)pad.Height)
                     {
-                        resizeMode = ResizeMode.Crop;
-                    }
-
-                    if (w >= image.Width && h >= image.Height && resizeMode == ResizeMode.Crop && !isCropUpsize)
-                    {
-                        resizeMode = ResizeMode.BoxPad;
-                    }
-
-                    PointF? centerCoordinates = null;
-
-                    if (options.FocusX.HasValue && options.FocusY.HasValue)
-                    {
-                        centerCoordinates = new PointF(
-                            +(options.FocusX.Value / 2f) + 0.5f,
-                            -(options.FocusY.Value / 2f) + 0.5f
-                        );
-                    }
-
-                    var (size, pad) = ResizeHelper.CalculateTargetLocationAndBounds(resizeMode, new Size(image.Width, image.Height), w, h, centerCoordinates);
-
-                    var sourceRectangle = new MagickGeometry(pad.Width, pad.Height)
-                    {
-                        IgnoreAspectRatio = true
+                        IgnoreAspectRatio = true,
                     };
 
                     clone.Resize(sourceRectangle);
 
-                    image.Extent(size.Width, size.Height);
-
+                    image.Extent((uint)size.Width, (uint)size.Height);
                     image.CompositeClear(color);
                     image.Composite(clone, pad.X, pad.Y, CompositeOperator.Over);
                 }
@@ -108,7 +88,7 @@ public sealed class ImageMagickThumbnailGenerator : AssetThumbnailGeneratorBase
 
                 if (options.Quality.HasValue)
                 {
-                    image.Quality = options.Quality.Value;
+                    image.Quality = (uint)options.Quality.Value;
                 }
             }
 
@@ -151,7 +131,7 @@ public sealed class ImageMagickThumbnailGenerator : AssetThumbnailGeneratorBase
             {
                 image.Ping(source, new MagickReadSettings
                 {
-                    Format = GetFormat(mimeType)
+                    Format = GetFormat(mimeType),
                 });
 
                 var hasSensitiveMetadata =
@@ -159,8 +139,8 @@ public sealed class ImageMagickThumbnailGenerator : AssetThumbnailGeneratorBase
 
                 return Task.FromResult<ImageInfo?>(new ImageInfo(
                     image.Format.ToImageFormat(),
-                    image.Width,
-                    image.Height,
+                    (int)image.Width,
+                    (int)image.Height,
                     image.Orientation.GetOrientation(),
                     hasSensitiveMetadata));
             }
@@ -169,6 +149,39 @@ public sealed class ImageMagickThumbnailGenerator : AssetThumbnailGeneratorBase
         {
             return Task.FromResult<ImageInfo?>(null);
         }
+    }
+
+    private static PointF? GetResizeAnchor(ResizeOptions options)
+    {
+        PointF? centerCoordinates = null;
+
+        if (options.FocusX.HasValue && options.FocusY.HasValue)
+        {
+            centerCoordinates = new PointF(
+                +(options.FocusX.Value / 2f) + 0.5f,
+                -(options.FocusY.Value / 2f) + 0.5f
+            );
+        }
+
+        return centerCoordinates;
+    }
+
+    private static ResizeMode GetResizeMode(ResizeOptions options, int w, int h, IMagickImage<byte> image)
+    {
+        var isCropUpsize = options.Mode == ResizeMode.CropUpsize;
+
+        var resizeMode = options.Mode;
+        if (isCropUpsize)
+        {
+            resizeMode = ResizeMode.Crop;
+        }
+
+        if (w >= image.Width && h >= image.Height && resizeMode == ResizeMode.Crop && !isCropUpsize)
+        {
+            resizeMode = ResizeMode.BoxPad;
+        }
+
+        return resizeMode;
     }
 
     private static MagickFormat GetFormat(string mimeType)

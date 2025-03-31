@@ -5,34 +5,18 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Microsoft.Extensions.Options;
-using Squidex.Messaging.Mongo;
 using Xunit;
-
-#pragma warning disable SA1300 // Element should begin with upper-case letter
 
 namespace Squidex.Messaging;
 
 [Trait("Category", "Dependencies")]
-public class MongoSubscriptionStoreTests : SubscriptionStoreTestsBase, IClassFixture<MongoFixture>
+public class MongoSubscriptionStoreTests(MongoMessagingFixture fixture)
+    : SubscriptionStoreTestsBase, IClassFixture<MongoMessagingFixture>
 {
-    public MongoFixture _ { get; }
-
-    public MongoSubscriptionStoreTests(MongoFixture fixture)
+    protected override void Configure(MessagingBuilder builder)
     {
-        _ = fixture;
-    }
+        builder.Services.AddSingleton(fixture.Database);
 
-    public async override Task<IMessagingSubscriptionStore> CreateSubscriptionStoreAsync()
-    {
-        var options = Options.Create(new MongoSubscriptionStoreOptions());
-
-        _.CleanCollections(x => x == options.Value.CollectionName);
-
-        var sut = new MongoSubscriptionStore(_.Database, options);
-
-        await sut.InitializeAsync(default);
-
-        return sut;
+        builder.AddMongoDataStore(TestHelpers.Configuration);
     }
 }

@@ -1,7 +1,7 @@
 #
 # Stage 1, Build Backend
 #
-FROM mcr.microsoft.com/dotnet/sdk:7.0 as backend
+FROM mcr.microsoft.com/dotnet/sdk:8.0 as backend
 
 WORKDIR /src
 
@@ -9,6 +9,9 @@ WORKDIR /src
 COPY *.sln ./
 
 # Copy the main source project files
+COPY ai/*/*.csproj ./
+RUN for file in $(ls *.csproj); do mkdir -p ai/${file%.*}/ && mv $file ai/${file%.*}/; done
+
 COPY assets/*/*.csproj ./
 RUN for file in $(ls *.csproj); do mkdir -p assets/${file%.*}/ && mv $file assets/${file%.*}/; done
 
@@ -38,7 +41,7 @@ RUN dotnet publish --no-restore assets/Squidex.Assets.ResizeService/Squidex.Asse
 #
 # Stage 3, Build runtime
 #
-FROM mcr.microsoft.com/dotnet/aspnet:7.0-bullseye-slim
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-bookworm-slim
 
 # Default AspNetCore directory
 WORKDIR /app
@@ -47,5 +50,7 @@ WORKDIR /app
 COPY --from=backend /build/ .
 
 EXPOSE 80
+
+ENV ASPNETCORE_HTTP_PORTS=80
 
 ENTRYPOINT ["dotnet", "Squidex.Assets.ResizeService.dll"]

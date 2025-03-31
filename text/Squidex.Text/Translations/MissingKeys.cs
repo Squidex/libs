@@ -23,7 +23,7 @@ public sealed class MissingKeys
         }
         else
         {
-            missingTranslations = new HashSet<string>();
+            missingTranslations = [];
         }
     }
 
@@ -33,7 +33,7 @@ public sealed class MissingKeys
         {
             if (!missingTranslations.Add(key))
             {
-                File.AppendAllLines(MissingFileName, new string[] { key });
+                File.AppendAllLines(MissingFileName, [key]);
             }
         }
     }

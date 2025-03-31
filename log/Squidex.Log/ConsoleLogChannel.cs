@@ -9,15 +9,9 @@ using Squidex.Log.Internal;
 
 namespace Squidex.Log;
 
-public sealed class ConsoleLogChannel : ILogChannel, IDisposable
+public sealed class ConsoleLogChannel(bool useColors = false) : ILogChannel, IDisposable
 {
     private readonly ConsoleLogProcessor processor = new ConsoleLogProcessor();
-    private readonly bool useColors;
-
-    public ConsoleLogChannel(bool useColors = false)
-    {
-        this.useColors = useColors;
-    }
 
     public void Dispose()
     {

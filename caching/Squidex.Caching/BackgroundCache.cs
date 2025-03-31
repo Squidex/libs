@@ -10,42 +10,25 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace Squidex.Caching;
 
-public sealed class BackgroundCache : IBackgroundCache
+public sealed class BackgroundCache(IMemoryCache memoryCache, TimeProvider timeProvider) : IBackgroundCache
 {
     private static readonly TimeSpan MaxComputionTime = TimeSpan.FromMinutes(2);
-    private readonly object[] locks = new object[32];
+    private readonly object[] locks = CreateLocks(32);
     private readonly ConcurrentDictionary<object, bool> isUpdating = new ConcurrentDictionary<object, bool>();
-    private readonly IMemoryCache memoryCache;
 
-    private sealed class Entry<T>
+    private sealed class Entry<T>(Task<T> value, DateTimeOffset expires)
     {
-        public Task<T> Value { get; }
+        public Task<T> Value { get; } = value;
 
-        public DateTimeOffset Expires { get; }
-
-        public Entry(Task<T> value, DateTimeOffset expires)
-        {
-            Value = value;
-
-            Expires = expires;
-        }
-    }
-
-    public Func<DateTimeOffset>? Clock { get; set; }
-
-    public BackgroundCache(IMemoryCache memoryCache)
-    {
-        this.memoryCache = memoryCache;
-
-        for (var i = 0; i < locks.Length; i++)
-        {
-            locks[i] = new object();
-        }
+        public DateTimeOffset Expires { get; } = expires;
     }
 
     public Task<T> GetOrCreateAsync<T>(object key, TimeSpan expiration, Func<object, Task<T>> creator, Func<T, Task<bool>>? isValid = null)
     {
-        var now = GetTime();
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(creator);
+
+        var now = timeProvider.GetUtcNow();
 
         if (memoryCache.TryGetValue(key, out var cached))
         {
@@ -82,7 +65,6 @@ public sealed class BackgroundCache : IBackgroundCache
         var absoluteExpiration = now + expiration;
 
         var newEntry = new Entry<T>(value, absoluteExpiration - MaxComputionTime);
-
         memoryCache.Set(key, newEntry, absoluteExpiration);
 
         return newEntry;
@@ -113,11 +95,11 @@ public sealed class BackgroundCache : IBackgroundCache
             {
                 var newValue = await creator(key);
 
-                AddEntry(key, expiration, Task.FromResult(newValue), GetTime());
+                AddEntry(key, expiration, Task.FromResult(newValue), timeProvider.GetUtcNow());
             }
             catch (Exception ex)
             {
-                AddEntry(key, expiration, Task.FromException<T>(ex), GetTime());
+                AddEntry(key, expiration, Task.FromException<T>(ex), timeProvider.GetUtcNow());
             }
             finally
             {
@@ -133,15 +115,14 @@ public sealed class BackgroundCache : IBackgroundCache
         return locks[index];
     }
 
-    private DateTimeOffset GetTime()
+    private static object[] CreateLocks(int count)
     {
-        var clock = Clock;
-
-        if (clock != null)
+        var result = new object[count];
+        for (var i = 0; i < count; i++)
         {
-            return clock();
+            result[i] = new object();
         }
 
-        return DateTimeOffset.UtcNow;
+        return result;
     }
 }

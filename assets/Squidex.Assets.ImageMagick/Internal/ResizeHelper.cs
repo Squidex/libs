@@ -6,9 +6,17 @@
 // ==========================================================================
 
 using System;
-using SixLabors.ImageSharp;
 
-namespace Squidex.Assets.Internal;
+#pragma warning disable MA0048 // File name must match type name
+#pragma warning disable SA1313 // Parameter names should begin with lower-case letter
+
+namespace Squidex.Assets.ImageMagick.Internal;
+
+public readonly record struct PointF(float X, float Y);
+
+public readonly record struct Size(int Width, int Height);
+
+public readonly record struct Rectangle(int X, int Y, int Width, int Height);
 
 internal static class ResizeHelper
 {
@@ -75,7 +83,16 @@ internal static class ResizeHelper
             var targetX = (desiredWidth - sourceWidth) / 2;
 
             // Target image width and height can be different to the rectangle width and height.
-            return (new Size(Sanitize(desiredWidth), Sanitize(desiredHeight)), new Rectangle(targetX, targetY, Sanitize(targetWidth), Sanitize(targetHeight)));
+            return (
+                new Size(
+                    Sanitize(desiredWidth),
+                    Sanitize(desiredHeight)),
+                new Rectangle(
+                    targetX,
+                    targetY,
+                    Sanitize(targetWidth),
+                    Sanitize(targetHeight))
+            );
         }
 
         // Switch to pad mode to downscale and calculate from there.
@@ -89,9 +106,9 @@ internal static class ResizeHelper
         PointF? centerCoordinates)
     {
         float ratio;
+
         var sourceWidth = source.Width;
         var sourceHeight = source.Height;
-
         var targetX = 0;
         var targetY = 0;
         var targetWidth = desiredWidth;
@@ -154,7 +171,16 @@ internal static class ResizeHelper
         }
 
         // Target image width and height can be different to the rectangle width and height.
-        return (new Size(Sanitize(desiredWidth), Sanitize(desiredHeight)), new Rectangle(targetX, targetY, Sanitize(targetWidth), Sanitize(targetHeight)));
+        return (
+            new Size(
+                Sanitize(desiredWidth),
+                Sanitize(desiredHeight)),
+            new Rectangle(
+                targetX,
+                targetY,
+                Sanitize(targetWidth),
+                Sanitize(targetHeight))
+        );
     }
 
     private static (Size Size, Rectangle Rectangle) CalculateMaxRectangle(
@@ -184,7 +210,16 @@ internal static class ResizeHelper
         }
 
         // Replace the size to match the rectangle.
-        return (new Size(Sanitize(targetWidth), Sanitize(targetHeight)), new Rectangle(0, 0, Sanitize(targetWidth), Sanitize(targetHeight)));
+        return (
+            new Size(
+                Sanitize(targetWidth),
+                Sanitize(targetHeight)),
+            new Rectangle(
+                0,
+                0,
+                Sanitize(targetWidth),
+                Sanitize(targetHeight))
+        );
     }
 
     private static (Size Size, Rectangle Rectangle) CalculateMinRectangle(
@@ -266,7 +301,16 @@ internal static class ResizeHelper
         }
 
         // Target image width and height can be different to the rectangle width and height.
-        return (new Size(Sanitize(desiredWidth), Sanitize(desiredHeight)), new Rectangle(targetX, targetY, Sanitize(targetWidth), Sanitize(targetHeight)));
+        return (
+            new Size(
+                Sanitize(desiredWidth),
+                Sanitize(desiredHeight)),
+            new Rectangle(
+                targetX,
+                targetY,
+                Sanitize(targetWidth),
+                Sanitize(targetHeight))
+        );
     }
 
     private static int Sanitize(int input) => Math.Max(1, input);

@@ -7,11 +7,11 @@
 
 namespace Squidex.Assets;
 
-public readonly struct BytesRange
+public readonly struct BytesRange(long? from, long? to)
 {
-    public readonly long? From;
+    public readonly long? From = from;
 
-    public readonly long? To;
+    public readonly long? To = to;
 
     public long Length
     {
@@ -36,13 +36,6 @@ public readonly struct BytesRange
     public bool IsDefined
     {
         get { return (From >= 0 || To >= 0) && Length > 0; }
-    }
-
-    public BytesRange(long? from, long? to)
-    {
-        From = from;
-
-        To = to;
     }
 
     public override string? ToString()

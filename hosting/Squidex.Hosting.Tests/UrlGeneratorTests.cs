@@ -21,7 +21,7 @@ public class UrlGeneratorTests
         var sut = new UrlGenerator(Options.Create(new UrlOptions
         {
             BaseUrl = url,
-            BasePath = null
+            BasePath = null,
         }));
 
         Assert.Equal("http://squidex.io", sut.BuildUrl());
@@ -49,7 +49,7 @@ public class UrlGeneratorTests
         var sut = new UrlGenerator(Options.Create(new UrlOptions
         {
             BaseUrl = url,
-            BasePath = "base"
+            BasePath = "base",
         }));
 
         Assert.Equal("http://squidex.io/base", sut.BuildUrl());
@@ -74,7 +74,7 @@ public class UrlGeneratorTests
         {
             BaseUrl = "http://squidex.io",
             BasePath = null,
-            CallbackUrl = "http://callback.squidex.io"
+            CallbackUrl = "http://callback.squidex.io",
         }));
 
         Assert.Equal("http://callback.squidex.io", sut.BuildCallbackUrl());
@@ -88,7 +88,7 @@ public class UrlGeneratorTests
         {
             BaseUrl = "http://squidex.io",
             BasePath = null,
-            CallbackUrl = null
+            CallbackUrl = null,
         }));
 
         Assert.Equal("http://squidex.io", sut.BuildCallbackUrl());

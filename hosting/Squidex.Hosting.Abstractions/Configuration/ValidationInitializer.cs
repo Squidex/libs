@@ -7,16 +7,9 @@
 
 namespace Squidex.Hosting.Configuration;
 
-public sealed class ValidationInitializer : IInitializable
+public sealed class ValidationInitializer(IEnumerable<IErrorProvider> errorProviders) : IInitializable
 {
-    private readonly IEnumerable<IErrorProvider> errorProviders;
-
     public int Order => int.MinValue;
-
-    public ValidationInitializer(IEnumerable<IErrorProvider> errorProviders)
-    {
-        this.errorProviders = errorProviders;
-    }
 
     public Task InitializeAsync(
         CancellationToken ct)

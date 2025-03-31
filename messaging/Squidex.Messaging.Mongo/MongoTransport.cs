@@ -13,24 +13,16 @@ using Squidex.Messaging.Internal;
 
 namespace Squidex.Messaging.Mongo;
 
-public sealed class MongoTransport : IMessagingTransport
+public sealed class MongoTransport(
+    IMongoDatabase database,
+    IMessagingDataProvider messagingDataProvider,
+    IOptions<MongoTransportOptions> options,
+    TimeProvider timeProvider,
+    ILogger<MongoTransport> log)
+    : IMessagingTransport
 {
-    private readonly Dictionary<string, Task<IMongoCollection<MongoMessage>>> collections = new Dictionary<string, Task<IMongoCollection<MongoMessage>>>();
-    private readonly MongoTransportOptions options;
-    private readonly IMongoDatabase database;
-    private readonly IMessagingSubscriptions subscriptions;
-    private readonly IClock clock;
-    private readonly ILogger<MongoTransport> log;
-
-    public MongoTransport(IMongoDatabase database, IMessagingSubscriptions subscriptions,
-        IOptions<MongoTransportOptions> options, IClock clock, ILogger<MongoTransport> log)
-    {
-        this.options = options.Value;
-        this.database = database;
-        this.subscriptions = subscriptions;
-        this.clock = clock;
-        this.log = log;
-    }
+    private readonly Dictionary<string, Task<IMongoCollection<MongoMessage>>> collections = [];
+    private readonly MongoTransportOptions options = options.Value;
 
     public Task InitializeAsync(
         CancellationToken ct)
@@ -54,25 +46,28 @@ public sealed class MongoTransport : IMessagingTransport
             return null;
         }
 
-        var collectionName = channel.Name;
-        var collectionInstance = await GetCollectionAsync(collectionName);
+        var channelName = channel.Name;
+        var channelCollection = await GetCollectionAsync(channelName);
 
         IAsyncDisposable? subscription = null;
-
         if (channel.Type == ChannelType.Topic)
         {
             var value = new MongoSubscriptionValue
             {
-                InstanceName = instanceName
+                InstanceName = instanceName,
             };
 
-            subscription = await subscriptions.SubscribeAsync(channel.Name, instanceName, value, this.options.SubscriptionExpiration, ct);
+            subscription = await messagingDataProvider.StoreAsync(channelName, instanceName, value, this.options.SubscriptionExpiration, ct);
         }
 
-        IAsyncDisposable result = new MongoTransportCleaner(collectionInstance, collectionName,
+        IAsyncDisposable result = new MongoTransportCleaner(
+            channelCollection,
+            channelName,
             options.Timeout,
             options.Expires,
-            this.options.UpdateInterval, log, clock);
+            this.options.UpdateInterval,
+            log,
+            timeProvider);
 
         if (subscription != null)
         {
@@ -87,13 +82,14 @@ public sealed class MongoTransport : IMessagingTransport
     {
         IReadOnlyList<string> queues;
 
+        var channelName = channel.Name;
         if (channel.Type == ChannelType.Queue)
         {
-            queues = new List<string> { channel.Name };
+            queues = [channelName];
         }
         else
         {
-            var subscribed = await subscriptions.GetSubscriptionsAsync<MongoSubscriptionValue>(channel.Name, ct);
+            var subscribed = await messagingDataProvider.GetEntriesAsync<MongoSubscriptionValue>(channel.Name, ct);
 
             queues = subscribed.Select(x => x.Value.InstanceName).ToList();
         }
@@ -104,32 +100,39 @@ public sealed class MongoTransport : IMessagingTransport
         }
 
         // Only use one collection per topic for all queues, because it is easier to deal with outdated subscriptions.
-        var collection = await GetCollectionAsync(channel.Name);
+        var channelCollection = await GetCollectionAsync(channelName);
 
         foreach (var queueName in queues)
         {
-            var request = new MongoMessage
+            var mongoMessage = new MongoMessage
             {
                 Id = $"{transportMessage.Headers[HeaderNames.Id]}_{queueName}",
                 QueueName = queueName,
                 MessageData = transportMessage.Data,
                 MessageHeaders = transportMessage.Headers,
-                TimeToLive = GetTimeToLive(transportMessage.Headers)
+                TimeToLive = transportMessage.Headers.GetTimeToLive(timeProvider),
             };
 
-            await collection.InsertOneAsync(request, null, ct);
+            await channelCollection.InsertOneAsync(mongoMessage, null, ct);
         }
     }
 
     public async Task<IAsyncDisposable> SubscribeAsync(ChannelName channel, string instanceName, MessageTransportCallback callback,
         CancellationToken ct)
     {
-        var collectionName = channel.Name;
-        var collectionInstance = await GetCollectionAsync(collectionName);
-
         var queueFilter = channel.Type == ChannelType.Topic ? instanceName : null;
 
-        return new MongoSubscription(callback, collectionInstance, collectionName, queueFilter, options, clock, log);
+        var channelName = channel.Name;
+        var channelCollection = await GetCollectionAsync(channelName);
+
+        return new MongoSubscription(
+            callback,
+            channelCollection,
+            channelName,
+            queueFilter,
+            options,
+            timeProvider,
+            log);
     }
 
     private async Task<IMongoCollection<MongoMessage>> GetCollectionAsync(string name)
@@ -143,8 +146,7 @@ public sealed class MongoTransport : IMessagingTransport
                 var collection = database.GetCollection<MongoMessage>($"{options.CollectionName}_{name}");
 
                 await collection.Indexes.CreateManyAsync(
-                    new[]
-                    {
+                    [
                         new CreateIndexModel<MongoMessage>(
                             Builders<MongoMessage>.IndexKeys
                                 .Ascending(x => x.TimeHandled)
@@ -154,9 +156,9 @@ public sealed class MongoTransport : IMessagingTransport
                                 .Ascending(x => x.TimeToLive),
                             new CreateIndexOptions
                             {
-                                ExpireAfter = TimeSpan.Zero
-                            })
-                    },
+                                ExpireAfter = TimeSpan.Zero,
+                            }),
+                    ],
                     default);
 
                 return collection;
@@ -170,17 +172,5 @@ public sealed class MongoTransport : IMessagingTransport
         }
 
         return await collectionTask;
-    }
-
-    private DateTime GetTimeToLive(TransportHeaders headers)
-    {
-        var time = TimeSpan.FromDays(30);
-
-        if (headers.TryGetTimestamp(HeaderNames.TimeExpires, out var expires))
-        {
-            time = expires;
-        }
-
-        return clock.UtcNow + time;
     }
 }

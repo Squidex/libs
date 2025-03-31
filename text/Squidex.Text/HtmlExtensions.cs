@@ -6,85 +6,58 @@
 // ==========================================================================
 
 using System.Text;
-using HtmlAgilityPack;
+using HtmlPerformanceKit;
 
 namespace Squidex.Text;
 
 public static class HtmlExtensions
 {
+    private static readonly char[] TrimChars = [' ', '\n', '\r'];
+
     public static string Html2Text(this string html)
     {
-        var document = LoadHtml(html);
+        var htmlWriter = new StringBuilder();
+        var htmlReader = new HtmlReader(new StringReader(html));
 
-        var sb = new StringBuilder();
+        WriteTextTo(htmlReader, htmlWriter);
 
-        WriteTextTo(document.DocumentNode, sb);
-
-        return sb.ToString().Trim(' ', '\n', '\r');
+        return htmlWriter.ToString().Trim(TrimChars);
     }
 
-    private static HtmlDocument LoadHtml(string text)
+    private static void WriteTextTo(HtmlReader reader, StringBuilder sb)
     {
-        var document = new HtmlDocument();
-
-        document.LoadHtml(text);
-
-        return document;
-    }
-
-    private static void WriteTextTo(HtmlNode node, StringBuilder sb)
-    {
-        switch (node.NodeType)
+        var readText = true;
+        while (reader.Read())
         {
-            case HtmlNodeType.Comment:
-                break;
-            case HtmlNodeType.Document:
-                WriteChildrenTextTo(node, sb);
-                break;
-            case HtmlNodeType.Text:
-                var html = ((HtmlTextNode)node).Text;
+            switch (reader.TokenKind)
+            {
+                case HtmlTokenKind.Text when readText:
+                    var text = reader.TextAsMemory.Trim();
 
-                if (HtmlNode.IsOverlappedClosingElement(html))
-                {
+                    if (text.Length > 0)
+                    {
+                        HtmlEntity.Decode(text, sb);
+                    }
+
                     break;
-                }
 
-                if (!string.IsNullOrWhiteSpace(html))
-                {
-                    sb.Append(HtmlEntity.DeEntitize(html));
-                }
+                case HtmlTokenKind.Tag:
+                    var tag = reader.NameAsMemory.Span;
 
-                break;
+                    readText &= !tag.Equals("script", StringComparison.OrdinalIgnoreCase) && !tag.Equals("style", StringComparison.OrdinalIgnoreCase);
+                    break;
 
-            case HtmlNodeType.Element:
-                switch (node.Name)
-                {
-                    case "p":
+                case HtmlTokenKind.EndTag:
+                    var endTag = reader.NameAsMemory.Span;
+
+                    if (endTag.Equals("p", StringComparison.OrdinalIgnoreCase) || endTag.Equals("br", StringComparison.OrdinalIgnoreCase))
+                    {
                         sb.AppendLine();
-                        break;
-                    case "br":
-                        sb.AppendLine();
-                        break;
-                    case "style":
-                        return;
-                    case "script":
-                        return;
-                }
+                    }
 
-                if (node.HasChildNodes)
-                {
-                    WriteChildrenTextTo(node, sb);
-                }
-
-                break;
-        }
-    }
-
-    private static void WriteChildrenTextTo(HtmlNode node, StringBuilder sb)
-    {
-        foreach (var child in node.ChildNodes)
-        {
-            WriteTextTo(child, sb);
+                    readText = true;
+                    break;
+            }
         }
     }
 }

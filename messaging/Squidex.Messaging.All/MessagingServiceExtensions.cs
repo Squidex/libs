@@ -6,41 +6,48 @@
 // ==========================================================================
 
 using Microsoft.Extensions.Configuration;
+using Squidex.Messaging;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
 public static class MessagingServiceExtensions
 {
-    public static IServiceCollection AddMessagingTransport(this IServiceCollection services, IConfiguration config)
+    public static MessagingBuilder AddTransport(this MessagingBuilder builder, IConfiguration config, Alternatives? custom = null)
     {
-        config.ConfigureByOption("messaging:type", new Alternatives
+        var options = new Alternatives
         {
             ["MongoDb"] = () =>
             {
-                services.AddMongoTransport(config);
+                builder.AddMongoTransport(config);
             },
             ["Scheduler"] = () =>
             {
-                services.AddMongoTransport(config);
+                builder.AddMongoTransport(config);
             },
             ["GooglePubSub"] = () =>
             {
-                services.AddGooglePubSubTransport(config);
-            },
-            ["Kafka"] = () =>
-            {
-                services.AddKafkaTransport(config);
+                builder.AddGooglePubSubTransport(config);
             },
             ["RabbitMq"] = () =>
             {
-                services.AddRabbitMqTransport(config);
+                builder.AddRabbitMqTransport(config);
             },
             ["Redis"] = () =>
             {
-                services.AddRedisTransport(config);
-            }
-        });
+                builder.AddRedisTransport(config);
+            },
+        };
 
-        return services;
+        if (custom != null)
+        {
+            foreach (var (key, configure) in custom)
+            {
+                options[key] = configure;
+            }
+        }
+
+        config.ConfigureByOption("messaging:type", options);
+
+        return builder;
     }
 }

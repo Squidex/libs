@@ -9,35 +9,29 @@ using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Microsoft.Extensions.Options;
-using Squidex.Assets.Internal;
 using Squidex.Hosting;
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.Azure;
 
-public class AzureBlobAssetStore : IAssetStore, IInitializable
+public class AzureBlobAssetStore(IOptions<AzureBlobAssetOptions> options) : IAssetStore, IInitializable
 {
     private static readonly BlobUploadOptions NoOverwriteUpload = new BlobUploadOptions
     {
         Conditions = new BlobRequestConditions
         {
-            IfNoneMatch = new ETag("*")
-        }
+            IfNoneMatch = new ETag("*"),
+        },
     };
     private static readonly BlobCopyFromUriOptions NoOverwriteCopy = new BlobCopyFromUriOptions
     {
         DestinationConditions = new BlobRequestConditions
         {
-            IfNoneMatch = new ETag("*")
-        }
+            IfNoneMatch = new ETag("*"),
+        },
     };
-    private readonly AzureBlobAssetOptions options;
+    private readonly AzureBlobAssetOptions options = options.Value;
     private BlobContainerClient blobContainer;
     private BlobContainerProperties blobContainerProperties;
-
-    public AzureBlobAssetStore(IOptions<AzureBlobAssetOptions> options)
-    {
-        this.options = options.Value;
-    }
 
     public async Task InitializeAsync(
         CancellationToken ct)
@@ -131,7 +125,7 @@ public class AzureBlobAssetStore : IAssetStore, IInitializable
     public async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default,
         CancellationToken ct = default)
     {
-        Guard.NotNull(stream, nameof(stream));
+        ArgumentNullException.ThrowIfNull(stream);
 
         var name = GetFileName(fileName, nameof(fileName));
 
@@ -139,10 +133,12 @@ public class AzureBlobAssetStore : IAssetStore, IInitializable
         {
             var blob = blobContainer.GetBlobClient(name);
 
-            var downloadOptions = new BlobDownloadOptions
+            var downloadOptions = new BlobDownloadOptions();
+
+            if (range.IsDefined)
             {
-                Range = new HttpRange(range.From ?? 0, range.To)
-            };
+                downloadOptions.Range = new HttpRange(range.From ?? 0, range.Length);
+            }
 
             var result = await blob.DownloadStreamingAsync(downloadOptions, ct);
 
@@ -160,7 +156,7 @@ public class AzureBlobAssetStore : IAssetStore, IInitializable
     public async Task<long> UploadAsync(string fileName, Stream stream, bool overwrite = false,
         CancellationToken ct = default)
     {
-        Guard.NotNull(stream, nameof(stream));
+        ArgumentNullException.ThrowIfNull(stream);
 
         var name = GetFileName(fileName, nameof(fileName));
 
@@ -203,8 +199,8 @@ public class AzureBlobAssetStore : IAssetStore, IInitializable
 
     private static string GetFileName(string fileName, string parameterName)
     {
-        Guard.NotNullOrEmpty(fileName, parameterName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(fileName, parameterName);
 
-        return fileName.Replace('\\', '/');
+        return FilePathHelper.EnsureThatPathIsChildOf(fileName.Replace('\\', '/'), "./");
     }
 }

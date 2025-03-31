@@ -22,6 +22,33 @@ public class DeepLFreeTranslationServiceTests : TranslationServiceTestsBase
         return services.GetRequiredService<ITranslationService>();
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void Should_not_be_configure_if_auth_key_is_not_defined(string? authKey)
+    {
+        var sut =
+            new ServiceCollection()
+                .AddDeepLTranslations(TestHelpers.Configuration, c => c.AuthKey = authKey!)
+                .BuildServiceProvider()
+                .GetRequiredService<ITranslationService>();
+
+        Assert.False(sut.IsConfigured);
+    }
+
+    [Fact]
+    public void Shouldbe_configure_if_auth_key_is_defined()
+    {
+        var sut =
+            new ServiceCollection()
+                .AddDeepLTranslations(TestHelpers.Configuration, c => c.AuthKey = "My Auth Key")
+                .BuildServiceProvider()
+                .GetRequiredService<ITranslationService>();
+
+        Assert.True(sut.IsConfigured);
+    }
+
     [Fact]
     public async Task Should_return_result_if_not_configured()
     {
@@ -31,7 +58,7 @@ public class DeepLFreeTranslationServiceTests : TranslationServiceTestsBase
                 .BuildServiceProvider()
                 .GetRequiredService<ITranslationService>();
 
-        var results = await sut.TranslateAsync(new[] { "Hello" }, "en");
+        var results = await sut.TranslateAsync(["Hello"], "en");
 
         Assert.All(results, x => Assert.Equal(TranslationStatus.NotConfigured, x.Status));
     }

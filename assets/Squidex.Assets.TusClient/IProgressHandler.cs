@@ -7,67 +7,36 @@
 
 #pragma warning disable MA0048 // File name must match type name
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.TusClient;
 
-public abstract class UploadEvent
+public abstract class UploadEvent(string fileId)
 {
-    public string FileId { get; }
-
-    protected UploadEvent(string fileId)
-    {
-        FileId = fileId;
-    }
+    public string FileId { get; } = fileId;
 }
 
-public sealed class UploadProgressEvent : UploadEvent
+public sealed class UploadProgressEvent(string fileId, int progress, long bytesWritten, long bytesTotal) : UploadEvent(fileId)
 {
-    public int Progress { get; }
+    public int Progress { get; } = progress;
 
-    public long BytesWritten { get; }
+    public long BytesWritten { get; } = bytesWritten;
 
-    public long BytesTotal { get; }
-
-    public UploadProgressEvent(string fileId, int progress, long bytesWritten, long bytesTotal)
-        : base(fileId)
-    {
-        Progress = progress;
-        BytesWritten = bytesWritten;
-        BytesTotal = bytesTotal;
-    }
+    public long BytesTotal { get; } = bytesTotal;
 }
 
-public sealed class UploadCompletedEvent : UploadEvent
+public sealed class UploadCompletedEvent(string fileId, HttpResponseMessage response) : UploadEvent(fileId)
 {
-    public HttpResponseMessage Response { get; }
-
-    public UploadCompletedEvent(string fileId, HttpResponseMessage response)
-        : base(fileId)
-    {
-        Response = response;
-    }
+    public HttpResponseMessage Response { get; } = response;
 }
 
-public sealed class UploadCreatedEvent : UploadEvent
+public sealed class UploadCreatedEvent(string fileId) : UploadEvent(fileId)
 {
-    public UploadCreatedEvent(string fileId)
-        : base(fileId)
-    {
-    }
 }
 
-public sealed class UploadExceptionEvent : UploadEvent
+public sealed class UploadExceptionEvent(string fileId, Exception exception, HttpResponseMessage? response) : UploadEvent(fileId)
 {
-    public HttpResponseMessage? Response { get; }
+    public HttpResponseMessage? Response { get; } = response;
 
-    public Exception Exception { get; }
-
-    public UploadExceptionEvent(string fileId, Exception exception, HttpResponseMessage? response)
-        : base(fileId)
-    {
-        Exception = exception;
-
-        Response = response;
-    }
+    public Exception Exception { get; } = exception;
 }
 
 public interface IProgressHandler

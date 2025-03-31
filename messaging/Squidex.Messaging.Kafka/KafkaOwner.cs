@@ -11,26 +11,20 @@ using Microsoft.Extensions.Options;
 
 namespace Squidex.Messaging.Kafka;
 
-public sealed class KafkaOwner
+public sealed class KafkaOwner(
+    IOptions<KafkaTransportOptions> options,
+    ILogger<KafkaTransport> log)
 {
-    private readonly IProducer<Null, Null> producer;
+    private readonly IProducer<Null, Null> producer =
+        new ProducerBuilder<Null, Null>(options.Value)
+            .SetLogHandler(KafkaLogFactory<Null, Null>.ProducerLog(log))
+            .SetErrorHandler(KafkaLogFactory<Null, Null>.ProducerError(log))
+            .SetStatisticsHandler(KafkaLogFactory<Null, Null>.ProducerStats(log))
+            .Build();
 
     public Handle Handle => producer.Handle;
 
-    public KafkaTransportOptions Options { get; }
-
-    public KafkaOwner(IOptions<KafkaTransportOptions> options,
-        ILogger<KafkaTransport> log)
-    {
-        Options = options.Value;
-
-        producer =
-            new ProducerBuilder<Null, Null>(options.Value)
-                .SetLogHandler(KafkaLogFactory<Null, Null>.ProducerLog(log))
-                .SetErrorHandler(KafkaLogFactory<Null, Null>.ProducerError(log))
-                .SetStatisticsHandler(KafkaLogFactory<Null, Null>.ProducerStats(log))
-                .Build();
-    }
+    public KafkaTransportOptions Options { get; } = options.Value;
 
     public void Dispose()
     {

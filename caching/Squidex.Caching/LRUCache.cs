@@ -11,7 +11,7 @@ namespace Squidex.Caching;
 
 public sealed class LRUCache<TKey, TValue> where TKey : notnull
 {
-    private readonly Dictionary<TKey, LinkedListNode<LRUCacheItem<TKey, TValue>>> cacheMap = new Dictionary<TKey, LinkedListNode<LRUCacheItem<TKey, TValue>>>();
+    private readonly Dictionary<TKey, LinkedListNode<LRUCacheItem<TKey, TValue>>> cacheMap = [];
     private readonly LinkedList<LRUCacheItem<TKey, TValue>> cacheHistory = new LinkedList<LRUCacheItem<TKey, TValue>>();
     private readonly int capacity;
     private readonly Action<TKey, TValue> itemEvicted;
@@ -46,6 +46,8 @@ public sealed class LRUCache<TKey, TValue> where TKey : notnull
 
     public bool Set(TKey key, TValue value)
     {
+        ArgumentNullException.ThrowIfNull(key);
+
         if (cacheMap.TryGetValue(key, out var node))
         {
             node.Value.Value = value;
@@ -75,6 +77,8 @@ public sealed class LRUCache<TKey, TValue> where TKey : notnull
 
     public bool Remove(TKey key)
     {
+        ArgumentNullException.ThrowIfNull(key);
+
         if (cacheMap.TryGetValue(key, out var node))
         {
             cacheMap.Remove(key);
@@ -88,6 +92,8 @@ public sealed class LRUCache<TKey, TValue> where TKey : notnull
 
     public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value)
     {
+        ArgumentNullException.ThrowIfNull(key);
+
         value = default!;
 
         if (cacheMap.TryGetValue(key, out var node))

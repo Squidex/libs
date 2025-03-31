@@ -6,13 +6,19 @@
 // ==========================================================================
 
 using System;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.Formats.Webp;
+using SixLabors.ImageSharp.Processing;
+using ImageSharpMode = SixLabors.ImageSharp.Processing.ResizeMode;
+using ImageSharpOptions = SixLabors.ImageSharp.Processing.ResizeOptions;
 
-namespace Squidex.Assets.Internal;
+namespace Squidex.Assets.ImageSharp.Internal;
 
 internal static class Extensions
 {
@@ -33,18 +39,12 @@ internal static class Extensions
             throw new NotSupportedException();
         }
 
-        var encoder = imageFormatsManager.GetEncoder(format);
-
-        if (encoder == null)
-        {
-            throw new NotSupportedException();
-        }
-
+        var encoder = imageFormatsManager.GetEncoder(format) ?? throw new NotSupportedException();
         if (encoder is PngEncoder png && png.ColorType != PngColorType.RgbWithAlpha)
         {
             encoder = new PngEncoder
             {
-                ColorType = PngColorType.RgbWithAlpha
+                ColorType = PngColorType.RgbWithAlpha,
             };
         }
 
@@ -54,7 +54,7 @@ internal static class Extensions
         {
             encoder = new JpegEncoder
             {
-                Quality = quality
+                Quality = quality,
             };
         }
 
@@ -62,10 +62,55 @@ internal static class Extensions
         {
             encoder = new WebpEncoder
             {
-                Quality = quality
+                Quality = quality,
             };
         }
 
         return encoder;
+    }
+
+    public static void Watermark(this IImageProcessingContext operation, Image watermark, WatermarkAnchor anchor, float opacity)
+    {
+        var size = operation.GetCurrentSize();
+
+        if (watermark.Size.Width > size.Width || watermark.Size.Height > size.Height)
+        {
+            watermark.Mutate(watermarkOperation =>
+            {
+                var options = new ImageSharpOptions { Size = size, Mode = ImageSharpMode.Max };
+
+                watermarkOperation.Resize(options);
+            });
+        }
+
+        var x = 0;
+        var y = 0;
+        if (anchor is WatermarkAnchor.TopRight or WatermarkAnchor.BottomRight)
+        {
+            x = size.Width - watermark.Width;
+        }
+
+        if (anchor is WatermarkAnchor.BottomLeft or WatermarkAnchor.BottomRight)
+        {
+            y = size.Height - watermark.Height;
+        }
+
+        if (anchor == WatermarkAnchor.Center)
+        {
+            x = (size.Width - watermark.Width) / 2;
+            y = (size.Height - watermark.Height) / 2;
+        }
+
+        operation.DrawImage(watermark, new Point(x, y), opacity);
+    }
+
+    public static async Task<Image> GetImageAsync(this IHttpClientFactory httpClientFactory, string url,
+        CancellationToken ct)
+    {
+        using var httpClient = httpClientFactory.CreateClient();
+        using var httpResponse = await httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
+
+        await using var httpStream = await httpResponse.Content.ReadAsStreamAsync(ct);
+        return await Image.LoadAsync(httpStream, ct);
     }
 }

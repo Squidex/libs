@@ -7,16 +7,10 @@
 
 namespace Squidex.Assets;
 
-public class PauseStream : DelegateStream
+public class PauseStream(Stream innerStream, double pauseAfter) : DelegateStream(innerStream)
 {
-    private double pauseAfter = 1;
+    private double pauseTime = pauseAfter;
     private int totalRead;
-
-    public PauseStream(Stream innerStream, double pauseAfter)
-        : base(innerStream)
-    {
-        this.pauseAfter = pauseAfter;
-    }
 
     public void Reset(double? newPauseAfter = null)
     {
@@ -24,14 +18,14 @@ public class PauseStream : DelegateStream
 
         if (newPauseAfter.HasValue)
         {
-            pauseAfter = newPauseAfter.Value;
+            pauseTime = newPauseAfter.Value;
         }
     }
 
     public override async ValueTask<int> ReadAsync(Memory<byte> buffer,
         CancellationToken cancellationToken = default)
     {
-        if (totalRead >= Length * pauseAfter)
+        if (totalRead >= Length * pauseTime)
         {
             return 0;
         }

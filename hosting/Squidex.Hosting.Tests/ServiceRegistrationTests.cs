@@ -30,14 +30,9 @@ public class ServiceRegistrationTests
         public IWrapped? Inner => null;
     }
 
-    private sealed class ServiceWrapper : IWrapped
+    private sealed class ServiceWrapper(ServiceRegistrationTests.IWrapped inner) : IWrapped
     {
-        public IWrapped? Inner { get; }
-
-        public ServiceWrapper(IWrapped inner)
-        {
-            Inner = inner;
-        }
+        public IWrapped? Inner { get; } = inner;
     }
 
     [Fact]

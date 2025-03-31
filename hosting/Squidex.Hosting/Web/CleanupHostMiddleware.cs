@@ -9,15 +9,8 @@ using Microsoft.AspNetCore.Http;
 
 namespace Squidex.Hosting.Web;
 
-public sealed class CleanupHostMiddleware
+public sealed class CleanupHostMiddleware(RequestDelegate next)
 {
-    private readonly RequestDelegate next;
-
-    public CleanupHostMiddleware(RequestDelegate next)
-    {
-        this.next = next;
-    }
-
     public Task InvokeAsync(HttpContext context)
     {
         var request = context.Request;

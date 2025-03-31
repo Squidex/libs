@@ -7,29 +7,21 @@
 
 using Xunit;
 
-#pragma warning disable SA1300 // Element should begin with upper-case letter
-
 namespace Squidex.Assets;
 
 [Trait("Category", "Dependencies")]
-public class GoogleCloudAssetStoreTests : AssetStoreTests<GoogleCloudAssetStore>, IClassFixture<GoogleCloudAssetStoreFixture>
+public class GoogleCloudAssetStoreTests(GoogleCloudAssetStoreFixture fixture)
+    : AssetStoreTests, IClassFixture<GoogleCloudAssetStoreFixture>
 {
-    public GoogleCloudAssetStoreFixture _ { get; }
-
-    public GoogleCloudAssetStoreTests(GoogleCloudAssetStoreFixture fixture)
+    public override Task<IAssetStore> CreateSutAsync()
     {
-        _ = fixture;
-    }
-
-    public override GoogleCloudAssetStore CreateStore()
-    {
-        return _.AssetStore;
+        return Task.FromResult<IAssetStore>(fixture.Store);
     }
 
     [Fact]
     public void Should_calculate_source_url()
     {
-        var url = ((IAssetStore)Sut).GeneratePublicUrl(FileName);
+        var url = ((IAssetStore)fixture.Store).GeneratePublicUrl(FileName);
 
         Assert.Null(url);
     }

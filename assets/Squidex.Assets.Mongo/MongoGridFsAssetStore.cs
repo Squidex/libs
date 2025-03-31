@@ -8,22 +8,15 @@
 using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
-using Squidex.Assets.Internal;
 using Squidex.Hosting;
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.Mongo;
 
-public sealed class MongoGridFsAssetStore : IAssetStore, IInitializable
+public sealed class MongoGridFsAssetStore(IGridFSBucket<string> bucket) : IAssetStore, IInitializable
 {
     private static readonly FilterDefinitionBuilder<GridFSFileInfo<string>> Filters = Builders<GridFSFileInfo<string>>.Filter;
     private static readonly GridFSDownloadOptions DownloadDefault = new GridFSDownloadOptions();
     private static readonly GridFSDownloadOptions DownloadSeekable = new GridFSDownloadOptions { Seekable = true };
-    private readonly IGridFSBucket<string> bucket;
-
-    public MongoGridFsAssetStore(IGridFSBucket<string> bucket)
-    {
-        this.bucket = bucket;
-    }
 
     public async Task InitializeAsync(
         CancellationToken ct)
@@ -46,18 +39,13 @@ public sealed class MongoGridFsAssetStore : IAssetStore, IInitializable
         var fileQuery = await bucket.FindAsync(Filters.Eq(x => x.Id, name), cancellationToken: ct);
         var fileObject = await fileQuery.FirstOrDefaultAsync(ct);
 
-        if (fileObject == null)
-        {
-            throw new AssetNotFoundException(fileName);
-        }
-
-        return fileObject.Length;
+        return fileObject == null ? throw new AssetNotFoundException(fileName) : fileObject.Length;
     }
 
     public async Task CopyAsync(string sourceFileName, string targetFileName,
         CancellationToken ct = default)
     {
-        Guard.NotNullOrEmpty(targetFileName, nameof(targetFileName));
+        ArgumentException.ThrowIfNullOrWhiteSpace(targetFileName);
 
         var sourceName = GetFileName(sourceFileName, nameof(sourceFileName));
 
@@ -77,7 +65,7 @@ public sealed class MongoGridFsAssetStore : IAssetStore, IInitializable
     public async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default,
         CancellationToken ct = default)
     {
-        Guard.NotNull(stream, nameof(stream));
+        ArgumentNullException.ThrowIfNull(stream);
 
         var name = GetFileName(fileName, nameof(fileName));
 
@@ -99,7 +87,7 @@ public sealed class MongoGridFsAssetStore : IAssetStore, IInitializable
     public async Task<long> UploadAsync(string fileName, Stream stream, bool overwrite = false,
         CancellationToken ct = default)
     {
-        Guard.NotNull(stream, nameof(stream));
+        ArgumentNullException.ThrowIfNull(stream);
 
         var name = GetFileName(fileName, nameof(fileName));
 
@@ -170,8 +158,8 @@ public sealed class MongoGridFsAssetStore : IAssetStore, IInitializable
 
     private static string GetFileName(string fileName, string parameterName)
     {
-        Guard.NotNullOrEmpty(fileName, parameterName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(fileName, parameterName);
 
-        return fileName.Replace('\\', '/');
+        return FilePathHelper.EnsureThatPathIsChildOf(fileName.Replace('\\', '/'), "./");
     }
 }

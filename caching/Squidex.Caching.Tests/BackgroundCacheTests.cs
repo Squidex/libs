@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using FakeItEasy;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Xunit;
@@ -14,18 +15,13 @@ namespace Squidex.Caching;
 public class BackgroundCacheTests
 {
     private readonly Random random = new Random();
-    private readonly BackgroundCache sut = new BackgroundCache(CreateMemoryCache());
+    private readonly BackgroundCache sut;
     private int factoryInvoked;
-    private DateTimeOffset now;
+    private DateTimeOffset now = DateTimeOffset.UtcNow;
 
     public BackgroundCacheTests()
     {
-        now = DateTimeOffset.UtcNow;
-
-        sut.Clock = () =>
-        {
-            return now;
-        };
+        sut = new BackgroundCache(CreateMemoryCache(), CreateTimeProvider());
     }
 
     [Fact]
@@ -109,6 +105,16 @@ public class BackgroundCacheTests
 
             return factoryInvoked + 10;
         }, x => Task.FromResult(isValid));
+    }
+
+    private TimeProvider CreateTimeProvider()
+    {
+        var timeProvider = A.Fake<TimeProvider>();
+
+        A.CallTo(() => timeProvider.GetUtcNow())
+            .ReturnsLazily(() => now);
+
+        return timeProvider;
     }
 
     private static MemoryCache CreateMemoryCache()

@@ -6,7 +6,6 @@
 // ==========================================================================
 
 using System.Collections.Concurrent;
-using Squidex.Assets.Internal;
 
 namespace Squidex.Assets;
 
@@ -35,7 +34,7 @@ public class MemoryAssetStore : IAssetStore
     public virtual async Task CopyAsync(string sourceFileName, string targetFileName,
         CancellationToken ct = default)
     {
-        Guard.NotNullOrEmpty(targetFileName, nameof(targetFileName));
+        ArgumentException.ThrowIfNullOrWhiteSpace(targetFileName);
 
         var sourceName = GetFileName(sourceFileName, nameof(sourceFileName));
 
@@ -53,7 +52,7 @@ public class MemoryAssetStore : IAssetStore
     public virtual async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default,
         CancellationToken ct = default)
     {
-        Guard.NotNull(stream, nameof(stream));
+        ArgumentNullException.ThrowIfNull(stream);
 
         var name = GetFileName(fileName, nameof(fileName));
 
@@ -78,7 +77,7 @@ public class MemoryAssetStore : IAssetStore
     public virtual async Task<long> UploadAsync(string fileName, Stream stream, bool overwrite = false,
         CancellationToken ct = default)
     {
-        Guard.NotNull(stream, nameof(stream));
+        ArgumentNullException.ThrowIfNull(stream);
 
         var name = GetFileName(fileName, nameof(fileName));
 
@@ -120,7 +119,7 @@ public class MemoryAssetStore : IAssetStore
     public virtual Task DeleteByPrefixAsync(string prefix,
         CancellationToken ct = default)
     {
-        Guard.NotNullOrEmpty(prefix, nameof(prefix));
+        ArgumentException.ThrowIfNullOrWhiteSpace(prefix);
 
         // ToList on concurrent dictionary is not thread safe, therefore we maintain our own local copy.
         HashSet<string>? toRemove = null;
@@ -129,7 +128,7 @@ public class MemoryAssetStore : IAssetStore
         {
             if (key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
             {
-                toRemove ??= new HashSet<string>();
+                toRemove ??= [];
                 toRemove.Add(key);
             }
         }
@@ -157,8 +156,8 @@ public class MemoryAssetStore : IAssetStore
 
     private static string GetFileName(string fileName, string parameterName)
     {
-        Guard.NotNullOrEmpty(fileName, parameterName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(fileName, parameterName);
 
-        return fileName.Replace('\\', '/');
+        return FilePathHelper.EnsureThatPathIsChildOf(fileName.Replace('\\', '/'), "./");
     }
 }

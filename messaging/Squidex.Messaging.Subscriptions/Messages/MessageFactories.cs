@@ -12,91 +12,32 @@ namespace Squidex.Messaging.Subscriptions.Messages;
 
 internal static class MessageFactories
 {
-    private static readonly ConcurrentDictionary<Type, Func<Guid, ISubscription, SubscribeMessageBase>> SubscribeFactories = new ();
-    private static readonly ConcurrentDictionary<Type, Func<List<Guid>, object, PayloadMessageBase>> PayloadFactories = new ();
-
-    private static readonly MethodInfo BuildSubscribeFactoryMethod =
-        typeof(MessageFactories).GetMethod(nameof(BuildSubscribeFactory), BindingFlags.NonPublic | BindingFlags.Static)!;
+    private static readonly ConcurrentDictionary<Type, Func<List<string>, string?, object, PayloadMessageBase>> PayloadFactories = [];
 
     private static readonly MethodInfo BuildPayloadFactoryMethod =
         typeof(MessageFactories).GetMethod(nameof(BuildPayloadFactory), BindingFlags.NonPublic | BindingFlags.Static)!;
 
-    public static SubscriptionsMessageBase Subscribe(Guid id, ISubscription subscription, string? sourceId)
-    {
-        var factory = SubscribeFactories.GetOrAdd(subscription.GetType(), type =>
-        {
-            var method = BuildSubscribeFactoryMethod.MakeGenericMethod(type);
-
-            return (Func<Guid, ISubscription, SubscribeMessageBase>)method.Invoke(null, Array.Empty<object?>())!;
-        });
-
-        var result = factory(id, subscription);
-
-        return Enrich(result, sourceId);
-    }
-
-    public static SubscriptionsMessageBase Payload(List<Guid> ids, object message, string? sourceId)
+    public static PayloadMessageBase Payload<T>(List<string> ids, T message, string? sourceId) where T : notnull
     {
         var factory = PayloadFactories.GetOrAdd(message.GetType(), type =>
         {
             var method = BuildPayloadFactoryMethod.MakeGenericMethod(type);
 
-            return (Func<List<Guid>, object, PayloadMessageBase>)method.Invoke(null, Array.Empty<object?>())!;
+            return (Func<List<string>, string?, object, PayloadMessageBase>)method.Invoke(null, [])!;
         });
 
-        var result = factory(ids, message);
-
-        return Enrich(result, sourceId);
+        return factory(ids, sourceId, message);
     }
 
-    public static SubscriptionsMessageBase Unsubscribe(Guid id, string? sourceId)
+    private static Func<List<string>, string?, object, PayloadMessageBase> BuildPayloadFactory<T>() where T : notnull
     {
-        var result = new UnsubscribeMessage
-        {
-            SubscriptionId = id
-        };
-
-        return Enrich(result, sourceId);
-    }
-
-    public static SubscriptionsMessageBase Alive(Guid id, string? sourceId)
-    {
-        var result = new UnsubscribeMessage
-        {
-            SubscriptionId = id
-        };
-
-        return Enrich(result, sourceId);
-    }
-
-    private static SubscriptionsMessageBase Enrich(SubscriptionsMessageBase result, string? sourceId)
-    {
-        // Ensure that we do not publish to the the current instance.
-        result.SourceId = sourceId;
-
-        return result;
-    }
-
-    private static Func<List<Guid>, object, PayloadMessageBase> BuildPayloadFactory<T>() where T : notnull
-    {
-        return (ids, message) =>
+        return (ids, sourceId, message) =>
         {
             return new PayloadMessage<T>
             {
                 SubscriptionMessage = (T)message,
-                SubscriptionIds = ids
-            };
-        };
-    }
-
-    private static Func<Guid, object, SubscribeMessageBase> BuildSubscribeFactory<T>() where T : ISubscription
-    {
-        return (id, subscription) =>
-        {
-            return new SubscribeMessage<T>
-            {
-                Subscription = (T)subscription,
-                SubscriptionId = id
+                SubscriptionIds = ids,
+                SourceId = sourceId,
             };
         };
     }

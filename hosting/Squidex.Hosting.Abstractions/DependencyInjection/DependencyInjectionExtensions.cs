@@ -134,7 +134,7 @@ public static class DependencyInjectionExtensions
         // Build an inner factory to cache the reflection logic.
         var innerFactory = BuildFactory(existing);
 
-        var factory = ActivatorUtilities.CreateFactory(typeof(TImplementation), new Type[] { typeof(TService) });
+        var factory = ActivatorUtilities.CreateFactory(typeof(TImplementation), [typeof(TService)]);
 
         services.Add(
             new ServiceDescriptor(
@@ -143,7 +143,7 @@ public static class DependencyInjectionExtensions
                 {
                     var wrapped = (TService)innerFactory(s);
 
-                    return factory(s, new object[] { wrapped });
+                    return factory(s, [wrapped]);
                 },
                 lifetime));
 
@@ -193,7 +193,7 @@ public static class DependencyInjectionExtensions
 
         if (descriptor?.ImplementationType != null)
         {
-            var factory = ActivatorUtilities.CreateFactory(descriptor.ImplementationType, Array.Empty<Type>());
+            var factory = ActivatorUtilities.CreateFactory(descriptor.ImplementationType, []);
 
             return s => factory(s, null);
         }

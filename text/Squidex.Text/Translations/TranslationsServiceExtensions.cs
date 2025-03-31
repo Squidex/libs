@@ -14,6 +14,7 @@ public static class TranslationsServiceExtensions
 {
     public static IServiceCollection AddTranslations(this IServiceCollection services)
     {
+        services.AddHttpClient();
         services.TryAddSingleton<ITranslator, Translator>();
 
         return services;

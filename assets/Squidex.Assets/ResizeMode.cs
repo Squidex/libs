@@ -15,5 +15,5 @@ public enum ResizeMode
     BoxPad,
     Max,
     Min,
-    Stretch
+    Stretch,
 }

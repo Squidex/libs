@@ -10,15 +10,8 @@ using System.Diagnostics.CodeAnalysis;
 namespace Squidex.Log.Internal;
 
 [ExcludeFromCodeCoverage]
-public sealed class WindowsLogConsole : IConsole
+public sealed class WindowsLogConsole(bool logToStdError) : IConsole
 {
-    private readonly bool logToStdError;
-
-    public WindowsLogConsole(bool logToStdError)
-    {
-        this.logToStdError = logToStdError;
-    }
-
     public void Reset()
     {
         Console.ResetColor();

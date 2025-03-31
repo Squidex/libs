@@ -7,29 +7,21 @@
 
 using Xunit;
 
-#pragma warning disable SA1300 // Element should begin with upper-case letter
-
 namespace Squidex.Assets;
 
 [Trait("Category", "Dependencies")]
-public class AzureBlobAssetStoreTests : AssetStoreTests<AzureBlobAssetStore>, IClassFixture<AzureBlobAssetStoreFixture>
+public class AzureBlobAssetStoreTests(AzureBlobAssetStoreFixture fixture)
+    : AssetStoreTests, IClassFixture<AzureBlobAssetStoreFixture>
 {
-    public AzureBlobAssetStoreFixture _ { get; }
-
-    public AzureBlobAssetStoreTests(AzureBlobAssetStoreFixture fixture)
+    public override Task<IAssetStore> CreateSutAsync()
     {
-        _ = fixture;
-    }
-
-    public override AzureBlobAssetStore CreateStore()
-    {
-        return _.AssetStore;
+        return Task.FromResult<IAssetStore>(fixture.Store);
     }
 
     [Fact]
     public void Should_calculate_source_url()
     {
-        var url = Sut.GeneratePublicUrl(FileName);
+        var url = fixture.Store.GeneratePublicUrl(FileName);
 
         Assert.Equal($"http://127.0.0.1:10000/devstoreaccount1/squidex-test-container/{FileName}", url);
     }

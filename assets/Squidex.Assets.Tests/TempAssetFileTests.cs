@@ -13,58 +13,59 @@ namespace Squidex.Assets;
 public class TempAssetFileTests
 {
     [Fact]
-    public void Should_construct()
+    public async Task Should_construct()
     {
-        using (var result = new TempAssetFile("fileName", "file/type", 1024))
+        await using (var result = new TempAssetFile("fileName", "file/type"))
         {
             Assert.Equal("fileName", result.FileName);
             Assert.Equal("file/type", result.MimeType);
-            Assert.Equal(1024, result.FileSize);
+            Assert.Equal(0, result.FileSize);
         }
     }
 
     [Fact]
-    public void Should_construct_from_other_file()
+    public async Task Should_construct_from_other_file()
     {
         var source = new DelegateAssetFile("fileName", "file/type", 1024, () => new MemoryStream());
 
-        using (var result = TempAssetFile.Create(source))
+        await using (var result = TempAssetFile.Create(source))
         {
             Assert.Equal("fileName", result.FileName);
             Assert.Equal("file/type", result.MimeType);
-            Assert.Equal(1024, result.FileSize);
+            Assert.Equal(0, result.FileSize);
         }
     }
 
     [Fact]
-    public void Should_be_serializable_to_json()
+    public async Task Should_be_serializable_to_json()
     {
-        var source = new TempAssetFile("fileName", "file/type", 1024);
+        await using (var source = new TempAssetFile("fileName", "file/type"))
+        {
+            var deserialized = JsonConvert.DeserializeObject<TempAssetFile>(JsonConvert.SerializeObject(source));
 
-        var deserialized = JsonConvert.DeserializeObject<TempAssetFile>(JsonConvert.SerializeObject(source));
-
-        Assert.Equal(source.FileName, deserialized?.FileName);
+            Assert.Equal(source.FileName, deserialized?.FileName);
+        }
     }
 
     [Fact]
-    public void Should_allow_multiple_reads_and_writes()
+    public async Task Should_allow_multiple_reads_and_writes()
     {
-        using (var result = new TempAssetFile("fileName", "file/type", 1024))
+        await using (var result = new TempAssetFile("fileName", "file/type"))
         {
             var buffer = new byte[] { 1, 2, 3, 4 };
 
-            using (var stream = result.OpenWrite())
+            await using (var stream = result.OpenWrite())
             {
-                stream.Write(buffer, 0, buffer.Length);
+                await stream.WriteAsync(buffer.AsMemory());
             }
 
             for (var i = 0; i < 3; i++)
             {
-                using (var stream = result.OpenWrite())
+                await using (var stream = result.OpenWrite())
                 {
                     var read = new byte[4];
 
-                    var bytesRead = stream.Read(read, 0, read.Length);
+                    var bytesRead = await stream.ReadAsync(read.AsMemory());
 
                     Assert.Equal(buffer.Length, bytesRead);
                     Assert.Equal(buffer, read);

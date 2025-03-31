@@ -11,88 +11,86 @@ using Squidex.Messaging.Internal;
 
 namespace Squidex.Messaging.RabbitMq;
 
-public sealed class RabbitMqTransport : IMessagingTransport
+public sealed class RabbitMqTransport(
+    RabbitMqOwner owner,
+    ILogger<RabbitMqTransport> log)
+    : IMessagingTransport
 {
-    private readonly RabbitMqOwner owner;
-    private readonly ILogger<RabbitMqTransport> log;
-    private readonly HashSet<string> createdQueues = new HashSet<string>();
-    private IModel? model;
+    private readonly HashSet<string> createdQueues = [];
+    private readonly SemaphoreSlim semaphoreSlim = new SemaphoreSlim(1);
+    private IChannel? channelModel;
 
-    public RabbitMqTransport(RabbitMqOwner owner,
-        ILogger<RabbitMqTransport> log)
-    {
-        this.owner = owner;
-
-        this.log = log;
-    }
-
-    public Task InitializeAsync(
+    public async Task InitializeAsync(
         CancellationToken ct)
     {
-        if (model != null)
+        if (channelModel != null)
         {
-            return Task.CompletedTask;
+            return;
         }
 
-        model = owner.Connection.CreateModel();
-
-        return Task.CompletedTask;
+        channelModel = await owner.CreateChannelAsync(ct);
     }
 
     public Task ReleaseAsync(
         CancellationToken ct)
     {
-        if (model == null)
+        if (channelModel == null)
         {
             return Task.CompletedTask;
         }
 
-        model.Dispose();
-        model = null;
+        channelModel.Dispose();
+        channelModel = null;
 
         return Task.CompletedTask;
     }
 
-    public Task<IAsyncDisposable?> CreateChannelAsync(ChannelName channel, string instanceName, bool consume, ProducerOptions producerOptions,
+    public async Task<IAsyncDisposable?> CreateChannelAsync(ChannelName channel, string instanceName, bool consume, ProducerOptions producerOptions,
         CancellationToken ct)
     {
-        if (model == null)
+        if (channelModel == null)
         {
             ThrowHelper.InvalidOperationException("Transport not initialized yet.");
-            return Task.FromResult<IAsyncDisposable?>(null);
+            return null;
         }
 
-        lock (model)
+        await semaphoreSlim.WaitAsync(ct);
+        try
         {
             if (channel.Type == ChannelType.Queue)
             {
-                model.QueueDeclare(channel.Name, true, false, false, null);
+                await channelModel.QueueDeclareAsync(channel.Name, true, false, false, null, cancellationToken: ct);
             }
             else
             {
-                model.ExchangeDeclare(channel.Name, "fanout", true, false, null);
+                await channelModel.ExchangeDeclareAsync(channel.Name, "fanout", true, false, null, cancellationToken: ct);
             }
         }
-
-        return Task.FromResult<IAsyncDisposable?>(null);
-    }
-
-    public Task ProduceAsync(ChannelName channel, string instanceName, TransportMessage transportMessage,
-        CancellationToken ct)
-    {
-        if (model == null)
+        finally
         {
-            ThrowHelper.InvalidOperationException("Transport not initialized yet.");
-            return Task.CompletedTask;
+            semaphoreSlim.Release();
         }
 
-        lock (model)
+        return null;
+    }
+
+    public async Task ProduceAsync(ChannelName channel, string instanceName, TransportMessage transportMessage,
+        CancellationToken ct)
+    {
+        if (channelModel == null)
         {
-            var properties = model.CreateBasicProperties();
+            ThrowHelper.InvalidOperationException("Transport not initialized yet.");
+            return;
+        }
+
+        await semaphoreSlim.WaitAsync(ct);
+        try
+        {
+            var properties = new BasicProperties();
 
             if (transportMessage.Headers.Count > 0)
             {
-                properties.Headers = new Dictionary<string, object>();
+                properties.Headers = new Dictionary<string, object?>();
 
                 foreach (var (key, value) in transportMessage.Headers)
                 {
@@ -102,26 +100,23 @@ public sealed class RabbitMqTransport : IMessagingTransport
 
             if (channel.Type == ChannelType.Queue)
             {
-                model.BasicPublish(string.Empty, channel.Name, properties, transportMessage.Data);
+                await channelModel.BasicPublishAsync(string.Empty, channel.Name, false, properties, transportMessage.Data, ct);
             }
             else
             {
-                model.BasicPublish(channel.Name, "*", properties, transportMessage.Data);
+                await channelModel.BasicPublishAsync(channel.Name, "*", false, properties, transportMessage.Data, ct);
             }
         }
-
-        return Task.CompletedTask;
+        finally
+        {
+            semaphoreSlim.Release();
+        }
     }
 
-    public Task<IAsyncDisposable> SubscribeAsync(ChannelName channel, string instanceName, MessageTransportCallback callback,
+    public async Task<IAsyncDisposable> SubscribeAsync(ChannelName channel, string instanceName, MessageTransportCallback callback,
         CancellationToken ct)
     {
-        return Task.FromResult(SubscribeCore(channel, instanceName, callback));
-    }
-
-    private IAsyncDisposable SubscribeCore(ChannelName channel, string instanceName, MessageTransportCallback callback)
-    {
-        if (model == null)
+        if (channelModel == null)
         {
             ThrowHelper.InvalidOperationException("Transport not initialized yet.");
             return null!;
@@ -131,13 +126,14 @@ public sealed class RabbitMqTransport : IMessagingTransport
 
         if (channel.Type == ChannelType.Topic)
         {
-            queueName = CreateTemporaryQueue(channel, instanceName);
+            queueName = await CreateTemporaryQueueAsync(channel, instanceName, ct);
         }
 
-        return new RabbitMqSubscription(queueName, owner, callback, log);
+        return await RabbitMqSubscription.OpenAsync(queueName, owner, callback, log, ct);
     }
 
-    private string CreateTemporaryQueue(ChannelName channel, string instanceName)
+    private async Task<string> CreateTemporaryQueueAsync(ChannelName channel, string instanceName,
+        CancellationToken ct)
     {
         var queueName = $"{channel.Name}_{instanceName}";
 
@@ -146,13 +142,16 @@ public sealed class RabbitMqTransport : IMessagingTransport
             return queueName;
         }
 
-        lock (model!)
+        await semaphoreSlim.WaitAsync(ct);
+        try
         {
             // Create a queue that only lives as long as the client is connected.
-            model.QueueDeclare(queueName);
-
-            // Bind the queue to the exchange.
-            model.QueueBind(queueName, channel.Name, "*");
+            await channelModel!.QueueDeclareAsync(queueName, cancellationToken: ct);
+            await channelModel!.QueueBindAsync(queueName, channel.Name, "*", cancellationToken: ct);
+        }
+        finally
+        {
+            semaphoreSlim.Release();
         }
 
         return queueName;

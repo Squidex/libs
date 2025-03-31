@@ -17,8 +17,10 @@ public abstract class AssetThumbnailGeneratorTests
     protected readonly IAssetThumbnailGenerator sut;
 #pragma warning restore SA1401 // Fields should be private
 
-    public static IEnumerable<object[]> GetConversions()
+    public static TheoryData<ImageFormat, ImageFormat> GetConversions()
     {
+        var result = new TheoryData<ImageFormat, ImageFormat>();
+
         var allFormats = Enum.GetValues(typeof(ImageFormat)).OfType<ImageFormat>();
 
         foreach (var source in allFormats)
@@ -27,10 +29,12 @@ public abstract class AssetThumbnailGeneratorTests
             {
                 if (!Equals(target, source))
                 {
-                    yield return new object[] { target, source };
+                    result.Add(target, source);
                 }
             }
         }
+
+        return result;
     }
 
     protected AssetThumbnailGeneratorTests()
@@ -115,7 +119,7 @@ public abstract class AssetThumbnailGeneratorTests
             {
                 TargetWidth = 1000,
                 TargetHeight = 1000,
-                Mode = ResizeMode.Stretch
+                Mode = ResizeMode.Stretch,
             });
 
             Assert.True(target.Length > source.Length);
@@ -133,7 +137,7 @@ public abstract class AssetThumbnailGeneratorTests
             {
                 TargetWidth = 100,
                 TargetHeight = 100,
-                Mode = ResizeMode.Stretch
+                Mode = ResizeMode.Stretch,
             });
 
             Assert.True(target.Length < source.Length);
@@ -149,7 +153,7 @@ public abstract class AssetThumbnailGeneratorTests
         {
             await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
             {
-                Quality = 10
+                Quality = 10,
             });
 
             Assert.True(target.Length < source.Length);
@@ -165,7 +169,8 @@ public abstract class AssetThumbnailGeneratorTests
         {
             await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
             {
-                Quality = 10, Format = ImageFormat.JPEG
+                Quality = 10,
+                Format = ImageFormat.JPEG,
             });
 
             Assert.True(target.Length < source.Length);
@@ -255,7 +260,7 @@ public abstract class AssetThumbnailGeneratorTests
                 Background = color,
                 TargetWidth = w,
                 TargetHeight = h,
-                Mode = mode
+                Mode = mode,
             });
 
             target.Position = 0;
@@ -309,7 +314,7 @@ public abstract class AssetThumbnailGeneratorTests
             {
                 TargetWidth = 1000,
                 TargetHeight = 200,
-                Mode = ResizeMode.Stretch
+                Mode = ResizeMode.Stretch,
             });
         }
     }
@@ -325,7 +330,7 @@ public abstract class AssetThumbnailGeneratorTests
             {
                 TargetWidth = 400,
                 TargetHeight = 0,
-                Mode = ResizeMode.Max
+                Mode = ResizeMode.Max,
             });
         }
     }
@@ -341,7 +346,7 @@ public abstract class AssetThumbnailGeneratorTests
             {
                 TargetWidth = 100,
                 TargetHeight = 0,
-                Mode = ResizeMode.Min
+                Mode = ResizeMode.Min,
             });
         }
     }
@@ -357,7 +362,7 @@ public abstract class AssetThumbnailGeneratorTests
             {
                 TargetWidth = 300,
                 TargetHeight = 300,
-                Mode = ResizeMode.BoxPad
+                Mode = ResizeMode.BoxPad,
             });
         }
     }
@@ -373,7 +378,7 @@ public abstract class AssetThumbnailGeneratorTests
             {
                 TargetWidth = 100,
                 TargetHeight = 100,
-                Mode = ResizeMode.Crop
+                Mode = ResizeMode.Crop,
             });
         }
     }
@@ -389,7 +394,7 @@ public abstract class AssetThumbnailGeneratorTests
             {
                 TargetWidth = 600,
                 TargetHeight = 600,
-                Mode = ResizeMode.CropUpsize
+                Mode = ResizeMode.CropUpsize,
             });
         }
     }
@@ -405,7 +410,7 @@ public abstract class AssetThumbnailGeneratorTests
             {
                 TargetWidth = 50,
                 TargetHeight = 0,
-                Mode = ResizeMode.Pad
+                Mode = ResizeMode.Pad,
             });
         }
     }
@@ -494,23 +499,22 @@ public abstract class AssetThumbnailGeneratorTests
         Assert.Null(imageInfo);
     }
 
-    private FileStream GetStream(string type, string? extension = null)
+    protected FileStream GetStream(string type, string? extension = null)
     {
         Directory.CreateDirectory("images");
 
         return new FileStream($"images/{type}.{Name()}.{extension ?? "png"}", FileMode.Create);
     }
 
-    private (string, Stream) GetImage(string fileName)
+    protected (string, Stream) GetImage(string fileName)
     {
-        var name = $"Squidex.Assets.Images.{fileName}";
+        var filePath = $"Squidex.Assets.Images.{fileName}";
+        var fileType = GetMimeType(fileName);
 
-        var mimeType = GetMimeType(fileName);
-
-        return (mimeType, GetType().Assembly.GetManifestResourceStream(name)!);
+        return (fileType, GetType().Assembly.GetManifestResourceStream(filePath)!);
     }
 
-    private static string GetMimeType(string fileName)
+    protected static string GetMimeType(string fileName)
     {
         var extension = fileName.Split('.')[^1];
 
@@ -524,12 +528,12 @@ public abstract class AssetThumbnailGeneratorTests
         return mimeType;
     }
 
-    private (string, Stream) GetImage(ImageFormat format)
+    protected (string, Stream) GetImage(ImageFormat format)
     {
         return GetImage($"logo.{format.ToString().ToLowerInvariant()}");
     }
 
-    private (string, Stream) GetRotatedJpeg()
+    protected (string, Stream) GetRotatedJpeg()
     {
         return GetImage("logo-wide-rotated.jpeg");
     }

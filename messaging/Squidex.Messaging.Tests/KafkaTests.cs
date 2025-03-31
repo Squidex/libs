@@ -5,19 +5,22 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Xunit;
+
 namespace Squidex.Messaging;
 
-public class KafkaTests : MessagingTestsBase
+[Trait("Category", "Dependencies")]
+public class KafkaTests(KafkaFixture fixture)
+    : MessagingTestsBase, IClassFixture<KafkaFixture>
 {
     protected override string TopicOrQueueName => "dev";
 
-    protected override void ConfigureServices(IServiceCollection services, ChannelName channel, bool consume)
+    protected override void Configure(MessagingBuilder builder)
     {
-        services
-            .AddKafkaTransport(TestHelpers.Configuration)
-            .AddMessaging(channel, consume, options =>
-            {
-                options.Expires = TimeSpan.FromDays(1);
-            });
+        builder.AddKafkaTransport(TestHelpers.Configuration, options =>
+        {
+            options.BootstrapServers = fixture.Kafka.GetBootstrapAddress();
+            options.GroupId = Guid.NewGuid().ToString();
+        });
     }
 }

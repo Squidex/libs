@@ -6,15 +6,15 @@
 // ==========================================================================
 
 using System.Collections.Concurrent;
-using Squidex.Assets.Internal;
+using Squidex.Assets.TusAdapter.Internal;
 using tusdotnet.Interfaces;
 using tusdotnet.Models;
 
 #pragma warning disable MA0106 // Avoid closure by using an overload with the 'factoryArgument' parameter
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.TusAdapter;
 
-public sealed class AssetTusStore :
+public sealed class AssetTusStore(IAssetStore assetStore, IAssetKeyValueStore<TusMetadata> keyValueStore) :
     ITusExpirationStore,
     ITusCreationDeferLengthStore,
     ITusCreationStore,
@@ -24,14 +24,6 @@ public sealed class AssetTusStore :
 {
     private static readonly TimeSpan DefaultExpiration = TimeSpan.FromDays(2);
     private readonly ConcurrentDictionary<string, Task<AssetTusFile>> files = new ConcurrentDictionary<string, Task<AssetTusFile>>();
-    private readonly IAssetStore assetStore;
-    private readonly IAssetKeyValueStore<TusMetadata> assetKeyValueStore;
-
-    public AssetTusStore(IAssetStore assetStore, IAssetKeyValueStore<TusMetadata> keyValueStore)
-    {
-        this.assetStore = assetStore;
-        this.assetKeyValueStore = keyValueStore;
-    }
 
     public async Task<string> CreateFileAsync(long uploadLength, string metadata,
         CancellationToken cancellationToken)
@@ -43,7 +35,7 @@ public sealed class AssetTusStore :
             Created = true,
             UploadLength = uploadLength,
             UploadMetadata = metadata,
-            Expires = DateTimeOffset.UtcNow.Add(DefaultExpiration)
+            Expires = DateTimeOffset.UtcNow.Add(DefaultExpiration),
         };
 
         await SetMetadataAsync(id, metadataObj, cancellationToken);
@@ -174,7 +166,7 @@ public sealed class AssetTusStore :
     {
         var result = new List<string>();
 
-        var expirations = assetKeyValueStore.GetExpiredEntriesAsync(DateTimeOffset.UtcNow, cancellationToken);
+        var expirations = keyValueStore.GetExpiredEntriesAsync(DateTimeOffset.UtcNow, cancellationToken);
 
         await foreach (var (_, value) in expirations.WithCancellation(cancellationToken))
         {
@@ -221,7 +213,7 @@ public sealed class AssetTusStore :
     {
         var key = Key(fileId);
 
-        return await assetKeyValueStore.GetAsync(key, ct);
+        return await keyValueStore.GetAsync(key, ct);
     }
 
     public async Task<int> RemoveExpiredFilesAsync(
@@ -229,7 +221,7 @@ public sealed class AssetTusStore :
     {
         var deletionCount = 0;
 
-        var expirations = assetKeyValueStore.GetExpiredEntriesAsync(DateTimeOffset.UtcNow, cancellationToken);
+        var expirations = keyValueStore.GetExpiredEntriesAsync(DateTimeOffset.UtcNow, cancellationToken);
 
         await foreach (var (_, expiration) in expirations.WithCancellation(cancellationToken))
         {
@@ -260,7 +252,7 @@ public sealed class AssetTusStore :
             await assetStore.DeleteAsync(PartName(metadata.Id, i), cancellationToken);
         }
 
-        await assetKeyValueStore.DeleteAsync(Key(metadata.Id), cancellationToken);
+        await keyValueStore.DeleteAsync(Key(metadata.Id), cancellationToken);
     }
 
     private Task SetMetadataAsync(string fileId, TusMetadata metadata,
@@ -275,7 +267,7 @@ public sealed class AssetTusStore :
             metadata.Expires = DateTimeOffset.UtcNow.Add(DefaultExpiration);
         }
 
-        return assetKeyValueStore.SetAsync(key, metadata, metadata.Expires!.Value, ct);
+        return keyValueStore.SetAsync(key, metadata, metadata.Expires!.Value, ct);
     }
 
     private static string PartName(string fileId, int index)

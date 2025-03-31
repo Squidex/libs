@@ -7,23 +7,14 @@
 
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Squidex.Assets.Internal;
 using Squidex.Hosting;
 
 namespace Squidex.Assets;
 
-public sealed class FolderAssetStore : IAssetStore, IInitializable
+public sealed class FolderAssetStore(IOptions<FolderAssetOptions> options, ILogger<FolderAssetStore> log) : IAssetStore, IInitializable
 {
     private const int BufferSize = 81920;
-    private readonly ILogger<FolderAssetStore> log;
-    private readonly DirectoryInfo directory;
-
-    public FolderAssetStore(IOptions<FolderAssetOptions> options, ILogger<FolderAssetStore> log)
-    {
-        this.log = log;
-
-        directory = new DirectoryInfo(options.Value.Path);
-    }
+    private readonly DirectoryInfo directory = new DirectoryInfo(options.Value.Path);
 
     public Task InitializeAsync(
         CancellationToken ct)
@@ -91,7 +82,7 @@ public sealed class FolderAssetStore : IAssetStore, IInitializable
     public async Task DownloadAsync(string fileName, Stream stream, BytesRange range = default,
         CancellationToken ct = default)
     {
-        Guard.NotNull(stream, nameof(stream));
+        ArgumentNullException.ThrowIfNull(stream);
 
         var file = GetFile(fileName, nameof(fileName));
 
@@ -115,7 +106,7 @@ public sealed class FolderAssetStore : IAssetStore, IInitializable
     public async Task<long> UploadAsync(string fileName, Stream stream, bool overwrite = false,
         CancellationToken ct = default)
     {
-        Guard.NotNull(stream, nameof(stream));
+        ArgumentNullException.ThrowIfNull(stream);
 
         var file = GetFile(fileName, nameof(fileName));
 
@@ -209,12 +200,14 @@ public sealed class FolderAssetStore : IAssetStore, IInitializable
 
     private string GetPath(string name)
     {
-        return Path.Combine(directory.FullName, name);
+        var path = Path.Combine(directory.FullName, name);
+
+        return FilePathHelper.EnsureThatPathIsChildOf(path, directory.FullName);
     }
 
     private static string GetFileName(string fileName, string parameterName)
     {
-        Guard.NotNullOrEmpty(fileName, parameterName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(fileName, parameterName);
 
         return fileName.Replace('\\', '/');
     }

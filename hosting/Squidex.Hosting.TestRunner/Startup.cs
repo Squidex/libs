@@ -11,15 +11,8 @@ using Squidex.Log;
 
 namespace Squidex.Hosting;
 
-public sealed class Startup
+public sealed class Startup(IConfiguration configuration)
 {
-    private readonly IConfiguration configuration;
-
-    public Startup(IConfiguration configuration)
-    {
-        this.configuration = configuration;
-    }
-
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddSingletonAs(_ => JsonLogWriterFactory.Readable())
@@ -58,7 +51,7 @@ public sealed class Startup
                 html = html.Replace("<body>", "<body><script>console.log('I have been transformed.')</script>", StringComparison.OrdinalIgnoreCase);
 
                 return new ValueTask<string>(html);
-            }
+            },
         });
 
         app.UseRouting();
@@ -69,18 +62,18 @@ public sealed class Startup
             {
                 context.Response.Headers.ContentType = "text/html";
 
-                await context.Response.WriteAsync("<html><body>Hello World</body></html>");
+                await context.Response.WriteAsync("<html><body>Hello World</body></html>", context.RequestAborted);
             });
             endpoints.MapGet("/hello.bytes", async context =>
             {
                 context.Response.Headers.ContentType = "text/html";
 
-                await context.Response.Body.WriteAsync(Encoding.UTF8.GetBytes("<html><body>Hello World</body></html>"));
+                await context.Response.Body.WriteAsync(Encoding.UTF8.GetBytes("<html><body>Hello World</body></html>"), context.RequestAborted);
             });
 
             endpoints.MapGet("/hello", async context =>
             {
-                await context.Response.WriteAsync("Hello, World!");
+                await context.Response.WriteAsync("Hello, World!", context.RequestAborted);
             });
         });
 

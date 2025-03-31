@@ -13,20 +13,14 @@ using StackExchange.Redis;
 
 namespace Squidex.Messaging.Redis;
 
-public sealed class RedisTransport : IMessagingTransport
+public sealed class RedisTransport(
+    IOptions<RedisTransportOptions> options,
+    ILogger<RedisTransport> log)
+    : IMessagingTransport
 {
-    private readonly ILogger<RedisTransport> log;
-    private readonly RedisTransportOptions options;
+    private readonly RedisTransportOptions options = options.Value;
     private ISubscriber? subscriber;
     private IDatabase? database;
-
-    public RedisTransport(IOptions<RedisTransportOptions> options,
-        ILogger<RedisTransport> log)
-    {
-        this.options = options.Value;
-
-        this.log = log;
-    }
 
     public async Task InitializeAsync(
         CancellationToken ct)

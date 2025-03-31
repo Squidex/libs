@@ -5,21 +5,19 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Xunit;
+
 namespace Squidex.Messaging;
 
+[Trait("Category", "Dependencies")]
 public class GoogleCloudTests : MessagingTestsBase
 {
     protected override string TopicOrQueueName => "messaging-tests";
 
     protected override bool CanHandleAndSimulateTimeout => false;
 
-    protected override void ConfigureServices(IServiceCollection services, ChannelName channel, bool consume)
+    protected override void Configure(MessagingBuilder builder)
     {
-        services
-            .AddGooglePubSubTransport(TestHelpers.Configuration)
-            .AddMessaging(channel, consume, options =>
-            {
-                options.Expires = TimeSpan.FromDays(1);
-            });
+        builder.AddGooglePubSubTransport(TestHelpers.Configuration);
     }
 }

@@ -5,9 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Squidex.Assets.Internal;
-
-namespace Squidex.Assets;
+namespace Squidex.Assets.S3;
 
 public sealed class SeekFakerStream : Stream
 {
@@ -41,7 +39,7 @@ public sealed class SeekFakerStream : Stream
 
     public SeekFakerStream(Stream inner)
     {
-        Guard.NotNull(inner, nameof(inner));
+        ArgumentNullException.ThrowIfNull(inner);
 
         if (!inner.CanRead)
         {

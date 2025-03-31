@@ -7,34 +7,21 @@
 
 using Xunit;
 
-#pragma warning disable SA1300 // Element should begin with upper-case letter
-
 namespace Squidex.Messaging;
 
-public class MongoMessagingPrefetchTests : MessagingTestsBase, IClassFixture<MongoFixture>
+public class MongoMessagingPrefetchTests(MongoMessagingFixture fixture)
+    : MessagingTestsBase, IClassFixture<MongoMessagingFixture>
 {
-    public MongoFixture _ { get; }
-
-    public MongoMessagingPrefetchTests(MongoFixture fixture)
+    protected override void Configure(MessagingBuilder builder)
     {
-        _ = fixture;
-    }
+        builder.Services.AddSingleton(fixture.Database);
 
-    protected override void ConfigureServices(IServiceCollection services, ChannelName channel, bool consume)
-    {
-        services
-            .AddSingleton(_.Database)
-            .AddMongoTransport(TestHelpers.Configuration, options =>
-            {
-                options.Prefetch = 5;
-                options.PollingInterval = TimeSpan.FromSeconds(0.1);
-                options.UpdateInterval = TimeSpan.FromSeconds(0.1);
-
-                _.CleanCollections(x => x.StartsWith(options.CollectionName, StringComparison.OrdinalIgnoreCase));
-            })
-            .AddMessaging(channel, consume, options =>
-            {
-                options.Expires = TimeSpan.FromDays(1);
-            });
+        builder.AddMongoDataStore(TestHelpers.Configuration);
+        builder.AddMongoTransport(TestHelpers.Configuration, options =>
+        {
+            options.Prefetch = 5;
+            options.PollingInterval = TimeSpan.FromSeconds(0.1);
+            options.UpdateInterval = TimeSpan.FromSeconds(0.1);
+        });
     }
 }

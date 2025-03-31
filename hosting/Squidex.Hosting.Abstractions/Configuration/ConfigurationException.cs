@@ -5,46 +5,23 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System.Runtime.Serialization;
 using System.Text;
 
 namespace Squidex.Hosting.Configuration;
 
 [Serializable]
-public class ConfigurationException : Exception
+public class ConfigurationException(IReadOnlyList<ConfigurationError> errors, Exception? inner = null) : Exception(FormatMessage(errors), inner)
 {
-    public IReadOnlyList<ConfigurationError> Errors { get; }
+    public IReadOnlyList<ConfigurationError> Errors { get; } = errors;
 
     public ConfigurationException(ConfigurationError error, Exception? inner = null)
-        : this(new List<ConfigurationError> { error }, inner)
+        : this([error], inner)
     {
-    }
-
-    public ConfigurationException(IReadOnlyList<ConfigurationError> errors, Exception? inner = null)
-        : base(FormatMessage(errors), inner)
-    {
-        Errors = errors;
-    }
-
-    protected ConfigurationException(SerializationInfo info, StreamingContext context)
-        : base(info, context)
-    {
-        Errors = (List<ConfigurationError>)info.GetValue(nameof(Errors), typeof(List<ConfigurationError>))!;
-    }
-
-    public override void GetObjectData(SerializationInfo info, StreamingContext context)
-    {
-        info.AddValue(nameof(Errors), Errors);
-
-        base.GetObjectData(info, context);
     }
 
     private static string FormatMessage(IReadOnlyList<ConfigurationError> errors)
     {
-        if (errors == null)
-        {
-            throw new ArgumentNullException(nameof(errors));
-        }
+        ArgumentNullException.ThrowIfNull(errors);
 
         var sb = new StringBuilder();
 

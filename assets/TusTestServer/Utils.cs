@@ -6,7 +6,8 @@
 // ==========================================================================
 
 using Squidex.Assets;
-using Squidex.Assets.Internal;
+using Squidex.Assets.TusAdapter;
+using Squidex.Assets.TusAdapter.Internal;
 using tusdotnet;
 using tusdotnet.Models;
 using tusdotnet.Models.Configuration;
@@ -31,7 +32,7 @@ public static class Utils
                 {
                     OnFileCompleteAsync = async eventContext =>
                     {
-                        var file = (AssetFile)(await eventContext.GetFileAsync());
+                        var file = (IAssetFile)(await eventContext.GetFileAsync());
 
                         await using var fileStream = file.OpenRead();
 
@@ -48,9 +49,9 @@ public static class Utils
                         {
                             await fileStream.CopyToAsync(stream, eventContext.CancellationToken);
                         }
-                    }
+                    },
                 },
-                FileLockProvider = new AssetFileLockProvider(store)
+                FileLockProvider = new AssetFileLockProvider(store),
             };
         });
     }

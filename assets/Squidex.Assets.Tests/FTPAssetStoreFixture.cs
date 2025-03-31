@@ -6,26 +6,37 @@
 // ==========================================================================
 
 using FakeItEasy;
+using Squidex.Assets.FTP;
+using Squidex.Hosting;
+using Xunit;
 
 namespace Squidex.Assets;
 
-public sealed class FTPAssetStoreFixture : IDisposable
+public sealed class FTPAssetStoreFixture : IAsyncLifetime
 {
-    public FTPAssetStore AssetStore { get; }
+    public IServiceProvider Services { get; private set; }
 
-    public FTPAssetStoreFixture()
+    public FTPAssetStore Store => Services.GetRequiredService<FTPAssetStore>();
+
+    public async Task InitializeAsync()
     {
-        var services =
+        Services =
             new ServiceCollection()
                 .AddSingleton(A.Fake<ILogger<FTPAssetStore>>())
                 .AddFTPAssetStore(TestHelpers.Configuration)
                 .BuildServiceProvider();
 
-        AssetStore = services.GetRequiredService<FTPAssetStore>();
-        AssetStore.InitializeAsync(default).Wait();
+        foreach (var service in Services.GetRequiredService<IEnumerable<IInitializable>>())
+        {
+            await service.InitializeAsync(default);
+        }
     }
 
-    public void Dispose()
+    public async Task DisposeAsync()
     {
+        foreach (var service in Services.GetRequiredService<IEnumerable<IInitializable>>())
+        {
+            await service.ReleaseAsync(default);
+        }
     }
 }

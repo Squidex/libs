@@ -9,23 +9,16 @@ using Squidex.Log;
 
 namespace Squidex.Hosting;
 
-public abstract class SystemHost<T> where T : ISystem
+public abstract class SystemHost<T>(ISemanticLog log, IEnumerable<T> systems) where T : ISystem
 {
-    protected IReadOnlyList<(T System, string Name)> Systems { get; }
-
-    protected ISemanticLog Log { get; }
-
-    protected SystemHost(ISemanticLog log, IEnumerable<T> systems)
-    {
-        Log = log;
-
-        Systems =
+    protected IReadOnlyList<(T System, string Name)> Systems { get; } =
             systems.Distinct()
                 .Select(x => (System: x, Name: GetName(x)))
                 .OrderBy(x => x.System.Order)
                 .ThenBy(x => x.Name)
                 .ToList();
-    }
+
+    protected ISemanticLog Log { get; } = log;
 
     private static string GetName(T system)
     {

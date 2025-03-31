@@ -5,7 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.TusClient;
 
 public sealed class DelegatingProgressHandler : IProgressHandler
 {

@@ -21,6 +21,9 @@ dotnet_diagnostic.RECS0117.severity = none
 dotnet_diagnostic.SA0001.severity = none
 dotnet_diagnostic.SA1649.severity = none
 
+# IDE0305: Simplify collection initialization
+dotnet_diagnostic.IDE0305.severity = none
+
 # CA1707: Identifiers should not contain underscores
 dotnet_diagnostic.CA1707.severity = none
 
@@ -52,7 +55,7 @@ dotnet_diagnostic.MA0004.severity = none
 dotnet_diagnostic.MA0006.severity = none
 
 # MA0007: Add a comma after the last value
-dotnet_diagnostic.MA0007.severity = none
+dotnet_diagnostic.MA0007.severity = warning
 
 # MA0008: Add StructLayoutAttribute
 dotnet_diagnostic.MA0008.severity = none    
@@ -117,6 +120,9 @@ dotnet_diagnostic.RECS0154.severity = none
 # SA1009: Closing parenthesis should be spaced correctly
 dotnet_diagnostic.SA1009.severity = none
 
+# SA1010: Opening square brackets should not be preceded by a space.
+dotnet_diagnostic.SA1010.severity = none
+
 # SA1011: Closing square brackets should be spaced correctly
 dotnet_diagnostic.SA1011.severity = none
 
@@ -173,3 +179,9 @@ dotnet_diagnostic.SA1615.severity = none
 
 # SA1623: Property summary documentation should match accessors
 dotnet_diagnostic.SA1623.severity = none
+
+# SKEXP0001: Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+dotnet_diagnostic.SKEXP0001.severity = none
+
+# SKEXP0003: Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+dotnet_diagnostic.SKEXP0003.severity = none

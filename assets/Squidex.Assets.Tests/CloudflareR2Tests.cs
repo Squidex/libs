@@ -6,25 +6,18 @@
 // ==========================================================================
 
 using Microsoft.Extensions.Options;
+using Squidex.Assets.S3;
 using Xunit;
-
-#pragma warning disable SA1300 // Element should begin with upper-case letter
 
 namespace Squidex.Assets;
 
 [Trait("Category", "Dependencies")]
-public class CloudflareR2Tests : AssetStoreTests<AmazonS3AssetStore>, IClassFixture<CloudflareR2Fixture>
+public class CloudflareR2Tests(CloudflareR2Fixture fixture)
+    : AssetStoreTests, IClassFixture<CloudflareR2Fixture>
 {
-    public CloudflareR2Fixture _ { get; }
-
-    public CloudflareR2Tests(CloudflareR2Fixture fixture)
+    public override Task<IAssetStore> CreateSutAsync()
     {
-        _ = fixture;
-    }
-
-    public override AmazonS3AssetStore CreateStore()
-    {
-        return _.AssetStore;
+        return Task.FromResult<IAssetStore>(fixture.Store);
     }
 
     [Fact]
@@ -38,7 +31,7 @@ public class CloudflareR2Tests : AssetStoreTests<AmazonS3AssetStore>, IClassFixt
             ForcePathStyle = false,
             RegionName = "invalid",
             SecretKey = "invalid",
-            ServiceUrl = null!
+            ServiceUrl = null!,
         }));
 
         await Assert.ThrowsAsync<AssetStoreException>(() => sut.InitializeAsync(default));
@@ -47,7 +40,7 @@ public class CloudflareR2Tests : AssetStoreTests<AmazonS3AssetStore>, IClassFixt
     [Fact]
     public void Should_calculate_source_url()
     {
-        var url = ((IAssetStore)Sut).GeneratePublicUrl(FileName);
+        var url = ((IAssetStore)fixture.Store).GeneratePublicUrl(FileName);
 
         Assert.Null(url);
     }

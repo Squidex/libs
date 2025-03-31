@@ -7,7 +7,7 @@
 
 using Squidex.Hosting.Configuration;
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.Azure;
 
 public sealed class AzureBlobAssetOptions : IValidatableOptions
 {

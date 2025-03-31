@@ -14,12 +14,11 @@ using Microsoft.Extensions.Options;
 namespace Squidex.Text.Translations.DeepL;
 
 [ExcludeFromCodeCoverage]
-public sealed class DeepLTranslationService : ITranslationService
+public sealed class DeepLTranslationService(IHttpClientFactory httpClientFactory, IOptions<DeepLTranslationOptions> options) : ITranslationService
 {
     private const string UrlPaid = "https://api.deepl.com/v2/translate";
     private const string UrlFree = "https://api-free.deepl.com/v2/translate";
-    private readonly DeepLTranslationOptions options;
-    private readonly IHttpClientFactory httpClientFactory;
+    private readonly DeepLTranslationOptions options = options.Value;
 
     private sealed class TranslationsDto
     {
@@ -66,11 +65,7 @@ public sealed class DeepLTranslationService : ITranslationService
         public int EntryCount { get; set; } // 1
     }
 
-    public DeepLTranslationService(IOptions<DeepLTranslationOptions> options, IHttpClientFactory httpClientFactory)
-    {
-        this.options = options.Value;
-        this.httpClientFactory = httpClientFactory;
-    }
+    public bool IsConfigured { get; } = !string.IsNullOrWhiteSpace(options.Value.AuthKey);
 
     public async Task<IReadOnlyList<TranslationResult>> TranslateAsync(IEnumerable<string> texts, string targetLanguage, string? sourceLanguage = null,
         CancellationToken ct = default)
@@ -79,7 +74,7 @@ public sealed class DeepLTranslationService : ITranslationService
 
         var results = new List<TranslationResult>();
 
-        if (string.IsNullOrWhiteSpace(options.AuthKey))
+        if (!IsConfigured)
         {
             for (var i = 0; i < textsArray.Length; i++)
             {
@@ -96,7 +91,7 @@ public sealed class DeepLTranslationService : ITranslationService
 
         var parameters = new List<KeyValuePair<string, string>>
         {
-            new KeyValuePair<string, string>("target_lang", GetLanguageCode(targetLanguage))
+            new KeyValuePair<string, string>("target_lang", GetLanguageCode(targetLanguage)),
         };
 
         foreach (var text in textsArray)
@@ -161,46 +156,44 @@ public sealed class DeepLTranslationService : ITranslationService
             UrlFree :
             UrlPaid;
 
-        var requestMessage = new HttpRequestMessage(HttpMethod.Post, url);
-
-        requestMessage.Headers.Add("Authorization", $"DeepL-Auth-Key {options.AuthKey}");
-        requestMessage.Content = new FormUrlEncodedContent(parameters!);
-
-        var httpClient = httpClientFactory.CreateClient("DeepL");
-
-        using (var response = await httpClient.SendAsync(requestMessage, ct))
+        using var httpClient = CreateClient();
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, url)
         {
-            try
-            {
-                response.EnsureSuccessStatusCode();
+             Content = new FormUrlEncodedContent(parameters!),
+        };
 
-                var jsonString = await response.Content.ReadAsStringAsync(ct);
-                var jsonResponse = JsonSerializer.Deserialize<TranslationsDto>(jsonString)!;
+        using var httpResponse = await httpClient.SendAsync(httpRequest, ct);
 
-                var index = 0;
-                foreach (var translation in jsonResponse.Translations)
-                {
-                    var estimationSource = textsArray[index];
-                    var estimatedCosts = estimationSource.Length * options.CostsPerCharacterInEUR;
+        try
+        {
+            httpResponse.EnsureSuccessStatusCode();
 
-                    var language = GetSourceLanguage(translation.DetectedSourceLanguage, sourceLanguage);
+            var jsonString = await httpResponse.Content.ReadAsStringAsync(ct);
+            var jsonResponse = JsonSerializer.Deserialize<TranslationsDto>(jsonString)!;
 
-                    results.Add(TranslationResult.Success(translation.Text, language, estimatedCosts));
-                    index++;
-                }
-            }
-            catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.BadRequest)
+            var index = 0;
+            foreach (var translation in jsonResponse.Translations)
             {
-                AddError(TranslationResult.LanguageNotSupported);
+                var estimationSource = textsArray[index];
+                var estimatedCosts = estimationSource.Length * options.CostsPerCharacterInEUR;
+
+                var language = GetSourceLanguage(translation.DetectedSourceLanguage, sourceLanguage);
+
+                results.Add(TranslationResult.Success(translation.Text, language, estimatedCosts));
+                index++;
             }
-            catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
-            {
-                AddError(TranslationResult.Unauthorized);
-            }
-            catch (Exception ex)
-            {
-                AddError(TranslationResult.Failed(ex));
-            }
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.BadRequest)
+        {
+            AddError(TranslationResult.LanguageNotSupported);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+        {
+            AddError(TranslationResult.Unauthorized);
+        }
+        catch (Exception ex)
+        {
+            AddError(TranslationResult.Failed(ex));
         }
 
         return results;
@@ -212,6 +205,15 @@ public sealed class DeepLTranslationService : ITranslationService
                 results.Add(result);
             }
         }
+    }
+
+    private HttpClient CreateClient()
+    {
+        var httpClient = httpClientFactory.CreateClient("DeepL");
+
+        httpClient.DefaultRequestHeaders.Add("Authorization", $"DeepL-Auth-Key {options.AuthKey}");
+
+        return httpClient;
     }
 
     private static string GetSourceLanguage(string language, string? fallback)

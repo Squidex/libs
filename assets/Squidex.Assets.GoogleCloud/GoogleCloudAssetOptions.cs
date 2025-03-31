@@ -7,7 +7,7 @@
 
 using Squidex.Hosting.Configuration;
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.GoogleCloud;
 
 public sealed class GoogleCloudAssetOptions : IValidatableOptions
 {

@@ -5,8 +5,8 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Squidex.Assets;
-using Squidex.Assets.Internal;
+using Squidex.Assets.TusAdapter;
+using Squidex.Assets.TusAdapter.Internal;
 using tusdotnet.Interfaces;
 
 namespace Microsoft.Extensions.DependencyInjection;

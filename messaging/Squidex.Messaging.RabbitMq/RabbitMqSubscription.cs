@@ -15,106 +15,131 @@ namespace Squidex.Messaging.RabbitMq;
 internal sealed class RabbitMqSubscription : IMessageAck, IAsyncDisposable
 {
     private readonly CancellationTokenSource stopToken = new CancellationTokenSource();
-    private readonly IModel model;
     private readonly string queueName;
-    private readonly string consumerTag;
+    private readonly IChannel channel;
     private readonly ILogger log;
+    private string consumerTag;
 
-    public RabbitMqSubscription(string queueName, RabbitMqOwner factory,
-        MessageTransportCallback callback, ILogger log)
+    private RabbitMqSubscription(string queueName, IChannel channel, ILogger log)
     {
         this.queueName = queueName;
-
-        model = factory.Connection.CreateModel();
-
-        var eventConsumer = new AsyncEventingBasicConsumer(model);
-
-        eventConsumer.Received += async (_, @event) =>
-        {
-            var headers = new TransportHeaders();
-
-            foreach (var (key, value) in @event.BasicProperties.Headers)
-            {
-                if (value is byte[] bytes)
-                {
-                    headers[key] = Encoding.UTF8.GetString(bytes);
-                }
-                else if (value is string text)
-                {
-                    headers[key] = text;
-                }
-            }
-
-            var transportMessage = new TransportMessage(@event.Body.ToArray(), @event.RoutingKey, headers);
-            var transportResult = new TransportResult(transportMessage, @event.DeliveryTag);
-
-            await callback(transportResult, this, stopToken.Token);
-        };
-
-        consumerTag = model.BasicConsume(queueName, false, eventConsumer);
-
+        this.channel = channel;
         this.log = log;
     }
 
-    public ValueTask DisposeAsync()
+    public static async Task<RabbitMqSubscription> OpenAsync(
+        string queueName, RabbitMqOwner
+        factory,
+        MessageTransportCallback callback,
+        ILogger log,
+        CancellationToken ct)
     {
-        stopToken.Cancel();
+        var rabbitMqChannel = await factory.CreateChannelAsync(ct);
+        var rabbitMqSubscription = new RabbitMqSubscription(queueName, rabbitMqChannel, log);
 
-        model.BasicCancel(consumerTag);
-        model.Dispose();
+        await rabbitMqSubscription.StartAsync(callback, ct);
 
-        return default;
+        return rabbitMqSubscription;
     }
 
-    public Task OnErrorAsync(TransportResult result,
+    internal async Task StartAsync(MessageTransportCallback callback,
+        CancellationToken ct)
+    {
+        var eventConsumer = new AsyncEventingBasicConsumer(channel);
+
+        eventConsumer.ReceivedAsync += async (_, @event) =>
+        {
+            try
+            {
+                var headers = new TransportHeaders();
+
+                if (@event.BasicProperties.Headers != null)
+                {
+                    foreach (var (key, value) in @event.BasicProperties.Headers)
+                    {
+                        if (value is byte[] bytes)
+                        {
+                            headers[key] = Encoding.UTF8.GetString(bytes);
+                        }
+                        else if (value is string text)
+                        {
+                            headers[key] = text;
+                        }
+                    }
+                }
+
+                var transportMessage = new TransportMessage(@event.Body.ToArray(), @event.RoutingKey, headers);
+                var transportResult = new TransportResult(transportMessage, @event.DeliveryTag);
+
+                await callback(transportResult, this, stopToken.Token);
+            }
+            catch (Exception ex)
+            {
+                log.LogError(ex, "Failed to handle message from queue {queue}.", queueName);
+            }
+        };
+
+        consumerTag = await channel.BasicConsumeAsync(queueName, false, eventConsumer, ct);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await stopToken.CancelAsync();
+        try
+        {
+            await channel.BasicCancelAsync(consumerTag, cancellationToken: default);
+        }
+        finally
+        {
+            channel.Dispose();
+        }
+    }
+
+    public async Task OnErrorAsync(TransportResult result,
         CancellationToken ct)
     {
         if (stopToken.IsCancellationRequested)
         {
-            return Task.CompletedTask;
+            return;
         }
 
         if (result.Data is not ulong deliverTag)
         {
             log.LogWarning("Transport message has no RabbitMq delivery tag.");
-            return Task.CompletedTask;
+            return;
         }
 
         try
         {
-            model.BasicReject(deliverTag, false);
+            await channel.BasicRejectAsync(deliverTag, false, ct);
         }
         catch (Exception ex)
         {
             log.LogError(ex, "Failed to acknowledge message from queue {queue}.", queueName);
         }
-
-        return Task.CompletedTask;
     }
 
-    public Task OnSuccessAsync(TransportResult result,
+    public async Task OnSuccessAsync(TransportResult result,
         CancellationToken ct)
     {
         if (stopToken.IsCancellationRequested)
         {
-            return Task.CompletedTask;
+            return;
         }
 
         if (result.Data is not ulong deliverTag)
         {
             log.LogWarning("Transport message has no RabbitMq delivery tag.");
-            return Task.CompletedTask;
+            return;
         }
 
         try
         {
-            model.BasicAck(deliverTag, false);
+            await channel.BasicAckAsync(deliverTag, false, ct);
         }
         catch (Exception ex)
         {
             log.LogError(ex, "Failed to reject message from queue {queue}.", queueName);
         }
-
-        return Task.CompletedTask;
     }
 }

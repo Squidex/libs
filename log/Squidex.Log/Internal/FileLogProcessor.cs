@@ -28,7 +28,8 @@ public sealed class FileLogProcessor : IDisposable
 
         outputThread = new Thread(ProcessLogQueue)
         {
-            IsBackground = true, Name = "Logging"
+            IsBackground = true,
+            Name = "Logging",
         };
     }
 
@@ -46,7 +47,7 @@ public sealed class FileLogProcessor : IDisposable
 
             writer = new StreamWriter(fs, Encoding.UTF8)
             {
-                AutoFlush = true
+                AutoFlush = true,
             };
 
             writer.WriteLine($"--- Started Logging {DateTime.UtcNow} ---", 1);

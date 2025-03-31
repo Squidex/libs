@@ -10,15 +10,8 @@ using System.Diagnostics.CodeAnalysis;
 namespace Squidex.Log.Internal;
 
 [ExcludeFromCodeCoverage]
-public sealed class AnsiLogConsole : IConsole
+public sealed class AnsiLogConsole(bool logToStdError) : IConsole
 {
-    private readonly bool logToStdError;
-
-    public AnsiLogConsole(bool logToStdError)
-    {
-        this.logToStdError = logToStdError;
-    }
-
     public void Reset()
     {
     }

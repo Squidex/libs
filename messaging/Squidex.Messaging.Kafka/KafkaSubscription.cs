@@ -25,7 +25,7 @@ internal sealed class KafkaSubscription : IMessageAck, IAsyncDisposable
 
         var config = factory.Options.Configure(new ConsumerConfig
         {
-            AutoOffsetReset = AutoOffsetReset.Earliest
+            AutoOffsetReset = AutoOffsetReset.Earliest,
         });
 
         // We do not commit automatically, because the message might be scheduled.
@@ -43,7 +43,6 @@ internal sealed class KafkaSubscription : IMessageAck, IAsyncDisposable
             using (consumer)
             {
                 consumer.Subscribe(channelName);
-
                 try
                 {
                     while (!stopToken.IsCancellationRequested)
@@ -63,6 +62,10 @@ internal sealed class KafkaSubscription : IMessageAck, IAsyncDisposable
                         callback(transportResult, this, stopToken.Token).Wait(stopToken.Token);
                     }
                 }
+                catch (Exception ex)
+                {
+                    log.LogError(ex, "Subscription failed.");
+                }
                 finally
                 {
                     consumer.Close();
@@ -78,11 +81,11 @@ internal sealed class KafkaSubscription : IMessageAck, IAsyncDisposable
 #pragma warning restore IDE0017 // Simplify object initialization
     }
 
-    public ValueTask DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         try
         {
-            stopToken.Cancel();
+            await stopToken.CancelAsync();
 
             consumerThread.Join(1500);
         }
@@ -90,13 +93,6 @@ internal sealed class KafkaSubscription : IMessageAck, IAsyncDisposable
         {
             log.LogError(ex, "Kafka shutdown failed.");
         }
-        finally
-        {
-            consumer.Close();
-            consumer.Dispose();
-        }
-
-        return default;
     }
 
     public Task OnErrorAsync(TransportResult result,

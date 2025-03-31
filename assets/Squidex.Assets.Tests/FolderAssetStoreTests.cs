@@ -9,45 +9,37 @@ using FakeItEasy;
 using Microsoft.Extensions.Options;
 using Xunit;
 
-#pragma warning disable SA1300 // Element should begin with upper-case letter
-
 namespace Squidex.Assets;
 
-public class FolderAssetStoreTests : AssetStoreTests<FolderAssetStore>, IClassFixture<FolderAssetStoreFixture>
+public class FolderAssetStoreTests(FolderAssetStoreFixture fixture)
+    : AssetStoreTests, IClassFixture<FolderAssetStoreFixture>
 {
-    public FolderAssetStoreFixture _ { get; }
-
-    public FolderAssetStoreTests(FolderAssetStoreFixture fixture)
+    public override Task<IAssetStore> CreateSutAsync()
     {
-        _ = fixture;
-    }
-
-    public override FolderAssetStore CreateStore()
-    {
-        return _.AssetStore;
+        return Task.FromResult<IAssetStore>(fixture.Store);
     }
 
     [Fact]
-    public void Should_throw_when_creating_directory_failed()
+    public async Task Should_throw_when_creating_directory_failed()
     {
         var options = Options.Create(new FolderAssetOptions
         {
-            Path = CreateInvalidPath()
+            Path = CreateInvalidPath(),
         });
 
-        Assert.Throws<AssetStoreException>(() => new FolderAssetStore(options, A.Dummy<ILogger<FolderAssetStore>>()).InitializeAsync(default).Wait());
+        await Assert.ThrowsAsync<AssetStoreException>(() => new FolderAssetStore(options, A.Dummy<ILogger<FolderAssetStore>>()).InitializeAsync(default));
     }
 
     [Fact]
     public void Should_create_directory_when_connecting()
     {
-        Assert.True(Directory.Exists(_.TestFolder));
+        Assert.True(Directory.Exists(fixture.TestFolder));
     }
 
     [Fact]
     public void Should_calculate_source_url()
     {
-        var url = ((IAssetStore)Sut).GeneratePublicUrl(FileName);
+        var url = ((IAssetStore)fixture.Store).GeneratePublicUrl(FileName);
 
         Assert.Null(url);
     }

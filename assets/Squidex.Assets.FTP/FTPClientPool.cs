@@ -6,25 +6,14 @@
 // ==========================================================================
 
 using FluentFTP;
-using Squidex.Assets.Internal;
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.FTP;
 
-internal sealed class FTPClientPool
+internal sealed class FTPClientPool(Func<IAsyncFtpClient> clientFactory, int clientsLimit)
 {
     private readonly Queue<TaskCompletionSource<(IAsyncFtpClient, bool)>> queue = new Queue<TaskCompletionSource<(IAsyncFtpClient, bool)>>();
     private readonly Queue<IAsyncFtpClient> pool = new Queue<IAsyncFtpClient>();
-    private readonly Func<IAsyncFtpClient> clientFactory;
-    private readonly int clientsLimit;
     private int created;
-
-    public FTPClientPool(Func<IAsyncFtpClient> clientFactory, int clientsLimit)
-    {
-        Guard.NotNull(clientFactory, nameof(clientFactory));
-
-        this.clientFactory = clientFactory;
-        this.clientsLimit = clientsLimit;
-    }
 
     public async Task<(IAsyncFtpClient, bool IsNew)> GetClientAsync(
         CancellationToken ct)

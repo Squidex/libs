@@ -16,22 +16,16 @@ using GooglePushConfig = Google.Cloud.PubSub.V1.PushConfig;
 
 namespace Squidex.Messaging.GoogleCloud;
 
-public sealed class GooglePubSubTransport : IMessagingTransport
+public sealed class GooglePubSubTransport(
+    IOptions<GooglePubSubTransportOptions> options,
+    ILogger<GooglePubSubTransport> log)
+    : IMessagingTransport
 {
-    private readonly Dictionary<string, Task<PublisherClient>> publishers = new Dictionary<string, Task<PublisherClient>>();
-    private readonly GooglePubSubTransportOptions options;
+    private readonly Dictionary<string, Task<PublisherClient>> publishers = [];
+    private readonly GooglePubSubTransportOptions options = options.Value;
     private readonly GooglePushConfig pushConfig = new GooglePushConfig();
-    private readonly HashSet<string> createdSubcriptions = new HashSet<string>();
-    private readonly HashSet<string> createdTopics = new HashSet<string>();
-    private readonly ILogger<GooglePubSubTransport> log;
-
-    public GooglePubSubTransport(IOptions<GooglePubSubTransportOptions> options,
-        ILogger<GooglePubSubTransport> log)
-    {
-        this.options = options.Value;
-
-        this.log = log;
-    }
+    private readonly HashSet<string> createdSubcriptions = [];
+    private readonly HashSet<string> createdTopics = [];
 
     public Task InitializeAsync(
         CancellationToken ct)
@@ -166,7 +160,7 @@ public sealed class GooglePubSubTransport : IMessagingTransport
 
         var pubSubMessage = new PubsubMessage
         {
-            Data = ByteString.CopyFrom(transportMessage.Data)
+            Data = ByteString.CopyFrom(transportMessage.Data),
         };
 
         foreach (var (key, value) in transportMessage.Headers)
@@ -211,9 +205,9 @@ public sealed class GooglePubSubTransport : IMessagingTransport
             SubscriptionName = subscriptionName,
             ExpirationPolicy = new ExpirationPolicy
             {
-                Ttl = Duration.FromTimeSpan(TimeSpan.FromDays(2))
+                Ttl = Duration.FromTimeSpan(TimeSpan.FromDays(2)),
             },
-            TopicAsTopicName = publisherClient.TopicName
+            TopicAsTopicName = publisherClient.TopicName,
         };
 
         await subscriptionApi.CreateSubscriptionAsync(request, ct);

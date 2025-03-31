@@ -8,22 +8,15 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Squidex.Assets;
+namespace Squidex.Assets.TusAdapter;
 
-internal sealed class TusActionResult : IActionResult
+internal sealed class TusActionResult(HttpResponse response) : IActionResult
 {
-    private readonly HttpResponse response;
-
     public int StatusCode => response.StatusCode;
 
     public IHeaderDictionary Headers => response.Headers;
 
     public Stream Body => response.Body;
-
-    public TusActionResult(HttpResponse response)
-    {
-        this.response = response;
-    }
 
     public void ApplyHeaders(HttpContext context)
     {

@@ -16,12 +16,11 @@ namespace Squidex.Caching;
 public class ReplicatedCacheTests
 {
     private readonly IMessageBus pubSub = A.Fake<IMessageBus>();
-    private readonly ReplicatedCacheOptions options = new ReplicatedCacheOptions { Enable = true };
     private readonly ReplicatedCache sut;
 
     public ReplicatedCacheTests()
     {
-        sut = new ReplicatedCache(CreateMemoryCache(), pubSub, Options.Create(options));
+        sut = new ReplicatedCache(CreateMemoryCache(), pubSub);
     }
 
     [Fact]
@@ -40,33 +39,29 @@ public class ReplicatedCacheTests
     public async Task Should_serve_from_cache_when_many_added()
     {
         await sut.AddAsync(
-            new[]
-            {
+            [
                 new KeyValuePair<string, object?>("Key1", 1),
                 new KeyValuePair<string, object?>("Key2", 1),
-            },
+            ],
             TimeSpan.FromMinutes(10));
 
         AssertCache(sut, "Key1", 1, true);
         AssertCache(sut, "Key2", 1, true);
 
         await sut.RemoveAsync(
-            new[]
-            {
+            [
                 "Key1",
-                "Key2"
-            });
+                "Key2",
+            ]);
 
         AssertCache(sut, "Key1", null, false);
         AssertCache(sut, "Key2", null, false);
     }
 
     [Fact]
-    public async Task Should_not_serve_from_cache_when_disabled()
+    public async Task Should_not_serve_from_cache_when_expiration_is_not_set()
     {
-        options.Enable = false;
-
-        await sut.AddAsync("Key", 1, TimeSpan.FromMilliseconds(100));
+        await sut.AddAsync("Key", 1, TimeSpan.Zero);
 
         AssertCache(sut, "Key", null, false);
     }
@@ -93,8 +88,6 @@ public class ReplicatedCacheTests
     [Fact]
     public async Task Should_send_invalidation_message_when_removed()
     {
-        options.Enable = true;
-
         await sut.RemoveAsync("Key");
 
         A.CallTo(() => pubSub.PublishAsync(A<CacheInvalidateMessage>.That.Matches(x => x.Keys.Contains("Key")), null, A<CancellationToken>._))
@@ -102,21 +95,10 @@ public class ReplicatedCacheTests
     }
 
     [Fact]
-    public async Task Should_not_send_invalidation_message_when_not_enabled()
-    {
-        options.Enable = false;
-
-        await sut.RemoveAsync("Key");
-
-        A.CallTo(() => pubSub.PublishAsync(A<object>._, null, A<CancellationToken>._))
-            .MustNotHaveHappened();
-    }
-
-    [Fact]
     public async Task Should_invalidate_keys_when_message_received()
     {
         await sut.AddAsync("Key", 1, TimeSpan.FromHours(1));
-        await sut.HandleAsync(new CacheInvalidateMessage { Keys = new[] { "Key" } }, default);
+        await sut.HandleAsync(new CacheInvalidateMessage { Keys = ["Key"] }, default);
 
         AssertCache(sut, "Key", null, false);
     }
@@ -125,7 +107,7 @@ public class ReplicatedCacheTests
     public async Task Should_invalidate_keys_when_message_received_from_same_instance()
     {
         await sut.AddAsync("Key", 1, TimeSpan.FromHours(1));
-        await sut.HandleAsync(new CacheInvalidateMessage { Keys = new[] { "Key" }, Source = sut.InstanceId }, default);
+        await sut.HandleAsync(new CacheInvalidateMessage { Keys = ["Key"], Source = sut.InstanceId }, default);
 
         AssertCache(sut, "Key", 1, true);
     }
@@ -136,7 +118,7 @@ public class ReplicatedCacheTests
         await sut.HandleAsync(new CacheInvalidateMessage { }, default);
     }
 
-    private static void AssertCache(IReplicatedCache cache, string key, object? expectedValue, bool expectedFound)
+    private static void AssertCache(ReplicatedCache cache, string key, object? expectedValue, bool expectedFound)
     {
         var found = cache.TryGetValue(key, out var value);
 

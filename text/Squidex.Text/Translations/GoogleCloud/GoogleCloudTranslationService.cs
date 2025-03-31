@@ -11,15 +11,12 @@ using Microsoft.Extensions.Options;
 
 namespace Squidex.Text.Translations.GoogleCloud;
 
-public sealed class GoogleCloudTranslationService : ITranslationService
+public sealed class GoogleCloudTranslationService(IOptions<GoogleCloudTranslationOptions> options) : ITranslationService
 {
-    private readonly GoogleCloudTranslationOptions options;
+    private readonly GoogleCloudTranslationOptions options = options.Value;
     private TranslationServiceClient service;
 
-    public GoogleCloudTranslationService(IOptions<GoogleCloudTranslationOptions> options)
-    {
-        this.options = options.Value;
-    }
+    public bool IsConfigured { get; } = !string.IsNullOrWhiteSpace(options.Value.ProjectId);
 
     public async Task<IReadOnlyList<TranslationResult>> TranslateAsync(IEnumerable<string> texts, string targetLanguage, string? sourceLanguage = null,
         CancellationToken ct = default)
@@ -28,7 +25,7 @@ public sealed class GoogleCloudTranslationService : ITranslationService
 
         var results = new List<TranslationResult>();
 
-        if (string.IsNullOrWhiteSpace(options.ProjectId))
+        if (!IsConfigured)
         {
             for (var i = 0; i < texts.Count(); i++)
             {
@@ -47,7 +44,7 @@ public sealed class GoogleCloudTranslationService : ITranslationService
 
         var request = new TranslateTextRequest
         {
-            Parent = $"projects/{options.ProjectId}"
+            Parent = $"projects/{options.ProjectId}",
         };
 
         foreach (var text in textsArray)

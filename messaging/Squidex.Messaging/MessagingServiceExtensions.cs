@@ -6,18 +6,18 @@
 // ==========================================================================
 
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using Squidex.Hosting;
 using Squidex.Messaging;
 using Squidex.Messaging.Implementation;
 using Squidex.Messaging.Implementation.InMemory;
 using Squidex.Messaging.Implementation.Null;
-using Squidex.Messaging.Internal;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
 public static class MessagingServiceExtensions
 {
-    public static IServiceCollection AddMessaging(this IServiceCollection services, Action<MessagingOptions>? configure = null)
+    public static MessagingBuilder AddMessaging(this IServiceCollection services, Action<MessagingOptions>? configure = null)
     {
         services.ConfigureOptional(configure);
 
@@ -27,17 +27,14 @@ public static class MessagingServiceExtensions
         services.TryAddSingleton<IMessageBus,
             DefaultMessageBus>();
 
-        services.TryAddSingleton<IMessagingSubscriptionStore,
-            InMemorySubscriptionStore>();
-
         services.TryAddSingleton<IMessagingTransport,
             NullTransport>();
 
         services.TryAddSingleton<IInstanceNameProvider,
             HostNameInstanceNameProvider>();
 
-        services.TryAddSingleton<IClock,
-            DefaultClock>();
+        services.TryAddSingleton(
+            TimeProvider.System);
 
         services.TryAddSingleton<
             HandlerPipeline>();
@@ -45,15 +42,32 @@ public static class MessagingServiceExtensions
         services.AddSingleton<IInternalMessageProducer,
             DelegatingProducer>();
 
-        services.AddSingletonAs<DefaultMessagingSubscriptions>()
-            .As<IMessagingSubscriptions>();
+        services.AddSingletonAs<MessagingDataProvider>()
+            .AsSelf();
 
-        return services;
+        services.AddMemoryCache();
+        services.AddSingletonAs<IMessagingDataProvider>(c =>
+            {
+                var inner = c.GetRequiredService<MessagingDataProvider>();
+
+                if (c.GetRequiredService<IOptions<MessagingOptions>>().Value.DataCacheDuration > TimeSpan.Zero)
+                {
+                    return ActivatorUtilities.CreateInstance<CachingMessagingDataProvider>(c, inner);
+                }
+
+                return inner;
+            })
+            .As<IMessagingDataProvider>();
+
+        services.TryAddSingleton<IMessagingDataStore,
+            InMemoryMessagingDataStore>();
+
+        return new MessagingBuilder(services);
     }
 
-    public static IServiceCollection AddMessaging(this IServiceCollection services, ChannelName channel, bool consume, Action<ChannelOptions>? configure = null)
+    public static MessagingBuilder AddChannel(this MessagingBuilder builder, ChannelName channel, bool consume, Action<ChannelOptions>? configure = null)
     {
-        services.Configure<ChannelOptions>(channel.ToString(), options =>
+        builder.Services.Configure<ChannelOptions>(channel.ToString(), options =>
         {
             configure?.Invoke(options);
         });
@@ -63,20 +77,24 @@ public static class MessagingServiceExtensions
             return sp.GetRequiredService<IEnumerable<DelegatingConsumer>>().Single(x => x.Channel == channel);
         }
 
-        AddMessaging(services);
-
-        services.AddSingleton(
+        builder.Services.AddSingleton(
             sp => ActivatorUtilities.CreateInstance<DelegatingProducer>(sp, channel));
 
         if (consume)
         {
-            services.AddSingleton(
+            builder.Services.AddSingleton(
                 sp => ActivatorUtilities.CreateInstance<DelegatingConsumer>(sp, channel));
 
-            services.AddSingleton<IBackgroundProcess>(
+            builder.Services.AddSingleton<IBackgroundProcess>(
                 FindConsumer);
         }
 
-        return services;
+        return builder;
+    }
+
+    public static MessagingBuilder Configure(this MessagingBuilder builder, Action<MessagingOptions>? configure = null)
+    {
+        builder.Services.ConfigureOptional(configure);
+        return builder;
     }
 }

@@ -11,7 +11,7 @@ namespace Squidex.Caching;
 
 public class AsyncLocalCacheTests
 {
-    private readonly ILocalCache sut = new AsyncLocalCache();
+    private readonly AsyncLocalCache sut = new AsyncLocalCache();
     private int called;
 
     [Fact]
@@ -111,7 +111,7 @@ public class AsyncLocalCacheTests
         Assert.Equal(2, value2);
     }
 
-    private static void AssertCache(ILocalCache cache, string key, object? expectedValue, bool expectedFound)
+    private static void AssertCache(AsyncLocalCache cache, string key, object? expectedValue, bool expectedFound)
     {
         var found = cache.TryGetValue(key, out var value);
 

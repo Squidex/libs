@@ -9,17 +9,19 @@ using Xunit;
 
 namespace Squidex.Assets;
 
-public class MemoryAssetStoreTests : AssetStoreTests<MemoryAssetStore>
+public class MemoryAssetStoreTests : AssetStoreTests
 {
-    public override MemoryAssetStore CreateStore()
+    public override Task<IAssetStore> CreateSutAsync()
     {
-        return new MemoryAssetStore();
+        return Task.FromResult<IAssetStore>(new MemoryAssetStore());
     }
 
     [Fact]
-    public void Should_not_calculate_source_url()
+    public async Task Should_not_calculate_source_url()
     {
-        var url = ((IAssetStore)Sut).GeneratePublicUrl(FileName);
+        var sut = await CreateSutAsync();
+
+        var url = sut.GeneratePublicUrl(FileName);
 
         Assert.Null(url);
     }

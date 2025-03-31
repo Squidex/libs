@@ -18,7 +18,7 @@ internal sealed class DelegatingConsumer : IBackgroundProcess
 {
     private readonly string instanceName;
     private readonly string activity;
-    private readonly List<IAsyncDisposable> openSubscriptions = new List<IAsyncDisposable>();
+    private readonly List<IAsyncDisposable> openSubscriptions = [];
     private readonly ChannelName channelName;
     private readonly ChannelOptions channelOptions;
     private readonly HandlerPipeline pipeline;

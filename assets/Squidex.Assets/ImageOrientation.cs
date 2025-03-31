@@ -17,5 +17,5 @@ public enum ImageOrientation : uint
     LeftTop,
     RightTop,
     RightBottom,
-    LeftBottom
+    LeftBottom,
 }
