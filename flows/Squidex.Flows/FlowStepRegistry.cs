@@ -7,8 +7,10 @@
 
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
+using System.Text;
 using Microsoft.Extensions.Options;
 using Squidex.Hosting;
+using Squidex.Text;
 
 namespace Squidex.Flows;
 
@@ -38,7 +40,8 @@ public sealed class FlowStepRegistry(IOptions<FlowOptions> options) : IInitializ
             return this;
         }
 
-        var name = GetStepName(stepType);
+        var stepName = GetStepName(stepType);
+        var stepObsolete = stepType.GetCustomAttribute<ObsoleteAttribute>();
 
         var definition =
             new FlowStepDescriptor
@@ -48,7 +51,8 @@ public sealed class FlowStepRegistry(IOptions<FlowOptions> options) : IInitializ
                 Display = metadata.Display,
                 IconColor = metadata.IconColor,
                 IconImage = metadata.IconImage,
-                IsObsolete = stepType.GetCustomAttribute<ObsoleteAttribute>() != null,
+                IsObsolete = stepObsolete != null,
+                ObsoleteReason = stepObsolete?.Message,
                 ReadMore = metadata.ReadMore,
                 Title = metadata.Title,
             };
@@ -57,12 +61,15 @@ public sealed class FlowStepRegistry(IOptions<FlowOptions> options) : IInitializ
         {
             if (property.CanRead && property.CanWrite)
             {
+                var propertyObsolete = property.GetCustomAttribute<ObsoleteAttribute>();
+
                 var stepProperty = new FlowStepPropertyDescriptor
                 {
-                    Name = property.Name,
+                    Name = property.Name.ToCamelCase(),
                     IsFormattable = property.GetCustomAttribute<ExpressionAttribute>() != null,
-                    IsObsolete = stepType.GetCustomAttribute<ObsoleteAttribute>() != null,
+                    IsObsolete = propertyObsolete != null,
                     IsScript = property.GetCustomAttribute<ScriptAttribute>() != null,
+                    ObsoleteReason = propertyObsolete?.Message,
                 };
 
                 var display = property.GetCustomAttribute<DisplayAttribute>();
@@ -73,7 +80,7 @@ public sealed class FlowStepRegistry(IOptions<FlowOptions> options) : IInitializ
                 }
                 else
                 {
-                    stepProperty.Display = property.Name;
+                    stepProperty.Display = GetDisplayName(property);
                 }
 
                 if (!string.IsNullOrWhiteSpace(display?.Description))
@@ -113,9 +120,31 @@ public sealed class FlowStepRegistry(IOptions<FlowOptions> options) : IInitializ
             }
         }
 
-        steps[name] = definition;
+        steps[stepName] = definition;
 
         return this;
+    }
+
+    private static string GetDisplayName(PropertyInfo property)
+    {
+        var sb = new StringBuilder();
+        var pv = (char)0;
+        foreach (var c in property.Name)
+        {
+            if ((char.IsNumber(pv) || char.IsLower(pv)) && char.IsUpper(c))
+            {
+                sb.Append(' ');
+            }
+            else if (!char.IsNumber(pv) && char.IsNumber(c))
+            {
+                sb.Append(' ');
+            }
+
+            sb.Append(c);
+            pv = c;
+        }
+
+        return sb.ToString();
     }
 
     private static T? GetDataAttribute<T>(PropertyInfo property) where T : ValidationAttribute

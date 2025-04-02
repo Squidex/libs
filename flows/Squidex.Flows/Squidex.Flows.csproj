@@ -34,6 +34,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\hosting\Squidex.Hosting.Abstractions\Squidex.Hosting.Abstractions.csproj" />
+    <ProjectReference Include="..\..\text\Squidex.Text\Squidex.Text.csproj" />
   </ItemGroup>
 
 </Project>

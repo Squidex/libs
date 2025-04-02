@@ -19,6 +19,8 @@ public sealed class FlowStepPropertyDescriptor
 
     public string[]? Options { get; set; }
 
+    public string? ObsoleteReason { get; set; }
+
     public bool IsFormattable { get; set; }
 
     public bool IsScript { get; set; }
