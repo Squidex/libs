@@ -77,7 +77,8 @@ public sealed class ImageSharpThumbnailGenerator(IHttpClientFactory httpClientFa
                 if (w > 0 || h > 0)
                 {
                     var resizeMode = GetResizeMode(options, w, h, image);
-                    var resizeOptions = new ImageSharpOptions { Size = new Size(w, h), Mode = resizeMode, PremultiplyAlpha = true };
+                    var bgColor = options.Background != null && Color.TryParse(options.Background, out var color) ? color : Color.Transparent;
+                    var resizeOptions = new ImageSharpOptions { Size = new Size(w, h), Mode = resizeMode, PremultiplyAlpha = true, PadColor = bgColor };
 
                     if (options.FocusX.HasValue && options.FocusY.HasValue)
                     {
@@ -89,14 +90,7 @@ public sealed class ImageSharpThumbnailGenerator(IHttpClientFactory httpClientFa
 
                     operation.Resize(resizeOptions);
 
-                    if (options.Background != null && Color.TryParse(options.Background, out var color))
-                    {
-                        operation.BackgroundColor(color);
-                    }
-                    else
-                    {
-                        operation.BackgroundColor(Color.Transparent);
-                    }
+                    operation.BackgroundColor(bgColor);
                 }
 
                 if (watermark != null)
