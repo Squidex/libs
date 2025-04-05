@@ -33,15 +33,5 @@ public sealed class AmazonS3AssetOptions : IValidatableOptions
         {
             yield return new ConfigurationError("Value is required.", nameof(Bucket));
         }
-
-        if (string.IsNullOrWhiteSpace(AccessKey))
-        {
-            yield return new ConfigurationError("Value is required.", nameof(AccessKey));
-        }
-
-        if (string.IsNullOrWhiteSpace(SecretKey))
-        {
-            yield return new ConfigurationError("Value is required.", nameof(SecretKey));
-        }
     }
 }
