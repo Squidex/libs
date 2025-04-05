@@ -5,7 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Flows.Execution;
+namespace Squidex.Flows.Internal.Execution;
 
 #pragma warning disable MA0048 // File name must match type name
 public delegate ValueTask<FlowStepResult> NextStepDelegate();

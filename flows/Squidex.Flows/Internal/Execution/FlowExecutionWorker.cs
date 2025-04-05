@@ -10,10 +10,10 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NodaTime;
-using Squidex.Flows.Execution.Utils;
+using Squidex.Flows.Internal.Execution.Utils;
 using Squidex.Hosting;
 
-namespace Squidex.Flows.Execution;
+namespace Squidex.Flows.Internal.Execution;
 
 public sealed class FlowExecutionWorker<TContext> : BackgroundService, IBackgroundProcess where TContext : FlowContext
 {
@@ -23,6 +23,7 @@ public sealed class FlowExecutionWorker<TContext> : BackgroundService, IBackgrou
     private readonly IFlowExecutor<TContext> executor;
     private readonly IFlowStateStore<TContext> store;
     private readonly ILogger<FlowExecutionWorker<TContext>> log;
+    private readonly int[] partitions;
 
     public IClock Clock { get; set; } = SystemClock.Instance;
 
@@ -34,6 +35,7 @@ public sealed class FlowExecutionWorker<TContext> : BackgroundService, IBackgrou
     {
         this.executor = executor;
         this.options = options.Value;
+        partitions = options.Value.GetPartitions();
         this.store = store;
         this.log = log;
 
@@ -61,9 +63,9 @@ public sealed class FlowExecutionWorker<TContext> : BackgroundService, IBackgrou
         try
         {
             var now = Clock.GetCurrentInstant();
-            await foreach (var next in store.QueryPendingAsync(now, ct))
+            await foreach (var next in store.QueryPendingAsync(partitions, now, ct))
             {
-                await requestScheduler.ScheduleAsync(next.ExecutionPartition, next, ct);
+                await requestScheduler.ScheduleAsync(next.ScheduleKey, next, ct);
             }
         }
         catch (Exception ex)

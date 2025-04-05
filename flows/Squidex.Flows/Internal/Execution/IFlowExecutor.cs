@@ -7,17 +7,11 @@
 
 using Squidex.Flows.Internal;
 
-namespace Squidex.Flows.Execution;
+namespace Squidex.Flows.Internal.Execution;
 
 public interface IFlowExecutor<TContext> where TContext : FlowContext
 {
-    Task<FlowExecutionState<TContext>> CreateInstanceAsync(
-        string ownerId,
-        string definitionId,
-        string description,
-        FlowDefinition definition,
-        TContext context,
-        CancellationToken ct);
+    FlowExecutionState<TContext> CreateState(CreateFlowInstanceRequest<TContext> request);
 
     Task ValidateAsync(FlowDefinition definition, AddError addError,
         CancellationToken ct);

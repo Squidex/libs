@@ -5,7 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Squidex.Flows.Execution;
+using Squidex.Flows.Internal.Execution;
 
 namespace Squidex.Flows.Internal;
 

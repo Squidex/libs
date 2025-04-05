@@ -7,7 +7,7 @@
 
 using System.Threading.Channels;
 
-namespace Squidex.Flows.Execution.Utils;
+namespace Squidex.Flows.Internal.Execution.Utils;
 
 public sealed class PartitionedScheduler<T> : IAsyncDisposable
 {

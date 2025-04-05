@@ -6,9 +6,8 @@
 // ==========================================================================
 
 using NodaTime;
-using Squidex.Flows.Internal;
 
-namespace Squidex.Flows.Execution;
+namespace Squidex.Flows.Internal.Execution;
 
 public sealed class FlowExecutionState<TContext> where TContext : FlowContext
 {
@@ -22,9 +21,11 @@ public sealed class FlowExecutionState<TContext> where TContext : FlowContext
 
     required public TContext Context { get; set; }
 
-    public int ExecutionPartition { get; set; }
+    required public string ScheduleKey { get; set; }
 
     required public string Description { get; set; }
+
+    required public int SchedulePartition { get; set; }
 
     public Dictionary<Guid, ExecutionStepState> Steps { get; set; } = [];
 

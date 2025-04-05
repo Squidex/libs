@@ -9,15 +9,26 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using MongoDB.Driver;
 using NodaTime;
-using Squidex.Flows.Execution;
+using Squidex.Flows.Internal.Execution;
+using Squidex.Hosting;
 
 namespace Squidex.Flows.Mongo;
 
 public sealed class MongoFlowStateStore<TContext>(IMongoDatabase database, JsonSerializerOptions jsonSerializerOptions)
-    : IFlowStateStore<TContext>
+    : IFlowStateStore<TContext>, IInitializable
      where TContext : FlowContext
 {
     private readonly IMongoCollection<MongoFlowStateEntity> collection = database.GetCollection<MongoFlowStateEntity>("FlowStates");
+
+    public async Task InitializeAsync(CancellationToken ct)
+    {
+        await collection.Indexes.CreateOneAsync(
+            new CreateIndexModel<MongoFlowStateEntity>(
+                Builders<MongoFlowStateEntity>.IndexKeys
+                    .Ascending(x => x.DueTime)
+                    .Ascending(x => x.SchedulePartition)),
+            cancellationToken: ct);
+    }
 
     public Task CancelByDefinitionIdAsync(string definitionId,
         CancellationToken ct = default)
@@ -96,11 +107,11 @@ public sealed class MongoFlowStateStore<TContext>(IMongoDatabase database, JsonS
         return (items, entitiesTotal);
     }
 
-    public async IAsyncEnumerable<FlowExecutionState<TContext>> QueryPendingAsync(Instant now,
+    public async IAsyncEnumerable<FlowExecutionState<TContext>> QueryPendingAsync(int[] partitions, Instant now,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
         var queryLimit = now.ToDateTimeOffset();
-        var queryItems = await collection.Find(x => x.DueTime != null && x.DueTime < queryLimit).ToCursorAsync(ct);
+        var queryItems = await collection.Find(x => x.DueTime != null && x.DueTime < queryLimit && partitions.Contains(x.SchedulePartition)).ToCursorAsync(ct);
 
         while (await queryItems.MoveNextAsync(ct))
         {
@@ -112,7 +123,7 @@ public sealed class MongoFlowStateStore<TContext>(IMongoDatabase database, JsonS
     }
 
     public async Task StoreAsync(List<FlowExecutionState<TContext>> states,
-        CancellationToken ct)
+        CancellationToken ct = default)
     {
         if (states.Count == 0)
         {
@@ -130,6 +141,7 @@ public sealed class MongoFlowStateStore<TContext>(IMongoDatabase database, JsonS
                         Id = state.InstanceId,
                         DefinitionId = state.DefinitionId,
                         DueTime = state.NextRun?.ToDateTimeOffset(),
+                        SchedulePartition = state.SchedulePartition,
                         OwnerId = state.OwnerId,
                         State = JsonSerializer.Serialize(state, jsonSerializerOptions),
                     })

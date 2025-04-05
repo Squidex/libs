@@ -5,17 +5,21 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using NodaTime;
+using Squidex.Flows.Internal;
+using Squidex.Flows.Internal.Execution;
 
-namespace Squidex.Flows.Execution;
+namespace Squidex.Flows;
 
-public interface IFlowStateStore<TContext> where TContext : FlowContext
+public interface IFlowManager<TContext> where TContext : FlowContext
 {
-    Task StoreAsync(List<FlowExecutionState<TContext>> states,
-        CancellationToken ct = default);
+    Task EnqueueAsync(CreateFlowInstanceRequest<TContext>[] requests,
+        CancellationToken ct);
 
-    Task EnqueueAsync(Guid instanceId, Instant nextAttempt,
-        CancellationToken ct = default);
+    Task ValidateAsync(FlowDefinition definition, AddError addError,
+        CancellationToken ct);
+
+    Task SimulateAsync(FlowExecutionState<TContext> state,
+        CancellationToken ct);
 
     Task CancelByInstanceIdAsync(Guid instanceId,
         CancellationToken ct = default);
@@ -29,12 +33,6 @@ public interface IFlowStateStore<TContext> where TContext : FlowContext
     Task DeleteByOwnerIdAsync(string ownerId,
         CancellationToken ct = default);
 
-    IAsyncEnumerable<FlowExecutionState<TContext>> QueryPendingAsync(Instant now,
-        CancellationToken ct = default);
-
     Task<(List<FlowExecutionState<TContext>> Items, long Total)> QueryByOwnerAsync(string ownerId, string? definitionId = null, int skip = 0, int take = 20,
-        CancellationToken ct = default);
-
-    Task<FlowExecutionState<TContext>?> FindAsync(Guid id,
         CancellationToken ct = default);
 }

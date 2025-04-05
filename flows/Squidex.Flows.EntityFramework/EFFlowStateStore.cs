@@ -10,7 +10,7 @@ using System.Text.Json;
 using EFCore.BulkExtensions;
 using Microsoft.EntityFrameworkCore;
 using NodaTime;
-using Squidex.Flows.Execution;
+using Squidex.Flows.Internal.Execution;
 
 namespace Squidex.Flows.EntityFramework;
 
@@ -117,13 +117,13 @@ public sealed class EFFlowStateStore<TDbContext, TContext>(
         return (items, entitiesTotal);
     }
 
-    public async IAsyncEnumerable<FlowExecutionState<TContext>> QueryPendingAsync(Instant now,
+    public async IAsyncEnumerable<FlowExecutionState<TContext>> QueryPendingAsync(int[] partitions, Instant now,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
 
         var queryLimit = now.ToDateTimeOffset();
-        var queryItems = dbContext.Set<EFFlowStateEntity>().Where(x => x.DueTime != null && x.DueTime < queryLimit).AsAsyncEnumerable();
+        var queryItems = dbContext.Set<EFFlowStateEntity>().Where(x => x.DueTime != null && x.DueTime < queryLimit && partitions.Contains(x.SchedulePartition)).AsAsyncEnumerable();
 
         await foreach (var item in queryItems.WithCancellation(ct))
         {

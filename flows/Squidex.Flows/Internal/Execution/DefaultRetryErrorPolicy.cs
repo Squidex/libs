@@ -8,13 +8,13 @@
 using System.Reflection;
 using NodaTime;
 
-namespace Squidex.Flows.Execution;
+namespace Squidex.Flows.Internal.Execution;
 
 public sealed class DefaultRetryErrorPolicy<TContext> : IErrorPolicy<TContext> where TContext : FlowContext
 {
-    public Instant? ShouldRetry(FlowExecutionState<TContext> state, ExecutionStepState stepState, IFlowStep step)
+    public Instant? ShouldRetry(FlowExecutionState<TContext> state, ExecutionStepState stepState, IFlowStep step, Instant now)
     {
-        if (step.GetType().GetCustomAttribute<RetryAttribute>() == null)
+        if (step.GetType().GetCustomAttribute<NoRetryAttribute>() != null)
         {
             return null;
         }
@@ -22,13 +22,13 @@ public sealed class DefaultRetryErrorPolicy<TContext> : IErrorPolicy<TContext> w
         switch (stepState.Attempts.Count)
         {
             case 1:
-                return state.Created.Plus(Duration.FromMinutes(5));
+                return now.Plus(Duration.FromMinutes(5));
             case 2:
-                return state.Created.Plus(Duration.FromHours(1));
+                return now.Plus(Duration.FromHours(1));
             case 3:
-                return state.Created.Plus(Duration.FromHours(6));
+                return now.Plus(Duration.FromHours(6));
             case 4:
-                return state.Created.Plus(Duration.FromHours(12));
+                return now.Plus(Duration.FromHours(12));
             default:
                 return null;
         }

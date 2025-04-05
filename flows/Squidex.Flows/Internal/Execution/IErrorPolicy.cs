@@ -5,13 +5,11 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Flows.Execution;
+using NodaTime;
 
-public enum ExecutionStatus
+namespace Squidex.Flows.Internal.Execution;
+
+public interface IErrorPolicy<TContext> where TContext : FlowContext
 {
-    Pending,
-    Scheduled,
-    Completed,
-    Failed,
-    Running,
+    Instant? ShouldRetry(FlowExecutionState<TContext> state, ExecutionStepState stepState, IFlowStep step, Instant now);
 }

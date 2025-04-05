@@ -7,7 +7,7 @@
 
 using FluentAssertions;
 using NodaTime;
-using Squidex.Flows.Execution;
+using Squidex.Flows.Internal.Execution;
 
 namespace Squidex.Flows;
 
@@ -178,9 +178,9 @@ public abstract class FlowStateStoreTests
         var now = Instant.FromDateTimeOffset(new DateTimeOffset(2023, 12, 11, 10, 09, 9, TimeSpan.Zero));
 
         var ownerId = Guid.NewGuid().ToString();
-        var state1 = CreateState(ownerId);
-        var state2 = CreateState(ownerId);
-        var state3 = CreateState(ownerId);
+        var state1 = CreateState(ownerId, 1);
+        var state2 = CreateState(ownerId, 2);
+        var state3 = CreateState(ownerId, 3);
 
         state1.NextRun = null;
         state2.NextRun = now;
@@ -188,17 +188,24 @@ public abstract class FlowStateStoreTests
 
         await sut.StoreAsync([state1, state2, state3]);
 
-        var found1 = await sut.QueryPendingAsync(now.Minus(Duration.FromDays(3))).Where(x => x.OwnerId == ownerId).ToListAsync();
+        var daysAgo = now.Minus(Duration.FromDays(3));
+
+        var found1 = await sut.QueryPendingAsync([1, 2, 3], daysAgo).Where(x => x.OwnerId == ownerId).ToListAsync();
         found1.Should().BeEmpty();
 
-        var found2 = await sut.QueryPendingAsync(now.Plus(Duration.FromDays(3))).Where(x => x.OwnerId == ownerId).ToListAsync();
+        var found2 = await sut.QueryPendingAsync([1, 2, 3], daysAgo).Where(x => x.OwnerId == ownerId).ToListAsync();
         found2.Should().BeEquivalentTo([state2]);
 
-        var found3 = await sut.QueryPendingAsync(now.Plus(Duration.FromDays(30))).Where(x => x.OwnerId == ownerId).ToListAsync();
+        var monthsAgo = now.Minus(Duration.FromDays(30));
+
+        var found3 = await sut.QueryPendingAsync([1, 2, 3], monthsAgo).Where(x => x.OwnerId == ownerId).ToListAsync();
         found3.Should().BeEquivalentTo([state2, state3]);
+
+        var found4 = await sut.QueryPendingAsync([3], monthsAgo).Where(x => x.OwnerId == ownerId).ToListAsync();
+        found4.Should().BeEquivalentTo([state3]);
     }
 
-    private static FlowExecutionState<TestFlowContext> CreateState(string ownerId)
+    private static FlowExecutionState<TestFlowContext> CreateState(string ownerId, int partition = 0)
     {
         return new FlowExecutionState<TestFlowContext>
         {
@@ -211,6 +218,8 @@ public abstract class FlowStateStoreTests
             Created = default,
             NextRun = FarInFuture,
             OwnerId = ownerId,
+            ScheduleKey = string.Empty,
+            SchedulePartition = partition,
         };
     }
 }

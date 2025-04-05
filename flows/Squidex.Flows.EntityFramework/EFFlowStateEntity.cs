@@ -17,5 +17,7 @@ public sealed class EFFlowStateEntity
 
     public string State { get; set; }
 
+    public int SchedulePartition { get; set; }
+
     public DateTimeOffset? DueTime { get; set; }
 }

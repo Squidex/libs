@@ -8,7 +8,7 @@
 using Microsoft.EntityFrameworkCore;
 using Squidex.Flows;
 using Squidex.Flows.EntityFramework;
-using Squidex.Flows.Execution;
+using Squidex.Flows.Internal.Execution;
 
 namespace Microsoft.Extensions.DependencyInjection;
 

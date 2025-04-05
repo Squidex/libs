@@ -5,13 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Flows.Execution;
+namespace Squidex.Flows;
 
-public interface IExpressionEngine
+[AttributeUsage(AttributeTargets.Class)]
+public sealed class NoRetryAttribute : Attribute
 {
-    bool Evaluate<T>(string? expression, T value);
-
-    ValueTask<string?> RenderAsync<T>(string? expression, T value, ExpressionFallback fallback);
-
-    string Serialize<T>(T value);
 }

@@ -6,7 +6,7 @@
 // ==========================================================================
 
 using Microsoft.Extensions.DependencyInjection;
-using Squidex.Flows.Execution;
+using Squidex.Flows.Internal.Execution;
 using TestHelpers;
 using TestHelpers.MongoDb;
 

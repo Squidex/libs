@@ -11,8 +11,8 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using NodaTime;
 using NodaTime.Serialization.SystemTextJson;
 using Squidex.Flows;
-using Squidex.Flows.Execution;
 using Squidex.Flows.Internal;
+using Squidex.Flows.Internal.Execution;
 using Squidex.Flows.Steps;
 
 namespace Microsoft.Extensions.DependencyInjection;

@@ -6,7 +6,7 @@
 // ==========================================================================
 
 using Squidex.Flows;
-using Squidex.Flows.Execution;
+using Squidex.Flows.Internal.Execution;
 using Squidex.Flows.Mongo;
 
 namespace Microsoft.Extensions.DependencyInjection;

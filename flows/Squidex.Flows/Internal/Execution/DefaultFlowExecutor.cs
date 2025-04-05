@@ -7,16 +7,17 @@
 
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
+using Microsoft.Extensions.Options;
 using NodaTime;
-using Squidex.Flows.Internal;
 
-namespace Squidex.Flows.Execution;
+namespace Squidex.Flows.Internal.Execution;
 
 public sealed class DefaultFlowExecutor<TContext>(
     IEnumerable<IFlowMiddleware> middlewares,
     IErrorPolicy<TContext> errorPolicy,
     IExpressionEngine expressionEngine,
-    IServiceProvider serviceProvider)
+    IServiceProvider serviceProvider,
+    IOptions<FlowOptions> flowOptions)
     : IFlowExecutor<TContext> where TContext : FlowContext
 {
     private readonly List<IFlowMiddleware> reverseMiddlewares = middlewares.Reverse().ToList();
@@ -29,8 +30,10 @@ public sealed class DefaultFlowExecutor<TContext>(
         if (definition.Steps.Count == 0)
         {
             addError(string.Empty, ValidationErrorType.NoSteps);
+            return;
         }
-        else if (definition.InitialStep == default || !definition.Steps.ContainsKey(definition.InitialStep))
+
+        if (definition.InitialStep == default || !definition.Steps.ContainsKey(definition.InitialStep))
         {
             addError(string.Empty, ValidationErrorType.NoStartStep);
         }
@@ -44,9 +47,17 @@ public sealed class DefaultFlowExecutor<TContext>(
                 addError(string.Empty, ValidationErrorType.InvalidStepId);
             }
 
+            if (stepDefinition.NextStepId != default && !definition.Steps.ContainsKey(stepDefinition.NextStepId))
+            {
+                addError($"steps.{stepId}", ValidationErrorType.InvalidNextStepId);
+            }
+
             ValidateProperties(addError, stepId, stepDefinition.Step);
 
-            await stepDefinition.Step.ValidateAsync(context, addError, ct);
+            await stepDefinition.Step.ValidateAsync(context, (path, message) =>
+            {
+                addError($"steps.{stepId}.{path}", ValidationErrorType.InvalidProperty, message);
+            }, ct);
         }
     }
 
@@ -74,43 +85,43 @@ public sealed class DefaultFlowExecutor<TContext>(
         }
     }
 
-    public Task<FlowExecutionState<TContext>> CreateInstanceAsync(
-        string ownerId,
-        string definitionId,
-        string description,
-        FlowDefinition definition,
-        TContext context,
-        CancellationToken ct)
+    public FlowExecutionState<TContext> CreateState(CreateFlowInstanceRequest<TContext> request)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(nameof(ownerId));
-        ArgumentException.ThrowIfNullOrWhiteSpace(nameof(definitionId));
-        ArgumentException.ThrowIfNullOrWhiteSpace(nameof(description));
-        ArgumentNullException.ThrowIfNull(nameof(definition));
-        ArgumentNullException.ThrowIfNull(nameof(context));
+        ArgumentNullException.ThrowIfNull(nameof(request.Definition));
+        ArgumentNullException.ThrowIfNull(nameof(request.Context));
+        ArgumentNullException.ThrowIfNull(nameof(request.ScheduleKey));
+        ArgumentException.ThrowIfNullOrWhiteSpace(nameof(request.OwnerId));
+        ArgumentException.ThrowIfNullOrWhiteSpace(nameof(request.DefinitionId));
+        ArgumentException.ThrowIfNullOrWhiteSpace(nameof(request.Description));
+        ArgumentException.ThrowIfNullOrWhiteSpace(nameof(request.ScheduleKey));
 
-        if (definition.Steps.Count == 0)
+        if (request.Definition.Steps.Count == 0)
         {
             throw new InvalidOperationException($"Flow definition has no steps.");
         }
 
-        if (!definition.Steps.ContainsKey(definition.InitialStep))
+        if (!request.Definition.Steps.ContainsKey(request.Definition.InitialStep))
         {
-            throw new InvalidOperationException($"Flow definition has no step with ID '{definition.InitialStep}'.");
+            throw new InvalidOperationException($"Flow definition has no step with ID '{request.Definition.InitialStep}'.");
         }
+
+        var partition = Math.Abs(request.ScheduleKey.GetHashCode(StringComparison.InvariantCulture) % flowOptions.Value.NumPartitions);
 
         var state = new FlowExecutionState<TContext>
         {
-            Context = context,
-            Definition = definition,
-            DefinitionId = definitionId,
-            Description = description,
+            Context = request.Context,
+            Definition = request.Definition,
+            DefinitionId = request.DefinitionId,
+            Description = request.Description,
             InstanceId = Guid.NewGuid(),
             NextRun = Clock.GetCurrentInstant(),
-            NextStep = definition.InitialStep,
-            OwnerId = ownerId,
+            NextStep = request.Definition.InitialStep,
+            OwnerId = request.OwnerId,
+            ScheduleKey = request.ScheduleKey,
+            SchedulePartition = partition,
         };
 
-        return Task.FromResult(state);
+        return state;
     }
 
     public async Task SimulateAsync(FlowExecutionState<TContext> state,
@@ -251,7 +262,7 @@ public sealed class DefaultFlowExecutor<TContext>(
                 }
                 else
                 {
-                    var nextAttempt = errorPolicy.ShouldRetry(state, stepState, step);
+                    var nextAttempt = errorPolicy.ShouldRetry(state, stepState, step, now);
                     if (nextAttempt > now)
                     {
                         state.Next(stepId, nextAttempt.Value);

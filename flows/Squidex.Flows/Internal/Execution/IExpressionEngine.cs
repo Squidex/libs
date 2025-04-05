@@ -5,14 +5,13 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using NodaTime;
+namespace Squidex.Flows.Internal.Execution;
 
-namespace Squidex.Flows.Execution;
-
-internal class NoRetryErrorPolicy<TContext> : IErrorPolicy<TContext> where TContext : FlowContext
+public interface IExpressionEngine
 {
-    public Instant? ShouldRetry(FlowExecutionState<TContext> state, ExecutionStepState stepState, IFlowStep step)
-    {
-        return null;
-    }
+    bool Evaluate<T>(string? expression, T value);
+
+    ValueTask<string?> RenderAsync<T>(string? expression, T value, ExpressionFallback fallback);
+
+    string Serialize<T>(T value);
 }

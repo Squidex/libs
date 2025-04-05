@@ -30,7 +30,7 @@ public static class EFSchema
         {
             b.ToTable("Messages");
 
-            b.HasIndex(nameof(EFMessage.ChannelName), nameof(EFMessage.TimeHandled));
+            b.HasIndex(x => new { x.ChannelName, x.TimeHandled });
         });
 
         return modelBuilder;

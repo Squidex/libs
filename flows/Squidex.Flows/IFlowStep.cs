@@ -9,7 +9,7 @@ namespace Squidex.Flows;
 
 public interface IFlowStep
 {
-    ValueTask ValidateAsync(FlowValidationContext validationContext, AddError addError,
+    ValueTask ValidateAsync(FlowValidationContext validationContext, AddStepError addError,
         CancellationToken ct)
     {
         return default;

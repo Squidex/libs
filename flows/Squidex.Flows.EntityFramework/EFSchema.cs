@@ -13,7 +13,10 @@ public static class EFSchema
 {
     public static ModelBuilder UseFlows(this ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<EFFlowStateEntity>();
+        modelBuilder.Entity<EFFlowStateEntity>(b =>
+        {
+            b.HasIndex(x => new { x.DueTime, x.SchedulePartition });
+        });
 
         return modelBuilder;
     }
