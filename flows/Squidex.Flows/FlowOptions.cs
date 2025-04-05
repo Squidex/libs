@@ -13,6 +13,8 @@ public sealed class FlowOptions : IValidatableOptions
 {
     public TimeSpan JobQueryInterval { get; set; } = TimeSpan.FromSeconds(10);
 
+    public TimeSpan DefaultTimeout { get; set; } = TimeSpan.FromSeconds(10);
+
     public List<Type> Steps { get; set; } = [];
 
     public int NumTasks { get; set; } = 32;
@@ -22,6 +24,8 @@ public sealed class FlowOptions : IValidatableOptions
     public int NumPartitions { get; set; } = 120;
 
     public int WorkerIndex { get; set; }
+
+    public Func<Exception, bool>? IsSafeException { get; set; } = _ => true;
 
     public void AddStepIfNotExist(Type stepType)
     {

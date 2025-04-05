@@ -212,14 +212,11 @@ public abstract class FlowStateStoreTests
             InstanceId = Guid.NewGuid(),
             DefinitionId = Guid.NewGuid().ToString(),
             Definition = null!,
-            Description = "A state",
-            Completed = default,
+            Completed = SystemClock.Instance.GetCurrentInstant(),
             Context = new TestFlowContext(),
-            Created = default,
+            Created = SystemClock.Instance.GetCurrentInstant(),
             NextRun = FarInFuture,
             OwnerId = ownerId,
-            ScheduleKey = string.Empty,
-            SchedulePartition = partition,
         };
     }
 }

@@ -84,7 +84,7 @@ public sealed class FlowExecutionWorker<TContext> : BackgroundService, IBackgrou
 
         try
         {
-            await executor.ExecuteAsync(state, default, ct);
+            await executor.ExecuteAsync(state, ct);
             await store.StoreAsync([state], default);
         }
         finally

@@ -17,7 +17,7 @@ public sealed class NotRetryableNoopStep : IFlowStep
     public ValueTask<FlowStepResult> ExecuteAsync(FlowContext context, FlowExecutionContext executionContext,
         CancellationToken ct)
     {
-        return default;
+        return new ValueTask<FlowStepResult>(FlowStepResult.Next());
     }
 }
 
@@ -26,7 +26,7 @@ public sealed class NoopStep : IFlowStep
     public ValueTask<FlowStepResult> ExecuteAsync(FlowContext context, FlowExecutionContext executionContext,
         CancellationToken ct)
     {
-        return default;
+        return new ValueTask<FlowStepResult>(FlowStepResult.Next());
     }
 }
 
@@ -38,7 +38,7 @@ public sealed class NoopStepWithRequiredProperty : IFlowStep
     public ValueTask<FlowStepResult> ExecuteAsync(FlowContext context, FlowExecutionContext executionContext,
         CancellationToken ct)
     {
-        return default;
+        return new ValueTask<FlowStepResult>(FlowStepResult.Next());
     }
 }
 
@@ -54,6 +54,18 @@ public sealed class NoopStepWithCustomValidation : IFlowStep
     public ValueTask<FlowStepResult> ExecuteAsync(FlowContext context, FlowExecutionContext executionContext,
         CancellationToken ct)
     {
-        return default;
+        return new ValueTask<FlowStepResult>(FlowStepResult.Next());
+    }
+}
+
+public sealed class NoopStepWithExpression : IFlowStep
+{
+    [Expression]
+    public string? Property { get; set; }
+
+    public ValueTask<FlowStepResult> ExecuteAsync(FlowContext context, FlowExecutionContext executionContext,
+        CancellationToken ct)
+    {
+        return new ValueTask<FlowStepResult>(FlowStepResult.Next());
     }
 }

@@ -15,7 +15,6 @@ public class DefaultRetryErrorPolicyTests
     private readonly Instant now = SystemClock.Instance.GetCurrentInstant();
     private readonly DefaultRetryErrorPolicy<TestFlowContext> sut = new DefaultRetryErrorPolicy<TestFlowContext>();
 
-
     [Fact]
     public void Should_not_retry_for_no_attempts()
     {

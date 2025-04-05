@@ -5,8 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Squidex.Flows.Internal;
-
 namespace Squidex.Flows.Internal.Execution;
 
 public interface IFlowExecutor<TContext> where TContext : FlowContext
@@ -19,6 +17,6 @@ public interface IFlowExecutor<TContext> where TContext : FlowContext
     Task SimulateAsync(FlowExecutionState<TContext> state,
         CancellationToken ct);
 
-    Task ExecuteAsync(FlowExecutionState<TContext> state, ExecutionOptions options,
+    Task ExecuteAsync(FlowExecutionState<TContext> state,
         CancellationToken ct);
 }

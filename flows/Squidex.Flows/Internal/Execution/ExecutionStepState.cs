@@ -41,7 +41,7 @@ public sealed class ExecutionStepAttempt
 
     public Instant Completed { get; set; }
 
-    public Exception? Error { get; set; }
+    public string? Error { get; set; }
 }
 
 public sealed record ExecutionStepLogEntry(Instant Timestamp, string Message, string? Dump);

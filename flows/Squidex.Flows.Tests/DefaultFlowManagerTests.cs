@@ -162,14 +162,8 @@ public class DefaultFlowManagerTests
             InstanceId = Guid.NewGuid(),
             DefinitionId = Guid.NewGuid().ToString(),
             Definition = null!,
-            Description = "A state",
-            Completed = default,
             Context = new TestFlowContext(),
-            Created = default,
-            NextRun = null,
             OwnerId = Guid.NewGuid().ToString(),
-            ScheduleKey = string.Empty,
-            SchedulePartition = 0,
         };
     }
 }

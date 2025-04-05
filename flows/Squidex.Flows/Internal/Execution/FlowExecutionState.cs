@@ -21,11 +21,11 @@ public sealed class FlowExecutionState<TContext> where TContext : FlowContext
 
     required public TContext Context { get; set; }
 
-    required public string ScheduleKey { get; set; }
+    public string Description { get; set; } = string.Empty;
 
-    required public string Description { get; set; }
+    public string ScheduleKey { get; set; } = string.Empty;
 
-    required public int SchedulePartition { get; set; }
+    public int SchedulePartition { get; set; }
 
     public Dictionary<Guid, ExecutionStepState> Steps { get; set; } = [];
 

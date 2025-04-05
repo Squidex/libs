@@ -13,9 +13,9 @@ public readonly record struct CreateFlowInstanceRequest<TContext>
 
     required public string DefinitionId { get; init; }
 
-    required public string Description { get; init; }
+    public string? Description { get; init; }
 
-    required public string ScheduleKey { get; init; }
+    public string? ScheduleKey { get; init; }
 
     required public FlowDefinition Definition { get; init; }
 
