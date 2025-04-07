@@ -49,7 +49,15 @@ public sealed class AmazonS3AssetStore(IOptions<AmazonS3AssetOptions> options) :
                 amazonS3Config.RegionEndpoint = RegionEndpoint.GetBySystemName(options.RegionName);
             }
 
-            s3Client = new AmazonS3Client(options.AccessKey, options.SecretKey, amazonS3Config);
+            if (!string.IsNullOrWhiteSpace(options.AccessKey) && !string.IsNullOrWhiteSpace(options.SecretKey))
+            {
+                s3Client = new AmazonS3Client(options.AccessKey, options.SecretKey, amazonS3Config);
+            }
+            else
+            {
+                s3Client = new AmazonS3Client(amazonS3Config);
+            }
+
             s3Transfer = new TransferUtility(s3Client);
 
             var exists = await AmazonS3Util.DoesS3BucketExistV2Async(s3Client, options.Bucket);
