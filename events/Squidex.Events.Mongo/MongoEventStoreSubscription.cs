@@ -101,12 +101,9 @@ public sealed class MongoEventStoreSubscription : IEventSubscription
                 var isRead = false;
                 await cursor.ForEachAsync(async change =>
                 {
-                    if (change.OperationType == ChangeStreamOperationType.Insert)
+                    foreach (var storedEvent in change.FullDocument.Filtered(lastPosition))
                     {
-                        foreach (var storedEvent in change.FullDocument.Filtered(lastPosition))
-                        {
-                            await eventSubscriber.OnNextAsync(this, storedEvent);
-                        }
+                        await eventSubscriber.OnNextAsync(this, storedEvent);
                     }
 
                     isRead = true;
@@ -135,7 +132,7 @@ public sealed class MongoEventStoreSubscription : IEventSubscription
 
             if (storedEvent.Data.Headers.Timestamp() >= queryUntil)
             {
-                // We can actually miss events if we query until events until now.
+                // We can actually miss events if we query until events until.
                 // because an event with a larger timestamp can be available before an event with a smaller timestamp.
                 break;
             }
@@ -149,18 +146,18 @@ public sealed class MongoEventStoreSubscription : IEventSubscription
 
     private static PipelineDefinition<ChangeStreamDocument<MongoEventCommit>, ChangeStreamDocument<MongoEventCommit>>? Match(StreamFilter streamFilter)
     {
-        var result = new EmptyPipelineDefinition<ChangeStreamDocument<MongoEventCommit>>();
+        var filterBuilder = Builders<ChangeStreamDocument<MongoEventCommit>>.Filter;
+        var filterResult = filterBuilder.Eq(x => x.OperationType, ChangeStreamOperationType.Insert);
 
         var byStream = FilterBuilder.ByChangeInStream(streamFilter);
         if (byStream != null)
         {
-            var filterBuilder = Builders<ChangeStreamDocument<MongoEventCommit>>.Filter;
-            var filterExpression = filterBuilder.Or(filterBuilder.Ne(x => x.OperationType, ChangeStreamOperationType.Insert), byStream);
-
-            return result.Match(filterExpression);
+            filterResult = filterBuilder.And(filterResult, byStream);
         }
 
-        return result;
+        var emptyPipeline = new EmptyPipelineDefinition<ChangeStreamDocument<MongoEventCommit>>();
+
+        return emptyPipeline.Match(filterResult);
     }
 
     public void Dispose()
