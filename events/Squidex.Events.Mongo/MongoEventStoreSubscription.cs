@@ -33,7 +33,7 @@ public sealed class MongoEventStoreSubscription : IEventSubscription
         {
             StreamPosition lastRawPosition = default;
 
-            if (!position.IsEnd)
+            if (!position.ReadFromEnd)
             {
                 try
                 {
@@ -50,7 +50,7 @@ public sealed class MongoEventStoreSubscription : IEventSubscription
             }
 
             ParsedStreamPosition parsedPosition;
-            if (lastRawPosition.IsEnd)
+            if (position.ReadFromEnd)
             {
                 parsedPosition = Clock.GetUtcNow();
             }

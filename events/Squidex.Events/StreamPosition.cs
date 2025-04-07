@@ -9,7 +9,7 @@
 
 namespace Squidex.Events;
 
-public record struct StreamPosition(string? Token, bool IsEnd)
+public record struct StreamPosition(string? Token, bool ReadFromEnd)
 {
     public static readonly StreamPosition Start = default;
 

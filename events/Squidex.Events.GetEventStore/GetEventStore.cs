@@ -49,7 +49,7 @@ public sealed class GetEventStore(
     public async IAsyncEnumerable<StoredEvent> QueryAllAsync(StreamFilter filter = default, StreamPosition position = default, int take = int.MaxValue,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
-        if (take <= 0 || position.IsEnd)
+        if (take <= 0 || position.ReadFromEnd)
         {
             yield break;
         }

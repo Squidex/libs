@@ -30,7 +30,7 @@ internal sealed class GetEventStoreSubscription : IEventSubscription
             var streamName = await projectionClient.CreateProjectionAsync(filter, false, default);
 
             var start = FromStream.Start;
-            if (position.IsEnd)
+            if (position.ReadFromEnd)
             {
                 start = FromStream.End;
             }
