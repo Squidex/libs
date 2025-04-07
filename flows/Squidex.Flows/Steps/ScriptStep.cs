@@ -15,19 +15,19 @@ namespace Squidex.Flows.Steps;
     IconColor = "#3389ff",
     Display = "Execute a script",
     Description = "Execute custom code in Javascript.")]
-public class ScriptStep : IFlowStep
+public sealed record ScriptStep : FlowStep
 {
     [Script]
     [Display(Name = "Script", Description = "The script to execute.")]
     [Editor(FlowStepEditor.TextArea)]
     public string? Script { get; set; }
 
-    public async ValueTask<FlowStepResult> ExecuteAsync(FlowContext context, FlowExecutionContext executionContext,
+    public override async ValueTask<FlowStepResult> ExecuteAsync(FlowExecutionContext executionContext,
         CancellationToken ct)
     {
-        if (!string.IsNullOrEmpty(Script))
+        if (!string.IsNullOrWhiteSpace(Script))
         {
-            await executionContext.RenderAsync(Script, context);
+            await executionContext.RenderAsync(Script, executionContext.Context);
         }
 
         return FlowStepResult.Next();

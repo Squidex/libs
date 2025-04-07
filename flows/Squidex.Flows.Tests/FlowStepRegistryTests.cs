@@ -39,7 +39,7 @@ public class FlowStepRegistryTests
         Display = "Step display",
         Description = "Step description.",
         ReadMore = "https://www.readmore.com/")]
-    public class CombinedStep : IFlowStep
+    public record CombinedStep : FlowStep
     {
         [Required]
         [Display(Name = "Url Name", Description = "Url Description")]
@@ -81,7 +81,7 @@ public class FlowStepRegistryTests
         [Editor(FlowStepEditor.Text)]
         public int? My12Monkeys { get; set; }
 
-        public ValueTask<FlowStepResult> ExecuteAsync(FlowContext context, FlowExecutionContext executionContext, CancellationToken ct)
+        public override ValueTask<FlowStepResult> ExecuteAsync(FlowExecutionContext executionContext, CancellationToken ct)
         {
             return default;
         }
@@ -95,7 +95,7 @@ public class FlowStepRegistryTests
         Description = "Step description.",
         ReadMore = "https://www.readmore.com/")]
     [Obsolete("Obsolete step")]
-    public class ObsoleteStep : IFlowStep
+    public sealed record ObsoleteStep : FlowStep
     {
         [Editor(FlowStepEditor.Text)]
         [Obsolete]
@@ -105,7 +105,7 @@ public class FlowStepRegistryTests
         [Obsolete("Use property 3")]
         public string Text2 { get; set; }
 
-        public ValueTask<FlowStepResult> ExecuteAsync(FlowContext context, FlowExecutionContext executionContext, CancellationToken ct)
+        public override ValueTask<FlowStepResult> ExecuteAsync(FlowExecutionContext executionContext, CancellationToken ct)
         {
             return default;
         }

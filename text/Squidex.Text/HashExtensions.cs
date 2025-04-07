@@ -5,14 +5,22 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using NodaTime;
+namespace Squidex.Text;
 
-namespace Squidex.Flows.Internal.Execution;
-
-public sealed class NoRetryErrorPolicy<TContext> : IFlowErrorPolicy<TContext> where TContext : FlowContext
+public static class HashExtensions
 {
-    public Instant? ShouldRetry(FlowExecutionState<TContext> state, ExecutionStepState stepState, FlowStep step, Instant now)
+    public static int GetDeterministicHashCode(this string source)
     {
-        return null;
+        const uint prime = 0x01000193;
+        const uint basis = 0x811C9DC5;
+
+        uint hash = basis;
+        foreach (char c in source)
+        {
+            hash ^= c;
+            hash *= prime;
+        }
+
+        return unchecked((int)hash);
     }
 }

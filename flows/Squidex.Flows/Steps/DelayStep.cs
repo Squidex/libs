@@ -6,6 +6,7 @@
 // ==========================================================================
 
 using System.ComponentModel.DataAnnotations;
+using Generator.Equals;
 using NodaTime;
 
 namespace Squidex.Flows.Steps;
@@ -16,20 +17,20 @@ namespace Squidex.Flows.Steps;
     IconColor = "#3389ff",
     Display = "Delay workflow",
     Description = "Wait a little bit until the next step is executed.")]
-public sealed class DelayStep : IFlowStep
+[Equatable]
+public sealed partial record DelayStep : FlowStep
 {
     [Required]
     [Display(Name = "Delay", Description = "The delay in seconds.")]
     [Editor(FlowStepEditor.Number)]
-    [Expression]
     public int DelayInSec { get; set; }
 
     public IClock Clock { get; set; } = SystemClock.Instance;
 
-    public ValueTask<FlowStepResult> ExecuteAsync(FlowContext context, FlowExecutionContext executionContext,
+    public override ValueTask<FlowStepResult> ExecuteAsync(FlowExecutionContext executionContext,
         CancellationToken ct)
     {
-        var scheduled = Clock.GetCurrentInstant().Plus(Duration.FromSeconds(DelayInSec));
+        var scheduled = Clock.GetCurrentInstant().Plus(Duration.FromSeconds(Math.Max(0, DelayInSec)));
 
         return new ValueTask<FlowStepResult>(FlowStepResult.Next(scheduled: scheduled));
     }

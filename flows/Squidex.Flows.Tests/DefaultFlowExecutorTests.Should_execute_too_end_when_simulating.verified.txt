@@ -17,7 +17,7 @@
   SchedulePartition: 75,
   Steps: {
     StepId1: {
-      Status: Scheduled,
+      Status: Failed,
       IsPrepared: true,
       Attempts: [
         {
@@ -26,13 +26,28 @@
           Error: Step Error
         },
         {
-          Started: DateTimeOffset_2,
-          Completed: DateTimeOffset_2,
+          Started: DateTimeOffset_1,
+          Completed: DateTimeOffset_1,
+          Error: Step Error
+        },
+        {
+          Started: DateTimeOffset_1,
+          Completed: DateTimeOffset_1,
+          Error: Step Error
+        },
+        {
+          Started: DateTimeOffset_1,
+          Completed: DateTimeOffset_1,
+          Error: Step Error
+        },
+        {
+          Started: DateTimeOffset_1,
+          Completed: DateTimeOffset_1,
           Error: Step Error
         }
       ]
     }
   },
-  NextStepId: StepId1,
-  NextRun: DateTimeOffset_3
+  Completed: DateTimeOffset_1,
+  Status: Failed
 }

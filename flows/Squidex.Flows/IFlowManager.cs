@@ -15,10 +15,10 @@ public interface IFlowManager<TContext> where TContext : FlowContext
     Task EnqueueAsync(CreateFlowInstanceRequest<TContext>[] requests,
         CancellationToken ct);
 
-    Task ValidateAsync(FlowDefinition definition, AddError addError,
+    Task SimulateAsync(CreateFlowInstanceRequest<TContext> state,
         CancellationToken ct);
 
-    Task SimulateAsync(FlowExecutionState<TContext> state,
+    Task ValidateAsync(FlowDefinition definition, AddError addError,
         CancellationToken ct);
 
     Task CancelByInstanceIdAsync(Guid instanceId,

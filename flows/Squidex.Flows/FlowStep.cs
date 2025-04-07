@@ -7,20 +7,20 @@
 
 namespace Squidex.Flows;
 
-public interface IFlowStep
+public abstract record FlowStep
 {
-    ValueTask ValidateAsync(FlowValidationContext validationContext, AddStepError addError,
+    public virtual ValueTask ValidateAsync(FlowValidationContext validationContext, AddStepError addError,
         CancellationToken ct)
     {
         return default;
     }
 
-    ValueTask PrepareAsync(FlowContext context, FlowExecutionContext executionContext,
+    public virtual ValueTask PrepareAsync(FlowExecutionContext executionContext,
         CancellationToken ct)
     {
         return default;
     }
 
-    ValueTask<FlowStepResult> ExecuteAsync(FlowContext context, FlowExecutionContext executionContext,
+    public abstract ValueTask<FlowStepResult> ExecuteAsync(FlowExecutionContext executionContext,
         CancellationToken ct);
 }

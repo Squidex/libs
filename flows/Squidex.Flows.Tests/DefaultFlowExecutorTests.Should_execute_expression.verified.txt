@@ -8,7 +8,7 @@
       StepId1: {
         IgnoreError: false,
         Step: {
-          Property: Expression Result
+          Property: 
         }
       }
     }

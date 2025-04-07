@@ -29,7 +29,7 @@ public sealed class FlowExecutionState<TContext> where TContext : FlowContext
 
     public Dictionary<Guid, ExecutionStepState> Steps { get; set; } = [];
 
-    public Guid NextStep { get; set; }
+    public Guid NextStepId { get; set; }
 
     public Instant? NextRun { get; set; }
 
@@ -56,7 +56,7 @@ public sealed class FlowExecutionState<TContext> where TContext : FlowContext
     {
         Status = ExecutionStatus.Failed;
         NextRun = null;
-        NextStep = default;
+        NextStepId = default;
         Completed = now;
     }
 
@@ -64,14 +64,34 @@ public sealed class FlowExecutionState<TContext> where TContext : FlowContext
     {
         Completed = now;
         NextRun = null;
-        NextStep = default;
+        NextStepId = default;
         Status = ExecutionStatus.Completed;
     }
 
     public void Next(Guid nextId, Instant scheduleAt)
     {
         NextRun = scheduleAt;
-        NextStep = nextId;
+        NextStepId = nextId;
         Step(nextId).Status = ExecutionStatus.Scheduled;
+    }
+
+    public Guid GetNextStep(FlowStepDefinition currentStep, Guid nextId)
+    {
+        if (nextId == default)
+        {
+            nextId = currentStep.NextStepId;
+        }
+
+        if (!Definition.Steps.ContainsKey(nextId))
+        {
+            return default;
+        }
+
+        if (Step(nextId).Status != ExecutionStatus.Pending)
+        {
+            return default;
+        }
+
+        return nextId;
     }
 }

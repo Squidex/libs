@@ -5,20 +5,24 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Generator.Equals;
+
 namespace Squidex.Flows.Internal;
 
-public sealed class FlowDefinition
+[Equatable]
+public sealed partial record FlowDefinition
 {
-    public Guid InitialStep { get; set; }
+    public Guid InitialStep { get; init; }
 
-    public Dictionary<Guid, FlowStepDefinition> Steps { get; set; } = [];
+    [UnorderedEquality]
+    public Dictionary<Guid, FlowStepDefinition> Steps { get; init; } = [];
 
-    public IFlowStep? GetInitialStep()
+    public FlowStep? GetInitialStep()
     {
         return GetStep(InitialStep);
     }
 
-    public IFlowStep? GetStep(Guid id)
+    public FlowStep? GetStep(Guid id)
     {
         if (id == Guid.Empty)
         {

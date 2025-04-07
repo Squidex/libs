@@ -5,6 +5,8 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Generator.Equals;
+
 namespace Squidex.Flows.Steps;
 
 #pragma warning disable MA0048 // File name must match type name
@@ -15,27 +17,30 @@ namespace Squidex.Flows.Steps;
     IconColor = "#4bb958",
     Display = "Conditions",
     Description = "Create branches based on conditions.")]
-public class IfStep : IFlowStep
+[Equatable]
+public sealed partial record IfStep : FlowStep
 {
+    [OrderedEquality]
     public List<IfBranch> Branches { get; set; }
 
     public Guid Else { get; set; }
 
     public Guid NextStep { get; set; }
 
-    public ValueTask ValidateAsync(FlowValidationContext validationContext, AddError addError,
+    public override ValueTask ValidateAsync(FlowValidationContext validationContext, AddStepError addError,
         CancellationToken ct)
     {
         var definition = validationContext.Definition;
         var branches = Branches ?? [];
         var index = 0;
+
         foreach (var branch in branches)
         {
             if (branch.Step == default && definition.Steps.ContainsKey(branch.Step))
             {
                 var path = $"branches[{index}].step";
 
-                addError(path, ValidationErrorType.InvalidStepId);
+                addError(path, "Invalid Step ID.");
             }
 
             index++;
@@ -43,13 +48,13 @@ public class IfStep : IFlowStep
 
         if (Else != default && !definition.Steps.ContainsKey(Else))
         {
-            addError("else", ValidationErrorType.InvalidStepId);
+            addError("else", "Invalid Step ID");
         }
 
         return default;
     }
 
-    public ValueTask PrepareAsync(FlowContext context, FlowExecutionContext executionContext,
+    public override ValueTask PrepareAsync(FlowExecutionContext executionContext,
         CancellationToken ct)
     {
         var nextStep = Else;
@@ -57,7 +62,7 @@ public class IfStep : IFlowStep
         var branches = Branches ?? [];
         foreach (var branch in branches)
         {
-            if (executionContext.Evaluate(branch.Condition, context))
+            if (executionContext.Evaluate(branch.Condition, executionContext.Context))
             {
                 nextStep = branch.Step;
                 break;
@@ -68,7 +73,7 @@ public class IfStep : IFlowStep
         return default;
     }
 
-    public ValueTask<FlowStepResult> ExecuteAsync(FlowContext context, FlowExecutionContext executionContext,
+    public override ValueTask<FlowStepResult> ExecuteAsync(FlowExecutionContext executionContext,
         CancellationToken ct)
     {
         return new ValueTask<FlowStepResult>(FlowStepResult.Next(NextStep));

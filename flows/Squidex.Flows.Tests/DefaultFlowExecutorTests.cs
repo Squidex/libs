@@ -14,34 +14,24 @@ namespace Squidex.Flows;
 
 public class DefaultFlowExecutorTests
 {
-    private readonly IExpressionEngine expressionEngine = A.Fake<IExpressionEngine>();
+    private readonly IFlowExpressionEngine expressionEngine = A.Fake<IFlowExpressionEngine>();
+    private readonly Guid stepId1 = Guid.Parse("216e4ed4-8e29-4c38-9265-7e5e1f55eb2a");
+    private readonly Guid stepId2 = Guid.Parse("216e4ed4-8e29-4c38-9265-7e5e1f55eb2b");
+    private readonly Guid stepId3 = Guid.Parse("216e4ed4-8e29-4c38-9265-7e5e1f55eb2c");
     private readonly DefaultFlowExecutor<TestFlowContext> sut;
     private Instant now = SystemClock.Instance.GetCurrentInstant();
 
     public DefaultFlowExecutorTests()
     {
-        var clock = A.Fake<IClock>();
-
-        A.CallTo(() => clock.GetCurrentInstant())
-            .ReturnsLazily(() => now);
-
-        sut = new DefaultFlowExecutor<TestFlowContext>([],
-            new DefaultRetryErrorPolicy<TestFlowContext>(),
-            expressionEngine,
-            A.Fake<IServiceProvider>(),
-            Options.Create(new FlowOptions()))
-        {
-            Clock = clock,
-        };
+        sut = CreateSut();
     }
 
     [Fact]
     public async Task Should_execute_first_step()
     {
-        var stepId1 = Guid.NewGuid();
-        var step1 = A.Fake<IFlowStep>();
+        var step1 = A.Fake<FlowStep>();
 
-        A.CallTo(() => step1.ExecuteAsync(A<FlowContext>._, A<FlowExecutionContext>._, A<CancellationToken>._))
+        A.CallTo(() => step1.ExecuteAsync(A<FlowExecutionContext>._, A<CancellationToken>._))
             .Returns(new ValueTask<FlowStepResult>(FlowStepResult.Next()));
 
         var state = sut.CreateState(
@@ -73,10 +63,9 @@ public class DefaultFlowExecutorTests
     [InlineData(ExecutionStatus.Completed)]
     public async Task Should_execute_nothing_if_already_completed(ExecutionStatus status)
     {
-        var stepId1 = Guid.NewGuid();
-        var step1 = A.Fake<IFlowStep>();
+        var step1 = A.Fake<FlowStep>();
 
-        A.CallTo(() => step1.ExecuteAsync(A<FlowContext>._, A<FlowExecutionContext>._, A<CancellationToken>._))
+        A.CallTo(() => step1.ExecuteAsync(A<FlowExecutionContext>._, A<CancellationToken>._))
             .Returns(new ValueTask<FlowStepResult>(FlowStepResult.Next()));
 
         var state = sut.CreateState(
@@ -106,7 +95,6 @@ public class DefaultFlowExecutorTests
     [Fact]
     public async Task Should_execute_expression()
     {
-        var stepId1 = Guid.NewGuid();
         var step1 = new NoopStepWithExpression { Property = "Expression Source" };
 
         A.CallTo(() => expressionEngine.RenderAsync("Expression Source", A<TestFlowContext>._, ExpressionFallback.None))
@@ -136,10 +124,9 @@ public class DefaultFlowExecutorTests
     [Fact]
     public async Task Should_execute_first_step_with_error()
     {
-        var stepId1 = Guid.NewGuid();
-        var step1 = A.Fake<IFlowStep>();
+        var step1 = A.Fake<FlowStep>();
 
-        A.CallTo(() => step1.ExecuteAsync(A<FlowContext>._, A<FlowExecutionContext>._, A<CancellationToken>._))
+        A.CallTo(() => step1.ExecuteAsync(A<FlowExecutionContext>._, A<CancellationToken>._))
             .Throws(new InvalidOperationException("Step Error"));
 
         var state = sut.CreateState(
@@ -168,10 +155,9 @@ public class DefaultFlowExecutorTests
     [Fact]
     public async Task Should_execute_first_step_again_after_error()
     {
-        var stepId1 = Guid.NewGuid();
-        var step1 = A.Fake<IFlowStep>();
+        var step1 = A.Fake<FlowStep>();
 
-        A.CallTo(() => step1.ExecuteAsync(A<FlowContext>._, A<FlowExecutionContext>._, A<CancellationToken>._))
+        A.CallTo(() => step1.ExecuteAsync(A<FlowExecutionContext>._, A<CancellationToken>._))
             .Throws(new InvalidOperationException("Step Error"));
 
         var state = sut.CreateState(
@@ -205,10 +191,9 @@ public class DefaultFlowExecutorTests
     [Fact]
     public async Task Should_execute_first_step_again_after_attempts_exeeded()
     {
-        var stepId1 = Guid.NewGuid();
-        var step1 = A.Fake<IFlowStep>();
+        var step1 = A.Fake<FlowStep>();
 
-        A.CallTo(() => step1.ExecuteAsync(A<FlowContext>._, A<FlowExecutionContext>._, A<CancellationToken>._))
+        A.CallTo(() => step1.ExecuteAsync(A<FlowExecutionContext>._, A<CancellationToken>._))
             .Throws(new InvalidOperationException("Step Error"));
 
         var state = sut.CreateState(
@@ -240,18 +225,47 @@ public class DefaultFlowExecutorTests
     }
 
     [Fact]
+    public async Task Should_execute_too_end_when_simulating()
+    {
+        var step1 = A.Fake<FlowStep>();
+
+        A.CallTo(() => step1.ExecuteAsync(A<FlowExecutionContext>._, A<CancellationToken>._))
+            .Throws(new InvalidOperationException("Step Error"));
+
+        var state = sut.CreateState(
+            new CreateFlowInstanceRequest<TestFlowContext>
+            {
+                Context = new TestFlowContext(),
+                DefinitionId = Guid.NewGuid().ToString(),
+                Definition = new FlowDefinition
+                {
+                    Steps = new Dictionary<Guid, FlowStepDefinition>
+                    {
+                        [stepId1] = new FlowStepDefinition { Step = step1 },
+                    },
+                    InitialStep = stepId1,
+                },
+                OwnerId = Guid.NewGuid().ToString(),
+            });
+
+        await sut.SimulateAsync(state, default);
+
+        AssertPrepared(step1, 1);
+        AssertExecuted(step1, 5);
+
+        await Verify(state).AddNamedGuid(stepId1, "StepId1");
+    }
+
+    [Fact]
     public async Task Should_execute_next_step_after_success()
     {
-        var stepId1 = Guid.Parse("216e4ed4-8e29-4c38-9265-7e5e1f55eb2a");
-        var step1 = A.Fake<IFlowStep>();
+        var step1 = A.Fake<FlowStep>();
+        var step2 = A.Fake<FlowStep>();
 
-        var stepId2 = Guid.Parse("216e4ed4-8e29-4c38-9265-7e5e1f55eb2b");
-        var step2 = A.Fake<IFlowStep>();
-
-        A.CallTo(() => step1.ExecuteAsync(A<FlowContext>._, A<FlowExecutionContext>._, A<CancellationToken>._))
+        A.CallTo(() => step1.ExecuteAsync(A<FlowExecutionContext>._, A<CancellationToken>._))
             .Returns(new ValueTask<FlowStepResult>(FlowStepResult.Next()));
 
-        A.CallTo(() => step2.ExecuteAsync(A<FlowContext>._, A<FlowExecutionContext>._, A<CancellationToken>._))
+        A.CallTo(() => step2.ExecuteAsync(A<FlowExecutionContext>._, A<CancellationToken>._))
             .Returns(new ValueTask<FlowStepResult>(FlowStepResult.Next()));
 
         var state = sut.CreateState(
@@ -285,16 +299,13 @@ public class DefaultFlowExecutorTests
     [Fact]
     public async Task Should_execute_next_step_after_ignored_error()
     {
-        var stepId1 = Guid.Parse("216e4ed4-8e29-4c38-9265-7e5e1f55eb2a");
-        var step1 = A.Fake<IFlowStep>();
+        var step1 = A.Fake<FlowStep>();
+        var step2 = A.Fake<FlowStep>();
 
-        var stepId2 = Guid.Parse("216e4ed4-8e29-4c38-9265-7e5e1f55eb2b");
-        var step2 = A.Fake<IFlowStep>();
-
-        A.CallTo(() => step1.ExecuteAsync(A<FlowContext>._, A<FlowExecutionContext>._, A<CancellationToken>._))
+        A.CallTo(() => step1.ExecuteAsync(A<FlowExecutionContext>._, A<CancellationToken>._))
             .Throws(new InvalidOperationException("Step Error"));
 
-        A.CallTo(() => step2.ExecuteAsync(A<FlowContext>._, A<FlowExecutionContext>._, A<CancellationToken>._))
+        A.CallTo(() => step2.ExecuteAsync(A<FlowExecutionContext>._, A<CancellationToken>._))
             .Returns(new ValueTask<FlowStepResult>(FlowStepResult.Next()));
 
         var state = sut.CreateState(
@@ -328,13 +339,10 @@ public class DefaultFlowExecutorTests
     [Fact]
     public async Task Should_not_execute_next_step_if_steps_completes_flow()
     {
-        var stepId1 = Guid.Parse("216e4ed4-8e29-4c38-9265-7e5e1f55eb2a");
-        var step1 = A.Fake<IFlowStep>();
+        var step1 = A.Fake<FlowStep>();
+        var step2 = A.Fake<FlowStep>();
 
-        var stepId2 = Guid.Parse("216e4ed4-8e29-4c38-9265-7e5e1f55eb2b");
-        var step2 = A.Fake<IFlowStep>();
-
-        A.CallTo(() => step1.ExecuteAsync(A<FlowContext>._, A<FlowExecutionContext>._, A<CancellationToken>._))
+        A.CallTo(() => step1.ExecuteAsync(A<FlowExecutionContext>._, A<CancellationToken>._))
             .Returns(new ValueTask<FlowStepResult>(FlowStepResult.Complete()));
 
         var state = sut.CreateState(
@@ -368,19 +376,14 @@ public class DefaultFlowExecutorTests
     [Fact]
     public async Task Should_not_execute_next_step_if_steps_jumps_to_specific_step()
     {
-        var stepId1 = Guid.Parse("216e4ed4-8e29-4c38-9265-7e5e1f55eb2a");
-        var step1 = A.Fake<IFlowStep>();
+        var step1 = A.Fake<FlowStep>();
+        var step2 = A.Fake<FlowStep>();
+        var step3 = A.Fake<FlowStep>();
 
-        var stepId2 = Guid.Parse("216e4ed4-8e29-4c38-9265-7e5e1f55eb2b");
-        var step2 = A.Fake<IFlowStep>();
-
-        var stepId3 = Guid.Parse("216e4ed4-8e29-4c38-9265-7e5e1f55eb2c");
-        var step3 = A.Fake<IFlowStep>();
-
-        A.CallTo(() => step1.ExecuteAsync(A<FlowContext>._, A<FlowExecutionContext>._, A<CancellationToken>._))
+        A.CallTo(() => step1.ExecuteAsync(A<FlowExecutionContext>._, A<CancellationToken>._))
             .Returns(new ValueTask<FlowStepResult>(FlowStepResult.Next(stepId3)));
 
-        A.CallTo(() => step3.ExecuteAsync(A<FlowContext>._, A<FlowExecutionContext>._, A<CancellationToken>._))
+        A.CallTo(() => step3.ExecuteAsync(A<FlowExecutionContext>._, A<CancellationToken>._))
             .Returns(new ValueTask<FlowStepResult>(FlowStepResult.Complete()));
 
         var state = sut.CreateState(
@@ -417,10 +420,9 @@ public class DefaultFlowExecutorTests
     [Fact]
     public async Task Should_detect_self_executing_step()
     {
-        var stepId1 = Guid.NewGuid();
-        var step1 = A.Fake<IFlowStep>();
+        var step1 = A.Fake<FlowStep>();
 
-        A.CallTo(() => step1.ExecuteAsync(A<FlowContext>._, A<FlowExecutionContext>._, A<CancellationToken>._))
+        A.CallTo(() => step1.ExecuteAsync(A<FlowExecutionContext>._, A<CancellationToken>._))
             .Returns(new ValueTask<FlowStepResult>(FlowStepResult.Next(stepId1)));
 
         var state = sut.CreateState(
@@ -450,16 +452,13 @@ public class DefaultFlowExecutorTests
     [Fact]
     public async Task Should_detect_loop()
     {
-        var stepId1 = Guid.Parse("216e4ed4-8e29-4c38-9265-7e5e1f55eb2a");
-        var step1 = A.Fake<IFlowStep>();
+        var step1 = A.Fake<FlowStep>();
+        var step2 = A.Fake<FlowStep>();
 
-        var stepId2 = Guid.Parse("216e4ed4-8e29-4c38-9265-7e5e1f55eb2b");
-        var step2 = A.Fake<IFlowStep>();
-
-        A.CallTo(() => step1.ExecuteAsync(A<FlowContext>._, A<FlowExecutionContext>._, A<CancellationToken>._))
+        A.CallTo(() => step1.ExecuteAsync(A<FlowExecutionContext>._, A<CancellationToken>._))
             .Returns(new ValueTask<FlowStepResult>(FlowStepResult.Next()));
 
-        A.CallTo(() => step2.ExecuteAsync(A<FlowContext>._, A<FlowExecutionContext>._, A<CancellationToken>._))
+        A.CallTo(() => step2.ExecuteAsync(A<FlowExecutionContext>._, A<CancellationToken>._))
             .Returns(new ValueTask<FlowStepResult>(FlowStepResult.Next()));
 
         var state = sut.CreateState(
@@ -490,16 +489,13 @@ public class DefaultFlowExecutorTests
     [Fact]
     public async Task Should_detect_loop_by_result()
     {
-        var stepId1 = Guid.Parse("216e4ed4-8e29-4c38-9265-7e5e1f55eb2a");
-        var step1 = A.Fake<IFlowStep>();
+        var step1 = A.Fake<FlowStep>();
+        var step2 = A.Fake<FlowStep>();
 
-        var stepId2 = Guid.Parse("216e4ed4-8e29-4c38-9265-7e5e1f55eb2b");
-        var step2 = A.Fake<IFlowStep>();
-
-        A.CallTo(() => step1.ExecuteAsync(A<FlowContext>._, A<FlowExecutionContext>._, A<CancellationToken>._))
+        A.CallTo(() => step1.ExecuteAsync(A<FlowExecutionContext>._, A<CancellationToken>._))
             .Returns(new ValueTask<FlowStepResult>(FlowStepResult.Next(stepId2)));
 
-        A.CallTo(() => step2.ExecuteAsync(A<FlowContext>._, A<FlowExecutionContext>._, A<CancellationToken>._))
+        A.CallTo(() => step2.ExecuteAsync(A<FlowExecutionContext>._, A<CancellationToken>._))
             .Returns(new ValueTask<FlowStepResult>(FlowStepResult.Next(stepId1)));
 
         var state = sut.CreateState(
@@ -527,15 +523,189 @@ public class DefaultFlowExecutorTests
         await Verify(state).AddNamedGuid(stepId1, "StepId1").AddNamedGuid(stepId2, "StepId2");
     }
 
-    private static void AssertPrepared(IFlowStep step, int count)
+    [Theory]
+    [InlineData(ExecutionStatus.Failed)]
+    [InlineData(ExecutionStatus.Completed)]
+    public async Task Should_throw_exception_if_step_already_completed(ExecutionStatus status)
     {
-        A.CallTo(() => step.PrepareAsync(A<FlowContext>._, A<FlowExecutionContext>._, A<CancellationToken>._))
+        var step1 = A.Fake<FlowStep>();
+
+        var state = sut.CreateState(
+            new CreateFlowInstanceRequest<TestFlowContext>
+            {
+                Context = new TestFlowContext(),
+                DefinitionId = Guid.NewGuid().ToString(),
+                Definition = new FlowDefinition
+                {
+                    Steps = new Dictionary<Guid, FlowStepDefinition>
+                    {
+                        [stepId1] = new FlowStepDefinition { Step = step1 },
+                    },
+                    InitialStep = stepId1,
+                },
+                OwnerId = Guid.NewGuid().ToString(),
+            });
+
+        state.Steps[stepId1] = new ExecutionStepState
+        {
+            Status = status,
+        };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ExecuteAsync(state, default));
+    }
+
+    [Fact]
+    public async Task Should_throw_exception_if_next_step_id_is_not_defined()
+    {
+        var step1 = A.Fake<FlowStep>();
+
+        var state = sut.CreateState(
+            new CreateFlowInstanceRequest<TestFlowContext>
+            {
+                Context = new TestFlowContext(),
+                DefinitionId = Guid.NewGuid().ToString(),
+                Definition = new FlowDefinition
+                {
+                    Steps = new Dictionary<Guid, FlowStepDefinition>
+                    {
+                        [stepId1] = new FlowStepDefinition { Step = step1 },
+                    },
+                    InitialStep = stepId1,
+                },
+                OwnerId = Guid.NewGuid().ToString(),
+            });
+
+        state.NextStepId = Guid.Empty;
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ExecuteAsync(state, default));
+    }
+
+    [Fact]
+    public async Task Should_throw_exception_if_next_step_id_is_not_valid()
+    {
+        var step1 = A.Fake<FlowStep>();
+
+        var state = sut.CreateState(
+            new CreateFlowInstanceRequest<TestFlowContext>
+            {
+                Context = new TestFlowContext(),
+                DefinitionId = Guid.NewGuid().ToString(),
+                Definition = new FlowDefinition
+                {
+                    Steps = new Dictionary<Guid, FlowStepDefinition>
+                    {
+                        [stepId1] = new FlowStepDefinition { Step = step1 },
+                    },
+                    InitialStep = stepId1,
+                },
+                OwnerId = Guid.NewGuid().ToString(),
+            });
+
+        state.NextStepId = stepId2;
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ExecuteAsync(state, default));
+    }
+
+    [Fact]
+    public async Task Should_fail_if_step_returns_null()
+    {
+        var step1 = A.Fake<FlowStep>();
+
+        A.CallTo(() => step1.ExecuteAsync(A<FlowExecutionContext>._, A<CancellationToken>._))
+            .Returns(default(ValueTask<FlowStepResult>));
+
+        var state = sut.CreateState(
+            new CreateFlowInstanceRequest<TestFlowContext>
+            {
+                Context = new TestFlowContext(),
+                DefinitionId = Guid.NewGuid().ToString(),
+                Definition = new FlowDefinition
+                {
+                    Steps = new Dictionary<Guid, FlowStepDefinition>
+                    {
+                        [stepId1] = new FlowStepDefinition { Step = step1 },
+                    },
+                    InitialStep = stepId1,
+                },
+                OwnerId = Guid.NewGuid().ToString(),
+            });
+
+        await sut.ExecuteAsync(state, default);
+
+        await Verify(state).AddNamedGuid(stepId1, "StepId1");
+    }
+
+    [Fact]
+    public async Task Should_execute_middlewares()
+    {
+        var middleware1 = A.Fake<IFlowMiddleware>();
+        var middleware2 = A.Fake<IFlowMiddleware>();
+
+        A.CallTo(() => middleware1.InvokeAsync(A<FlowExecutionContext>._, A<NextStepDelegate>._, A<CancellationToken>._))
+            .Invokes(c => c.GetArgument<NextStepDelegate>(1)!.Invoke());
+
+        A.CallTo(() => middleware2.InvokeAsync(A<FlowExecutionContext>._, A<NextStepDelegate>._, A<CancellationToken>._))
+            .Invokes(c => c.GetArgument<NextStepDelegate>(1)!.Invoke());
+
+        var localSut = CreateSut(middleware1, middleware2);
+
+        var step1 = A.Fake<FlowStep>();
+
+        A.CallTo(() => step1.ExecuteAsync(A<FlowExecutionContext>._, A<CancellationToken>._))
+            .Returns(new ValueTask<FlowStepResult>(FlowStepResult.Next()));
+
+        var state = sut.CreateState(
+            new CreateFlowInstanceRequest<TestFlowContext>
+            {
+                Context = new TestFlowContext(),
+                DefinitionId = Guid.NewGuid().ToString(),
+                Definition = new FlowDefinition
+                {
+                    Steps = new Dictionary<Guid, FlowStepDefinition>
+                    {
+                        [stepId1] = new FlowStepDefinition { Step = step1 },
+                    },
+                    InitialStep = stepId1,
+                },
+                OwnerId = Guid.NewGuid().ToString(),
+            });
+
+        await localSut.ExecuteAsync(state, default);
+
+        A.CallTo(() => middleware1.InvokeAsync(A<FlowExecutionContext>._, A<NextStepDelegate>._, A<CancellationToken>._))
+            .MustHaveHappened();
+
+        A.CallTo(() => middleware2.InvokeAsync(A<FlowExecutionContext>._, A<NextStepDelegate>._, A<CancellationToken>._))
+            .MustHaveHappened();
+    }
+
+    private static void AssertPrepared(FlowStep step, int count)
+    {
+        A.CallTo(() => step.PrepareAsync(A<FlowExecutionContext>._, A<CancellationToken>._))
             .MustHaveHappenedANumberOfTimesMatching(x => x == count);
     }
 
-    private static void AssertExecuted(IFlowStep step, int count)
+    private static void AssertExecuted(FlowStep step, int count)
     {
-        A.CallTo(() => step.ExecuteAsync(A<FlowContext>._, A<FlowExecutionContext>._, A<CancellationToken>._))
+        A.CallTo(() => step.ExecuteAsync(A<FlowExecutionContext>._, A<CancellationToken>._))
             .MustHaveHappenedANumberOfTimesMatching(x => x == count);
+    }
+
+    private DefaultFlowExecutor<TestFlowContext> CreateSut(params IFlowMiddleware[] middlewares)
+    {
+        var clock = A.Fake<IClock>();
+
+        A.CallTo(() => clock.GetCurrentInstant())
+            .ReturnsLazily(() => now);
+
+        return new DefaultFlowExecutor<TestFlowContext>(
+            middlewares,
+            new DefaultRetryErrorPolicy<TestFlowContext>(),
+            expressionEngine,
+            A.Fake<IServiceProvider>(),
+            Options.Create(new FlowOptions()))
+        {
+            Clock = clock,
+        };
     }
 }

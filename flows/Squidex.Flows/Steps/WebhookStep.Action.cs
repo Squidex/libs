@@ -6,17 +6,20 @@
 // ==========================================================================
 
 using System.Text;
+using Generator.Equals;
 using Squidex.Flows.Steps.Utils;
 
 namespace Squidex.Flows.Steps;
 
-public sealed partial class WebhookStep
+public sealed partial record WebhookStep
 {
+    [IgnoreEquality]
     public string? Signature { get; set; }
 
+    [IgnoreEquality]
     public Dictionary<string, string>? ParsedHeaders { get; set; }
 
-    public ValueTask PrepareAsync(FlowContext context, FlowExecutionContext executionContext,
+    public override ValueTask PrepareAsync(FlowExecutionContext executionContext,
         CancellationToken ct)
     {
         ParsedHeaders = ParseHeaders(Headers);
@@ -51,7 +54,7 @@ public sealed partial class WebhookStep
         return headersDictionary;
     }
 
-    public async ValueTask<FlowStepResult> ExecuteAsync(FlowContext context, FlowExecutionContext executionContext,
+    public override async ValueTask<FlowStepResult> ExecuteAsync(FlowExecutionContext executionContext,
         CancellationToken ct)
     {
         var method = HttpMethod.Post;

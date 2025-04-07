@@ -29,16 +29,19 @@ public sealed class DefaultFlowManager<TContext>(
         await flowStateStore.StoreAsync(states, ct);
     }
 
+    public async Task<FlowExecutionState<TContext>> SimulateAsync(CreateFlowInstanceRequest<TContext> request,
+        CancellationToken ct)
+    {
+        var state = flowExecutor.CreateState(request);
+
+        await flowExecutor.SimulateAsync(state, ct);
+        return state;
+    }
+
     public Task ValidateAsync(FlowDefinition definition, AddError addError,
         CancellationToken ct)
     {
         return flowExecutor.ValidateAsync(definition, addError, ct);
-    }
-
-    public Task SimulateAsync(FlowExecutionState<TContext> state,
-        CancellationToken ct)
-    {
-        return flowExecutor.SimulateAsync(state, ct);
     }
 
     public Task CancelByInstanceIdAsync(Guid instanceId,

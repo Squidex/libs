@@ -23,7 +23,7 @@
         {
           Started: DateTimeOffset_1,
           Completed: DateTimeOffset_1,
-          Error: Step Error
+          Error: Step does not return a valid result.
         }
       ]
     }

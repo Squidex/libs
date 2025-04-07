@@ -7,9 +7,11 @@
 
 namespace Squidex.Flows.Internal.Execution;
 
-public struct ExecutionOptions
+public interface IFlowExpressionEngine
 {
-    public bool IsSimulation { get; set; }
+    bool Evaluate<T>(string? expression, T value);
 
-    public TimeSpan Timeout { get; set; }
+    ValueTask<string?> RenderAsync<T>(string? expression, T value, ExpressionFallback fallback = default);
+
+    string Serialize<T>(T value);
 }

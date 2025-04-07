@@ -29,7 +29,7 @@ public static class FlowsServiceExtensions
             .As<IFlowExecutor<TContext>>();
 
         services.AddSingletonAs<DefaultRetryErrorPolicy<TContext>>()
-            .As<IErrorPolicy<TContext>>();
+            .As<IFlowErrorPolicy<TContext>>();
 
         services.AddSingletonAs<FlowConsoleMiddleware>()
             .As<IFlowMiddleware>();

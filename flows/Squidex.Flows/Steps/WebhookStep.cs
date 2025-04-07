@@ -6,6 +6,7 @@
 // ==========================================================================
 
 using System.ComponentModel.DataAnnotations;
+using Generator.Equals;
 
 namespace Squidex.Flows.Steps;
 
@@ -16,7 +17,8 @@ namespace Squidex.Flows.Steps;
     Display = "Send webhook",
     Description = "Invoke HTTP endpoints on a target system.",
     ReadMore = "https://en.wikipedia.org/wiki/weebhook")]
-public sealed partial class WebhookStep : IFlowStep
+[Equatable]
+public sealed partial record WebhookStep : FlowStep
 {
     [Required]
     [Display(Name = "Method", Description = "The type of the request.")]

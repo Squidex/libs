@@ -10,9 +10,9 @@ using NodaTime;
 
 namespace Squidex.Flows.Internal.Execution;
 
-public sealed class DefaultRetryErrorPolicy<TContext> : IErrorPolicy<TContext> where TContext : FlowContext
+public sealed class DefaultRetryErrorPolicy<TContext> : IFlowErrorPolicy<TContext> where TContext : FlowContext
 {
-    public Instant? ShouldRetry(FlowExecutionState<TContext> state, ExecutionStepState stepState, IFlowStep step, Instant now)
+    public Instant? ShouldRetry(FlowExecutionState<TContext> state, ExecutionStepState stepState, FlowStep step, Instant now)
     {
         if (step.GetType().GetCustomAttribute<NoRetryAttribute>() != null)
         {

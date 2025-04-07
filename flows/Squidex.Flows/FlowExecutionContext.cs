@@ -11,12 +11,18 @@ using Squidex.Flows.Internal.Execution;
 namespace Squidex.Flows;
 
 public sealed class FlowExecutionContext(
-    IExpressionEngine expressionEngine,
+    IFlowExpressionEngine expressionEngine,
+    FlowStep step,
     IServiceProvider serviceProvider,
+    FlowContext context,
     Action<string, string?> logger,
     bool isSimulation)
 {
     public bool IsSimulation => isSimulation;
+
+    public FlowContext Context => context;
+
+    public FlowStep Step => step;
 
     public T Resolve<T>() where T : class
     {

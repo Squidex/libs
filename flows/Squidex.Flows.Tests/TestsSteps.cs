@@ -12,58 +12,58 @@ using System.ComponentModel.DataAnnotations;
 namespace Squidex.Flows;
 
 [NoRetry]
-public sealed class NotRetryableNoopStep : IFlowStep
+public sealed record NotRetryableNoopStep : FlowStep
 {
-    public ValueTask<FlowStepResult> ExecuteAsync(FlowContext context, FlowExecutionContext executionContext,
+    public override ValueTask<FlowStepResult> ExecuteAsync(FlowExecutionContext executionContext,
         CancellationToken ct)
     {
         return new ValueTask<FlowStepResult>(FlowStepResult.Next());
     }
 }
 
-public sealed class NoopStep : IFlowStep
+public sealed record NoopStep : FlowStep
 {
-    public ValueTask<FlowStepResult> ExecuteAsync(FlowContext context, FlowExecutionContext executionContext,
+    public override ValueTask<FlowStepResult> ExecuteAsync(FlowExecutionContext executionContext,
         CancellationToken ct)
     {
         return new ValueTask<FlowStepResult>(FlowStepResult.Next());
     }
 }
 
-public sealed class NoopStepWithRequiredProperty : IFlowStep
+public sealed record NoopStepWithRequiredProperty : FlowStep
 {
     [Required]
     public string Required { get; set; }
 
-    public ValueTask<FlowStepResult> ExecuteAsync(FlowContext context, FlowExecutionContext executionContext,
+    public override ValueTask<FlowStepResult> ExecuteAsync(FlowExecutionContext executionContext,
         CancellationToken ct)
     {
         return new ValueTask<FlowStepResult>(FlowStepResult.Next());
     }
 }
 
-public sealed class NoopStepWithCustomValidation : IFlowStep
+public sealed record NoopStepWithCustomValidation : FlowStep
 {
-    public ValueTask ValidateAsync(FlowValidationContext validationContext, AddStepError addError,
+    public override ValueTask ValidateAsync(FlowValidationContext validationContext, AddStepError addError,
         CancellationToken ct)
     {
         addError("Custom", "The Custom field has validation rules.");
         return default;
     }
 
-    public ValueTask<FlowStepResult> ExecuteAsync(FlowContext context, FlowExecutionContext executionContext,
+    public override ValueTask<FlowStepResult> ExecuteAsync(FlowExecutionContext executionContext,
         CancellationToken ct)
     {
         return new ValueTask<FlowStepResult>(FlowStepResult.Next());
     }
 }
 
-public sealed class NoopStepWithExpression : IFlowStep
+public sealed record NoopStepWithExpression : FlowStep
 {
     [Expression]
     public string? Property { get; set; }
 
-    public ValueTask<FlowStepResult> ExecuteAsync(FlowContext context, FlowExecutionContext executionContext,
+    public override ValueTask<FlowStepResult> ExecuteAsync(FlowExecutionContext executionContext,
         CancellationToken ct)
     {
         return new ValueTask<FlowStepResult>(FlowStepResult.Next());

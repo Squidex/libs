@@ -19,7 +19,7 @@ public class DefaultFlowExecutor_ValidationTests
     {
         sut = new DefaultFlowExecutor<TestFlowContext>([],
             new NoRetryErrorPolicy<TestFlowContext>(),
-            A.Fake<IExpressionEngine>(),
+            A.Fake<IFlowExpressionEngine>(),
             A.Fake<IServiceProvider>(),
             Options.Create(new FlowOptions()));
     }
@@ -150,7 +150,7 @@ public class DefaultFlowExecutor_ValidationTests
     [Fact]
     public async Task Should_not_error_is_is_valid()
     {
-        var stepId1 = Guid.NewGuid();
+        var stepId1 = Guid.Parse("216e4ed4-8e29-4c38-9265-7e5e1f55eb2a");
         var stepId2 = Guid.NewGuid();
 
         var definition = new FlowDefinition

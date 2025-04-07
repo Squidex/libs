@@ -6,7 +6,6 @@
 // ==========================================================================
 
 using System.ComponentModel.DataAnnotations;
-using System.Reflection;
 using Microsoft.Extensions.Options;
 using NodaTime;
 using Squidex.Text;
@@ -15,19 +14,23 @@ namespace Squidex.Flows.Internal.Execution;
 
 public sealed class DefaultFlowExecutor<TContext>(
     IEnumerable<IFlowMiddleware> middlewares,
-    IErrorPolicy<TContext> errorPolicy,
-    IExpressionEngine expressionEngine,
+    IFlowErrorPolicy<TContext> errorPolicy,
+    IFlowExpressionEngine expressionEngine,
     IServiceProvider serviceProvider,
     IOptions<FlowOptions> flowOptions)
     : IFlowExecutor<TContext> where TContext : FlowContext
 {
-    private readonly List<IFlowMiddleware> reverseMiddlewares = middlewares.Reverse().ToList();
+    private readonly PipelineDelegate pipeline = BuildPipeline(middlewares);
+    private readonly TimeSpan defaultTimeout = flowOptions.Value.DefaultTimeout;
 
     public IClock Clock { get; set; } = SystemClock.Instance;
 
     public async Task ValidateAsync(FlowDefinition definition, AddError addError,
         CancellationToken ct)
     {
+        ArgumentNullException.ThrowIfNull(nameof(definition));
+        ArgumentNullException.ThrowIfNull(nameof(addError));
+
         if (definition.Steps.Count == 0)
         {
             addError(string.Empty, ValidationErrorType.NoSteps);
@@ -62,7 +65,7 @@ public sealed class DefaultFlowExecutor<TContext>(
         }
     }
 
-    private static void ValidateProperties(AddError addError, Guid stepId, IFlowStep step)
+    private static void ValidateProperties(AddError addError, Guid stepId, FlowStep step)
     {
         var context = new ValidationContext(step);
         var errors = new List<ValidationResult>();
@@ -118,7 +121,7 @@ public sealed class DefaultFlowExecutor<TContext>(
             Description = request.Description ?? string.Empty,
             InstanceId = Guid.NewGuid(),
             NextRun = Clock.GetCurrentInstant(),
-            NextStep = request.Definition.InitialStep,
+            NextStepId = request.Definition.InitialStep,
             OwnerId = request.OwnerId,
             ScheduleKey = scheduleKey,
             SchedulePartition = schedulePartition,
@@ -132,8 +135,6 @@ public sealed class DefaultFlowExecutor<TContext>(
     {
         ArgumentNullException.ThrowIfNull(nameof(state));
 
-        var options = new ExecutionOptions { IsSimulation = true };
-
         while (true)
         {
             if (state.Status is ExecutionStatus.Completed or ExecutionStatus.Failed)
@@ -141,7 +142,7 @@ public sealed class DefaultFlowExecutor<TContext>(
                 break;
             }
 
-            await ExecuteCoreAsync(state, options, ct);
+            await ExecuteCoreAsync(state, true, default, ct);
         }
     }
 
@@ -149,8 +150,6 @@ public sealed class DefaultFlowExecutor<TContext>(
         CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(nameof(state));
-
-        var options = new ExecutionOptions { Timeout = flowOptions.Value.DefaultTimeout };
 
         while (true)
         {
@@ -165,16 +164,16 @@ public sealed class DefaultFlowExecutor<TContext>(
                 break;
             }
 
-            await ExecuteCoreAsync(state, options, ct);
+            await ExecuteCoreAsync(state, false, defaultTimeout, ct);
         }
     }
 
-    private async Task ExecuteCoreAsync(FlowExecutionState<TContext> state, ExecutionOptions options,
+    private async Task ExecuteCoreAsync(FlowExecutionState<TContext> state, bool simulate, TimeSpan timeout,
         CancellationToken ct)
     {
         var definition = state.Definition;
 
-        var stepId = state.NextStep;
+        var stepId = state.NextStepId;
         if (stepId == default)
         {
             throw new InvalidOperationException("Flow has not next step.");
@@ -201,8 +200,15 @@ public sealed class DefaultFlowExecutor<TContext>(
             }
         }
 
-        var executionContext = new FlowExecutionContext(expressionEngine, serviceProvider, Log, options.IsSimulation);
-        using (var cts = CreateCancellationTokenSource(options, ct))
+        var executionContext = new FlowExecutionContext(
+            expressionEngine,
+            stepDefinition.Step,
+            serviceProvider,
+            state.Context,
+            Log,
+            simulate);
+
+        using (var cts = CreateCancellationTokenSource(timeout, ct))
         {
             // Detect circular references to other steps.
             if (stepState.Status is ExecutionStatus.Completed or ExecutionStatus.Failed)
@@ -210,15 +216,12 @@ public sealed class DefaultFlowExecutor<TContext>(
                 throw new InvalidOperationException("Flow step has already been completed.");
             }
 
-            await PrepareAsync(state, stepDefinition.Step, stepState, executionContext, cts.Token);
+            await PrepareAsync(executionContext, stepDefinition.Step, stepState, cts.Token);
             try
             {
                 stepState.Status = ExecutionStatus.Running;
 
-                // The pipeline is built for each execution, as the costs are acceptable.
-                var pipeline = BuildPipeline(state.Context, executionContext, stepDefinition.Step, ct);
-
-                var result = await pipeline() ??
+                var result = await pipeline(executionContext, ct) ??
                     throw new InvalidOperationException("Step does not return a valid result.");
 
                 HandleSuccess(state, stepDefinition, stepState, result);
@@ -247,7 +250,7 @@ public sealed class DefaultFlowExecutor<TContext>(
 
         if (stepDefinition.IgnoreError)
         {
-            var nextId = GetNextStep(state, stepDefinition, FlowStepResult.Next());
+            var nextId = state.GetNextStep(stepDefinition, default);
             if (nextId != default)
             {
                 state.Next(nextId, Instant.MinValue);
@@ -291,7 +294,7 @@ public sealed class DefaultFlowExecutor<TContext>(
 
         if (result.Type == FlowStepResultType.Next)
         {
-            var nextId = GetNextStep(state, stepDefinition, result);
+            var nextId = state.GetNextStep(stepDefinition, result.StepId);
             if (nextId != default)
             {
                 state.Next(nextId, result.Scheduled);
@@ -302,19 +305,22 @@ public sealed class DefaultFlowExecutor<TContext>(
         state.Complete(now);
     }
 
-    private CancellationTokenSource CreateCancellationTokenSource(ExecutionOptions options, CancellationToken ct)
+    private static CancellationTokenSource CreateCancellationTokenSource(TimeSpan timeout, CancellationToken ct)
     {
         var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 
-        if (options.Timeout > TimeSpan.Zero)
+        if (timeout > TimeSpan.Zero)
         {
-            cts.CancelAfter(options.Timeout);
+            cts.CancelAfter(timeout);
         }
 
         return cts;
     }
 
-    private static async Task PrepareAsync(FlowExecutionState<TContext> state, IFlowStep step, ExecutionStepState stepState, FlowExecutionContext executionContext,
+    private static async Task PrepareAsync(
+        FlowExecutionContext executionContext,
+        FlowStep step,
+        ExecutionStepState stepState,
         CancellationToken ct)
     {
         if (stepState.IsPrepared)
@@ -322,72 +328,30 @@ public sealed class DefaultFlowExecutor<TContext>(
             return;
         }
 
-        foreach (var property in step.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public))
-        {
-            if (property.PropertyType != typeof(string))
-            {
-                continue;
-            }
-
-            if (!property.CanWrite || !property.CanRead)
-            {
-                continue;
-            }
-
-            var attribute = property.GetCustomAttribute<ExpressionAttribute>();
-            if (attribute == null)
-            {
-                continue;
-            }
-
-            var expressionSource = property.GetValue(step, null) as string;
-            var expressionResult = await executionContext.RenderAsync(expressionSource, state.Context, attribute.Fallback);
-
-            property.SetValue(step, expressionResult, null);
-        }
-
-        await step.PrepareAsync(state.Context, executionContext, ct);
+        await step.EvaluateExpressionsAsync(executionContext);
+        await step.PrepareAsync(executionContext, ct);
         stepState.IsPrepared = true;
     }
 
-    private NextStepDelegate BuildPipeline(TContext context, FlowExecutionContext executionContext, IFlowStep step,
-        CancellationToken ct)
+    private static PipelineDelegate BuildPipeline(IEnumerable<IFlowMiddleware> middlewares)
     {
-        NextStepDelegate next = () =>
+        return new PipelineDelegate((executionContext, ct) =>
         {
-            return step.ExecuteAsync(context, executionContext, ct);
-        };
-
-        foreach (var middleware in reverseMiddlewares)
-        {
-            var currentNext = next;
-            next = () =>
+            NextStepDelegate next = () =>
             {
-                return middleware.InvokeAsync(context, executionContext, step, currentNext, ct);
+                return executionContext.Step.ExecuteAsync(executionContext, ct);
             };
-        }
 
-        return next;
-    }
+            foreach (var middleware in middlewares.Reverse())
+            {
+                var currentNext = next;
+                next = () =>
+                {
+                    return middleware.InvokeAsync(executionContext, currentNext, ct);
+                };
+            }
 
-    private static Guid GetNextStep(FlowExecutionState<TContext> state, FlowStepDefinition currentStep, FlowStepResult result)
-    {
-        var nextId = result.StepId;
-        if (nextId == default)
-        {
-            nextId = currentStep.NextStepId;
-        }
-
-        if (!state.Definition.Steps.ContainsKey(nextId))
-        {
-            return default;
-        }
-
-        if (state.Step(nextId).Status != ExecutionStatus.Pending)
-        {
-            return default;
-        }
-
-        return nextId;
+            return next();
+        });
     }
 }
