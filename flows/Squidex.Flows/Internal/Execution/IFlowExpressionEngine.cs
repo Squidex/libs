@@ -13,5 +13,7 @@ public interface IFlowExpressionEngine
 
     ValueTask<string?> RenderAsync<T>(string? expression, T value, ExpressionFallback fallback = default);
 
-    string Serialize<T>(T value);
+    string SerializeJson<T>(T value);
+
+    T DeserializeJson<T>(string json);
 }

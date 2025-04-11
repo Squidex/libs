@@ -33,16 +33,34 @@ public sealed class EFFlowStateStore<TDbContext, TContext>(
                 ct);
     }
 
-    public async Task CancelByInstanceIdAsync(Guid instanceId,
+    public async Task<bool> CancelByInstanceIdAsync(Guid instanceId,
         CancellationToken ct = default)
     {
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
 
-        await dbContext.Set<EFFlowStateEntity>()
-            .Where(x => x.Id == instanceId)
-            .ExecuteUpdateAsync(b => b
-                .SetProperty(x => x.DueTime, (DateTimeOffset?)null),
-                ct);
+        var numUpdates =
+            await dbContext.Set<EFFlowStateEntity>()
+                .Where(x => x.Id == instanceId)
+                .ExecuteUpdateAsync(b => b
+                    .SetProperty(x => x.DueTime, (DateTimeOffset?)null),
+                    ct);
+
+        return numUpdates > 0;
+    }
+
+    public async Task<bool> EnqueueAsync(Guid instanceId, Instant nextAttempt,
+        CancellationToken ct = default)
+    {
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
+
+        var numUpdates =
+            await dbContext.Set<EFFlowStateEntity>()
+                .Where(x => x.Id == instanceId)
+                .ExecuteUpdateAsync(b => b
+                    .SetProperty(x => x.DueTime, nextAttempt.ToDateTimeOffset()),
+                    ct);
+
+        return numUpdates > 0;
     }
 
     public async Task CancelByOwnerIdAsync(string ownerId,
@@ -54,18 +72,6 @@ public sealed class EFFlowStateStore<TDbContext, TContext>(
             .Where(x => x.OwnerId == ownerId)
             .ExecuteUpdateAsync(b => b
                 .SetProperty(x => x.DueTime, (DateTimeOffset?)null),
-                ct);
-    }
-
-    public async Task EnqueueAsync(Guid instanceId, Instant nextAttempt,
-        CancellationToken ct = default)
-    {
-        await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
-
-        await dbContext.Set<EFFlowStateEntity>()
-            .Where(x => x.Id == instanceId)
-            .ExecuteUpdateAsync(b => b
-                .SetProperty(x => x.DueTime, nextAttempt.ToDateTimeOffset()),
                 ct);
     }
 

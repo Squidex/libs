@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NodaTime;
 using Squidex.Flows.Internal;
@@ -59,9 +60,9 @@ public class DefaultFlowExecutorTests
     }
 
     [Theory]
-    [InlineData(ExecutionStatus.Failed)]
-    [InlineData(ExecutionStatus.Completed)]
-    public async Task Should_execute_nothing_if_already_completed(ExecutionStatus status)
+    [InlineData(FlowExecutionStatus.Failed)]
+    [InlineData(FlowExecutionStatus.Completed)]
+    public async Task Should_execute_nothing_if_already_completed(FlowExecutionStatus status)
     {
         var step1 = A.Fake<FlowStep>();
 
@@ -524,9 +525,9 @@ public class DefaultFlowExecutorTests
     }
 
     [Theory]
-    [InlineData(ExecutionStatus.Failed)]
-    [InlineData(ExecutionStatus.Completed)]
-    public async Task Should_throw_exception_if_step_already_completed(ExecutionStatus status)
+    [InlineData(FlowExecutionStatus.Failed)]
+    [InlineData(FlowExecutionStatus.Completed)]
+    public async Task Should_throw_exception_if_step_already_completed(FlowExecutionStatus status)
     {
         var step1 = A.Fake<FlowStep>();
 
@@ -546,7 +547,7 @@ public class DefaultFlowExecutorTests
                 OwnerId = Guid.NewGuid().ToString(),
             });
 
-        state.Steps[stepId1] = new ExecutionStepState
+        state.Steps[stepId1] = new FlowExecutionStepState
         {
             Status = status,
         };
@@ -699,11 +700,13 @@ public class DefaultFlowExecutorTests
             .ReturnsLazily(() => now);
 
         return new DefaultFlowExecutor<TestFlowContext>(
+            A.Fake<IServiceProvider>(),
             middlewares,
+            [],
             new DefaultRetryErrorPolicy<TestFlowContext>(),
             expressionEngine,
-            A.Fake<IServiceProvider>(),
-            Options.Create(new FlowOptions()))
+            Options.Create(new FlowOptions()),
+            A.Fake<ILogger<DefaultFlowExecutor<TestFlowContext>>>())
         {
             Clock = clock,
         };

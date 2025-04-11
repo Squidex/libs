@@ -6,6 +6,7 @@
 // ==========================================================================
 
 using System.ComponentModel.DataAnnotations;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NodaTime;
 using Squidex.Text;
@@ -13,15 +14,18 @@ using Squidex.Text;
 namespace Squidex.Flows.Internal.Execution;
 
 public sealed class DefaultFlowExecutor<TContext>(
+    IServiceProvider serviceProvider,
     IEnumerable<IFlowMiddleware> middlewares,
+    IEnumerable<IFlowExecutionCallback<TContext>> callbacks,
     IFlowErrorPolicy<TContext> errorPolicy,
     IFlowExpressionEngine expressionEngine,
-    IServiceProvider serviceProvider,
-    IOptions<FlowOptions> flowOptions)
+    IOptions<FlowOptions> flowOptions,
+    ILogger<DefaultFlowExecutor<TContext>> log)
     : IFlowExecutor<TContext> where TContext : FlowContext
 {
     private readonly PipelineDelegate pipeline = BuildPipeline(middlewares);
-    private readonly TimeSpan defaultTimeout = flowOptions.Value.DefaultTimeout;
+
+    private TimeSpan DefaultTimeout => flowOptions.Value.DefaultTimeout;
 
     public IClock Clock { get; set; } = SystemClock.Instance;
 
@@ -137,7 +141,7 @@ public sealed class DefaultFlowExecutor<TContext>(
 
         while (true)
         {
-            if (state.Status is ExecutionStatus.Completed or ExecutionStatus.Failed)
+            if (state.Status is FlowExecutionStatus.Completed or FlowExecutionStatus.Failed)
             {
                 break;
             }
@@ -153,7 +157,7 @@ public sealed class DefaultFlowExecutor<TContext>(
 
         while (true)
         {
-            if (state.Status is ExecutionStatus.Completed or ExecutionStatus.Failed)
+            if (state.Status is FlowExecutionStatus.Completed or FlowExecutionStatus.Failed)
             {
                 break;
             }
@@ -164,7 +168,7 @@ public sealed class DefaultFlowExecutor<TContext>(
                 break;
             }
 
-            await ExecuteCoreAsync(state, false, defaultTimeout, ct);
+            await ExecuteCoreAsync(state, false, DefaultTimeout, ct);
         }
     }
 
@@ -184,9 +188,9 @@ public sealed class DefaultFlowExecutor<TContext>(
             throw new InvalidOperationException($"Cannot find step with ID '{definition.InitialStep}'.");
         }
 
-        if (state.Status == ExecutionStatus.Scheduled)
+        if (state.Status == FlowExecutionStatus.Scheduled)
         {
-            state.Status = ExecutionStatus.Running;
+            state.Status = FlowExecutionStatus.Running;
         }
 
         var stepState = state.Step(stepId);
@@ -196,22 +200,22 @@ public sealed class DefaultFlowExecutor<TContext>(
         {
             lock (stepAttempt.Log)
             {
-                stepAttempt.Log.Add(new ExecutionStepLogEntry(Clock.GetCurrentInstant(), message, dump));
+                stepAttempt.Log.Add(new FlowExecutionStepLogEntry(Clock.GetCurrentInstant(), message, dump));
             }
         }
 
         var executionContext = new FlowExecutionContext(
             expressionEngine,
             stepDefinition.Step,
-            serviceProvider,
             state.Context,
+            serviceProvider,
             Log,
             simulate);
 
         using (var cts = CreateCancellationTokenSource(timeout, ct))
         {
             // Detect circular references to other steps.
-            if (stepState.Status is ExecutionStatus.Completed or ExecutionStatus.Failed)
+            if (stepState.Status is FlowExecutionStatus.Completed or FlowExecutionStatus.Failed)
             {
                 throw new InvalidOperationException("Flow step has already been completed.");
             }
@@ -219,7 +223,7 @@ public sealed class DefaultFlowExecutor<TContext>(
             await PrepareAsync(executionContext, stepDefinition.Step, stepState, cts.Token);
             try
             {
-                stepState.Status = ExecutionStatus.Running;
+                stepState.Status = FlowExecutionStatus.Running;
 
                 var result = await pipeline(executionContext, ct) ??
                     throw new InvalidOperationException("Step does not return a valid result.");
@@ -234,6 +238,24 @@ public sealed class DefaultFlowExecutor<TContext>(
             {
                 stepAttempt.Completed = Clock.GetCurrentInstant();
             }
+
+            await HandleCallbacksAsync(state, ct);
+        }
+    }
+
+    private async Task HandleCallbacksAsync(FlowExecutionState<TContext> state,
+        CancellationToken ct)
+    {
+        foreach (var callback in callbacks)
+        {
+            try
+            {
+                await callback.OnUpdateAsync(state, ct);
+            }
+            catch (Exception ex)
+            {
+                log.LogError(ex, "Failed to execute {callback}.", callback);
+            }
         }
     }
 
@@ -241,8 +263,8 @@ public sealed class DefaultFlowExecutor<TContext>(
         FlowExecutionState<TContext> state,
         Guid stepId,
         FlowStepDefinition stepDefinition,
-        ExecutionStepState stepState,
-        ExecutionStepAttempt stepAttempt,
+        FlowExecutionStepState stepState,
+        FlowExecutionStepAttempt stepAttempt,
         Exception ex)
     {
         // Ensure to take the time after the step execution and preparation.
@@ -270,7 +292,7 @@ public sealed class DefaultFlowExecutor<TContext>(
             else
             {
                 state.Failed(now);
-                stepState.Status = ExecutionStatus.Failed;
+                stepState.Status = FlowExecutionStatus.Failed;
             }
         }
 
@@ -283,14 +305,14 @@ public sealed class DefaultFlowExecutor<TContext>(
     private void HandleSuccess(
         FlowExecutionState<TContext> state,
         FlowStepDefinition stepDefinition,
-        ExecutionStepState stepState,
+        FlowExecutionStepState stepState,
         FlowStepResult result)
     {
         // Ensure to take the time after the step execution and preparation.
         var now = Clock.GetCurrentInstant();
 
         // This step has been successful (we do not support loops).
-        stepState.Status = ExecutionStatus.Completed;
+        stepState.Status = FlowExecutionStatus.Completed;
 
         if (result.Type == FlowStepResultType.Next)
         {
@@ -320,7 +342,7 @@ public sealed class DefaultFlowExecutor<TContext>(
     private static async Task PrepareAsync(
         FlowExecutionContext executionContext,
         FlowStep step,
-        ExecutionStepState stepState,
+        FlowExecutionStepState stepState,
         CancellationToken ct)
     {
         if (stepState.IsPrepared)

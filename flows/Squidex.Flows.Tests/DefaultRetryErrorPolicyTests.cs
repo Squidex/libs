@@ -18,7 +18,7 @@ public class DefaultRetryErrorPolicyTests
     [Fact]
     public void Should_not_retry_for_no_attempts()
     {
-        var stepState = new ExecutionStepState
+        var stepState = new FlowExecutionStepState
         {
             Attempts = [],
         };
@@ -31,11 +31,11 @@ public class DefaultRetryErrorPolicyTests
     [Fact]
     public void Should_not_retry_if_disabled_for_step()
     {
-        var stepState = new ExecutionStepState
+        var stepState = new FlowExecutionStepState
         {
             Attempts =
             [
-                new ExecutionStepAttempt(),
+                new FlowExecutionStepAttempt(),
             ],
         };
 
@@ -47,11 +47,11 @@ public class DefaultRetryErrorPolicyTests
     [Fact]
     public void Should_retry_after_1_attempts()
     {
-        var stepState = new ExecutionStepState
+        var stepState = new FlowExecutionStepState
         {
             Attempts =
             [
-                new ExecutionStepAttempt(),
+                new FlowExecutionStepAttempt(),
             ],
         };
 
@@ -63,12 +63,12 @@ public class DefaultRetryErrorPolicyTests
     [Fact]
     public void Should_retry_after_2_attempts()
     {
-        var stepState = new ExecutionStepState
+        var stepState = new FlowExecutionStepState
         {
             Attempts =
             [
-                new ExecutionStepAttempt(),
-                new ExecutionStepAttempt(),
+                new FlowExecutionStepAttempt(),
+                new FlowExecutionStepAttempt(),
             ],
         };
 
@@ -80,13 +80,13 @@ public class DefaultRetryErrorPolicyTests
     [Fact]
     public void Should_retry_after_3_attempts()
     {
-        var stepState = new ExecutionStepState
+        var stepState = new FlowExecutionStepState
         {
             Attempts =
             [
-                new ExecutionStepAttempt(),
-                new ExecutionStepAttempt(),
-                new ExecutionStepAttempt(),
+                new FlowExecutionStepAttempt(),
+                new FlowExecutionStepAttempt(),
+                new FlowExecutionStepAttempt(),
             ],
         };
 
@@ -98,14 +98,14 @@ public class DefaultRetryErrorPolicyTests
     [Fact]
     public void Should_retry_after_4_attempts()
     {
-        var stepState = new ExecutionStepState
+        var stepState = new FlowExecutionStepState
         {
             Attempts =
             [
-                new ExecutionStepAttempt(),
-                new ExecutionStepAttempt(),
-                new ExecutionStepAttempt(),
-                new ExecutionStepAttempt(),
+                new FlowExecutionStepAttempt(),
+                new FlowExecutionStepAttempt(),
+                new FlowExecutionStepAttempt(),
+                new FlowExecutionStepAttempt(),
             ],
         };
 
@@ -117,15 +117,15 @@ public class DefaultRetryErrorPolicyTests
     [Fact]
     public void Should_retry_after_5_attempts()
     {
-        var stepState = new ExecutionStepState
+        var stepState = new FlowExecutionStepState
         {
             Attempts =
             [
-                new ExecutionStepAttempt(),
-                new ExecutionStepAttempt(),
-                new ExecutionStepAttempt(),
-                new ExecutionStepAttempt(),
-                new ExecutionStepAttempt(),
+                new FlowExecutionStepAttempt(),
+                new FlowExecutionStepAttempt(),
+                new FlowExecutionStepAttempt(),
+                new FlowExecutionStepAttempt(),
+                new FlowExecutionStepAttempt(),
             ],
         };
 

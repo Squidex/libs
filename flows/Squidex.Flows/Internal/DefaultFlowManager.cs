@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using NodaTime;
 using Squidex.Flows.Internal.Execution;
 
 namespace Squidex.Flows.Internal;
@@ -14,6 +15,8 @@ public sealed class DefaultFlowManager<TContext>(
     IFlowExecutor<TContext> flowExecutor)
     : IFlowManager<TContext> where TContext : FlowContext
 {
+    public IClock Clock { get; set; } = SystemClock.Instance;
+
     public async Task EnqueueAsync(CreateFlowInstanceRequest<TContext>[] requests,
         CancellationToken ct)
     {
@@ -44,7 +47,13 @@ public sealed class DefaultFlowManager<TContext>(
         return flowExecutor.ValidateAsync(definition, addError, ct);
     }
 
-    public Task CancelByInstanceIdAsync(Guid instanceId,
+    public Task<bool> ForceAsync(Guid instanceId,
+        CancellationToken ct = default)
+    {
+        return flowStateStore.EnqueueAsync(instanceId, Clock.GetCurrentInstant(), ct);
+    }
+
+    public Task<bool> CancelByInstanceIdAsync(Guid instanceId,
         CancellationToken ct = default)
     {
         return flowStateStore.CancelByInstanceIdAsync(instanceId, ct);
@@ -68,7 +77,13 @@ public sealed class DefaultFlowManager<TContext>(
         return flowStateStore.DeleteByOwnerIdAsync(ownerId, ct);
     }
 
-    public Task<(List<FlowExecutionState<TContext>> Items, long Total)> QueryByOwnerAsync(string ownerId, string? definitionId = null, int skip = 0, int take = 20,
+    public Task<FlowExecutionState<TContext>?> FindInstanceAsync(Guid id,
+        CancellationToken ct = default)
+    {
+        return flowStateStore.FindAsync(id, ct);
+    }
+
+    public Task<(List<FlowExecutionState<TContext>> Items, long Total)> QueryInstancesByOwnerAsync(string ownerId, string? definitionId = null, int skip = 0, int take = 20,
         CancellationToken ct = default)
     {
         return flowStateStore.QueryByOwnerAsync(ownerId, definitionId, skip, take, ct);

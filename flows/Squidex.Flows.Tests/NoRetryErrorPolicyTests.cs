@@ -16,11 +16,11 @@ public class NoRetryErrorPolicyTests
     [Fact]
     public void Should_not_retry_if_disabled_for_step()
     {
-        var stepState = new ExecutionStepState
+        var stepState = new FlowExecutionStepState
         {
             Attempts =
             [
-                new ExecutionStepAttempt(),
+                new FlowExecutionStepAttempt(),
             ],
         };
 

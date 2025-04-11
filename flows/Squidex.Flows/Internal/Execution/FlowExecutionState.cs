@@ -27,7 +27,7 @@ public sealed class FlowExecutionState<TContext> where TContext : FlowContext
 
     public int SchedulePartition { get; set; }
 
-    public Dictionary<Guid, ExecutionStepState> Steps { get; set; } = [];
+    public Dictionary<Guid, FlowExecutionStepState> Steps { get; set; } = [];
 
     public Guid NextStepId { get; set; }
 
@@ -39,13 +39,13 @@ public sealed class FlowExecutionState<TContext> where TContext : FlowContext
 
     public Instant Expires { get; set; }
 
-    public ExecutionStatus Status { get; set; }
+    public FlowExecutionStatus Status { get; set; }
 
-    public ExecutionStepState Step(Guid id)
+    public FlowExecutionStepState Step(Guid id)
     {
         if (!Steps.TryGetValue(id, out var stepState))
         {
-            stepState = new ExecutionStepState();
+            stepState = new FlowExecutionStepState();
             Steps[id] = stepState;
         }
 
@@ -54,7 +54,7 @@ public sealed class FlowExecutionState<TContext> where TContext : FlowContext
 
     public void Failed(Instant now)
     {
-        Status = ExecutionStatus.Failed;
+        Status = FlowExecutionStatus.Failed;
         NextRun = null;
         NextStepId = default;
         Completed = now;
@@ -65,14 +65,14 @@ public sealed class FlowExecutionState<TContext> where TContext : FlowContext
         Completed = now;
         NextRun = null;
         NextStepId = default;
-        Status = ExecutionStatus.Completed;
+        Status = FlowExecutionStatus.Completed;
     }
 
     public void Next(Guid nextId, Instant scheduleAt)
     {
         NextRun = scheduleAt;
         NextStepId = nextId;
-        Step(nextId).Status = ExecutionStatus.Scheduled;
+        Step(nextId).Status = FlowExecutionStatus.Scheduled;
     }
 
     public Guid GetNextStep(FlowStepDefinition currentStep, Guid nextId)
@@ -87,7 +87,7 @@ public sealed class FlowExecutionState<TContext> where TContext : FlowContext
             return default;
         }
 
-        if (Step(nextId).Status != ExecutionStatus.Pending)
+        if (Step(nextId).Status != FlowExecutionStatus.Pending)
         {
             return default;
         }

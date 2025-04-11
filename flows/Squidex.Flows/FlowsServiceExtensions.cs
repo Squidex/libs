@@ -19,11 +19,19 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class FlowsServiceExtensions
 {
+    public static FlowsBuilder AddFlowsCore(this IServiceCollection services)
+    {
+        return new FlowsBuilder(services);
+    }
+
     public static FlowsBuilder AddFlows<TContext>(this IServiceCollection services, IConfiguration config,
         Action<FlowOptions>? configure = null, string configPath = "flows")
         where TContext : FlowContext
     {
         services.Configure(config, configPath, configure);
+
+        services.AddSingletonAs<DefaultFlowManager<TContext>>()
+            .As<IFlowManager<TContext>>();
 
         services.AddSingletonAs<DefaultFlowExecutor<TContext>>()
             .As<IFlowExecutor<TContext>>();
@@ -43,10 +51,8 @@ public static class FlowsServiceExtensions
 
         services.Configure<FlowOptions>(options =>
         {
-            options.AddStepIfNotExist(typeof(DelayStep));
-            options.AddStepIfNotExist(typeof(IfStep));
-            options.AddStepIfNotExist(typeof(ScriptStep));
-            options.AddStepIfNotExist(typeof(WebhookStep));
+            options.AddStepIfNotExist(typeof(DelayFlowStep));
+            options.AddStepIfNotExist(typeof(IfFlowStep));
         });
 
         return new FlowsBuilder(services);
@@ -59,5 +65,13 @@ public static class FlowsServiceExtensions
             .AsSelf();
 
         return builder;
+    }
+
+    public static void AddFlowStep<T>(this IServiceCollection services) where T : FlowStep
+    {
+        services.Configure<FlowOptions>(options =>
+        {
+            options.Steps.Add(typeof(T));
+        });
     }
 }

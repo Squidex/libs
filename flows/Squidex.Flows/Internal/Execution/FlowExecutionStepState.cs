@@ -12,17 +12,17 @@ using NodaTime;
 
 namespace Squidex.Flows.Internal.Execution;
 
-public sealed class ExecutionStepState
+public sealed class FlowExecutionStepState
 {
-    public ExecutionStatus Status { get; set; }
+    public FlowExecutionStatus Status { get; set; }
 
     public bool IsPrepared { get; set; }
 
-    public List<ExecutionStepAttempt> Attempts { get; set; } = [];
+    public List<FlowExecutionStepAttempt> Attempts { get; set; } = [];
 
-    public ExecutionStepAttempt NextAttempt(Instant started)
+    public FlowExecutionStepAttempt NextAttempt(Instant started)
     {
-        var attempt = new ExecutionStepAttempt
+        var attempt = new FlowExecutionStepAttempt
         {
             Started = started,
         };
@@ -33,9 +33,9 @@ public sealed class ExecutionStepState
     }
 }
 
-public sealed class ExecutionStepAttempt
+public sealed class FlowExecutionStepAttempt
 {
-    public List<ExecutionStepLogEntry> Log { get; set; } = [];
+    public List<FlowExecutionStepLogEntry> Log { get; set; } = [];
 
     public Instant Started { get; set; }
 
@@ -44,4 +44,4 @@ public sealed class ExecutionStepAttempt
     public string? Error { get; set; }
 }
 
-public sealed record ExecutionStepLogEntry(Instant Timestamp, string Message, string? Dump);
+public sealed record FlowExecutionStepLogEntry(Instant Timestamp, string Message, string? Dump);

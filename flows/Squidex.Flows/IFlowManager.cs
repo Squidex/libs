@@ -15,13 +15,16 @@ public interface IFlowManager<TContext> where TContext : FlowContext
     Task EnqueueAsync(CreateFlowInstanceRequest<TContext>[] requests,
         CancellationToken ct);
 
-    Task SimulateAsync(CreateFlowInstanceRequest<TContext> state,
+    Task<FlowExecutionState<TContext>> SimulateAsync(CreateFlowInstanceRequest<TContext> state,
         CancellationToken ct);
 
     Task ValidateAsync(FlowDefinition definition, AddError addError,
         CancellationToken ct);
 
-    Task CancelByInstanceIdAsync(Guid instanceId,
+    Task<bool> ForceAsync(Guid instanceId,
+        CancellationToken ct = default);
+
+    Task<bool> CancelByInstanceIdAsync(Guid instanceId,
         CancellationToken ct = default);
 
     Task CancelByDefinitionIdAsync(string definitionId,
@@ -33,6 +36,9 @@ public interface IFlowManager<TContext> where TContext : FlowContext
     Task DeleteByOwnerIdAsync(string ownerId,
         CancellationToken ct = default);
 
-    Task<(List<FlowExecutionState<TContext>> Items, long Total)> QueryByOwnerAsync(string ownerId, string? definitionId = null, int skip = 0, int take = 20,
+    Task<FlowExecutionState<TContext>?> FindInstanceAsync(Guid id,
+        CancellationToken ct = default);
+
+    Task<(List<FlowExecutionState<TContext>> Items, long Total)> QueryInstancesByOwnerAsync(string ownerId, string? definitionId = null, int skip = 0, int take = 20,
         CancellationToken ct = default);
 }

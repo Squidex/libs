@@ -30,18 +30,32 @@ public sealed class MongoFlowStateStore<TContext>(IMongoDatabase database, JsonS
             cancellationToken: ct);
     }
 
+    public async Task<bool> CancelByInstanceIdAsync(Guid instanceId,
+        CancellationToken ct = default)
+    {
+        var update =
+            await collection.UpdateManyAsync(x => x.Id == instanceId,
+                Builders<MongoFlowStateEntity>.Update.Set(x => x.DueTime, null),
+                cancellationToken: ct);
+
+        return update.ModifiedCount > 0;
+    }
+
+    public async Task<bool> EnqueueAsync(Guid instanceId, Instant nextAttempt,
+        CancellationToken ct = default)
+    {
+        var update =
+            await collection.UpdateManyAsync(x => x.Id == instanceId,
+                Builders<MongoFlowStateEntity>.Update.Set(x => x.DueTime, nextAttempt.ToDateTimeOffset()),
+                cancellationToken: ct);
+
+        return update.ModifiedCount > 0;
+    }
+
     public Task CancelByDefinitionIdAsync(string definitionId,
         CancellationToken ct = default)
     {
         return collection.UpdateManyAsync(x => x.DefinitionId == definitionId,
-            Builders<MongoFlowStateEntity>.Update.Set(x => x.DueTime, null),
-            cancellationToken: ct);
-    }
-
-    public Task CancelByInstanceIdAsync(Guid instanceId,
-        CancellationToken ct = default)
-    {
-        return collection.UpdateManyAsync(x => x.Id == instanceId,
             Builders<MongoFlowStateEntity>.Update.Set(x => x.DueTime, null),
             cancellationToken: ct);
     }
@@ -51,14 +65,6 @@ public sealed class MongoFlowStateStore<TContext>(IMongoDatabase database, JsonS
     {
         return collection.UpdateManyAsync(x => x.OwnerId == ownerId,
             Builders<MongoFlowStateEntity>.Update.Set(x => x.DueTime, null),
-            cancellationToken: ct);
-    }
-
-    public Task EnqueueAsync(Guid instanceId, Instant nextAttempt,
-        CancellationToken ct = default)
-    {
-        return collection.UpdateManyAsync(x => x.Id == instanceId,
-            Builders<MongoFlowStateEntity>.Update.Set(x => x.DueTime, nextAttempt.ToDateTimeOffset()),
             cancellationToken: ct);
     }
 

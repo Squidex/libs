@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Squidex.Flows.Internal;
 using Squidex.Flows.Internal.Execution;
@@ -17,11 +18,14 @@ public class DefaultFlowExecutor_ValidationTests
 
     public DefaultFlowExecutor_ValidationTests()
     {
-        sut = new DefaultFlowExecutor<TestFlowContext>([],
+        sut = new DefaultFlowExecutor<TestFlowContext>(
+            A.Fake<IServiceProvider>(),
+            [],
+            [],
             new NoRetryErrorPolicy<TestFlowContext>(),
             A.Fake<IFlowExpressionEngine>(),
-            A.Fake<IServiceProvider>(),
-            Options.Create(new FlowOptions()));
+            Options.Create(new FlowOptions()),
+            A.Fake<ILogger<DefaultFlowExecutor<TestFlowContext>>>());
     }
 
     [Fact]

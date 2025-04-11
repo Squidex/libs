@@ -131,7 +131,7 @@ public class DefaultFlowManagerTests
         A.CallTo(() => flowStateStore.QueryByOwnerAsync(ownerId, definitionid, pageOffset, pageSize, ct))
             .Returns((items, 42));
 
-        var (result, total) = await sut.QueryByOwnerAsync(ownerId, definitionid, pageOffset, pageSize, ct);
+        var (result, total) = await sut.QueryInstancesByOwnerAsync(ownerId, definitionid, pageOffset, pageSize, ct);
 
         Assert.Equal(42, total);
         Assert.Same(items, result);
@@ -140,7 +140,7 @@ public class DefaultFlowManagerTests
     [Fact]
     public async Task Should_forward_simulation_to_executor()
     {
-        await sut.SimulateAsync(null!, ct);
+        await sut.SimulateAsync(default, ct);
 
         A.CallTo(() => flowExecutor.SimulateAsync(null!, ct))
             .MustHaveHappened();

@@ -13,8 +13,8 @@ namespace Squidex.Flows;
 public sealed class FlowExecutionContext(
     IFlowExpressionEngine expressionEngine,
     FlowStep step,
-    IServiceProvider serviceProvider,
     FlowContext context,
+    IServiceProvider serviceProvider,
     Action<string, string?> logger,
     bool isSimulation)
 {
@@ -27,6 +27,16 @@ public sealed class FlowExecutionContext(
     public T Resolve<T>() where T : class
     {
         return serviceProvider.GetRequiredService<T>();
+    }
+
+    public void LogSkipped(string message)
+    {
+        Log($"Skipped: {message}");
+    }
+
+    public void LogSkipSimulation()
+    {
+        Log($"Skipped: Running in simulation mode");
     }
 
     public void Log(string message, object? dump = null)
@@ -43,7 +53,7 @@ public sealed class FlowExecutionContext(
         }
         else if (dump != null)
         {
-            formattedDump = Serialize(dump);
+            formattedDump = SerializeJson(dump);
         }
 
         logger(message, formattedDump);
@@ -59,8 +69,13 @@ public sealed class FlowExecutionContext(
         return expressionEngine.RenderAsync(expression, value, fallback);
     }
 
-    public string Serialize<T>(T value)
+    public string SerializeJson<T>(T value)
     {
-        return expressionEngine.Serialize(value);
+        return expressionEngine.SerializeJson(value);
+    }
+
+    public T DeserializeJson<T>(string json)
+    {
+        return expressionEngine.DeserializeJson<T>(json);
     }
 }

@@ -14,10 +14,10 @@ public interface IFlowStateStore<TContext> where TContext : FlowContext
     Task StoreAsync(List<FlowExecutionState<TContext>> states,
         CancellationToken ct = default);
 
-    Task EnqueueAsync(Guid instanceId, Instant nextAttempt,
+    Task<bool> EnqueueAsync(Guid instanceId, Instant nextAttempt,
         CancellationToken ct = default);
 
-    Task CancelByInstanceIdAsync(Guid instanceId,
+    Task<bool> CancelByInstanceIdAsync(Guid instanceId,
         CancellationToken ct = default);
 
     Task CancelByDefinitionIdAsync(string definitionId,

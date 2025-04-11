@@ -10,7 +10,7 @@ using Squidex.Flows.Steps;
 
 namespace Squidex.Flows;
 
-public class ScriptStepTests
+public class ScriptFlowStepTests
 {
     private readonly IFlowExpressionEngine expressionEngine = A.Fake<IFlowExpressionEngine>();
 
@@ -20,7 +20,7 @@ public class ScriptStepTests
     [InlineData(" ")]
     public async Task Should_do_nothing_if_no_script_defined(string? script)
     {
-        var sut = new ScriptStep { Script = script! };
+        var sut = new ScriptFlowStepBase { Script = script! };
 
         await sut.ExecuteAsync(null!, default);
 
@@ -31,14 +31,14 @@ public class ScriptStepTests
     [Fact]
     public async Task Should_render_if_script_defined()
     {
-        var sut = new ScriptStep { Script = "my-script" };
+        var sut = new ScriptFlowStepBase { Script = "my-script" };
 
         var executionContext =
             new FlowExecutionContext(
                 expressionEngine,
                 A.Fake<FlowStep>(),
-                A.Fake<IServiceProvider>(),
                 new TestFlowContext(),
+                A.Fake<IServiceProvider>(),
                 null!,
                 false);
 

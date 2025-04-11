@@ -11,7 +11,7 @@ namespace Squidex.Flows.Internal.Execution;
 
 public sealed class NoRetryErrorPolicy<TContext> : IFlowErrorPolicy<TContext> where TContext : FlowContext
 {
-    public Instant? ShouldRetry(FlowExecutionState<TContext> state, ExecutionStepState stepState, FlowStep step, Instant now)
+    public Instant? ShouldRetry(FlowExecutionState<TContext> state, FlowExecutionStepState stepState, FlowStep step, Instant now)
     {
         return null;
     }

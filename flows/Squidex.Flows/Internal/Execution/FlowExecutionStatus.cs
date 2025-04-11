@@ -7,7 +7,7 @@
 
 namespace Squidex.Flows.Internal.Execution;
 
-public enum ExecutionStatus
+public enum FlowExecutionStatus
 {
     Pending,
     Scheduled,

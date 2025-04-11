@@ -15,7 +15,7 @@ public sealed class FlowOptions : IValidatableOptions
 
     public TimeSpan DefaultTimeout { get; set; } = TimeSpan.FromSeconds(10);
 
-    public List<Type> Steps { get; set; } = [];
+    public HashSet<Type> Steps { get; set; } = [];
 
     public int NumTasks { get; set; } = 32;
 
@@ -29,7 +29,6 @@ public sealed class FlowOptions : IValidatableOptions
 
     public void AddStepIfNotExist(Type stepType)
     {
-        Steps.Remove(stepType);
         Steps.Add(stepType);
     }
 

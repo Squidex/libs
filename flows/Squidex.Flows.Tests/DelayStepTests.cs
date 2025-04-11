@@ -23,7 +23,7 @@ public class DelayStepTests
     [Fact]
     public async Task Should_delay_call_by_specified_seconds()
     {
-        var sut = new DelayStep { Clock = clock, DelayInSec = 10 };
+        var sut = new DelayFlowStep { Clock = clock, DelayInSec = 10 };
 
         var result = await sut.ExecuteAsync(null!, default);
 
@@ -33,7 +33,7 @@ public class DelayStepTests
     [Fact]
     public async Task Should_not_delay_next_call_if_delay_is_negative()
     {
-        var sut = new DelayStep { Clock = clock, DelayInSec = -10 };
+        var sut = new DelayFlowStep { Clock = clock, DelayInSec = -10 };
 
         var result = await sut.ExecuteAsync(null!, default);
 
