@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Images\buggy1.jpeg" />
     <None Remove="Images\feather.png" />
     <None Remove="Images\landscape.png" />
     <None Remove="Images\landscape_small.png" />
@@ -58,6 +59,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Images\buggy1.jpeg" />
     <EmbeddedResource Include="Images\feather.png" />
     <EmbeddedResource Include="Images\landscape.png" />
 	<EmbeddedResource Include="Images\landscape_small.png" />

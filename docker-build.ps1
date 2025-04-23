@@ -1,4 +1,4 @@
-$version= "1.4.1"
+$version= "1.5.0"
 
 ## Calculate Major version
 $version_major = $version.split(".",3)[0]
