@@ -1,7 +1,7 @@
 #
 # Stage 1, Build Backend
 #
-FROM mcr.microsoft.com/dotnet/sdk:8.0 as backend
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS backend
 
 WORKDIR /src
 
@@ -17,6 +17,9 @@ RUN for file in $(ls *.csproj); do mkdir -p assets/${file%.*}/ && mv $file asset
 
 COPY caching/*/*.csproj ./
 RUN for file in $(ls *.csproj); do mkdir -p caching/${file%.*}/ && mv $file caching/${file%.*}/; done
+
+COPY events/*/*.csproj ./
+RUN for file in $(ls *.csproj); do mkdir -p events/${file%.*}/ && mv $file events/${file%.*}/; done
 
 COPY hosting/*/*.csproj ./
 RUN for file in $(ls *.csproj); do mkdir -p hosting/${file%.*}/ && mv $file hosting/${file%.*}/; done

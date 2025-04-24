@@ -33,7 +33,7 @@ public sealed class MongoEventStoreSubscription : IEventSubscription
         {
             StreamPosition lastRawPosition = default;
 
-            if (!position.IsEnd)
+            if (!position.ReadFromEnd)
             {
                 try
                 {
@@ -50,7 +50,7 @@ public sealed class MongoEventStoreSubscription : IEventSubscription
             }
 
             ParsedStreamPosition parsedPosition;
-            if (lastRawPosition.IsEnd)
+            if (position.ReadFromEnd)
             {
                 parsedPosition = Clock.GetUtcNow();
             }
@@ -73,15 +73,19 @@ public sealed class MongoEventStoreSubscription : IEventSubscription
 
     private async Task QueryCurrentAsync(StreamFilter streamFilter, ParsedStreamPosition lastPosition)
     {
-        BsonDocument? resumeToken = null;
-
-        var start =
+        var watchStartInSeconds =
             lastPosition.Timestamp.Timestamp > 0 ?
-            lastPosition.Timestamp.Timestamp - 30 :
-            Clock.GetUtcNow().Add(-TimeSpan.FromSeconds(30)).ToUnixTimeSeconds();
+            lastPosition.Timestamp.Timestamp :
+            (int)Clock.GetUtcNow().ToUnixTimeSeconds();
+
+        // Start a little bit earlier to get missing events.
+        watchStartInSeconds -= 30;
 
         var changePipeline = Match(streamFilter);
-        var changeStart = new BsonTimestamp((int)start, 0);
+        var changeStart = new BsonTimestamp(watchStartInSeconds, 0);
+
+        // If nothing has been queried, the resume token can be null.
+        BsonDocument? resumeToken = null;
 
         while (!stopToken.IsCancellationRequested)
         {
@@ -101,12 +105,9 @@ public sealed class MongoEventStoreSubscription : IEventSubscription
                 var isRead = false;
                 await cursor.ForEachAsync(async change =>
                 {
-                    if (change.OperationType == ChangeStreamOperationType.Insert)
+                    foreach (var storedEvent in change.FullDocument.Filtered(lastPosition))
                     {
-                        foreach (var storedEvent in change.FullDocument.Filtered(lastPosition))
-                        {
-                            await eventSubscriber.OnNextAsync(this, storedEvent);
-                        }
+                        await eventSubscriber.OnNextAsync(this, storedEvent);
                     }
 
                     isRead = true;
@@ -126,26 +127,22 @@ public sealed class MongoEventStoreSubscription : IEventSubscription
     {
         string? lastRawPosition = null;
 
-        using (var cts = new CancellationTokenSource())
-        {
-            using (var combined = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, stopToken.Token))
-            {
-                await foreach (var storedEvent in eventStore.QueryAllAsync(streamFilter, position, ct: combined.Token))
-                {
-                    var now = Clock.GetUtcNow();
+        using var cts = new CancellationTokenSource();
+        using var ctc = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, stopToken.Token);
 
-                    var timeToNow = now - new DateTimeOffset(storedEvent.Data.Headers.Timestamp(), default);
-                    if (timeToNow <= TimeSpan.FromMinutes(5))
-                    {
-                        await cts.CancelAsync();
-                    }
-                    else
-                    {
-                        await eventSubscriber.OnNextAsync(this, storedEvent);
-                        lastRawPosition = storedEvent.EventPosition;
-                    }
-                }
+        await foreach (var storedEvent in eventStore.QueryAllAsync(streamFilter, position, ct: ctc.Token))
+        {
+            var queryUntil = Clock.GetUtcNow().UtcDateTime.AddMinutes(-5);
+
+            if (storedEvent.Data.Headers.Timestamp() >= queryUntil)
+            {
+                // We can actually miss events if we query until events until.
+                // because an event with a larger timestamp can be available before an event with a smaller timestamp.
+                break;
             }
+
+            await eventSubscriber.OnNextAsync(this, storedEvent);
+            lastRawPosition = storedEvent.EventPosition;
         }
 
         return lastRawPosition;
@@ -153,19 +150,18 @@ public sealed class MongoEventStoreSubscription : IEventSubscription
 
     private static PipelineDefinition<ChangeStreamDocument<MongoEventCommit>, ChangeStreamDocument<MongoEventCommit>>? Match(StreamFilter streamFilter)
     {
-        var result = new EmptyPipelineDefinition<ChangeStreamDocument<MongoEventCommit>>();
+        var filterBuilder = Builders<ChangeStreamDocument<MongoEventCommit>>.Filter;
+        var filterResult = filterBuilder.Eq(x => x.OperationType, ChangeStreamOperationType.Insert);
 
         var byStream = FilterBuilder.ByChangeInStream(streamFilter);
-
         if (byStream != null)
         {
-            var filterBuilder = Builders<ChangeStreamDocument<MongoEventCommit>>.Filter;
-            var filterExpression = filterBuilder.Or(filterBuilder.Ne(x => x.OperationType, ChangeStreamOperationType.Insert), byStream);
-
-            return result.Match(filterExpression);
+            filterResult = filterBuilder.And(filterResult, byStream);
         }
 
-        return result;
+        var emptyPipeline = new EmptyPipelineDefinition<ChangeStreamDocument<MongoEventCommit>>();
+
+        return emptyPipeline.Match(filterResult);
     }
 
     public void Dispose()

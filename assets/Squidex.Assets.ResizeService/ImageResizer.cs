@@ -24,7 +24,6 @@ public sealed class ImageResizer(IAssetThumbnailGenerator assetThumbnailGenerato
         await using var tempStream = TempHelper.GetTempStream();
 
         await ReadToTempStreamAsync(context, tempStream);
-
         try
         {
             var options = BlurOptions.Parse(context.Request.Query.ToDictionary(x => x.Key, x => x.Value.ToString()));
@@ -43,7 +42,6 @@ public sealed class ImageResizer(IAssetThumbnailGenerator assetThumbnailGenerato
         catch (Exception ex)
         {
             var log = context.RequestServices.GetRequiredService<ILogger<ImageResizer>>();
-
             log.LogError(ex, "Failed to orient image.");
 
             context.Response.StatusCode = 400;
@@ -55,7 +53,6 @@ public sealed class ImageResizer(IAssetThumbnailGenerator assetThumbnailGenerato
         await using var tempStream = TempHelper.GetTempStream();
 
         await ReadToTempStreamAsync(context, tempStream);
-
         try
         {
             await assetThumbnailGenerator.FixAsync(
@@ -67,7 +64,6 @@ public sealed class ImageResizer(IAssetThumbnailGenerator assetThumbnailGenerato
         catch (Exception ex)
         {
             var log = context.RequestServices.GetRequiredService<ILogger<ImageResizer>>();
-
             log.LogError(ex, "Failed to orient image.");
 
             context.Response.StatusCode = 400;
@@ -79,7 +75,6 @@ public sealed class ImageResizer(IAssetThumbnailGenerator assetThumbnailGenerato
         await using var tempStream = TempHelper.GetTempStream();
 
         await ReadToTempStreamAsync(context, tempStream);
-
         try
         {
             var options = ResizeOptions.Parse(context.Request.Query.ToDictionary(x => x.Key, x => x.Value.ToString()));
@@ -87,13 +82,13 @@ public sealed class ImageResizer(IAssetThumbnailGenerator assetThumbnailGenerato
             await assetThumbnailGenerator.CreateThumbnailAsync(
                 tempStream,
                 context.Request.ContentType ?? "image/png",
-                context.Response.Body, options,
+                context.Response.Body,
+                options,
                 context.RequestAborted);
         }
         catch (Exception ex)
         {
             var log = context.RequestServices.GetRequiredService<ILogger<ImageResizer>>();
-
             log.LogError(ex, "Failed to resize image.");
 
             context.Response.StatusCode = 400;

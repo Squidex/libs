@@ -115,7 +115,7 @@ public sealed class ResizeOptions : IOptions
         {
             value = default(T);
 
-            return parameters.TryGetValue(key, out var temp) && Enum.TryParse<T>(temp, out value);
+            return parameters.TryGetValue(key, out var temp) && Enum.TryParse<T>(temp, true, out value);
         }
 
         bool TryParseInt(string key, out int value)

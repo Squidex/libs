@@ -415,6 +415,20 @@ public abstract class AssetThumbnailGeneratorTests
     }
 
     [Fact]
+    public async Task Should_convert_buggy_image()
+    {
+        var (mimeType, source) = GetImage("buggy1.jpeg");
+
+        await using (var target = GetStream("buggy1", "webp"))
+        {
+            await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
+            {
+                Format = ImageFormat.WEBP,
+            });
+        }
+    }
+
+    [Fact]
     public async Task Should_return_image_information_if_image_is_valid()
     {
         var (mimeType, source) = GetImage(ImageFormat.PNG);
