@@ -5,11 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace TestCodeGenerator;
+namespace Squidex.Flows;
 
-public sealed class FixtureModel
+[AttributeUsage(AttributeTargets.Property)]
+public sealed class ComputedAttribute : Attribute
 {
-    public string Name { get; set; }
-
-    public string Label { get; set; }
 }

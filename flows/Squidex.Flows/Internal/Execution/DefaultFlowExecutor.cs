@@ -177,7 +177,7 @@ public sealed class DefaultFlowExecutor<TContext>(
     {
         var definition = state.Definition;
 
-        var stepId = state.NextStepId;
+        var stepId = state.NextStepId ?? Guid.Empty;
         if (stepId == default)
         {
             throw new InvalidOperationException("Flow has not next step.");

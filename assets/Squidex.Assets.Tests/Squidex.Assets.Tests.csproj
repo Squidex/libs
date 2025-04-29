@@ -81,7 +81,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\TestHelpers\TestHelpers.csproj" />
+    <ProjectReference Include="..\..\utils\TestHelpers\TestHelpers.csproj" />
     <ProjectReference Include="..\Squidex.Assets.Azure\Squidex.Assets.Azure.csproj" />
     <ProjectReference Include="..\Squidex.Assets.EntityFramework\Squidex.Assets.EntityFramework.csproj" />
     <ProjectReference Include="..\Squidex.Assets.FTP\Squidex.Assets.FTP.csproj" />

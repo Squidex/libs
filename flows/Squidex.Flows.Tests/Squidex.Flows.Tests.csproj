@@ -39,7 +39,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\TestHelpers\TestHelpers.csproj" />
+    <ProjectReference Include="..\..\utils\TestHelpers\TestHelpers.csproj" />
     <ProjectReference Include="..\Squidex.Flows.EntityFramework\Squidex.Flows.EntityFramework.csproj" />
     <ProjectReference Include="..\Squidex.Flows.Mongo\Squidex.Flows.Mongo.csproj" />
     <ProjectReference Include="..\Squidex.Flows\Squidex.Flows.csproj" />

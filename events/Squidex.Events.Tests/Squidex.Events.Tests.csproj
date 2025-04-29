@@ -56,7 +56,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\TestHelpers\TestHelpers.csproj" />
+    <ProjectReference Include="..\..\utils\TestHelpers\TestHelpers.csproj" />
     <ProjectReference Include="..\Squidex.Events.EntityFramework\Squidex.Events.EntityFramework.csproj" />
     <ProjectReference Include="..\Squidex.Events.GetEventStore\Squidex.Events.GetEventStore.csproj" />
     <ProjectReference Include="..\Squidex.Events.Mongo\Squidex.Events.Mongo.csproj" />

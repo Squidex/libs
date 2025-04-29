@@ -44,7 +44,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\assets\Squidex.Assets.ImageSharp\Squidex.Assets.ImageSharp.csproj" />
-    <ProjectReference Include="..\..\TestHelpers\TestHelpers.csproj" />
+    <ProjectReference Include="..\..\utils\TestHelpers\.csproj" />
     <ProjectReference Include="..\Squidex.AI.EntityFramework\Squidex.AI.EntityFramework.csproj" />
     <ProjectReference Include="..\Squidex.AI.Mongo\Squidex.AI.Mongo.csproj" />
     <ProjectReference Include="..\Squidex.AI\Squidex.AI.csproj" />

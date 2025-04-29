@@ -9,6 +9,8 @@ namespace Squidex.Flows;
 
 public static class FlowStepEditor
 {
+    public const string Branches = nameof(Branches);
+
     public const string Checkbox = nameof(Checkbox);
 
     public const string Dropdown = nameof(Dropdown);

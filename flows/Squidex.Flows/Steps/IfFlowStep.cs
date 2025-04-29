@@ -6,6 +6,7 @@
 // ==========================================================================
 
 using Generator.Equals;
+using System.ComponentModel.DataAnnotations;
 
 namespace Squidex.Flows.Steps;
 
@@ -21,11 +22,16 @@ namespace Squidex.Flows.Steps;
 [Equatable]
 public sealed partial record IfFlowStep : FlowStep
 {
+    [Required]
+    [Display(Name = "Branches", Description = "The delay in seconds.")]
+    [Editor(FlowStepEditor.Number)]
     [OrderedEquality]
     public List<IfBranch> Branches { get; set; }
 
+    [Computed]
     public Guid Else { get; set; }
 
+    [Computed]
     public Guid NextStep { get; set; }
 
     public override ValueTask ValidateAsync(FlowValidationContext validationContext, AddStepError addError,

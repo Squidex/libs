@@ -117,7 +117,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squidex.Assets.EntityFramew
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squidex.Flows.EntityFramework", "flows\Squidex.Flows.EntityFramework\Squidex.Flows.EntityFramework.csproj", "{A38F612A-BF14-45E5-B025-D7218074E154}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestHelpers", "TestHelpers\TestHelpers.csproj", "{4E93A424-2190-491C-909F-40A5A06F36B7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestHelpers", "utils\TestHelpers\TestHelpers.csproj", "{4E93A424-2190-491C-909F-40A5A06F36B7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -81,6 +81,9 @@ public class FlowStepRegistryTests
         [Editor(FlowStepEditor.Text)]
         public int? My12Monkeys { get; set; }
 
+        [Computed]
+        public string Computed { get; set; }
+
         public override ValueTask<FlowStepResult> ExecuteAsync(FlowExecutionContext executionContext, CancellationToken ct)
         {
             return default;

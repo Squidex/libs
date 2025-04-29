@@ -29,7 +29,7 @@ public sealed class FlowExecutionState<TContext> where TContext : FlowContext
 
     public Dictionary<Guid, FlowExecutionStepState> Steps { get; set; } = [];
 
-    public Guid NextStepId { get; set; }
+    public Guid? NextStepId { get; set; }
 
     public Instant? NextRun { get; set; }
 
@@ -56,7 +56,7 @@ public sealed class FlowExecutionState<TContext> where TContext : FlowContext
     {
         Status = FlowExecutionStatus.Failed;
         NextRun = null;
-        NextStepId = default;
+        NextStepId = null;
         Completed = now;
     }
 
@@ -64,7 +64,7 @@ public sealed class FlowExecutionState<TContext> where TContext : FlowContext
     {
         Completed = now;
         NextRun = null;
-        NextStepId = default;
+        NextStepId = null;
         Status = FlowExecutionStatus.Completed;
     }
 

@@ -59,65 +59,72 @@ public sealed class FlowStepRegistry(IOptions<FlowOptions> options) : IInitializ
 
         foreach (var property in stepType.GetProperties())
         {
-            if (property.CanRead && property.CanWrite)
+            if (!property.CanRead || !property.CanWrite)
             {
-                var propertyObsolete = property.GetCustomAttribute<ObsoleteAttribute>();
-
-                var stepProperty = new FlowStepPropertyDescriptor
-                {
-                    Name = property.Name.ToCamelCase(),
-                    IsFormattable = property.GetCustomAttribute<ExpressionAttribute>() != null,
-                    IsObsolete = propertyObsolete != null,
-                    IsScript = property.GetCustomAttribute<ScriptAttribute>() != null,
-                    ObsoleteReason = propertyObsolete?.Message,
-                };
-
-                var display = property.GetCustomAttribute<DisplayAttribute>();
-
-                if (!string.IsNullOrWhiteSpace(display?.Name))
-                {
-                    stepProperty.Display = display.Name;
-                }
-                else
-                {
-                    stepProperty.Display = GetDisplayName(property);
-                }
-
-                if (!string.IsNullOrWhiteSpace(display?.Description))
-                {
-                    stepProperty.Description = display.Description;
-                }
-
-                var type = GetType(property);
-
-                if (!IsNullable(property.PropertyType))
-                {
-                    stepProperty.IsRequired |= GetDataAttribute<RequiredAttribute>(property) != null;
-                    stepProperty.IsRequired |= type.IsValueType && !IsBoolean(type) && !type.IsEnum;
-                }
-
-                if (type.IsEnum)
-                {
-                    var values = Enum.GetNames(type);
-
-                    stepProperty.Options = values;
-                    stepProperty.Editor = FlowStepEditor.Dropdown;
-                }
-                else if (IsBoolean(type))
-                {
-                    stepProperty.Editor = FlowStepEditor.Checkbox;
-                }
-                else if (IsNumericType(type))
-                {
-                    stepProperty.Editor = FlowStepEditor.Number;
-                }
-                else
-                {
-                    stepProperty.Editor = GetEditor(property);
-                }
-
-                definition.Properties.Add(stepProperty);
+                continue;
             }
+
+            if (property.GetCustomAttribute<ComputedAttribute>() != null)
+            {
+                continue;
+            }
+
+            var propertyObsolete = property.GetCustomAttribute<ObsoleteAttribute>();
+
+            var stepProperty = new FlowStepPropertyDescriptor
+            {
+                Name = property.Name.ToCamelCase(),
+                IsFormattable = property.GetCustomAttribute<ExpressionAttribute>() != null,
+                IsObsolete = propertyObsolete != null,
+                IsScript = property.GetCustomAttribute<ScriptAttribute>() != null,
+                ObsoleteReason = propertyObsolete?.Message,
+            };
+
+            var display = property.GetCustomAttribute<DisplayAttribute>();
+
+            if (!string.IsNullOrWhiteSpace(display?.Name))
+            {
+                stepProperty.Display = display.Name;
+            }
+            else
+            {
+                stepProperty.Display = GetDisplayName(property);
+            }
+
+            if (!string.IsNullOrWhiteSpace(display?.Description))
+            {
+                stepProperty.Description = display.Description;
+            }
+
+            var type = GetType(property);
+
+            if (!IsNullable(property.PropertyType))
+            {
+                stepProperty.IsRequired |= GetDataAttribute<RequiredAttribute>(property) != null;
+                stepProperty.IsRequired |= type.IsValueType && !IsBoolean(type) && !type.IsEnum;
+            }
+
+            if (type.IsEnum)
+            {
+                var values = Enum.GetNames(type);
+
+                stepProperty.Options = values;
+                stepProperty.Editor = FlowStepEditor.Dropdown;
+            }
+            else if (IsBoolean(type))
+            {
+                stepProperty.Editor = FlowStepEditor.Checkbox;
+            }
+            else if (IsNumericType(type))
+            {
+                stepProperty.Editor = FlowStepEditor.Number;
+            }
+            else
+            {
+                stepProperty.Editor = GetEditor(property);
+            }
+
+            definition.Properties.Add(stepProperty);
         }
 
         steps[stepName] = definition;
