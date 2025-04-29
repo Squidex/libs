@@ -17,6 +17,8 @@ public static class FlowStepEditor
 
     public const string Email = nameof(Email);
 
+    public const string None = nameof(None);
+
     public const string Number = nameof(Number);
 
     public const string Password = nameof(Password);

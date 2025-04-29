@@ -28,7 +28,7 @@ public sealed partial record IfFlowStep : FlowStep
     [OrderedEquality]
     public List<IfBranch> Branches { get; set; }
 
-    [Computed]
+    [Editor(FlowStepEditor.None)]
     public Guid Else { get; set; }
 
     [Computed]
