@@ -35,6 +35,36 @@ public sealed class DeepLTranslationService(IHttpClientFactory httpClientFactory
         public string DetectedSourceLanguage { get; set; }
     }
 
+    private sealed class GlossariesDto
+    {
+        [JsonPropertyName("glossaries")]
+        public GlossaryDto[] Glossaries { get; set; }
+    }
+
+    private sealed class GlossaryDto
+    {
+        [JsonPropertyName("glossary_id")]
+        public string GlossaryId { get; set; } // "def3a26b-3e84-45b3-84ae-0c0aaf3525f7"
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; } // "My Glossary"
+
+        [JsonPropertyName("ready")]
+        public bool Ready { get; set; } // true
+
+        [JsonPropertyName("source_lang")]
+        public string SourceLang { get; set; } // "EN"
+
+        [JsonPropertyName("target_lang")]
+        public string TargetLang { get; set; } // "DE"
+
+        [JsonPropertyName("creation_time")]
+        public DateTime CreationTime { get; set; } // "2021-08-03T14:16:18.329Z"
+
+        [JsonPropertyName("entry_count")]
+        public int EntryCount { get; set; } // 1
+    }
+
     public bool IsConfigured { get; } = !string.IsNullOrWhiteSpace(options.Value.AuthKey);
 
     public async Task<IReadOnlyList<TranslationResult>> TranslateAsync(IEnumerable<string> texts, string targetLanguage, string? sourceLanguage = null,
@@ -80,6 +110,45 @@ public sealed class DeepLTranslationService(IHttpClientFactory httpClientFactory
             UrlPaid;
 
         using var httpClient = CreateClient();
+
+        if (!string.IsNullOrWhiteSpace(options.GlossaryByName) && string.IsNullOrWhiteSpace(options.GlossaryById))
+        {
+            var gl_url = url.Replace("/translate", "/glossaries");
+            using var gl_httpRequest = new HttpRequestMessage(HttpMethod.Get, gl_url);
+            using var gl_httpResponse = await httpClient.SendAsync(gl_httpRequest, ct);
+
+            try
+            {
+                gl_httpResponse.EnsureSuccessStatusCode();
+
+                var gl_jsonString = await gl_httpResponse.Content.ReadAsStringAsync(ct);
+                var gl_jsonResponse = JsonSerializer.Deserialize<GlossariesDto>(gl_jsonString)!;
+
+                foreach (var glossary in gl_jsonResponse.Glossaries)
+                {
+                    if (options.GlossaryByName.Equals(glossary.Name, StringComparison.Ordinal))
+                    {
+                        options.GlossaryById = glossary.GlossaryId;
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                AddError(TranslationResult.Failed(ex));
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(options.GlossaryById))
+        {
+            parameters.Add(new KeyValuePair<string, string>("glossary_id", options.GlossaryById));
+        }
+
+        if (!string.IsNullOrWhiteSpace(options.TagHandling))
+        {
+            parameters.Add(new KeyValuePair<string, string>("tag_handling", options.TagHandling));
+        }
+
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, url)
         {
              Content = new FormUrlEncodedContent(parameters!),
