@@ -13,7 +13,7 @@ using TestHelpers.EntityFramework;
 
 namespace Squidex.Events;
 
-public sealed class MySqlEventStoreFixture() : PostgresFixture<TestDbContext>("eventstore-mysql")
+public sealed class MySqlEventStoreFixture() : MySqlFixture<TestDbContext>("eventstore-mysql")
 {
     protected override void AddServices(IServiceCollection services)
     {
