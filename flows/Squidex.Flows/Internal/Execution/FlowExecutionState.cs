@@ -79,7 +79,7 @@ public sealed class FlowExecutionState<TContext> where TContext : FlowContext
     {
         if (nextId == default)
         {
-            nextId = currentStep.NextStepId;
+            nextId = currentStep.NextStepId ?? default;
         }
 
         if (!Definition.Steps.ContainsKey(nextId))

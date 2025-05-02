@@ -111,7 +111,7 @@ public sealed class EFFlowStateStore<TDbContext, TContext>(
             query = query.Where(x => x.DefinitionId == definitionId);
         }
 
-        var entitiesItems = await query.Skip(skip).Take(take).ToListAsync(ct);
+        var entitiesItems = await query.OrderByDescending(x => x.Created).Skip(skip).Take(take).ToListAsync(ct);
         var entitiesTotal = (long)entitiesItems.Count;
         if (entitiesTotal >= take || skip > 0)
         {
@@ -152,9 +152,11 @@ public sealed class EFFlowStateStore<TDbContext, TContext>(
                 new EFFlowStateEntity
                 {
                     Id = x.InstanceId,
+                    Created = x.Created.ToDateTimeOffset(),
                     DefinitionId = x.DefinitionId,
                     DueTime = x.NextRun?.ToDateTimeOffset(),
                     OwnerId = x.OwnerId,
+                    SchedulePartition = x.SchedulePartition,
                     State = JsonSerializer.Serialize(x, jsonSerializerOptions),
                 });
 

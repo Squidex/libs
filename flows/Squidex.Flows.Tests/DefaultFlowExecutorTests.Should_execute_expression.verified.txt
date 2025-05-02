@@ -29,6 +29,8 @@
       ]
     }
   },
+  Created: DateTimeOffset_1,
   Completed: DateTimeOffset_1,
+  Expires: DateTimeOffset_2,
   Status: Completed
 }

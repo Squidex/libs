@@ -5,7 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using FluentAssertions;
 using NodaTime;
 using Squidex.Flows.Internal.Execution;
 
@@ -14,6 +13,7 @@ namespace Squidex.Flows;
 public abstract class FlowStateStoreTests
 {
     private static readonly Instant FarInFuture = Instant.FromDateTimeOffset(new DateTimeOffset(3000, 12, 11, 10, 9, 8, TimeSpan.Zero));
+    private int counter;
 
     protected abstract Task<IFlowStateStore<TestFlowContext>> CreateSutAsync();
 
@@ -63,10 +63,10 @@ public abstract class FlowStateStoreTests
         found1.Should().BeEquivalentTo((new List<FlowExecutionState<TestFlowContext>> { state1, state2 }, 2));
 
         var found2 = await sut.QueryByOwnerAsync(ownerId, skip: 1);
-        found2.Should().BeEquivalentTo((new List<FlowExecutionState<TestFlowContext>> { state2 }, 2));
+        found2.Should().BeEquivalentTo((new List<FlowExecutionState<TestFlowContext>> { state1 }, 2));
 
         var found3 = await sut.QueryByOwnerAsync(ownerId, take: 1);
-        found3.Should().BeEquivalentTo((new List<FlowExecutionState<TestFlowContext>> { state1 }, 2));
+        found3.Should().BeEquivalentTo((new List<FlowExecutionState<TestFlowContext>> { state2 }, 2));
 
         var found4 = await sut.QueryByOwnerAsync(ownerId, definitionId: state2.DefinitionId);
         found4.Should().BeEquivalentTo((new List<FlowExecutionState<TestFlowContext>> { state2 }, 1));
@@ -188,33 +188,35 @@ public abstract class FlowStateStoreTests
 
         await sut.StoreAsync([state1, state2, state3]);
 
-        var daysAgo = now.Minus(Duration.FromDays(3));
+        var nextDay = now.Plus(Duration.FromDays(1));
+        var nextMonth = now.Plus(Duration.FromDays(30));
 
-        var found1 = await sut.QueryPendingAsync([1, 2, 3], daysAgo).Where(x => x.OwnerId == ownerId).ToListAsync();
+        var found1 = await sut.QueryPendingAsync([1, 2, 3], now).Where(x => x.OwnerId == ownerId).ToListAsync();
         found1.Should().BeEmpty();
 
-        var found2 = await sut.QueryPendingAsync([1, 2, 3], daysAgo).Where(x => x.OwnerId == ownerId).ToListAsync();
+        var found2 = await sut.QueryPendingAsync([1, 2, 3], nextDay).Where(x => x.OwnerId == ownerId).ToListAsync();
         found2.Should().BeEquivalentTo([state2]);
 
-        var monthsAgo = now.Minus(Duration.FromDays(30));
-
-        var found3 = await sut.QueryPendingAsync([1, 2, 3], monthsAgo).Where(x => x.OwnerId == ownerId).ToListAsync();
+        var found3 = await sut.QueryPendingAsync([1, 2, 3], nextMonth).Where(x => x.OwnerId == ownerId).ToListAsync();
         found3.Should().BeEquivalentTo([state2, state3]);
 
-        var found4 = await sut.QueryPendingAsync([3], monthsAgo).Where(x => x.OwnerId == ownerId).ToListAsync();
+        var found4 = await sut.QueryPendingAsync([3], nextMonth).Where(x => x.OwnerId == ownerId).ToListAsync();
         found4.Should().BeEquivalentTo([state3]);
     }
 
-    private static FlowExecutionState<TestFlowContext> CreateState(string ownerId, int partition = 0)
+    private FlowExecutionState<TestFlowContext> CreateState(string ownerId, int partition = 0)
     {
+        var time = SystemClock.Instance.GetCurrentInstant().Plus(Duration.FromSeconds(counter++));
+
         return new FlowExecutionState<TestFlowContext>
         {
+            SchedulePartition = partition,
             InstanceId = Guid.NewGuid(),
             DefinitionId = Guid.NewGuid().ToString(),
             Definition = null!,
-            Completed = SystemClock.Instance.GetCurrentInstant(),
+            Completed = time,
             Context = new TestFlowContext(),
-            Created = SystemClock.Instance.GetCurrentInstant(),
+            Created = time,
             NextRun = FarInFuture,
             OwnerId = ownerId,
         };

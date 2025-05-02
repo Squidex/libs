@@ -25,7 +25,6 @@ public static class HttpExtensions
 
             if (!response.IsSuccessStatusCode)
             {
-                executionContext.Log("Http request failed", requestDump);
                 throw new HttpRequestException($"Response code does not indicate success: {(int)response.StatusCode} ({response.StatusCode}).");
             }
 

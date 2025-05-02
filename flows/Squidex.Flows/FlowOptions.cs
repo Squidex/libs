@@ -15,6 +15,8 @@ public sealed class FlowOptions : IValidatableOptions
 
     public TimeSpan DefaultTimeout { get; set; } = TimeSpan.FromSeconds(10);
 
+    public TimeSpan Expiration { get; set; } = TimeSpan.FromDays(30);
+
     public HashSet<Type> Steps { get; set; } = [];
 
     public int NumTasks { get; set; } = 32;

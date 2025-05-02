@@ -48,6 +48,8 @@
       ]
     }
   },
+  Created: DateTimeOffset_1,
   Completed: DateTimeOffset_5,
+  Expires: DateTimeOffset_6,
   Status: Failed
 }

@@ -326,7 +326,7 @@ public class OpenAITests
         };
 
         stream1.Should().BeEquivalentTo(expectedStream,
-            opts => opts.RespectingRuntimeTypes().ExcludeToolValuesAs());
+            opts => opts.PreferringRuntimeMemberTypes().ExcludeToolValuesAs());
     });
 
     private static async Task UseConversationId(Func<string, IChatAgent, IServiceProvider, Task> action)

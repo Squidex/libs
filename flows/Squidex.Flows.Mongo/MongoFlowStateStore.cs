@@ -101,7 +101,7 @@ public sealed class MongoFlowStateStore<TContext>(IMongoDatabase database, JsonS
 
         var filter = Builders<MongoFlowStateEntity>.Filter.And(filters);
 
-        var entitiesItems = await collection.Find(filter).Skip(skip).Limit(take).ToListAsync(ct);
+        var entitiesItems = await collection.Find(filter).Skip(skip).Limit(take).SortByDescending(x => x.Created).ToListAsync(ct);
         var entitiesTotal = (long)entitiesItems.Count;
         if (entitiesTotal >= take || skip > 0)
         {
@@ -145,6 +145,7 @@ public sealed class MongoFlowStateStore<TContext>(IMongoDatabase database, JsonS
                     new MongoFlowStateEntity
                     {
                         Id = state.InstanceId,
+                        Created = state.Created.ToDateTimeOffset(),
                         DefinitionId = state.DefinitionId,
                         DueTime = state.NextRun?.ToDateTimeOffset(),
                         SchedulePartition = state.SchedulePartition,

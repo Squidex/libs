@@ -34,5 +34,7 @@
     }
   },
   NextStepId: StepId1,
-  NextRun: DateTimeOffset_3
+  NextRun: DateTimeOffset_3,
+  Created: DateTimeOffset_1,
+  Expires: DateTimeOffset_4
 }

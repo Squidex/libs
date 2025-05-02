@@ -11,6 +11,8 @@ public sealed class EFFlowStateEntity
 {
     public Guid Id { get; set; }
 
+    public DateTimeOffset Created { get; set; }
+
     public string OwnerId { get; set; }
 
     public string DefinitionId { get; set; }

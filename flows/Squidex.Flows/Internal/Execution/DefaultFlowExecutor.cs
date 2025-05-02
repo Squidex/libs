@@ -9,6 +9,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NodaTime;
+using NodaTime.Extensions;
 using Squidex.Text;
 
 namespace Squidex.Flows.Internal.Execution;
@@ -55,7 +56,9 @@ public sealed class DefaultFlowExecutor<TContext>(
                 addError(string.Empty, ValidationErrorType.InvalidStepId);
             }
 
-            if (stepDefinition.NextStepId != default && !definition.Steps.ContainsKey(stepDefinition.NextStepId))
+            if (stepDefinition.NextStepId != null &&
+                stepDefinition.NextStepId != default &&
+                !definition.Steps.ContainsKey(stepDefinition.NextStepId.Value))
             {
                 addError($"steps.{stepId}", ValidationErrorType.InvalidNextStepId);
             }
@@ -119,10 +122,12 @@ public sealed class DefaultFlowExecutor<TContext>(
 
         var state = new FlowExecutionState<TContext>
         {
+            Created = Clock.GetCurrentInstant(),
             Context = request.Context,
             Definition = request.Definition,
             DefinitionId = request.DefinitionId,
             Description = request.Description ?? string.Empty,
+            Expires = Clock.GetCurrentInstant().Plus(flowOptions.Value.Expiration.ToDuration()),
             InstanceId = Guid.NewGuid(),
             NextRun = Clock.GetCurrentInstant(),
             NextStepId = request.Definition.InitialStep,

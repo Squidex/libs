@@ -7,7 +7,7 @@
 
 namespace Squidex.Flows;
 
-[AttributeUsage(AttributeTargets.Class, Inherited = false)]
+[AttributeUsage(AttributeTargets.Class, Inherited = true)]
 public sealed class FlowStepAttribute : Attribute
 {
     public string Title { get; set; }

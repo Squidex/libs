@@ -9,7 +9,9 @@ namespace Squidex.Flows.Internal;
 
 public sealed record FlowStepDefinition
 {
-    public Guid NextStepId { get; set; }
+    public Guid? NextStepId { get; set; }
+
+    public string? Name { get; set; }
 
     public bool IgnoreError { get; set; }
 

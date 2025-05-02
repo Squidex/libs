@@ -9,26 +9,22 @@ using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using System.Text;
 using Microsoft.Extensions.Options;
-using Squidex.Hosting;
 using Squidex.Text;
 
 namespace Squidex.Flows;
 
-public sealed class FlowStepRegistry(IOptions<FlowOptions> options) : IInitializable, IFlowStepRegistry
+public sealed class FlowStepRegistry : IFlowStepRegistry
 {
     private readonly Dictionary<string, FlowStepDescriptor> steps = [];
 
     public IReadOnlyDictionary<string, FlowStepDescriptor> Steps => steps;
 
-    public Task InitializeAsync(
-        CancellationToken ct)
+    public FlowStepRegistry(IOptions<FlowOptions> options)
     {
         foreach (var type in options.Value.Steps)
         {
             Add(type);
         }
-
-        return Task.CompletedTask;
     }
 
     private FlowStepRegistry Add(Type stepType)

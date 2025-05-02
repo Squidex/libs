@@ -151,7 +151,7 @@ public class ImagePipeTests
         }.SelectMany(x => x).ToList();
 
         resultStream.Should().BeEquivalentTo(expectedStream,
-            opts => opts.RespectingRuntimeTypes().ExcludeToolValuesAs());
+            opts => opts.PreferringRuntimeMemberTypes().ExcludeToolValuesAs());
     }
 
     private static string CombineResult(IEnumerable<InternalChatEvent> source)

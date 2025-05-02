@@ -142,7 +142,7 @@ public class DefaultFlowManagerTests
     {
         await sut.SimulateAsync(default, ct);
 
-        A.CallTo(() => flowExecutor.SimulateAsync(null!, ct))
+        A.CallTo(() => flowExecutor.SimulateAsync(A<FlowExecutionState<TestFlowContext>>._, ct))
             .MustHaveHappened();
     }
 

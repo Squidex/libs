@@ -115,10 +115,8 @@ public class FlowStepRegistryTests
     }
 
     [Fact]
-    public async Task Should_create_definition()
+    public void Should_create_definition()
     {
-        await sut.InitializeAsync(default);
-
         var expected = new FlowStepDescriptor
         {
             Type = typeof(CombinedStep),
@@ -248,10 +246,8 @@ public class FlowStepRegistryTests
     }
 
     [Fact]
-    public async Task Should_create_definition_for_obsolete_types()
+    public void Should_create_definition_for_obsolete_types()
     {
-        await sut.InitializeAsync(default);
-
         var expected = new FlowStepDescriptor
         {
             Type = typeof(ObsoleteStep),

@@ -11,17 +11,18 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="coverlet.collector" Version="6.0.2">
+    <PackageReference Include="coverlet.collector" Version="6.0.4">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="FakeItEasy" Version="8.3.0" />
-    <PackageReference Include="FluentAssertions" Version="6.12.2" />
+    <PackageReference Include="FluentAssertions" Version="8.2.0" />
     <PackageReference Include="Markdig" Version="0.38.0" />
     <PackageReference Include="Meziantou.Analyzer" Version="2.0.179">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageReference Include="RefactoringEssentials" Version="5.6.0" PrivateAssets="all" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" PrivateAssets="all" />
@@ -44,7 +45,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\assets\Squidex.Assets.ImageSharp\Squidex.Assets.ImageSharp.csproj" />
-    <ProjectReference Include="..\..\utils\TestHelpers\.csproj" />
+    <ProjectReference Include="..\..\utils\TestHelpers\TestHelpers.csproj" />
     <ProjectReference Include="..\Squidex.AI.EntityFramework\Squidex.AI.EntityFramework.csproj" />
     <ProjectReference Include="..\Squidex.AI.Mongo\Squidex.AI.Mongo.csproj" />
     <ProjectReference Include="..\Squidex.AI\Squidex.AI.csproj" />

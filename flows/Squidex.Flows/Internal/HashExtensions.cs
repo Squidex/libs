@@ -5,20 +5,17 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.Text;
+namespace Squidex.Flows.Internal;
 
 public static class HashExtensions
 {
     public static int GetDeterministicHashCode(this string source)
     {
-        const uint prime = 0x01000193;
-        const uint basis = 0x811C9DC5;
-
-        uint hash = basis;
+        uint hash = 0x811C9DC5;
         foreach (char c in source)
         {
             hash ^= c;
-            hash *= prime;
+            hash *= 0x01000193;
         }
 
         return unchecked((int)hash);

@@ -18,6 +18,7 @@ uploads/
 
 # Test Output
 _test-output/
+TestResults
 
 # NodeJS 
 node_modules/
