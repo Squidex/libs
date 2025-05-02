@@ -14,10 +14,13 @@ public class DelayStepTests
 {
     private readonly IClock clock = A.Fake<IClock>();
     private readonly Instant now = SystemClock.Instance.GetCurrentInstant();
+    private readonly FlowExecutionContext executionContext;
 
     public DelayStepTests()
     {
         A.CallTo(() => clock.GetCurrentInstant()).Returns(now);
+
+        executionContext = new FlowExecutionContext(null!, null!, null!, null!, (_, _) => { }, false);
     }
 
     [Fact]
@@ -25,7 +28,7 @@ public class DelayStepTests
     {
         var sut = new DelayFlowStep { Clock = clock, DelayInSec = 10 };
 
-        var result = await sut.ExecuteAsync(null!, default);
+        var result = await sut.ExecuteAsync(executionContext, default);
 
         Assert.Equal(now.Plus(Duration.FromSeconds(10)), result.Scheduled);
     }
@@ -35,8 +38,18 @@ public class DelayStepTests
     {
         var sut = new DelayFlowStep { Clock = clock, DelayInSec = -10 };
 
-        var result = await sut.ExecuteAsync(null!, default);
+        var result = await sut.ExecuteAsync(executionContext, default);
 
-        Assert.Equal(now, result.Scheduled);
+        Assert.Equal(default, result.Scheduled);
+    }
+
+    [Fact]
+    public async Task Should_not_delay_next_call_if_delay_is_larger_than_one_day()
+    {
+        var sut = new DelayFlowStep { Clock = clock, DelayInSec = (int)TimeSpan.FromDays(1.1).TotalSeconds };
+
+        var result = await sut.ExecuteAsync(executionContext, default);
+
+        Assert.Equal(default, result.Scheduled);
     }
 }

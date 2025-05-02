@@ -28,7 +28,12 @@ public abstract record FlowStep
     public abstract ValueTask<FlowStepResult> ExecuteAsync(FlowExecutionContext executionContext,
     CancellationToken ct);
 
-    public FlowStepResult Next(Guid stepId = default)
+    public FlowStepResult Next()
+    {
+        return FlowStepResult.Next(null);
+    }
+
+    public FlowStepResult Next(Guid stepId)
     {
         return FlowStepResult.Next(stepId);
     }

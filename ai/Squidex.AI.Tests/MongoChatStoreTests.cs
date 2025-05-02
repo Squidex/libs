@@ -23,7 +23,7 @@ public class MongoChatStoreFixture() : MongoFixture("chat-mongo")
     }
 }
 
-public class MongoChatStoreTests(MongoFixture fixture)
+public class MongoChatStoreTests(MongoChatStoreFixture fixture)
     : ChatStoreTests, IClassFixture<MongoChatStoreFixture>
 {
     public override Task<IChatStore> CreateSutAsync()

@@ -75,23 +75,25 @@ public sealed class FlowExecutionState<TContext> where TContext : FlowContext
         Step(nextId).Status = FlowExecutionStatus.Scheduled;
     }
 
-    public Guid GetNextStep(FlowStepDefinition currentStep, Guid nextId)
+    public Guid? GetNextStep(FlowStepDefinition currentStep, Guid? nextId)
     {
-        if (nextId == default)
+        var actualNext = nextId ?? currentStep.NextStepId ?? default;
+
+        if (actualNext == default)
         {
-            nextId = currentStep.NextStepId ?? default;
+            return null;
         }
 
-        if (!Definition.Steps.ContainsKey(nextId))
+        if (!Definition.Steps.ContainsKey(actualNext))
         {
-            return default;
+            return null;
         }
 
-        if (Step(nextId).Status != FlowExecutionStatus.Pending)
+        if (Step(actualNext).Status != FlowExecutionStatus.Pending)
         {
-            return default;
+            return null;
         }
 
-        return nextId;
+        return actualNext;
     }
 }

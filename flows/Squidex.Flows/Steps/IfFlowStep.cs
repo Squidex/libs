@@ -7,6 +7,7 @@
 
 using System.ComponentModel.DataAnnotations;
 using Generator.Equals;
+using Squidex.Flows.Internal;
 
 namespace Squidex.Flows.Steps;
 
@@ -31,63 +32,72 @@ public sealed partial record IfFlowStep : FlowStep
     [Editor(FlowStepEditor.None)]
     public Guid? ElseStepId { get; set; }
 
-    [Computed]
-    public Guid NextStep { get; set; }
-
     public override ValueTask ValidateAsync(FlowValidationContext validationContext, AddStepError addError,
         CancellationToken ct)
     {
         var definition = validationContext.Definition;
-        var branches = Branches ?? [];
-        var index = 0;
 
-        foreach (var branch in branches)
+        if (Branches != null)
         {
-            if (branch.NextStepId != null &&
-                branch.NextStepId != default &&
-                !definition.Steps.ContainsKey(branch.NextStepId.Value))
+            for (var i = 0; i < Branches.Count; i++)
             {
-                var path = $"branches[{index}].step";
-
-                addError(path, "Invalid Step ID.");
+                if (!IsValidStep(definition, Branches[i].NextStepId))
+                {
+                    addError($"branches[{i}].step", "Invalid Step ID.");
+                }
             }
-
-            index++;
         }
 
-        if (ElseStepId != null &&
-            ElseStepId != default &&
-            !definition.Steps.ContainsKey(ElseStepId.Value))
+        if (!IsValidStep(definition, ElseStepId))
         {
             addError("else", "Invalid Step ID");
         }
 
         return default;
-    }
 
-    public override ValueTask PrepareAsync(FlowExecutionContext executionContext,
-        CancellationToken ct)
-    {
-        var nextStep = ElseStepId;
-
-        var branches = Branches ?? [];
-        foreach (var branch in branches)
+        static bool IsValidStep(FlowDefinition definition, Guid? stepId)
         {
-            if (executionContext.Evaluate(branch.Condition, executionContext.Context))
-            {
-                nextStep = branch.NextStepId;
-                break;
-            }
+            return stepId == null || stepId.Value == default || definition.Steps.ContainsKey(stepId.Value);
         }
-
-        NextStep = nextStep ?? default;
-        return default;
     }
 
     public override ValueTask<FlowStepResult> ExecuteAsync(FlowExecutionContext executionContext,
         CancellationToken ct)
     {
-        return new ValueTask<FlowStepResult>(Next(NextStep));
+        return new ValueTask<FlowStepResult>(ExecuteCore(executionContext));
+    }
+
+    private FlowStepResult ExecuteCore(FlowExecutionContext executionContext)
+    {
+        if (Branches != null)
+        {
+            var index = 0;
+            foreach (var branch in Branches)
+            {
+                if (string.IsNullOrWhiteSpace(branch.Condition))
+                {
+                    executionContext.Log($"Branch #{index} matched criteria without condition.");
+                    return Next(branch.NextStepId ?? default);
+                }
+
+                if (executionContext.Evaluate(branch.Condition, executionContext.Context))
+                {
+                    executionContext.Log($"Branch #{index} matched criteria with condition '{branch.Condition}'");
+                    return Next(branch.NextStepId ?? default);
+                }
+
+                index++;
+            }
+        }
+
+        if (Branches == null || Branches.Count == 0)
+        {
+            executionContext.Log("No branch defined. Continue with 'else' branch.");
+            return Next(ElseStepId ?? default);
+        }
+
+        executionContext.Log("No conditioned matched criteria. Continue with 'else' branch.");
+        return Next(ElseStepId ?? default);
     }
 }
 

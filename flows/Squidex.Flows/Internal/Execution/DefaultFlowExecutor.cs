@@ -278,9 +278,9 @@ public sealed class DefaultFlowExecutor<TContext>(
         if (stepDefinition.IgnoreError)
         {
             var nextId = state.GetNextStep(stepDefinition, default);
-            if (nextId != default)
+            if (nextId != null)
             {
-                state.Next(nextId, Instant.MinValue);
+                state.Next(nextId.Value, Instant.MinValue);
             }
             else
             {
@@ -322,9 +322,9 @@ public sealed class DefaultFlowExecutor<TContext>(
         if (result.Type == FlowStepResultType.Next)
         {
             var nextId = state.GetNextStep(stepDefinition, result.StepId);
-            if (nextId != default)
+            if (nextId != null)
             {
-                state.Next(nextId, result.Scheduled);
+                state.Next(nextId.Value, result.Scheduled);
                 return;
             }
         }

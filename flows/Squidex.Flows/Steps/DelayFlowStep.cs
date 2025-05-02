@@ -22,6 +22,8 @@ namespace Squidex.Flows.Steps;
 [Equatable]
 public sealed partial record DelayFlowStep : FlowStep
 {
+    private static readonly int MaxDelay = (int)TimeSpan.FromDays(1).TotalSeconds;
+
     [Required]
     [Display(Name = "Delay", Description = "The delay in seconds.")]
     [Editor(FlowStepEditor.Number)]
@@ -35,8 +37,28 @@ public sealed partial record DelayFlowStep : FlowStep
     public override ValueTask<FlowStepResult> ExecuteAsync(FlowExecutionContext executionContext,
         CancellationToken ct)
     {
-        var scheduled = Clock.GetCurrentInstant().Plus(Duration.FromSeconds(Math.Max(0, DelayInSec)));
+        return new ValueTask<FlowStepResult>(ExecuteCore(executionContext));
+    }
 
-        return new ValueTask<FlowStepResult>(NextDelayed(scheduled));
+    private FlowStepResult ExecuteCore(FlowExecutionContext executionContext)
+    {
+        if (DelayInSec < 0)
+        {
+            executionContext.Log("Delay was defined. Continue with next step immediately");
+            return Next();
+        }
+
+        if (DelayInSec > MaxDelay)
+        {
+            executionContext.Log("Delay is larger than one day. Continue with next step immediately");
+            return Next();
+        }
+
+        var scheduledIn = Duration.FromSeconds(DelayInSec);
+        var scheduledAt = Clock.GetCurrentInstant().Plus(scheduledIn);
+
+        executionContext.Log($"Executing next step in {scheduledIn}, at {scheduledAt}");
+
+        return NextDelayed(scheduledAt);
     }
 }
