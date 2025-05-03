@@ -12,24 +12,24 @@ namespace Squidex.Flows.Internal;
 [Equatable]
 public sealed partial record FlowDefinition
 {
-    public Guid InitialStep { get; init; }
+    public Guid? InitialStepId { get; init; }
 
     [UnorderedEquality]
     public Dictionary<Guid, FlowStepDefinition> Steps { get; init; } = [];
 
-    public FlowStep? GetInitialStep()
+    public FlowStep? GetInitialStepId()
     {
-        return GetStep(InitialStep);
+        return GetStep(InitialStepId);
     }
 
-    public FlowStep? GetStep(Guid id)
+    public FlowStep? GetStep(Guid? id)
     {
-        if (id == Guid.Empty)
+        if (id == null || id == Guid.Empty)
         {
             return null;
         }
 
-        if (Steps.TryGetValue(id, out var stepDefinition))
+        if (Steps.TryGetValue(id.Value, out var stepDefinition))
         {
             return stepDefinition.Step;
         }

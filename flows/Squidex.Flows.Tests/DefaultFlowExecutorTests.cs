@@ -46,7 +46,7 @@ public class DefaultFlowExecutorTests
                     {
                         [stepId1] = new FlowStepDefinition { Step = step1 },
                     },
-                    InitialStep = stepId1,
+                    InitialStepId = stepId1,
                 },
                 OwnerId = Guid.NewGuid().ToString(),
             });
@@ -80,7 +80,7 @@ public class DefaultFlowExecutorTests
                     {
                         [stepId1] = new FlowStepDefinition { Step = step1 },
                     },
-                    InitialStep = stepId1,
+                    InitialStepId = stepId1,
                 },
                 OwnerId = Guid.NewGuid().ToString(),
             });
@@ -112,7 +112,7 @@ public class DefaultFlowExecutorTests
                     {
                         [stepId1] = new FlowStepDefinition { Step = step1 },
                     },
-                    InitialStep = stepId1,
+                    InitialStepId = stepId1,
                 },
                 OwnerId = Guid.NewGuid().ToString(),
             });
@@ -141,7 +141,7 @@ public class DefaultFlowExecutorTests
                     {
                         [stepId1] = new FlowStepDefinition { Step = step1 },
                     },
-                    InitialStep = stepId1,
+                    InitialStepId = stepId1,
                 },
                 OwnerId = Guid.NewGuid().ToString(),
             });
@@ -172,7 +172,7 @@ public class DefaultFlowExecutorTests
                     {
                         [stepId1] = new FlowStepDefinition { Step = step1 },
                     },
-                    InitialStep = stepId1,
+                    InitialStepId = stepId1,
                 },
                 OwnerId = Guid.NewGuid().ToString(),
             });
@@ -208,7 +208,7 @@ public class DefaultFlowExecutorTests
                     {
                         [stepId1] = new FlowStepDefinition { Step = step1 },
                     },
-                    InitialStep = stepId1,
+                    InitialStepId = stepId1,
                 },
                 OwnerId = Guid.NewGuid().ToString(),
             });
@@ -244,7 +244,7 @@ public class DefaultFlowExecutorTests
                     {
                         [stepId1] = new FlowStepDefinition { Step = step1 },
                     },
-                    InitialStep = stepId1,
+                    InitialStepId = stepId1,
                 },
                 OwnerId = Guid.NewGuid().ToString(),
             });
@@ -281,7 +281,7 @@ public class DefaultFlowExecutorTests
                         [stepId1] = new FlowStepDefinition { Step = step1, NextStepId = stepId2 },
                         [stepId2] = new FlowStepDefinition { Step = step2 },
                     },
-                    InitialStep = stepId1,
+                    InitialStepId = stepId1,
                 },
                 OwnerId = Guid.NewGuid().ToString(),
             });
@@ -321,7 +321,7 @@ public class DefaultFlowExecutorTests
                         [stepId1] = new FlowStepDefinition { Step = step1, NextStepId = stepId2, IgnoreError = true },
                         [stepId2] = new FlowStepDefinition { Step = step2 },
                     },
-                    InitialStep = stepId1,
+                    InitialStepId = stepId1,
                 },
                 OwnerId = Guid.NewGuid().ToString(),
             });
@@ -358,7 +358,7 @@ public class DefaultFlowExecutorTests
                         [stepId1] = new FlowStepDefinition { Step = step1, NextStepId = stepId2 },
                         [stepId2] = new FlowStepDefinition { Step = step2 },
                     },
-                    InitialStep = stepId1,
+                    InitialStepId = stepId1,
                 },
                 OwnerId = Guid.NewGuid().ToString(),
             });
@@ -400,7 +400,7 @@ public class DefaultFlowExecutorTests
                         [stepId2] = new FlowStepDefinition { Step = step2, NextStepId = stepId3 },
                         [stepId3] = new FlowStepDefinition { Step = step3 },
                     },
-                    InitialStep = stepId1,
+                    InitialStepId = stepId1,
                 },
                 OwnerId = Guid.NewGuid().ToString(),
             });
@@ -437,7 +437,7 @@ public class DefaultFlowExecutorTests
                     {
                         [stepId1] = new FlowStepDefinition { Step = step1 },
                     },
-                    InitialStep = stepId1,
+                    InitialStepId = stepId1,
                 },
                 OwnerId = Guid.NewGuid().ToString(),
             });
@@ -474,7 +474,7 @@ public class DefaultFlowExecutorTests
                         [stepId1] = new FlowStepDefinition { Step = step1, NextStepId = stepId2 },
                         [stepId2] = new FlowStepDefinition { Step = step2, NextStepId = stepId1 },
                     },
-                    InitialStep = stepId1,
+                    InitialStepId = stepId1,
                 },
                 OwnerId = Guid.NewGuid().ToString(),
             });
@@ -511,7 +511,7 @@ public class DefaultFlowExecutorTests
                         [stepId1] = new FlowStepDefinition { Step = step1 },
                         [stepId2] = new FlowStepDefinition { Step = step2 },
                     },
-                    InitialStep = stepId1,
+                    InitialStepId = stepId1,
                 },
                 OwnerId = Guid.NewGuid().ToString(),
             });
@@ -542,7 +542,7 @@ public class DefaultFlowExecutorTests
                     {
                         [stepId1] = new FlowStepDefinition { Step = step1 },
                     },
-                    InitialStep = stepId1,
+                    InitialStepId = stepId1,
                 },
                 OwnerId = Guid.NewGuid().ToString(),
             });
@@ -571,7 +571,7 @@ public class DefaultFlowExecutorTests
                     {
                         [stepId1] = new FlowStepDefinition { Step = step1 },
                     },
-                    InitialStep = stepId1,
+                    InitialStepId = stepId1,
                 },
                 OwnerId = Guid.NewGuid().ToString(),
             });
@@ -597,7 +597,7 @@ public class DefaultFlowExecutorTests
                     {
                         [stepId1] = new FlowStepDefinition { Step = step1 },
                     },
-                    InitialStep = stepId1,
+                    InitialStepId = stepId1,
                 },
                 OwnerId = Guid.NewGuid().ToString(),
             });
@@ -626,7 +626,7 @@ public class DefaultFlowExecutorTests
                     {
                         [stepId1] = new FlowStepDefinition { Step = step1 },
                     },
-                    InitialStep = stepId1,
+                    InitialStepId = stepId1,
                 },
                 OwnerId = Guid.NewGuid().ToString(),
             });
@@ -666,7 +666,7 @@ public class DefaultFlowExecutorTests
                     {
                         [stepId1] = new FlowStepDefinition { Step = step1 },
                     },
-                    InitialStep = stepId1,
+                    InitialStepId = stepId1,
                 },
                 OwnerId = Guid.NewGuid().ToString(),
             });

@@ -42,7 +42,9 @@ public sealed class DefaultFlowExecutor<TContext>(
             return;
         }
 
-        if (definition.InitialStep == default || !definition.Steps.ContainsKey(definition.InitialStep))
+        if (definition.InitialStepId == null ||
+            definition.InitialStepId == default ||
+            !definition.Steps.ContainsKey(definition.InitialStepId.Value))
         {
             addError(string.Empty, ValidationErrorType.NoStartStep);
         }
@@ -111,9 +113,14 @@ public sealed class DefaultFlowExecutor<TContext>(
             throw new InvalidOperationException($"Flow definition has no steps.");
         }
 
-        if (!request.Definition.Steps.ContainsKey(request.Definition.InitialStep))
+        if (request.Definition.InitialStepId == null)
         {
-            throw new InvalidOperationException($"Flow definition has no step with ID '{request.Definition.InitialStep}'.");
+            throw new InvalidOperationException($"Flow definition has initial step.");
+        }
+
+        if (!request.Definition.Steps.ContainsKey(request.Definition.InitialStepId.Value))
+        {
+            throw new InvalidOperationException($"Flow definition has no step with ID '{request.Definition.InitialStepId}'.");
         }
 
         var scheduleKey = request.ScheduleKey ?? string.Empty;
@@ -130,7 +137,7 @@ public sealed class DefaultFlowExecutor<TContext>(
             Expires = Clock.GetCurrentInstant().Plus(flowOptions.Value.Expiration.ToDuration()),
             InstanceId = Guid.NewGuid(),
             NextRun = Clock.GetCurrentInstant(),
-            NextStepId = request.Definition.InitialStep,
+            NextStepId = request.Definition.InitialStepId,
             OwnerId = request.OwnerId,
             ScheduleKey = scheduleKey,
             SchedulePartition = schedulePartition,
@@ -190,7 +197,7 @@ public sealed class DefaultFlowExecutor<TContext>(
 
         if (!definition.Steps.TryGetValue(stepId, out var stepDefinition))
         {
-            throw new InvalidOperationException($"Cannot find step with ID '{definition.InitialStep}'.");
+            throw new InvalidOperationException($"Cannot find step with ID '{definition.InitialStepId}'.");
         }
 
         if (state.Status == FlowExecutionStatus.Scheduled)

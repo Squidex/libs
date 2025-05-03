@@ -94,7 +94,7 @@ public class DefaultFlowExecutor_ValidationTests
                     NextStepId = Guid.NewGuid(),
                 },
             },
-            InitialStep = stepId,
+            InitialStepId = stepId,
         };
 
         var errors = await ValidateAsync(definition);
@@ -118,7 +118,7 @@ public class DefaultFlowExecutor_ValidationTests
                     NextStepId = Guid.NewGuid(),
                 },
             },
-            InitialStep = stepId,
+            InitialStepId = stepId,
         };
 
         var errors = await ValidateAsync(definition);
@@ -142,7 +142,7 @@ public class DefaultFlowExecutor_ValidationTests
                     NextStepId = Guid.NewGuid(),
                 },
             },
-            InitialStep = stepId,
+            InitialStepId = stepId,
         };
 
         var errors = await ValidateAsync(definition);
@@ -172,7 +172,7 @@ public class DefaultFlowExecutor_ValidationTests
                     NextStepId = default,
                 },
             },
-            InitialStep = stepId1,
+            InitialStepId = stepId1,
         };
 
         var errors = await ValidateAsync(definition);
