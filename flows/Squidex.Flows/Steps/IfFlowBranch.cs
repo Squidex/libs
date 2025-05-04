@@ -7,11 +7,9 @@
 
 namespace Squidex.Flows.Steps;
 
-public enum WebhookMethod
+public sealed record IfFlowBranch
 {
-    POST,
-    PUT,
-    GET,
-    DELETE,
-    PATCH,
+    public string? Condition { get; set; }
+
+    public Guid? NextStepId { get; set; }
 }

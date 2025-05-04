@@ -26,7 +26,7 @@ public class DelayStepTests
     [Fact]
     public async Task Should_delay_call_by_specified_seconds()
     {
-        var sut = new DelayFlowStep { Clock = clock, DelayInSec = 10 };
+        var sut = new DelayFlowStep { DelayInSec = 10 }.SetClock(clock);
 
         var result = await sut.ExecuteAsync(executionContext, default);
 
@@ -36,7 +36,7 @@ public class DelayStepTests
     [Fact]
     public async Task Should_not_delay_next_call_if_delay_is_negative()
     {
-        var sut = new DelayFlowStep { Clock = clock, DelayInSec = -10 };
+        var sut = new DelayFlowStep { DelayInSec = -10 };
 
         var result = await sut.ExecuteAsync(executionContext, default);
 
@@ -46,7 +46,7 @@ public class DelayStepTests
     [Fact]
     public async Task Should_not_delay_next_call_if_delay_is_larger_than_one_day()
     {
-        var sut = new DelayFlowStep { Clock = clock, DelayInSec = (int)TimeSpan.FromDays(1.1).TotalSeconds };
+        var sut = new DelayFlowStep { DelayInSec = (int)TimeSpan.FromDays(1.1).TotalSeconds }.SetClock(clock);
 
         var result = await sut.ExecuteAsync(executionContext, default);
 

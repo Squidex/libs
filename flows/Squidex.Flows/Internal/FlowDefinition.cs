@@ -5,16 +5,12 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Generator.Equals;
-
 namespace Squidex.Flows.Internal;
 
-[Equatable]
-public sealed partial record FlowDefinition
+public sealed record FlowDefinition : IEquatable<FlowDefinition>
 {
     public Guid? InitialStepId { get; init; }
 
-    [UnorderedEquality]
     public Dictionary<Guid, FlowStepDefinition> Steps { get; init; } = [];
 
     public FlowStep? GetInitialStepId()
@@ -35,5 +31,57 @@ public sealed partial record FlowDefinition
         }
 
         return null;
+    }
+
+    public bool Equals(FlowDefinition? other)
+    {
+        if (other is null)
+        {
+            return false;
+        }
+
+        if (ReferenceEquals(this, other))
+        {
+            return true;
+        }
+
+        static bool EqualSteps(Dictionary<Guid, FlowStepDefinition>? lhs, Dictionary<Guid, FlowStepDefinition>? rhs)
+        {
+            if (ReferenceEquals(lhs, rhs))
+            {
+                return true;
+            }
+
+            if (lhs == null || rhs == null)
+            {
+                return false;
+            }
+
+            if (lhs.Count != rhs.Count)
+            {
+                return false;
+            }
+
+            return lhs.OrderBy(kv => kv.Key).SequenceEqual(rhs.OrderBy(kv => kv.Key));
+        }
+
+        return InitialStepId == other.InitialStepId && EqualSteps(Steps, other.Steps);
+    }
+
+    public override int GetHashCode()
+    {
+        HashCode hashCode = default;
+        hashCode.Add(InitialStepId);
+
+        if (Steps != null)
+        {
+            foreach (var kvp in Steps.OrderBy(kv => kv.Key))
+            {
+                hashCode.Add(kvp.Key);
+                hashCode.Add(kvp.Value);
+            }
+        }
+
+        return hashCode.ToHashCode();
     }
 }

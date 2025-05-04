@@ -6,28 +6,23 @@
 // ==========================================================================
 
 using System.ComponentModel.DataAnnotations;
-using Generator.Equals;
 using Squidex.Flows.Internal;
 
 namespace Squidex.Flows.Steps;
 
-#pragma warning disable MA0048 // File name must match type name
-
-[NoRetry]
 [FlowStep(
     Title = "If",
     IconImage = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 -960 960 960'><path d='M600-160v-80H440v-200h-80v80H80v-240h280v80h80v-200h160v-80h280v240H600v-80h-80v320h80v-80h280v240H600zm80-80h120v-80H680v80zM160-440h120v-80H160v80zm520-200h120v-80H680v80zm0 400v-80 80zM280-440v-80 80zm400-200v-80 80z'/></svg>",
     IconColor = "#3389ff",
     Display = "Conditions",
     Description = "Create branches based on conditions.")]
-[Equatable]
-public sealed partial record IfFlowStep : FlowStep
+[NoRetry]
+public sealed record IfFlowStep : FlowStep, IEquatable<IfFlowStep>
 {
     [Required]
     [Display(Name = "Branches", Description = "The delay in seconds.")]
     [Editor(FlowStepEditor.Branches)]
-    [OrderedEquality]
-    public List<IfBranch> Branches { get; set; }
+    public List<IfFlowBranch>? Branches { get; set; }
 
     [Editor(FlowStepEditor.None)]
     public Guid? ElseStepId { get; set; }
@@ -99,11 +94,55 @@ public sealed partial record IfFlowStep : FlowStep
         executionContext.Log("No conditioned matched criteria. Continue with 'else' branch.");
         return Next(ElseStepId ?? default);
     }
-}
 
-public sealed class IfBranch
-{
-    public string? Condition { get; set; }
+    public bool Equals(IfFlowStep? other)
+    {
+        if (other is null)
+        {
+            return true;
+        }
 
-    public Guid? NextStepId { get; set; }
+        if (ReferenceEquals(this, other))
+        {
+            return true;
+        }
+
+        static bool EqualBranches(List<IfFlowBranch>? lhs, List<IfFlowBranch>? rhs)
+        {
+            if (ReferenceEquals(lhs, rhs))
+            {
+                return true;
+            }
+
+            if (lhs == null || rhs == null)
+            {
+                return false;
+            }
+
+            if (lhs.Count != rhs.Count)
+            {
+                return false;
+            }
+
+            return lhs.SequenceEqual(rhs);
+        }
+
+        return ElseStepId == other.ElseStepId && EqualBranches(Branches, other.Branches);
+    }
+
+    public override int GetHashCode()
+    {
+        HashCode hashCode = default;
+        hashCode.Add(ElseStepId);
+
+        if (Branches != null)
+        {
+            foreach (var branch in Branches)
+            {
+                hashCode.Add(branch);
+            }
+        }
+
+        return hashCode.ToHashCode();
+    }
 }

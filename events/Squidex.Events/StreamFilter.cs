@@ -7,6 +7,8 @@
 
 #pragma warning disable MA0048 // File name must match type name
 
+using System.ComponentModel.DataAnnotations;
+
 namespace Squidex.Events;
 
 public readonly struct StreamFilter(StreamFilterKind kind, IReadOnlySet<string>? prefixes = null) : IEquatable<StreamFilter>
@@ -67,17 +69,18 @@ public readonly struct StreamFilter(StreamFilterKind kind, IReadOnlySet<string>?
 
     public override int GetHashCode()
     {
-        var hashCode = 17 * Kind.GetHashCode();
+        HashCode hashCode = default;
+        hashCode.Add(Kind);
 
         if (Prefixes != null)
         {
             foreach (var prefix in Prefixes)
             {
-                hashCode ^= 23 * prefix.GetHashCode(StringComparison.Ordinal);
+                hashCode.Add(prefix, StringComparer.Ordinal);
             }
         }
 
-        return hashCode;
+        return hashCode.ToHashCode();
     }
 }
 

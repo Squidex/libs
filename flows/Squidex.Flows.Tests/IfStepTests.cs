@@ -29,7 +29,7 @@ public class IfStepTests
         {
             Branches =
             [
-                new IfBranch { NextStepId = Guid.NewGuid() },
+                new IfFlowBranch { NextStepId = Guid.NewGuid() },
             ],
         };
 
@@ -58,7 +58,7 @@ public class IfStepTests
         {
             Branches =
             [
-                new IfBranch { NextStepId = Guid.Empty },
+                new IfFlowBranch { NextStepId = Guid.Empty },
             ],
             ElseStepId = Guid.Empty,
         };
@@ -75,7 +75,7 @@ public class IfStepTests
         {
             Branches =
             [
-                new IfBranch { NextStepId = null },
+                new IfFlowBranch { NextStepId = null },
             ],
             ElseStepId = null,
         };
@@ -104,7 +104,7 @@ public class IfStepTests
         {
             Branches =
             [
-                new IfBranch { NextStepId = id1 },
+                new IfFlowBranch { NextStepId = id1 },
             ],
             ElseStepId = id2,
         };
@@ -126,9 +126,9 @@ public class IfStepTests
         {
             Branches =
             [
-                new IfBranch { NextStepId = idBranch1 },
-                new IfBranch { NextStepId = idBranch2 },
-                new IfBranch { NextStepId = idBranch3 },
+                new IfFlowBranch { NextStepId = idBranch1 },
+                new IfFlowBranch { NextStepId = idBranch2 },
+                new IfFlowBranch { NextStepId = idBranch3 },
             ],
             ElseStepId = idElse,
         };
@@ -156,9 +156,9 @@ public class IfStepTests
         {
             Branches =
             [
-                new IfBranch { NextStepId = idBranch1, Condition = "A == 1" },
-                new IfBranch { NextStepId = idBranch2, Condition = "A == 2" },
-                new IfBranch { NextStepId = idBranch3, Condition = "A == 3" },
+                new IfFlowBranch { NextStepId = idBranch1, Condition = "A == 1" },
+                new IfFlowBranch { NextStepId = idBranch2, Condition = "A == 2" },
+                new IfFlowBranch { NextStepId = idBranch3, Condition = "A == 3" },
             ],
             ElseStepId = idElse,
         };
@@ -183,9 +183,9 @@ public class IfStepTests
         {
             Branches =
             [
-                new IfBranch { NextStepId = idBranch1, Condition = "A == 1" },
-                new IfBranch { NextStepId = idBranch2, Condition = "A == 2" },
-                new IfBranch { NextStepId = idBranch3, Condition = "A == 3" },
+                new IfFlowBranch { NextStepId = idBranch1, Condition = "A == 1" },
+                new IfFlowBranch { NextStepId = idBranch2, Condition = "A == 2" },
+                new IfFlowBranch { NextStepId = idBranch3, Condition = "A == 3" },
             ],
             ElseStepId = idElse,
         };
@@ -234,6 +234,117 @@ public class IfStepTests
 
         A.CallTo(() => expressionEngine.Evaluate(A<string>._, executionContext.Context))
             .MustNotHaveHappened();
+    }
+
+    [Fact]
+    public void Should_provide_correct_equals0()
+    {
+        var lhs = new FlowDefinition();
+        var rhs = new FlowDefinition();
+
+        Assert.Equal(lhs, rhs);
+        Assert.Equal(lhs.GetHashCode(), rhs.GetHashCode());
+    }
+
+    [Fact]
+    public void Should_provide_correct_equals1()
+    {
+        var lhs = new IfFlowStep { Branches = null };
+        var rhs = new IfFlowStep { Branches = null };
+
+        Assert.Equal(lhs, rhs);
+        Assert.Equal(lhs.GetHashCode(), rhs.GetHashCode());
+    }
+
+    [Fact]
+    public void Should_provide_correct_equals2()
+    {
+        var id1 = Guid.NewGuid();
+        var id2 = Guid.NewGuid();
+
+        var lhs = new IfFlowStep
+        {
+            Branches =
+            [
+                new IfFlowBranch { Condition = "Condition1", NextStepId = id1 },
+                new IfFlowBranch { Condition = "Condition2", NextStepId = id2 },
+            ],
+            ElseStepId = id1,
+        };
+
+        var rhs = new IfFlowStep
+        {
+            Branches =
+            [
+                new IfFlowBranch { Condition = "Condition1", NextStepId = id1 },
+                new IfFlowBranch { Condition = "Condition2", NextStepId = id2 },
+            ],
+            ElseStepId = id1,
+        };
+
+        Assert.Equal(lhs, rhs);
+        Assert.Equal(lhs.GetHashCode(), rhs.GetHashCode());
+    }
+
+    [Fact]
+    public void Should_provide_correct_equals3()
+    {
+        var id1 = Guid.NewGuid();
+        var id2 = Guid.NewGuid();
+
+        var @base = new IfFlowStep
+        {
+            Branches =
+            [
+                new IfFlowBranch { Condition = "Condition1", NextStepId = id1 },
+                new IfFlowBranch { Condition = "Condition2", NextStepId = id2 },
+            ],
+            ElseStepId = id1,
+        };
+
+        var otherElse = new IfFlowStep
+        {
+            Branches =
+            [
+                new IfFlowBranch { Condition = "Condition1", NextStepId = id1 },
+                new IfFlowBranch { Condition = "Condition2", NextStepId = id2 },
+            ],
+            ElseStepId = id2,
+        };
+
+        Assert.NotEqual(@base, otherElse);
+        Assert.NotEqual(@base.GetHashCode(), otherElse.GetHashCode());
+
+        var otherBranchOrder = new IfFlowStep
+        {
+            Branches =
+            [
+                new IfFlowBranch { Condition = "Condition2", NextStepId = id2 },
+                new IfFlowBranch { Condition = "Condition1", NextStepId = id1 },
+            ],
+            ElseStepId = id1,
+        };
+
+        Assert.NotEqual(@base, otherBranchOrder);
+        Assert.NotEqual(@base.GetHashCode(), otherBranchOrder.GetHashCode());
+
+        var nullBranches = new IfFlowStep
+        {
+            Branches = null,
+            ElseStepId = id1,
+        };
+
+        Assert.NotEqual(@base, nullBranches);
+        Assert.NotEqual(@base.GetHashCode(), nullBranches.GetHashCode());
+
+        var emptyBranches = new IfFlowStep
+        {
+            Branches = [],
+            ElseStepId = id1,
+        };
+
+        Assert.NotEqual(@base, emptyBranches);
+        Assert.NotEqual(@base.GetHashCode(), emptyBranches.GetHashCode());
     }
 
     private static async Task<List<(string Path, string Message)>> ValidateAsync(FlowStep step, FlowDefinition definition)
