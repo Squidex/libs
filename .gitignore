@@ -27,4 +27,5 @@ docker-build.ps1
 appSettings.Development.json
 appSettings.Production.json
 launchSettings.json
+*.received.txt
 
