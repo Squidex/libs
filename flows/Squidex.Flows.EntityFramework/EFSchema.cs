@@ -15,6 +15,8 @@ public static class EFSchema
     {
         modelBuilder.Entity<EFFlowStateEntity>(b =>
         {
+            b.ToTable("Flows");
+
             b.HasIndex(x => new { x.DueTime, x.SchedulePartition });
         });
 
