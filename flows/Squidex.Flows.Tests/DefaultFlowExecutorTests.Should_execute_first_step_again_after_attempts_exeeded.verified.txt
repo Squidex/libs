@@ -3,7 +3,7 @@
   OwnerId: Guid_2,
   DefinitionId: Guid_3,
   Definition: {
-    InitialStep: StepId1,
+    InitialStepId: StepId1,
     Steps: {
       StepId1: {
         IgnoreError: false,
