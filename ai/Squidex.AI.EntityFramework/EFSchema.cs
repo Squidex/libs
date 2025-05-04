@@ -16,8 +16,8 @@ public static class EFSchema
         modelBuilder.Entity<EFChatEntity>(b =>
         {
             b.ToTable("Chats");
-
             b.HasIndex(x => x.LastUpdated);
+            b.Property(x => x.Id).HasMaxLength(255);
         });
 
         return modelBuilder;

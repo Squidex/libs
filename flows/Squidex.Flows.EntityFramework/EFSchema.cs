@@ -16,8 +16,9 @@ public static class EFSchema
         modelBuilder.Entity<EFFlowStateEntity>(b =>
         {
             b.ToTable("Flows");
-
             b.HasIndex(x => new { x.DueTime, x.SchedulePartition });
+            b.Property(x => x.DefinitionId).HasMaxLength(255);
+            b.Property(x => x.OwnerId).HasMaxLength(255);
         });
 
         return modelBuilder;

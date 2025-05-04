@@ -16,9 +16,12 @@ public static class EFSchema
         modelBuilder.Entity<EFMessagingDataEntity>(b =>
         {
             b.ToTable("MessagingData");
-
-            b.HasKey(nameof(EFMessagingDataEntity.Group), nameof(EFMessagingDataEntity.Key));
+            b.HasKey(x => new { x.Group, x.Key });
             b.HasIndex(x => x.Expiration);
+            b.Property(x => x.Group).HasMaxLength(255);
+            b.Property(x => x.Key).HasMaxLength(255);
+            b.Property(x => x.ValueType).HasMaxLength(255);
+            b.Property(x => x.ValueFormat).HasMaxLength(255);
         });
 
         return modelBuilder;
@@ -29,8 +32,10 @@ public static class EFSchema
         modelBuilder.Entity<EFMessage>(b =>
         {
             b.ToTable("Messages");
-
             b.HasIndex(x => new { x.ChannelName, x.TimeHandled });
+            b.Property(x => x.ChannelName).HasMaxLength(255);
+            b.Property(x => x.MessageHeaders).HasMaxLength(2000);
+            b.Property(x => x.QueueName).HasMaxLength(255);
         });
 
         return modelBuilder;

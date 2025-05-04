@@ -16,8 +16,8 @@ public static class EFSchema
         modelBuilder.Entity<EFAssetKeyValueEntity<T>>(b =>
         {
             b.ToTable($"AssetKeyValueStore_{typeof(T).Name}");
-
             b.HasIndex(x => x.Expires);
+            b.Property(x => x.Key).HasMaxLength(255);
         });
 
         return modelBuilder;
