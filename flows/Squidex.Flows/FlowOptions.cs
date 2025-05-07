@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Squidex.Flows.Internal;
 using Squidex.Hosting.Configuration;
 
 namespace Squidex.Flows;
@@ -38,7 +39,7 @@ public sealed class FlowOptions : IValidatableOptions
     {
         ArgumentNullException.ThrowIfNull(key);
 
-        return Math.Abs(key.GetHashCode(StringComparison.InvariantCulture) % NumPartitions);
+        return Math.Abs(key.GetDeterministicHashCode() % NumPartitions);
     }
 
     public int[] GetPartitions()

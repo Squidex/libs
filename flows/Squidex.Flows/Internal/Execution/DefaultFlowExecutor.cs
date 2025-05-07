@@ -6,12 +6,10 @@
 // ==========================================================================
 
 using System.ComponentModel.DataAnnotations;
-using Google.Api;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NodaTime;
 using NodaTime.Extensions;
-using Squidex.Text;
 
 namespace Squidex.Flows.Internal.Execution;
 
@@ -141,8 +139,7 @@ public sealed class DefaultFlowExecutor<TContext>(
         }
 
         var scheduleKey = request.ScheduleKey ?? string.Empty;
-        var scheduleHash = Math.Abs(scheduleKey.GetDeterministicHashCode());
-        var schedulePartition = scheduleHash % flowOptions.Value.NumPartitions;
+        var schedulePartition = flowOptions.Value.GetPartition(scheduleKey);
 
         var state = new FlowExecutionState<TContext>
         {
