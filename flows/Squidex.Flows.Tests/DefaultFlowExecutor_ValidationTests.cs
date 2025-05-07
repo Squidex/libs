@@ -29,7 +29,7 @@ public class DefaultFlowExecutor_ValidationTests
     }
 
     [Fact]
-    public async Task Should_error_if_definition_has_no_steps()
+    public async Task Should_add_error_if_definition_has_no_steps()
     {
         var definition = new FlowDefinition();
 
@@ -40,7 +40,7 @@ public class DefaultFlowExecutor_ValidationTests
     }
 
     [Fact]
-    public async Task Should_error_if_definition_has_no_start_step()
+    public async Task Should_add_error_if_definition_has_no_start_step()
     {
         var definition = new FlowDefinition
         {
@@ -60,7 +60,7 @@ public class DefaultFlowExecutor_ValidationTests
     }
 
     [Fact]
-    public async Task Should_error_if_step_id_is_invalid()
+    public async Task Should_add_error_if_step_id_is_invalid()
     {
         var definition = new FlowDefinition
         {
@@ -80,7 +80,7 @@ public class DefaultFlowExecutor_ValidationTests
     }
 
     [Fact]
-    public async Task Should_error_if_next_step_id_is_invalid()
+    public async Task Should_add_error_if_next_step_id_is_invalid()
     {
         var stepId = Guid.NewGuid();
 
@@ -100,11 +100,11 @@ public class DefaultFlowExecutor_ValidationTests
         var errors = await ValidateAsync(definition);
         var error = errors.LastOrDefault();
 
-        Assert.Equal(new Error($"steps.{stepId}", ValidationErrorType.InvalidNextStepId), error);
+        Assert.Equal(new Error($"Steps.{stepId}", ValidationErrorType.InvalidNextStepId), error);
     }
 
     [Fact]
-    public async Task Should_error_if_has_invalid_property()
+    public async Task Should_add_error_if_step_has_invalid_property()
     {
         var stepId = Guid.NewGuid();
 
@@ -124,11 +124,11 @@ public class DefaultFlowExecutor_ValidationTests
         var errors = await ValidateAsync(definition);
         var error = errors.LastOrDefault();
 
-        Assert.Equal(new Error($"steps.{stepId}.Required", ValidationErrorType.InvalidProperty, "The Required field is required."), error);
+        Assert.Equal(new Error($"Steps.{stepId}.Step.Required", ValidationErrorType.InvalidProperty, "The Required field is required."), error);
     }
 
     [Fact]
-    public async Task Should_error_if_has_invalid_custom_property()
+    public async Task Should_add_error_if_step_has_invalid_custom_property()
     {
         var stepId = Guid.NewGuid();
 
@@ -148,11 +148,22 @@ public class DefaultFlowExecutor_ValidationTests
         var errors = await ValidateAsync(definition);
         var error = errors.LastOrDefault();
 
-        Assert.Equal(new Error($"steps.{stepId}.Custom", ValidationErrorType.InvalidProperty, "The Custom field has validation rules."), error);
+        Assert.Equal(new Error($"Steps.{stepId}.Step.Custom", ValidationErrorType.InvalidProperty, "The Custom field has validation rules."), error);
     }
 
     [Fact]
-    public async Task Should_not_error_is_is_valid()
+    public async Task Should_add_error_if_step_has_invalid_property_on_step_validation()
+    {
+        var step = new NoopStepWithRequiredProperty();
+
+        var errors = await ValidateAsync(step);
+        var error = errors.LastOrDefault();
+
+        Assert.Equal(new Error($"Required", ValidationErrorType.InvalidProperty, "The Required field is required."), error);
+    }
+
+    [Fact]
+    public async Task Should_not_error_if_valid()
     {
         var stepId1 = Guid.Parse("216e4ed4-8e29-4c38-9265-7e5e1f55eb2a");
         var stepId2 = Guid.NewGuid();
@@ -191,6 +202,17 @@ public class DefaultFlowExecutor_ValidationTests
         var errors = new List<Error>();
 
         await sut.ValidateAsync(definition,
+            (path, type, message) => errors.Add(new Error(path, type, message)),
+            default);
+
+        return errors;
+    }
+
+    private async Task<List<Error>> ValidateAsync(FlowStep step)
+    {
+        var errors = new List<Error>();
+
+        await sut.ValidateAsync(step,
             (path, type, message) => errors.Add(new Error(path, type, message)),
             default);
 

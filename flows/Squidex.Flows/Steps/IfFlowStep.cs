@@ -31,6 +31,10 @@ public sealed record IfFlowStep : FlowStep, IEquatable<IfFlowStep>
         CancellationToken ct)
     {
         var definition = validationContext.Definition;
+        if (definition == null)
+        {
+            return default;
+        }
 
         if (Branches != null)
         {

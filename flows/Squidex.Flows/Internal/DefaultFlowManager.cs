@@ -47,6 +47,12 @@ public sealed class DefaultFlowManager<TContext>(
         return flowExecutor.ValidateAsync(definition, addError, ct);
     }
 
+    public Task ValidateAsync(FlowStep step, AddError addError,
+        CancellationToken ct)
+    {
+        return flowExecutor.ValidateAsync(step, addError, ct);
+    }
+
     public Task<bool> ForceAsync(Guid instanceId,
         CancellationToken ct = default)
     {

@@ -18,6 +18,7 @@ public enum ValidationErrorType
     NoSteps,
     NoStartStep,
     InvalidNextStepId,
+    InvalidStep,
     InvalidStepId,
     InvalidProperty,
 }

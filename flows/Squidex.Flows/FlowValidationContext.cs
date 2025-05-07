@@ -9,9 +9,9 @@ using Squidex.Flows.Internal;
 
 namespace Squidex.Flows;
 
-public sealed class FlowValidationContext(IServiceProvider serviceProvider, FlowDefinition definition)
+public sealed class FlowValidationContext(IServiceProvider serviceProvider, FlowDefinition? definition)
 {
     public IServiceProvider ServiceProvider => serviceProvider;
 
-    public FlowDefinition Definition => definition;
+    public FlowDefinition? Definition => definition;
 }

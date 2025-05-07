@@ -23,7 +23,7 @@ public class IfStepTests
     }
 
     [Fact]
-    public async Task Should_return_error_if_branch_has_invalid_target()
+    public async Task Should_add_error_if_branch_has_invalid_target()
     {
         var @if = new IfFlowStep
         {
@@ -39,7 +39,7 @@ public class IfStepTests
     }
 
     [Fact]
-    public async Task Should_return_error_if_else_condition_has_invalid_target()
+    public async Task Should_add_error_if_else_condition_has_invalid_target()
     {
         var @if = new IfFlowStep
         {
@@ -64,6 +64,19 @@ public class IfStepTests
         };
 
         var errors = await ValidateAsync(@if, new FlowDefinition());
+
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public async Task Should_not_add_error_if_else_condition_has_invalid_target_but_flow_definition_is_null()
+    {
+        var @if = new IfFlowStep
+        {
+            ElseStepId = Guid.NewGuid(),
+        };
+
+        var errors = await ValidateAsync(@if, null);
 
         Assert.Empty(errors);
     }
@@ -347,7 +360,7 @@ public class IfStepTests
         Assert.NotEqual(@base.GetHashCode(), emptyBranches.GetHashCode());
     }
 
-    private static async Task<List<(string Path, string Message)>> ValidateAsync(FlowStep step, FlowDefinition definition)
+    private static async Task<List<(string Path, string Message)>> ValidateAsync(FlowStep step, FlowDefinition? definition)
     {
         var errors = new List<(string Path, string Message)>();
 

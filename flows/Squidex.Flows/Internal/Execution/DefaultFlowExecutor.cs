@@ -6,6 +6,7 @@
 // ==========================================================================
 
 using System.ComponentModel.DataAnnotations;
+using Google.Api;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NodaTime;
@@ -62,27 +63,38 @@ public sealed class DefaultFlowExecutor<TContext>(
                 stepDefinition.NextStepId != default &&
                 !definition.Steps.ContainsKey(stepDefinition.NextStepId.Value))
             {
-                addError($"steps.{stepId}", ValidationErrorType.InvalidNextStepId);
+                addError($"Steps.{stepId}", ValidationErrorType.InvalidNextStepId);
             }
 
-            ValidateProperties(addError, stepId, stepDefinition.Step);
-
-            await stepDefinition.Step.ValidateAsync(context, (path, message) =>
+            if (stepDefinition.Step == null)
             {
-                addError($"steps.{stepId}.{path}", ValidationErrorType.InvalidProperty, message);
+                addError($"Steps.{stepId}.Step", ValidationErrorType.InvalidStepId);
+                return;
+            }
+
+            await ValidateCoreAsync(stepDefinition.Step, context, (path, type, message) =>
+            {
+                addError($"Steps.{stepId}.Step.{path}", type, message);
             }, ct);
         }
     }
 
-    private static void ValidateProperties(AddError addError, Guid stepId, FlowStep step)
+    public async Task ValidateAsync(FlowStep step, AddError addError,
+        CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(nameof(step));
+        ArgumentNullException.ThrowIfNull(nameof(addError));
+
+        await ValidateCoreAsync(step, new FlowValidationContext(serviceProvider, null), addError, ct);
+    }
+
+    private static async Task ValidateCoreAsync(FlowStep step, FlowValidationContext validationContext, AddError addError,
+        CancellationToken ct)
     {
         var context = new ValidationContext(step);
         var errors = new List<ValidationResult>();
 
-        if (Validator.TryValidateObject(step, context, errors, true))
-        {
-            return;
-        }
+        Validator.TryValidateObject(step, context, errors, true);
 
         foreach (var error in errors)
         {
@@ -93,9 +105,14 @@ public sealed class DefaultFlowExecutor<TContext>(
 
             foreach (var member in error.MemberNames)
             {
-                addError($"steps.{stepId}.{member}", ValidationErrorType.InvalidProperty, error.ErrorMessage);
+                addError(member, ValidationErrorType.InvalidProperty, error.ErrorMessage);
             }
         }
+
+        await step.ValidateAsync(validationContext, (path, message) =>
+        {
+            addError(path, ValidationErrorType.InvalidProperty, message);
+        }, ct);
     }
 
     public FlowExecutionState<TContext> CreateState(CreateFlowInstanceRequest<TContext> request)

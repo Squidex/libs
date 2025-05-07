@@ -147,11 +147,20 @@ public class DefaultFlowManagerTests
     }
 
     [Fact]
-    public async Task Should_forward_validation_to_executor()
+    public async Task Should_forward_flow_validation_to_executor()
     {
-        await sut.ValidateAsync(null!, null!, ct);
+        await sut.ValidateAsync((FlowDefinition)null!, null!, ct);
 
-        A.CallTo(() => flowExecutor.ValidateAsync(null!, null!, ct))
+        A.CallTo(() => flowExecutor.ValidateAsync((FlowDefinition)null!, null!, ct))
+            .MustHaveHappened();
+    }
+
+    [Fact]
+    public async Task Should_forward_step_validation_to_executor()
+    {
+        await sut.ValidateAsync((FlowStep)null!, null!, ct);
+
+        A.CallTo(() => flowExecutor.ValidateAsync((FlowStep)null!, null!, ct))
             .MustHaveHappened();
     }
 
