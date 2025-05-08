@@ -6,13 +6,13 @@
 // ==========================================================================
 
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Squidex.AI;
 using Squidex.AI.Implementation;
 using Squidex.AI.Implementation.OpenAI;
 using Squidex.AI.Implementation.Pinecone;
 
-namespace Squidex.AI;
+namespace Microsoft.Extensions.DependencyInjection;
 
 public static class AIServiceExtensions
 {

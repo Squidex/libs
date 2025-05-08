@@ -9,7 +9,6 @@ using System.Collections.Concurrent;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Squidex.Events.EntityFramework;
-using Xunit;
 
 namespace Squidex.Events;
 
@@ -23,7 +22,7 @@ public abstract class EFEventStoreTests : EventStoreTests
         var ts = DateTime.UtcNow.Ticks + 1000;
 
         var dbAdapter = Services.GetRequiredService<IProviderAdapter>();
-        var dbFactory = Services.GetRequiredService<IDbContextFactory<TestContext>>();
+        var dbFactory = Services.GetRequiredService<IDbContextFactory<TestDbContext>>();
 
         await InsertTestValueAsync(dbFactory, ts, ts);
 
@@ -39,7 +38,7 @@ public abstract class EFEventStoreTests : EventStoreTests
         var ts = DateTime.UtcNow.Ticks + 2000;
 
         var dbAdapter = Services.GetRequiredService<IProviderAdapter>();
-        var dbFactory = Services.GetRequiredService<IDbContextFactory<TestContext>>();
+        var dbFactory = Services.GetRequiredService<IDbContextFactory<TestDbContext>>();
 
         await InsertTestValueAsync(dbFactory, ts, ts);
 
@@ -49,7 +48,7 @@ public abstract class EFEventStoreTests : EventStoreTests
         Assert.True(dbAdapter.IsDuplicateException(ex));
     }
 
-    private static async Task InsertTestValueAsync(IDbContextFactory<TestContext> dbContextFactory, long id, long value)
+    private static async Task InsertTestValueAsync(IDbContextFactory<TestDbContext> dbContextFactory, long id, long value)
     {
         await using var dbContext1 = await dbContextFactory.CreateDbContextAsync();
 
@@ -61,7 +60,7 @@ public abstract class EFEventStoreTests : EventStoreTests
     public async Task Should_initialize_adapter_twice()
     {
         var dbAdapter = Services.GetRequiredService<IProviderAdapter>();
-        var dbFactory = Services.GetRequiredService<IDbContextFactory<TestContext>>();
+        var dbFactory = Services.GetRequiredService<IDbContextFactory<TestDbContext>>();
 
         for (var i = 0; i < 2; i++)
         {
@@ -74,7 +73,7 @@ public abstract class EFEventStoreTests : EventStoreTests
     public async Task Should_calculate_positions()
     {
         var dbAdapter = Services.GetRequiredService<IProviderAdapter>();
-        var dbFactory = Services.GetRequiredService<IDbContextFactory<TestContext>>();
+        var dbFactory = Services.GetRequiredService<IDbContextFactory<TestDbContext>>();
 
         var values = new HashSet<long>();
 
@@ -92,7 +91,7 @@ public abstract class EFEventStoreTests : EventStoreTests
     public async Task Should_calculate_positions_in_parallel()
     {
         var dbAdapter = Services.GetRequiredService<IProviderAdapter>();
-        var dbFactory = Services.GetRequiredService<IDbContextFactory<TestContext>>();
+        var dbFactory = Services.GetRequiredService<IDbContextFactory<TestDbContext>>();
 
         var values = new ConcurrentDictionary<long, long>();
 

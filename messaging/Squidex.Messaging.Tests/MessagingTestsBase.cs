@@ -6,10 +6,8 @@
 // ==========================================================================
 
 using System.Globalization;
-using FakeItEasy;
 using Squidex.Messaging.Implementation;
 using Squidex.Messaging.Internal;
-using Xunit;
 
 namespace Squidex.Messaging;
 

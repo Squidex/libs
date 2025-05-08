@@ -9,7 +9,7 @@ using System.Reactive.Linq;
 using Squidex.Messaging.Implementation;
 using Squidex.Messaging.Internal;
 using Squidex.Messaging.Subscriptions;
-using Xunit;
+using TestHelpers;
 
 #pragma warning disable MA0040 // Flow the cancellation token
 
@@ -223,7 +223,7 @@ public class SubscriptionServiceTests(MongoMessagingFixture fixture)
                     options.AddDebug();
                     options.AddConsole();
                 })
-                .AddSingleton(fixture.Database)
+                .AddSingleton(fixture.MongoDatabase)
                 .AddReplicatedCache()
                 .AddMessaging()
                     .Configure<MessagingOptions>(options =>
@@ -235,8 +235,8 @@ public class SubscriptionServiceTests(MongoMessagingFixture fixture)
                         options.GroupName = groupName;
                     })
                     .AddSubscriptions()
-                    .AddMongoDataStore(TestHelpers.Configuration)
-                    .AddMongoTransport(TestHelpers.Configuration)
+                    .AddMongoDataStore(TestUtils.Configuration)
+                    .AddMongoTransport(TestUtils.Configuration)
                     .Services
                 .AddSingleton<IInstanceNameProvider, RandomInstanceNameProvider>()
                 .BuildServiceProvider();

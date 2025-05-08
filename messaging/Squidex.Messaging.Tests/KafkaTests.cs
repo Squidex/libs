@@ -5,7 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Xunit;
+using TestHelpers;
 
 namespace Squidex.Messaging;
 
@@ -17,7 +17,7 @@ public class KafkaTests(KafkaFixture fixture)
 
     protected override void Configure(MessagingBuilder builder)
     {
-        builder.AddKafkaTransport(TestHelpers.Configuration, options =>
+        builder.AddKafkaTransport(TestUtils.Configuration, options =>
         {
             options.BootstrapServers = fixture.Kafka.GetBootstrapAddress();
             options.GroupId = Guid.NewGuid().ToString();

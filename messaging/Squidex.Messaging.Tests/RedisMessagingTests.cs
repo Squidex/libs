@@ -6,7 +6,7 @@
 // ==========================================================================
 
 using StackExchange.Redis;
-using Xunit;
+using TestHelpers;
 
 namespace Squidex.Messaging;
 
@@ -17,7 +17,7 @@ public class RedisMessagingTests(RedisFixture fixture)
 
     protected override void Configure(MessagingBuilder builder)
     {
-        builder.AddRedisTransport(TestHelpers.Configuration, options =>
+        builder.AddRedisTransport(TestUtils.Configuration, options =>
         {
             options.PollingInterval = TimeSpan.FromSeconds(0.1);
             options.ConnectionFactory = log =>

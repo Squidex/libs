@@ -6,10 +6,8 @@
 // ==========================================================================
 
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
-using FluentAssertions;
 using Squidex.AI.Implementation.OpenAI;
 using Squidex.AI.Utils;
-using Xunit;
 
 namespace Squidex.AI;
 

@@ -6,7 +6,7 @@
 // ==========================================================================
 
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
+using TestHelpers;
 
 namespace Squidex.Text.Translations;
 
@@ -16,7 +16,7 @@ public class GoogleCloudTranslationServiceTests : TranslationServiceTestsBase
     {
         var services =
             new ServiceCollection()
-                .AddGoogleCloudTranslations(TestHelpers.Configuration)
+                .AddGoogleCloudTranslations(TestUtils.Configuration)
                 .BuildServiceProvider();
 
         return services.GetRequiredService<ITranslationService>();
@@ -30,7 +30,7 @@ public class GoogleCloudTranslationServiceTests : TranslationServiceTestsBase
     {
         var sut =
             new ServiceCollection()
-                .AddGoogleCloudTranslations(TestHelpers.Configuration, c => c.ProjectId = projectId!)
+                .AddGoogleCloudTranslations(TestUtils.Configuration, c => c.ProjectId = projectId!)
                 .BuildServiceProvider()
                 .GetRequiredService<ITranslationService>();
 
@@ -42,7 +42,7 @@ public class GoogleCloudTranslationServiceTests : TranslationServiceTestsBase
     {
         var sut =
             new ServiceCollection()
-                .AddGoogleCloudTranslations(TestHelpers.Configuration, c => c.ProjectId = "My Project Id")
+                .AddGoogleCloudTranslations(TestUtils.Configuration, c => c.ProjectId = "My Project Id")
                 .BuildServiceProvider()
                 .GetRequiredService<ITranslationService>();
 
@@ -54,7 +54,7 @@ public class GoogleCloudTranslationServiceTests : TranslationServiceTestsBase
     {
         var sut =
             new ServiceCollection()
-                .AddGoogleCloudTranslations(TestHelpers.Configuration, c => c.ProjectId = null!)
+                .AddGoogleCloudTranslations(TestUtils.Configuration, c => c.ProjectId = null!)
                 .BuildServiceProvider()
                 .GetRequiredService<ITranslationService>();
 

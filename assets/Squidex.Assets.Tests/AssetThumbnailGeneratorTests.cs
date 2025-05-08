@@ -7,7 +7,6 @@
 
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using Xunit;
 
 namespace Squidex.Assets;
 
