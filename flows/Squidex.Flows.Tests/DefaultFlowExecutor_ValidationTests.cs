@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Squidex.Flows.Internal;
 using Squidex.Flows.Internal.Execution;
+using Squidex.Flows.Steps;
 
 namespace Squidex.Flows;
 
@@ -128,6 +129,29 @@ public class DefaultFlowExecutor_ValidationTests
     }
 
     [Fact]
+    public async Task Should_add_error_if_step_is_null()
+    {
+        var stepId = Guid.NewGuid();
+
+        var definition = new FlowDefinition
+        {
+            Steps = new Dictionary<Guid, FlowStepDefinition>()
+            {
+                [stepId] = new FlowStepDefinition
+                {
+                    Step = null!,
+                },
+            },
+            InitialStepId = stepId,
+        };
+
+        var errors = await ValidateAsync(definition);
+        var error = errors.LastOrDefault();
+
+        Assert.Equal(new Error($"Steps.{stepId}.Step", ValidationErrorType.InvalidStep), error);
+    }
+
+    [Fact]
     public async Task Should_add_error_if_step_has_invalid_custom_property()
     {
         var stepId = Guid.NewGuid();
@@ -167,6 +191,7 @@ public class DefaultFlowExecutor_ValidationTests
     {
         var stepId1 = Guid.Parse("216e4ed4-8e29-4c38-9265-7e5e1f55eb2a");
         var stepId2 = Guid.NewGuid();
+        var stepId3 = Guid.NewGuid();
 
         var definition = new FlowDefinition
         {
@@ -180,6 +205,11 @@ public class DefaultFlowExecutor_ValidationTests
                 [stepId2] = new FlowStepDefinition
                 {
                     Step = new NoopStepWithRequiredProperty { Required = "Step2" },
+                    NextStepId = stepId3,
+                },
+                [stepId3] = new FlowStepDefinition
+                {
+                    Step = new IfFlowStep(),
                     NextStepId = default,
                 },
             },

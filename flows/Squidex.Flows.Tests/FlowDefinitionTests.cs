@@ -13,6 +13,24 @@ namespace Squidex.Flows;
 public class FlowDefinitionTests
 {
     [Fact]
+    public void Should_provide_correct_equals_with_null()
+    {
+        var lhs = new FlowDefinition();
+
+        Assert.NotEqual(null!, lhs);
+    }
+
+    [Fact]
+    public void Should_provide_correct_equals_with_same()
+    {
+        var lhs = new FlowDefinition();
+        var rhs = lhs;
+
+        Assert.Equal(lhs, rhs);
+        Assert.Equal(lhs.GetHashCode(), rhs.GetHashCode());
+    }
+
+    [Fact]
     public void Should_provide_correct_equals0()
     {
         var lhs = new FlowDefinition();

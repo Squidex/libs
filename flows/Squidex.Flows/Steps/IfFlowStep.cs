@@ -19,7 +19,6 @@ namespace Squidex.Flows.Steps;
 [NoRetry]
 public sealed record IfFlowStep : FlowStep, IEquatable<IfFlowStep>
 {
-    [Required]
     [Display(Name = "Branches", Description = "The delay in seconds.")]
     [Editor(FlowStepEditor.Branches)]
     public List<IfFlowBranch>? Branches { get; set; }
@@ -103,7 +102,7 @@ public sealed record IfFlowStep : FlowStep, IEquatable<IfFlowStep>
     {
         if (other is null)
         {
-            return true;
+            return false;
         }
 
         if (ReferenceEquals(this, other))

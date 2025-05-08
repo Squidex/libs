@@ -360,6 +360,24 @@ public class IfStepTests
         Assert.NotEqual(@base.GetHashCode(), emptyBranches.GetHashCode());
     }
 
+    [Fact]
+    public void Should_provide_correct_equals_with_null()
+    {
+        var lhs = new IfFlowStep();
+
+        Assert.NotEqual(null!, lhs);
+    }
+
+    [Fact]
+    public void Should_provide_correct_equals_with_same()
+    {
+        var lhs = new IfFlowStep();
+        var rhs = lhs;
+
+        Assert.Equal(lhs, rhs);
+        Assert.Equal(lhs.GetHashCode(), rhs.GetHashCode());
+    }
+
     private static async Task<List<(string Path, string Message)>> ValidateAsync(FlowStep step, FlowDefinition? definition)
     {
         var errors = new List<(string Path, string Message)>();

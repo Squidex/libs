@@ -64,9 +64,9 @@ public sealed class DefaultFlowExecutor<TContext>(
                 addError($"Steps.{stepId}", ValidationErrorType.InvalidNextStepId);
             }
 
-            if (stepDefinition.Step == null)
+            if (stepDefinition.Step is null)
             {
-                addError($"Steps.{stepId}.Step", ValidationErrorType.InvalidStepId);
+                addError($"Steps.{stepId}.Step", ValidationErrorType.InvalidStep);
                 return;
             }
 
