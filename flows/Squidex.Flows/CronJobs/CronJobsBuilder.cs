@@ -6,16 +6,10 @@
 // ==========================================================================
 
 using Microsoft.Extensions.DependencyInjection;
-using Squidex.Flows.Internal.Execution;
 
-namespace Squidex.Flows;
+namespace Squidex.Flows.CronJobs;
 
-public class MongoFlowStateStoreTests(MongoFlowsFixture fixture) :
-    FlowStateStoreTests, IClassFixture<MongoFlowsFixture>
+public sealed class CronJobsBuilder(IServiceCollection services)
 {
-    protected override Task<IFlowStateStore<TestFlowContext>> CreateSutAsync()
-    {
-        var store = fixture.Services.GetRequiredService<IFlowStateStore<TestFlowContext>>();
-        return Task.FromResult(store);
-    }
+    public IServiceCollection Services { get; } = services;
 }

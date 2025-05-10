@@ -11,6 +11,18 @@ namespace Microsoft.EntityFrameworkCore;
 
 public static class EFSchema
 {
+    public static ModelBuilder UseCronJobs(this ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<EFCronJobEntity>(b =>
+        {
+            b.ToTable("CronJobs");
+            b.HasIndex(x => x.DueTime);
+            b.Property(x => x.Id).HasMaxLength(255);
+        });
+
+        return modelBuilder;
+    }
+
     public static ModelBuilder UseFlows(this ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<EFFlowStateEntity>(b =>

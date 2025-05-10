@@ -6,6 +6,8 @@
 // ==========================================================================
 
 using Squidex.Flows;
+using Squidex.Flows.CronJobs;
+using Squidex.Flows.CronJobs.Internal;
 using Squidex.Flows.Internal.Execution;
 using Squidex.Flows.Mongo;
 
@@ -13,10 +15,18 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class FlowServiceExtensions
 {
-    public static FlowsBuilder AddMongoFlowStore<TContext>(this FlowsBuilder builder) where TContext : FlowContext
+    public static FlowsBuilder AddMongoStore<TContext>(this FlowsBuilder builder) where TContext : FlowContext
     {
         builder.Services.AddSingletonAs<MongoFlowStateStore<TContext>>()
             .As<IFlowStateStore<TContext>>();
+
+        return builder;
+    }
+
+    public static CronJobsBuilder AddMongoStore<TContext>(this CronJobsBuilder builder) where TContext : FlowContext
+    {
+        builder.Services.AddSingletonAs<MongoCronJobStore<TContext>>()
+            .As<ICronJobStore<TContext>>();
 
         return builder;
     }
