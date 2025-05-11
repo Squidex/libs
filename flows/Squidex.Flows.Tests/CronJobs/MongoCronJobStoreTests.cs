@@ -8,12 +8,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using Squidex.Flows.CronJobs.Internal;
 
-#pragma warning disable MA0048 // File name must match type name
-
 namespace Squidex.Flows.CronJobs;
 
-public class MongoCronJobStoreTests(MongoFlowsFixture fixture) :
-    CronJobStoreTests, IClassFixture<MongoFlowsFixture>
+[Collection(MongoFlowsCollection.Name)]
+public class MongoCronJobStoreTests(MongoFlowsFixture fixture) : CronJobStoreTests
 {
     protected override Task<ICronJobStore<TestFlowContext>> CreateSutAsync()
     {

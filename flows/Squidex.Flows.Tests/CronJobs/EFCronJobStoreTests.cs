@@ -10,8 +10,8 @@ using Squidex.Flows.CronJobs.Internal;
 
 namespace Squidex.Flows.CronJobs;
 
-public class EFCronJobStoreTests(EFFlowsFixture fixture) :
-    CronJobStoreTests, IClassFixture<EFFlowsFixture>
+[Collection(EFFlowsCollection.Name)]
+public class EFCronJobStoreTests(EFFlowsFixture fixture) : CronJobStoreTests
 {
     protected override Task<ICronJobStore<TestFlowContext>> CreateSutAsync()
     {

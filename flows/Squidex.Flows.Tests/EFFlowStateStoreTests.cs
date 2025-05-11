@@ -10,8 +10,8 @@ using Squidex.Flows.Internal.Execution;
 
 namespace Squidex.Flows;
 
-public class EFFlowStateStoreTests(EFFlowsFixture fixture) :
-    FlowStateStoreTests, IClassFixture<EFFlowsFixture>
+[Collection(EFFlowsCollection.Name)]
+public class EFFlowStateStoreTests(EFFlowsFixture fixture) : FlowStateStoreTests
 {
     protected override Task<IFlowStateStore<TestFlowContext>> CreateSutAsync()
     {

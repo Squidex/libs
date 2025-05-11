@@ -10,8 +10,8 @@ using Squidex.Flows.Internal.Execution;
 
 namespace Squidex.Flows;
 
-public class MongoFlowStateStoreTests(MongoFlowsFixture fixture) :
-    FlowStateStoreTests, IClassFixture<MongoFlowsFixture>
+[Collection(MongoFlowsCollection.Name)]
+public class MongoFlowStateStoreTests(MongoFlowsFixture fixture) : FlowStateStoreTests
 {
     protected override Task<IFlowStateStore<TestFlowContext>> CreateSutAsync()
     {

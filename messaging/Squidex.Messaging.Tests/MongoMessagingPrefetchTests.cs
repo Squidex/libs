@@ -9,8 +9,8 @@ using TestHelpers;
 
 namespace Squidex.Messaging;
 
-public class MongoMessagingPrefetchTests(MongoMessagingFixture fixture)
-    : MessagingTestsBase, IClassFixture<MongoMessagingFixture>
+[Collection(MongoMessagingCollection.Name)]
+public class MongoMessagingPrefetchTests(MongoMessagingFixture fixture) : MessagingTestsBase
 {
     protected override void Configure(MessagingBuilder builder)
     {

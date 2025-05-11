@@ -35,3 +35,9 @@ public sealed class EFFlowsFixture() : PostgresFixture<EFFlowsDbContext>("flows-
             .AddEntityFrameworkStore<EFFlowsDbContext, TestFlowContext>();
     }
 }
+
+[CollectionDefinition(Name)]
+public class EFFlowsCollection : ICollectionFixture<EFFlowsFixture>
+{
+    public const string Name = "flows-postgres";
+}

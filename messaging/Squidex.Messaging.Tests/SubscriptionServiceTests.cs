@@ -15,8 +15,8 @@ using TestHelpers;
 
 namespace Squidex.Messaging;
 
+[Collection(MongoMessagingCollection.Name)]
 public class SubscriptionServiceTests(MongoMessagingFixture fixture)
-    : IClassFixture<MongoMessagingFixture>
 {
     private readonly string groupName = $"group-{Guid.NewGuid()}";
     private readonly string key = $"key-{Guid.NewGuid()}";

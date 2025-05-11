@@ -11,8 +11,8 @@ using TestHelpers;
 namespace Squidex.Messaging;
 
 [Trait("Category", "Dependencies")]
-public class MongoSubscriptionStoreTests(MongoMessagingFixture fixture)
-    : SubscriptionStoreTestsBase, IClassFixture<MongoMessagingFixture>
+[Collection(MongoMessagingCollection.Name)]
+public class MongoSubscriptionStoreTests(MongoMessagingFixture fixture) : SubscriptionStoreTestsBase
 {
     protected override void Configure(MessagingBuilder builder)
     {

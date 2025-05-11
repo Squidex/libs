@@ -79,15 +79,6 @@ public class DefaultCronJobManager<TContext>(
                     log.LogWarning("Failed parse expression '{expression}' for id '{id}'",
                         cronJob.Id,
                         cronJob.CronExpression);
-
-                    try
-                    {
-                        await cronJobStore.DeleteAsync(cronJob.Id, ct);
-                    }
-                    catch (Exception ex)
-                    {
-                        log.LogError(ex, "Failed to delete cron job with id '{id}'", cronJob.Id);
-                    }
                 }
 
                 var timezone = TimeZoneInfo.Utc;
