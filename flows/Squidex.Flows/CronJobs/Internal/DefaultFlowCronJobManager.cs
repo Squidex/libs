@@ -32,7 +32,7 @@ public class DefaultFlowCronJobManager<TContext>(
     public Task StartAsync(
         CancellationToken ct)
     {
-        timer = new SimpleTimer(UpdateAsync, options.Value.UpdateInterval, log);
+        timer = new SimpleTimer(UpdateAllAsync, options.Value.UpdateInterval, log);
         return Task.CompletedTask;
     }
 
@@ -46,8 +46,8 @@ public class DefaultFlowCronJobManager<TContext>(
         }
     }
 
-    public async Task UpdateAsync(
-        CancellationToken ct)
+    public async Task UpdateAllAsync(
+        CancellationToken ct = default)
     {
         var currentHandler = handler;
         var currentUpdates = new List<CronJobUpdate>();

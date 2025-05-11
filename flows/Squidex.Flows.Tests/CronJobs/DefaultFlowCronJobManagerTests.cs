@@ -163,7 +163,7 @@ public class DefaultFlowCronJobManagerTests
         A.CallTo(() => cronJobStore.QueryPendingAsync(A<Instant>._, default))
             .Returns(new List<CronJobResult<TestFlowContext>> { result1, result2, result3 }.ToAsyncEnumerable());
 
-        await sut.UpdateAsync(default);
+        await sut.UpdateAllAsync(default);
 
         updates.Should().BeEquivalentTo(
             [
@@ -203,7 +203,7 @@ public class DefaultFlowCronJobManagerTests
         A.CallTo(() => cronJobStore.QueryPendingAsync(A<Instant>._, default))
             .Returns(new List<CronJobResult<TestFlowContext>> { result1, result2 }.ToAsyncEnumerable());
 
-        await sut.UpdateAsync(default);
+        await sut.UpdateAllAsync(default);
 
         A.CallTo(() => cronJobStore.ScheduleAsync(
                 A<List<CronJobUpdate>>.That.Matches(x => x.Count == 2),

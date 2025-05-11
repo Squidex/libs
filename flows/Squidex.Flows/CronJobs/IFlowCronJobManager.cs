@@ -17,6 +17,9 @@ public interface IFlowCronJobManager<TContext>
     Task RemoveAsync(string id,
         CancellationToken ct = default);
 
+    Task UpdateAllAsync(
+        CancellationToken ct = default);
+
     IReadOnlyList<string> GetAvailableTimezoneIds();
 
     bool IsValidCronExpression(string expression);

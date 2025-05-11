@@ -39,4 +39,12 @@ public static class CronJobsServiceExtensions
 
         return new CronJobsBuilder(services);
     }
+
+    public static CronJobsBuilder AddWorker<TContext>(this CronJobsBuilder builder)
+    {
+        builder.Services.AddSingletonAs<CronJobWorker<TContext>>()
+            .AsSelf();
+
+        return builder;
+    }
 }
