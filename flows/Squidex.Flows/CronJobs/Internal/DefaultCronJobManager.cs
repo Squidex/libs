@@ -6,6 +6,8 @@
 // ==========================================================================
 
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq.Expressions;
 using Cronos;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -73,19 +75,18 @@ public class DefaultCronJobManager<TContext>(
                 }
 
                 // Ignore expressions, which cannot be parsed anymore.
-                if (!CronExpression.TryParse(cronJob.CronExpression, out var expression))
+                if (!TryGetCronExpression(cronJob.CronExpression, false, out var expression))
                 {
                     failedJobs.TryAdd(cronJob.Id, true);
                     log.LogWarning("Failed parse expression '{expression}' for id '{id}'",
                         cronJob.Id,
                         cronJob.CronExpression);
+                    continue;
                 }
 
-                var timezone = TimeZoneInfo.Utc;
-                // Just ignore timezones that we cannot parse anymore.
-                if (!string.IsNullOrWhiteSpace(cronJob.CronTimezone) && cronTimezones.TryParse(cronJob.CronTimezone, out var zone))
+                if (!TryGetTimezone(cronJob.CronTimezone, out var timezone))
                 {
-                    timezone = zone;
+                    timezone = TimeZoneInfo.Utc;
                 }
 
                 var lastDateTimeOffset = lastTime.ToDateTimeOffset();
@@ -99,7 +100,7 @@ public class DefaultCronJobManager<TContext>(
                         lastDateTimeOffset,
                         lastDateTimeOffset.AddYears(1),
                         timezone,
-                        fromInclusive: false)
+                        false)
                     .FirstOrDefault();
 
                 if (next == default)
@@ -148,13 +149,12 @@ public class DefaultCronJobManager<TContext>(
     {
         ArgumentNullException.ThrowIfNull(cronJob);
 
-        if (!CronExpression.TryParse(cronJob.CronExpression, out var expression))
+        if (!TryGetCronExpression(cronJob.CronExpression, true, out var expression))
         {
             throw new ArgumentException("Invalid cron expression.", nameof(cronJob));
         }
 
-        var timezone = TimeZoneInfo.Utc;
-        if (!string.IsNullOrWhiteSpace(cronJob.CronTimezone) && !cronTimezones.TryParse(cronJob.CronTimezone, out timezone))
+        if (!TryGetTimezone(cronJob.CronTimezone, out var timezone))
         {
             throw new ArgumentException("Invalid timezone.", nameof(cronJob));
         }
@@ -165,7 +165,7 @@ public class DefaultCronJobManager<TContext>(
                 now,
                 now.AddYears(1),
                 timezone,
-                fromInclusive: false)
+                false)
             .FirstOrDefault();
 
         if (next == default)
@@ -183,5 +183,64 @@ public class DefaultCronJobManager<TContext>(
         ArgumentNullException.ThrowIfNull(id);
 
         return cronJobStore.DeleteAsync(id, ct);
+    }
+
+    public bool IsValidCronExpression(string expression)
+    {
+        return TryGetCronExpression(expression, true, out var _);
+    }
+
+    public bool IsValidTimezone(string? timezone)
+    {
+        return TryGetTimezone(timezone, out var _);
+    }
+
+    private bool TryGetTimezone(string? id, [MaybeNullWhen(false)] out TimeZoneInfo result)
+    {
+        result = TimeZoneInfo.Utc;
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            return true;
+        }
+
+        return cronTimezones.TryParse(id, out result);
+    }
+
+    private bool TryGetCronExpression(string expression, bool validateInterval, [MaybeNullWhen(false)] out CronExpression result)
+    {
+        result = null!;
+        if (string.IsNullOrWhiteSpace(expression))
+        {
+            return false;
+        }
+
+        if (!CronExpression.TryParse(expression, out var parsed))
+        {
+            return false;
+        }
+
+        if (validateInterval)
+        {
+            var now = DateTime.UtcNow;
+            var occurrences =
+                parsed.GetOccurrences(
+                    now,
+                    now.AddYears(1),
+                    true)
+                .Take(100)
+                .ToList();
+
+            for (var i = 0; i < occurrences.Count - 1; i++)
+            {
+                var timeBetween = occurrences[i + 1] - occurrences[i];
+                if (timeBetween < options.Value.MinimumInterval)
+                {
+                    return false;
+                }
+            }
+        }
+
+        result = parsed;
+        return true;
     }
 }

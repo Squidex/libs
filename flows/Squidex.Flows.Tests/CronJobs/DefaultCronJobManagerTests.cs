@@ -66,7 +66,7 @@ public class DefaultCronJobManagerTests
         var job = new CronJob<TestFlowContext>
         {
             Id = Guid.NewGuid().ToString(),
-            CronExpression = "*/5 * * * *",
+            CronExpression = "0 */4 * * *",
             CronTimezone = timezone,
             Context = new TestFlowContext(),
         };
@@ -103,7 +103,7 @@ public class DefaultCronJobManagerTests
         var job = new CronJob<TestFlowContext>
         {
             Id = Guid.NewGuid().ToString(),
-            CronExpression = "*/5 * * * *",
+            CronExpression = "0 */4 * * *",
             CronTimezone = "invalid",
             Context = new TestFlowContext(),
         };
@@ -119,7 +119,7 @@ public class DefaultCronJobManagerTests
                 new CronJob<TestFlowContext>
                 {
                     Id = Guid.NewGuid().ToString(),
-                    CronExpression = "*/5 * * * *",
+                    CronExpression = "0 */4 * * *",
                     CronTimezone = "invalid",
                     Context = new TestFlowContext(),
                 },
@@ -130,7 +130,7 @@ public class DefaultCronJobManagerTests
                 new CronJob<TestFlowContext>
                 {
                     Id = Guid.NewGuid().ToString(),
-                    CronExpression = "*/5 * * * *",
+                    CronExpression = "0 */4 * * *",
                     CronTimezone = "invalid",
                     Context = new TestFlowContext(),
                 },
@@ -141,7 +141,7 @@ public class DefaultCronJobManagerTests
                 new CronJob<TestFlowContext>
                 {
                     Id = Guid.NewGuid().ToString(),
-                    CronExpression = "*/5 * * * *",
+                    CronExpression = "0 */4 * * *",
                     CronTimezone = "invalid",
                     Context = new TestFlowContext(),
                 },
@@ -167,9 +167,9 @@ public class DefaultCronJobManagerTests
 
         updates.Should().BeEquivalentTo(
             [
-                new CronJobUpdate(result1.Job.Id, Instant.FromUtc(2024, 11, 10, 9, 10, 0)),
-                new CronJobUpdate(result2.Job.Id, Instant.FromUtc(2024, 11, 11, 9, 10, 0)),
-                new CronJobUpdate(result3.Job.Id, Instant.FromUtc(2024, 11, 12, 9, 10, 0)),
+                new CronJobUpdate(result1.Job.Id, Instant.FromUtc(2024, 11, 10, 12, 0, 0)),
+                new CronJobUpdate(result2.Job.Id, Instant.FromUtc(2024, 11, 11, 12, 0, 0)),
+                new CronJobUpdate(result3.Job.Id, Instant.FromUtc(2024, 11, 12, 12, 0, 0)),
             ]);
 
         Assert.Equal(3, receivedJobs.Count);
@@ -209,5 +209,48 @@ public class DefaultCronJobManagerTests
                 A<List<CronJobUpdate>>.That.Matches(x => x.Count == 2),
                 A<CancellationToken>._))
             .MustHaveHappened();
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData("Europe/Berlin")]
+    public void Should_validate_timezone_successfully(string? input)
+    {
+        var result = sut.IsValidTimezone(input!);
+
+        Assert.True(result);
+    }
+
+    [Theory]
+    [InlineData("invalid")]
+    public void Should_validate_timezone_when_invalid(string? input)
+    {
+        var result = sut.IsValidTimezone(input!);
+
+        Assert.False(result);
+    }
+
+    [Theory]
+    [InlineData("0 */4 * * *")]
+    public void Should_validate_expression_successfully(string? input)
+    {
+        var result = sut.IsValidCronExpression(input!);
+
+        Assert.True(result);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData("invalid")]
+    [InlineData("*/5 * * * *")]
+    public void Should_validate_expression_when_invalid(string? input)
+    {
+        var result = sut.IsValidCronExpression(input!);
+
+        Assert.False(result);
     }
 }

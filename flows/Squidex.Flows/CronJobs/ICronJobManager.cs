@@ -16,4 +16,8 @@ public interface ICronJobManager<TContext>
 
     Task RemoveAsync(string id,
         CancellationToken ct = default);
+
+    bool IsValidCronExpression(string expression);
+
+    bool IsValidTimezone(string timezone);
 }
