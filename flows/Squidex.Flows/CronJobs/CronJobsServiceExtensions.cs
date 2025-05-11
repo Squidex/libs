@@ -17,7 +17,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class CronJobsServiceExtensions
 {
-    public static CronJobsBuilder AddCronJobs(this IServiceCollection services)
+    public static CronJobsBuilder AddCronJobsCore(this IServiceCollection services)
     {
         return new CronJobsBuilder(services);
     }
