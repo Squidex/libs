@@ -7,7 +7,7 @@
 
 namespace Squidex.Flows.CronJobs;
 
-public interface ICronJobManager<TContext>
+public interface IFlowCronJobManager<TContext>
 {
     void Subscribe(Func<CronJob<TContext>, CancellationToken, Task> handler);
 
@@ -16,6 +16,8 @@ public interface ICronJobManager<TContext>
 
     Task RemoveAsync(string id,
         CancellationToken ct = default);
+
+    IReadOnlyList<string> GetAvailableTimezoneIds();
 
     bool IsValidCronExpression(string expression);
 

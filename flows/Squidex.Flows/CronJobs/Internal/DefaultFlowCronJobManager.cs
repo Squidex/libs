@@ -7,7 +7,6 @@
 
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq.Expressions;
 using Cronos;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -17,12 +16,12 @@ using Squidex.Hosting;
 
 namespace Squidex.Flows.CronJobs.Internal;
 
-public class DefaultCronJobManager<TContext>(
+public class DefaultFlowCronJobManager<TContext>(
     ICronJobStore<TContext> cronJobStore,
     ICronTimezoneProvider cronTimezones,
     IOptions<CronJobsOptions> options,
-    ILogger<DefaultCronJobManager<TContext>> log)
-    : ICronJobManager<TContext>, IBackgroundProcess
+    ILogger<DefaultFlowCronJobManager<TContext>> log)
+    : IFlowCronJobManager<TContext>, IBackgroundProcess
 {
     private readonly ConcurrentDictionary<string, bool> failedJobs = [];
     private Func<CronJob<TContext>, CancellationToken, Task>? handler;
@@ -183,6 +182,11 @@ public class DefaultCronJobManager<TContext>(
         ArgumentNullException.ThrowIfNull(id);
 
         return cronJobStore.DeleteAsync(id, ct);
+    }
+
+    public IReadOnlyList<string> GetAvailableTimezoneIds()
+    {
+        return cronTimezones.GetAvailableIds();
     }
 
     public bool IsValidCronExpression(string expression)

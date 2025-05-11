@@ -253,4 +253,12 @@ public class DefaultFlowCronJobManagerTests
 
         Assert.False(result);
     }
+
+    [Fact]
+    public void Should_get_available_timezones()
+    {
+        var timezones = sut.GetAvailableTimezoneIds();
+
+        Assert.NotEmpty(timezones);
+    }
 }
