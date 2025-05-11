@@ -27,8 +27,8 @@ public static class CronJobsServiceExtensions
     {
         services.Configure(config, configPath, configure);
 
-        services.AddSingletonAs<DefaultCronJobManager<TContext>>()
-            .As<ICronJobManager<TContext>>();
+        services.AddSingletonAs<DefaultFlowCronJobManager<TContext>>()
+            .As<IFlowCronJobManager<TContext>>();
 
         services.AddSingletonAs<NodaCronTimezoneProvider>()
             .As<ICronTimezoneProvider>();
