@@ -21,5 +21,5 @@ public interface IFlowCronJobManager<TContext>
 
     bool IsValidCronExpression(string expression);
 
-    bool IsValidTimezone(string timezone);
+    bool IsValidTimezone(string? timezone);
 }
