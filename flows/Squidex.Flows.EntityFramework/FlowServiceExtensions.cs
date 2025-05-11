@@ -17,7 +17,6 @@ namespace Microsoft.Extensions.DependencyInjection;
 public static class FlowServiceExtensions
 {
     public static CronJobsBuilder AddEntityFrameworkStore<TDbContext, TContext>(this CronJobsBuilder builder)
-        where TContext : FlowContext
         where TDbContext : DbContext
     {
         builder.Services.AddSingletonAs<EFCronJobStore<TDbContext, TContext>>()

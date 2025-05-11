@@ -15,18 +15,18 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class FlowServiceExtensions
 {
-    public static FlowsBuilder AddMongoStore<TContext>(this FlowsBuilder builder) where TContext : FlowContext
+    public static CronJobsBuilder AddMongoStore<TContext>(this CronJobsBuilder builder)
     {
-        builder.Services.AddSingletonAs<MongoFlowStateStore<TContext>>()
-            .As<IFlowStateStore<TContext>>();
+        builder.Services.AddSingletonAs<MongoCronJobStore<TContext>>()
+            .As<ICronJobStore<TContext>>();
 
         return builder;
     }
 
-    public static CronJobsBuilder AddMongoStore<TContext>(this CronJobsBuilder builder) where TContext : FlowContext
+    public static FlowsBuilder AddMongoStore<TContext>(this FlowsBuilder builder) where TContext : FlowContext
     {
-        builder.Services.AddSingletonAs<MongoCronJobStore<TContext>>()
-            .As<ICronJobStore<TContext>>();
+        builder.Services.AddSingletonAs<MongoFlowStateStore<TContext>>()
+            .As<IFlowStateStore<TContext>>();
 
         return builder;
     }
