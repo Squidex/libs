@@ -9,6 +9,7 @@ using System.Globalization;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Windows.Markup;
 
 namespace Squidex.Flows.Steps.Utils;
 
@@ -28,14 +29,15 @@ public static class HttpDumpFormatter
     {
         var writer = new StringBuilder();
 
-        writer.AppendLine("Request:");
+        writer.AppendLine("REQUEST:");
         writer.AppendRequest(request, requestBody);
 
-        writer.AppendLine();
-        writer.AppendLine();
-
-        writer.AppendLine("Response:");
-        writer.AppendResponse(response, responseBody, elapsed, isTimeout);
+        if (response != null)
+        {
+            writer.AppendLine();
+            writer.AppendLine("RESPONSE:");
+            writer.AppendResponse(response, responseBody, elapsed, isTimeout);
+        }
 
         return writer.ToString();
     }
@@ -51,7 +53,7 @@ public static class HttpDumpFormatter
 
         if (!string.IsNullOrWhiteSpace(requestBody))
         {
-            writer.AppendLine();
+            writer.AppendLine("---");
             writer.AppendLine(requestBody);
         }
     }
@@ -69,21 +71,32 @@ public static class HttpDumpFormatter
             writer.AppendHeaders(response.Content?.Headers);
         }
 
-        if (!string.IsNullOrWhiteSpace(responseBody))
+        var hasBody = !string.IsNullOrWhiteSpace(responseBody);
+
+        if (hasBody)
         {
-            writer.AppendLine();
+            writer.AppendLine("---");
             writer.AppendLine(responseBody);
         }
 
         if (response != null && elapsed != TimeSpan.Zero)
         {
-            writer.AppendLine();
+            if (hasBody)
+            {
+                writer.AppendLine("---");
+            }
+
             writer.AppendLine(CultureInfo.InvariantCulture, $"Elapsed: {elapsed}");
         }
 
         if (isTimeout)
         {
-            writer.AppendLine(CultureInfo.InvariantCulture, $"Timeout after {elapsed}");
+            if (hasBody)
+            {
+                writer.AppendLine("---");
+            }
+
+            writer.AppendLine(CultureInfo.InvariantCulture, $"Timeout after: {elapsed}");
         }
     }
 
@@ -94,7 +107,7 @@ public static class HttpDumpFormatter
             return;
         }
 
-        foreach (var (key, value) in headers)
+        foreach (var (key, value) in headers.OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase))
         {
             writer.Append(key);
             writer.Append(": ");
