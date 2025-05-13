@@ -29,14 +29,14 @@ public sealed class FlowExecutionContext(
         return serviceProvider.GetRequiredService<T>();
     }
 
-    public void LogSkipped(string message)
+    public void LogSkipped(string message, object? dump = null)
     {
-        Log($"Skipped: {message}");
+        Log($"Skipped: {message}", dump);
     }
 
-    public void LogSkipSimulation()
+    public void LogSkipSimulation(object? dump = null)
     {
-        Log($"Skipped: Running in simulation mode");
+        Log($"Skipped: Running in simulation mode", dump);
     }
 
     public void Log(string message, object? dump = null)

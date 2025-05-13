@@ -7,7 +7,7 @@
 
 namespace Squidex.Flows.CronJobs;
 
-public interface IFlowCronJobManager<TContext>
+public interface ICronJobManager<TContext>
 {
     void Subscribe(Func<CronJob<TContext>, CancellationToken, Task> handler);
 

@@ -12,9 +12,9 @@ using Squidex.Hosting;
 namespace Squidex.Flows.CronJobs.Internal;
 
 public sealed class CronJobWorker<TContext>(
-    IFlowCronJobManager<TContext> cronJobManager,
+    ICronJobManager<TContext> cronJobManager,
     IOptions<CronJobsOptions> options,
-    ILogger<DefaultFlowCronJobManager<TContext>> log)
+    ILogger<DefaultCronJobManager<TContext>> log)
     : IBackgroundProcess
 {
     private SimpleTimer? timer;

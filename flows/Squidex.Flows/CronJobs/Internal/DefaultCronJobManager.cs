@@ -16,35 +16,17 @@ using Squidex.Hosting;
 
 namespace Squidex.Flows.CronJobs.Internal;
 
-public class DefaultFlowCronJobManager<TContext>(
+public class DefaultCronJobManager<TContext>(
     ICronJobStore<TContext> cronJobStore,
     ICronTimezoneProvider cronTimezones,
     IOptions<CronJobsOptions> options,
-    ILogger<DefaultFlowCronJobManager<TContext>> log)
-    : IFlowCronJobManager<TContext>, IBackgroundProcess
+    ILogger<DefaultCronJobManager<TContext>> log)
+    : ICronJobManager<TContext>
 {
     private readonly ConcurrentDictionary<string, bool> failedJobs = [];
     private Func<CronJob<TContext>, CancellationToken, Task>? handler;
-    private SimpleTimer? timer;
 
     public IClock Clock { get; set; } = SystemClock.Instance;
-
-    public Task StartAsync(
-        CancellationToken ct)
-    {
-        timer = new SimpleTimer(UpdateAllAsync, options.Value.UpdateInterval, log);
-        return Task.CompletedTask;
-    }
-
-    public async Task StopAsync(
-        CancellationToken ct)
-    {
-        if (timer != null)
-        {
-            await timer.DisposeAsync();
-            timer = null;
-        }
-    }
 
     public async Task UpdateAllAsync(
         CancellationToken ct = default)

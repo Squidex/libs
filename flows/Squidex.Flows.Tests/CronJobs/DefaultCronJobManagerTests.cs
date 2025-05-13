@@ -12,22 +12,22 @@ using Squidex.Flows.CronJobs.Internal;
 
 namespace Squidex.Flows.CronJobs;
 
-public class DefaultFlowCronJobManagerTests
+public class DefaultCronJobManagerTests
 {
     private readonly ICronJobStore<TestFlowContext> cronJobStore = A.Fake<ICronJobStore<TestFlowContext>>();
     private readonly IClock clock = A.Fake<IClock>();
     private readonly Instant now = Instant.FromUtc(2024, 11, 10, 9, 8, 7);
-    private readonly DefaultFlowCronJobManager<TestFlowContext> sut;
+    private readonly DefaultCronJobManager<TestFlowContext> sut;
 
-    public DefaultFlowCronJobManagerTests()
+    public DefaultCronJobManagerTests()
     {
         A.CallTo(() => clock.GetCurrentInstant()).Returns(now);
 
-        sut = new DefaultFlowCronJobManager<TestFlowContext>(
+        sut = new DefaultCronJobManager<TestFlowContext>(
             cronJobStore,
             new NodaCronTimezoneProvider(),
             Options.Create(new CronJobsOptions()),
-            A.Fake<ILogger<DefaultFlowCronJobManager<TestFlowContext>>>())
+            A.Fake<ILogger<DefaultCronJobManager<TestFlowContext>>>())
         {
             Clock = clock,
         };
