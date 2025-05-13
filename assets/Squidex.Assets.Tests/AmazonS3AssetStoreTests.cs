@@ -7,7 +7,6 @@
 
 using Microsoft.Extensions.Options;
 using Squidex.Assets.S3;
-using Xunit;
 
 namespace Squidex.Assets;
 

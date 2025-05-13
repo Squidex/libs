@@ -6,7 +6,6 @@
 // ==========================================================================
 
 using System.IO.Compression;
-using Xunit;
 
 namespace Squidex.Assets;
 

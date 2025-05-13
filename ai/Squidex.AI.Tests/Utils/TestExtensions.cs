@@ -11,7 +11,7 @@ namespace Squidex.AI.Utils;
 
 public static class TestExtensions
 {
-    public static EquivalencyAssertionOptions<T> ExcludeToolValuesAs<T>(this EquivalencyAssertionOptions<T> options)
+    public static EquivalencyOptions<T> ExcludeToolValuesAs<T>(this EquivalencyOptions<T> options)
     {
         return options.Excluding(x => x.Name.StartsWith("As", StringComparison.Ordinal));
     }

@@ -5,9 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using FakeItEasy;
 using Squidex.Messaging.Implementation;
-using Xunit;
 
 namespace Squidex.Messaging;
 
