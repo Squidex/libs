@@ -18,13 +18,11 @@ public class AsyncLocalCacheTests
         using (sut.StartContext())
         {
             sut.Add("Key", 1);
-
             await Task.Delay(5);
 
             AssertCache(sut, "Key", 1, true);
 
             await Task.Delay(5);
-
             sut.Remove("Key");
 
             AssertCache(sut, "Key", null, false);
@@ -35,13 +33,11 @@ public class AsyncLocalCacheTests
     public async Task Should_not_add_item_to_cache_when_context_not_exists()
     {
         sut.Add("Key", 1);
-
         await Task.Delay(5);
 
         AssertCache(sut, "Key", null, false);
 
         sut.Remove("Key");
-
         await Task.Delay(5);
 
         AssertCache(sut, "Key", null, false);
@@ -55,7 +51,6 @@ public class AsyncLocalCacheTests
             var value1 = await sut.GetOrCreateAsync("Key", () => Task.FromResult(++called));
 
             await Task.Delay(5);
-
             var value2 = await sut.GetOrCreateAsync("Key", () => Task.FromResult(++called));
 
             Assert.Equal(1, called);
@@ -70,7 +65,6 @@ public class AsyncLocalCacheTests
         var value1 = await sut.GetOrCreateAsync("Key", () => Task.FromResult(++called));
 
         await Task.Delay(5);
-
         var value2 = await sut.GetOrCreateAsync("Key", () => Task.FromResult(++called));
 
         Assert.Equal(2, called);
@@ -86,7 +80,6 @@ public class AsyncLocalCacheTests
             var value1 = await sut.GetOrCreateAsync("Key", () => Task.FromResult(++called));
 
             await Task.Delay(5);
-
             var value2 = await sut.GetOrCreateAsync("Key", () => Task.FromResult(++called));
 
             Assert.Equal(1, called);
@@ -101,7 +94,6 @@ public class AsyncLocalCacheTests
         var value1 = await sut.GetOrCreateAsync("Key", () => Task.FromResult(++called));
 
         await Task.Delay(5);
-
         var value2 = await sut.GetOrCreateAsync("Key", () => Task.FromResult(++called));
 
         Assert.Equal(2, called);

@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using EFCore.BulkExtensions;
 using Microsoft.EntityFrameworkCore;
 
 #pragma warning disable MA0048 // File name must match type name
@@ -14,6 +15,50 @@ namespace Squidex.Events.EntityFramework;
 public sealed partial class EFEventStore<T>
 {
     private const int MaxWriteAttempts = 20;
+
+    public async Task AppendUnsafeAsync(IEnumerable<EventCommit> commits,
+        CancellationToken ct = default)
+    {
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
+        var commitSet = dbContext.Set<EFEventCommit>();
+
+        var timestamp = timeProvider.GetUtcNow().UtcDateTime;
+
+        var efCommits = commits.Select(x =>
+            new EFEventCommit
+            {
+                Id = x.Id,
+                EventStream = x.StreamName,
+                EventStreamOffset = x.Offset,
+                EventsCount = x.Events.Count,
+                Events = x.Events.Select(e => e.SerializeToJsonString()).ToArray(),
+                Timestamp = timestamp,
+            });
+
+        await dbContext.BulkInsertAsync(efCommits, cancellationToken: ct);
+
+        var ids = commits.Select(x => x.Id).ToArray();
+        try
+        {
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(ct);
+            try
+            {
+                await adapter.UpdatePositionsAsync(dbContext, ids, ct);
+                await transaction.CommitAsync(ct);
+            }
+            catch (Exception)
+            {
+                await transaction.RollbackAsync(ct);
+                throw;
+            }
+        }
+        catch
+        {
+            await commitSet.Where(x => ids.Contains(x.Id))
+                .ExecuteDeleteAsync(ct);
+            throw;
+        }
+    }
 
     public async Task AppendAsync(Guid commitId, string streamName, long expectedVersion, ICollection<EventData> events,
         CancellationToken ct = default)
@@ -26,8 +71,8 @@ public sealed partial class EFEventStore<T>
             return;
         }
 
-        await using var context = await dbContextFactory.CreateDbContextAsync(ct);
-        var commitSet = context.Set<EFEventCommit>();
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
+        var commitSet = dbContext.Set<EFEventCommit>();
 
         var currentVersion = await GetEventStreamOffsetAsync(commitSet, streamName);
         if (expectedVersion >= -1 && expectedVersion != currentVersion)
@@ -55,15 +100,14 @@ public sealed partial class EFEventStore<T>
             try
             {
                 await commitSet.AddAsync(commit, ct);
-                await context.SaveChangesAsync(ct);
+                await dbContext.SaveChangesAsync(ct);
 
                 try
                 {
-                    await using var transaction = await context.Database.BeginTransactionAsync(ct);
+                    await using var transaction = await dbContext.Database.BeginTransactionAsync(ct);
                     try
                     {
-                        commit.Position = await adapter.GetPositionAsync(context, ct);
-                        await context.SaveChangesAsync(ct);
+                        await adapter.UpdatePositionAsync(dbContext, commit.Id, ct);
                         await transaction.CommitAsync(ct);
                     }
                     catch (Exception)
@@ -75,7 +119,7 @@ public sealed partial class EFEventStore<T>
                 catch
                 {
                     commitSet.Remove(commit);
-                    await context.SaveChangesAsync(ct);
+                    await dbContext.SaveChangesAsync(ct);
                     throw;
                 }
 
@@ -101,9 +145,9 @@ public sealed partial class EFEventStore<T>
     public async Task DeleteAsync(StreamFilter filter,
         CancellationToken ct = default)
     {
-        await using var context = await dbContextFactory.CreateDbContextAsync(ct);
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
 
-        await context.Set<EFEventCommit>().WhereStreamMatches(filter)
+        await dbContext.Set<EFEventCommit>().WhereStreamMatches(filter)
             .ExecuteDeleteAsync(ct);
     }
 

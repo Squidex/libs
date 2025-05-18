@@ -5,54 +5,111 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Data;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace Squidex.Events.EntityFramework.SqlServer;
 
 public sealed class SqlServerAdapter : IProviderAdapter
 {
-    public async Task<long> GetPositionAsync(DbContext dbContext,
-        CancellationToken ct)
-    {
-        // await using var transaction = await dbContext.Database.BeginTransactionAsync(ct);
-
-        // Autoincremented positions are not necessarily in the correct order.
-        // Therefore we have to create a positions table by ourself and create the next position in the same transaction.
-        var query = dbContext.Database.SqlQuery<long>($"EXEC NextPosition");
-
-        long result;
-        try
-        {
-            result = (await query.ToListAsync(ct)).Single();
-            // await transaction.CommitAsync(ct);
-        }
-        catch (Exception)
-        {
-            // await transaction.RollbackAsync(ct);
-            throw;
-        }
-
-        return result;
-    }
-
     public async Task InitializeAsync(DbContext dbContext,
         CancellationToken ct)
     {
-        var storedProdecure = $@"
-CREATE OR ALTER PROCEDURE NextPosition
+        await CreateUpdatePositionAsync(dbContext, ct);
+        await CreateUpdatePositionsAsync(dbContext, ct);
+        await InitialPositionAsync(dbContext, ct);
+    }
+
+    private static async Task CreateUpdatePositionAsync(DbContext dbContext, CancellationToken ct)
+    {
+        var sql = $@"
+CREATE OR ALTER PROCEDURE UpdatePosition2
+    @eventId UNIQUEIDENTIFIER
 AS
 BEGIN
-	-- Increment the position
-	UPDATE EventPosition
-	SET Position = Position + 1
-    OUTPUT Inserted.Position
-	WHERE Id = 1;
-END;";
-        await dbContext.Database.ExecuteSqlRawAsync(storedProdecure, ct);
+	SET NOCOUNT ON;
 
+    DECLARE @newPosition BIGINT;
+
+    -- Update position
+    UPDATE EventPosition
+    SET Position = Position + 1
+    WHERE Id = 1;
+
+    -- Fetch new position
+    SELECT @newPosition = Position
+    FROM EventPosition
+    WHERE Id = 1;
+
+    -- Update Events table
+    UPDATE Events
+    SET Position = @newPosition
+    WHERE Id = @eventId;
+
+    SELECT @newPosition AS NewPosition;
+END;";
+        await dbContext.Database.ExecuteSqlRawAsync(sql, ct);
+    }
+
+    private async Task CreateUpdatePositionsAsync(DbContext dbContext, CancellationToken ct)
+    {
         try
         {
-            var initialPosition = $@"
+            var sql1 = $@"
+CREATE TYPE EventIdTableType AS TABLE
+(
+    Id UNIQUEIDENTIFIER
+);";
+            await dbContext.Database.ExecuteSqlRawAsync(sql1, ct);
+        }
+        catch (Exception ex) when (IsDuplicateException(ex))
+        {
+            // Somehow the check above does not work reliably.
+        }
+
+        var sql2 = $@"
+CREATE OR ALTER PROCEDURE UpdatePositions
+    @eventIds EventIdTableType READONLY
+AS
+BEGIN
+	SET NOCOUNT ON;
+
+    DECLARE @newPosition BIGINT;
+    DECLARE @count INT;
+
+    SELECT @count = COUNT(*) FROM @eventIds;
+
+    -- Update position
+    UPDATE EventPosition
+    SET Position = Position +  @count
+    WHERE Id = 1;
+
+    -- Fetch new position
+    SELECT @newPosition = Position
+    FROM EventPosition
+    WHERE Id = 1;
+
+    -- Update Events table
+    ;WITH CTE AS (
+        SELECT Id, ROW_NUMBER() OVER (ORDER BY Id) AS RowNum
+        FROM @eventIds
+    )
+    UPDATE E
+    SET Position = @newPosition -  @count + CTE.RowNum
+    FROM Events E
+    JOIN CTE ON E.Id = CTE.Id;
+
+    SELECT @newPosition AS NewPosition;
+END;";
+        await dbContext.Database.ExecuteSqlRawAsync(sql2, ct);
+    }
+
+    private async Task InitialPositionAsync(DbContext dbContext, CancellationToken ct)
+    {
+        try
+        {
+            var sql = $@"
 IF NOT EXISTS(
     SELECT 1
     FROM EventPosition
@@ -62,12 +119,49 @@ BEGIN
     INSERT INTO EventPosition(Id, Position)
     VALUES(1, 1);
 END;";
-            await dbContext.Database.ExecuteSqlRawAsync(initialPosition, ct);
+            await dbContext.Database.ExecuteSqlRawAsync(sql, ct);
         }
         catch (Exception ex) when (IsDuplicateException(ex))
         {
             // Somehow the check above does not work reliably.
         }
+    }
+
+    public async Task<long> UpdatePositionAsync(DbContext dbContext, Guid id,
+        CancellationToken ct)
+    {
+        // Autoincremented positions are not necessarily in the correct order.
+        // Therefore we have to create a positions table by ourself and create the next position in the same transaction.
+        // Read comments from the following article: https://dev.to/kspeakman/event-storage-in-postgres-4dk2
+        var query = dbContext.Database.SqlQuery<long>($"EXEC UpdatePosition2 {id}");
+
+        return (await query.ToListAsync(ct)).Single();
+    }
+
+    public async Task<long> UpdatePositionsAsync(DbContext dbContext, Guid[] ids,
+        CancellationToken ct)
+    {
+        var dataTable = new DataTable();
+        dataTable.Columns.Add("Id", typeof(Guid));
+
+        foreach (var id in ids)
+        {
+            dataTable.Rows.Add(id);
+        }
+
+        var parameter = new SqlParameter("@eventIds", SqlDbType.Structured)
+        {
+            Value = dataTable,
+            // The table structure does not really matter.
+            TypeName = "EventIdTableType",
+        };
+
+        // Autoincremented positions are not necessarily in the correct order.
+        // Therefore we have to create a positions table by ourself and create the next position in the same transaction.
+        // Read comments from the following article: https://dev.to/kspeakman/event-storage-in-postgres-4dk2
+        var query = dbContext.Database.SqlQueryRaw<long>($"EXEC UpdatePositions @eventIds", parameter);
+
+        return (await query.ToListAsync(ct)).Single();
     }
 
     public bool IsDuplicateException(Exception exception)

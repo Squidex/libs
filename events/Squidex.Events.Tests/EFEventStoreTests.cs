@@ -6,6 +6,8 @@
 // ==========================================================================
 
 using System.Collections.Concurrent;
+using Docker.DotNet.Models;
+using Google.Api;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Squidex.Events.EntityFramework;
@@ -50,10 +52,10 @@ public abstract class EFEventStoreTests : EventStoreTests
 
     private static async Task InsertTestValueAsync(IDbContextFactory<TestDbContext> dbContextFactory, long id, long value)
     {
-        await using var dbContext1 = await dbContextFactory.CreateDbContextAsync();
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
 
-        dbContext1.Tests.Add(new TestEntity { Id = id, UniqueValue = value });
-        await dbContext1.SaveChangesAsync();
+        dbContext.Tests.Add(new TestEntity { Id = id, UniqueValue = value });
+        await dbContext.SaveChangesAsync();
     }
 
     [Fact]
@@ -70,7 +72,7 @@ public abstract class EFEventStoreTests : EventStoreTests
     }
 
     [Fact]
-    public async Task Should_calculate_positions()
+    public async Task Should_update_positions()
     {
         var dbAdapter = Services.GetRequiredService<IProviderAdapter>();
         var dbFactory = Services.GetRequiredService<IDbContextFactory<TestDbContext>>();
@@ -81,14 +83,32 @@ public abstract class EFEventStoreTests : EventStoreTests
         {
             await using var dbContext = await dbFactory.CreateDbContextAsync();
 
-            values.Add(await dbAdapter.GetPositionAsync(dbContext, default));
+            values.Add(await dbAdapter.UpdatePositionsAsync(dbContext, [Guid.NewGuid()], default));
         }
 
         Assert.Equal(1000, values.Count);
     }
 
     [Fact]
-    public async Task Should_calculate_positions_in_parallel()
+    public async Task Should_update_position()
+    {
+        var dbAdapter = Services.GetRequiredService<IProviderAdapter>();
+        var dbFactory = Services.GetRequiredService<IDbContextFactory<TestDbContext>>();
+
+        var values = new HashSet<long>();
+
+        for (var i = 0; i < 1000; i++)
+        {
+            await using var dbContext = await dbFactory.CreateDbContextAsync();
+
+            values.Add(await dbAdapter.UpdatePositionAsync(dbContext, Guid.NewGuid(), default));
+        }
+
+        Assert.Equal(1000, values.Count);
+    }
+
+    [Fact]
+    public async Task Should_update_position_in_parallel()
     {
         var dbAdapter = Services.GetRequiredService<IProviderAdapter>();
         var dbFactory = Services.GetRequiredService<IDbContextFactory<TestDbContext>>();
@@ -98,8 +118,44 @@ public abstract class EFEventStoreTests : EventStoreTests
         await Parallel.ForEachAsync(Enumerable.Range(0, 1000), async (_, ct) =>
         {
             await using var dbContext = await dbFactory.CreateDbContextAsync(ct);
+            await using var dbTransaction = await dbContext.Database.BeginTransactionAsync(ct);
+            try
+            {
+                values.TryAdd(await dbAdapter.UpdatePositionAsync(dbContext, Guid.NewGuid(), default), 0);
+                await dbTransaction.CommitAsync(ct);
+            }
+            catch (Exception)
+            {
+                await dbTransaction.RollbackAsync(ct);
+                throw;
+            }
+        });
 
-            values.TryAdd(await dbAdapter.GetPositionAsync(dbContext, default), 0);
+        Assert.Equal(1000, values.Count);
+    }
+
+    [Fact]
+    public async Task Should_update_positions_in_parallel()
+    {
+        var dbAdapter = Services.GetRequiredService<IProviderAdapter>();
+        var dbFactory = Services.GetRequiredService<IDbContextFactory<TestDbContext>>();
+
+        var values = new ConcurrentDictionary<long, long>();
+
+        await Parallel.ForEachAsync(Enumerable.Range(0, 1000), async (_, ct) =>
+        {
+            await using var dbContext = await dbFactory.CreateDbContextAsync(ct);
+            await using var dbTransaction = await dbContext.Database.BeginTransactionAsync(ct);
+            try
+            {
+                values.TryAdd(await dbAdapter.UpdatePositionsAsync(dbContext, [Guid.NewGuid()], default), 0);
+                await dbTransaction.CommitAsync(ct);
+            }
+            catch (Exception)
+            {
+                await dbTransaction.RollbackAsync(ct);
+                throw;
+            }
         });
 
         Assert.Equal(1000, values.Count);

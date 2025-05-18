@@ -10,20 +10,33 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
 using Squidex.Hosting;
 
+#pragma warning disable RECS0108 // Warns about static fields in generic types
+
 namespace TestHelpers.EntityFramework;
 
-public sealed class DbContextInitializer<TContext>(IDbContextFactory<TContext> dbContextFactory)
-    : IInitializable where TContext : DbContext
+public sealed class DbContextInitializer<TContext>(IDbContextFactory<TContext> dbContextFactory) : IInitializable
+    where TContext : DbContext
 {
-    public int Order => int.MinValue;
+    private static readonly TimeSpan WaitTime = TimeSpan.FromSeconds(30);
+
+    public int Order => -1000;
 
     public async Task InitializeAsync(
         CancellationToken ct)
     {
-        await using var context = await dbContextFactory.CreateDbContextAsync(ct);
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
 
-        var creator = (RelationalDatabaseCreator)context.Database.GetService<IDatabaseCreator>();
+        using var cts = new CancellationTokenSource(WaitTime);
+        while (!await dbContext.Database.CanConnectAsync(cts.Token))
+        {
+            await Task.Delay(100, cts.Token);
+        }
 
-        await creator.EnsureCreatedAsync(ct);
+        if (dbContext.Database.GetService<IDatabaseCreator>() is not RelationalDatabaseCreator relationalDatabaseCreator)
+        {
+            return;
+        }
+
+        await relationalDatabaseCreator.EnsureCreatedAsync(ct);
     }
 }

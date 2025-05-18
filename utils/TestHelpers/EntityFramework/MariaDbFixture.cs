@@ -7,6 +7,7 @@
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using MongoDB.Driver;
 using Squidex.Hosting;
 using Testcontainers.MariaDb;
 
@@ -18,6 +19,7 @@ public abstract class MariaDbFixture<TContext>(string? reuseId = null) : IAsyncL
         new MariaDbBuilder()
             .WithReuse(true)
             .WithLabel("reuse-id", reuseId)
+            .WithCommand("--log-bin-trust-function-creators=1", "--local-infile=1")
             .Build();
 
     public IServiceProvider Services { get; private set; }
@@ -29,7 +31,7 @@ public abstract class MariaDbFixture<TContext>(string? reuseId = null) : IAsyncL
     {
         await MariaDb.StartAsync();
 
-        var connectionString = MariaDb.GetConnectionString();
+        var connectionString = $"{MariaDb.GetConnectionString()};AllowLoadLocalInfile=true;MaxPoolSize=1000";
 
         var serviceCollection =
             new ServiceCollection()
