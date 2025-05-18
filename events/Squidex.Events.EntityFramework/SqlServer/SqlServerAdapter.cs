@@ -80,14 +80,10 @@ BEGIN
     WHERE Id = 1;
 
     -- Update Events table
-    ;WITH CTE AS (
-        SELECT Id, ROW_NUMBER() OVER (ORDER BY Id) AS RowNum
-        FROM @eventIds
-    )
-    UPDATE E
-    SET Position = @newPosition -  @count + CTE.RowNum
-    FROM Events E
-    JOIN CTE ON E.Id = CTE.Id;
+    UPDATE Events
+    SET Position = @newPosition - @count + eventId.Idx
+    FROM Events targetEvent
+    JOIN @eventIds eventId ON targetEvent.Id = eventId.Id;
 
     SELECT @newPosition AS NewPosition;
 END;";
@@ -125,7 +121,8 @@ END;";
             var sql1 = $@"
 CREATE TYPE EventIdTableType AS TABLE
 (
-    Id UNIQUEIDENTIFIER
+    Id  UNIQUEIDENTIFIER,
+    Idx INT
 );";
             await dbContext.Database.ExecuteSqlRawAsync(sql1, ct);
         }
@@ -141,7 +138,7 @@ CREATE TYPE EventIdTableType AS TABLE
         // Autoincremented positions are not necessarily in the correct order.
         // Therefore we have to create a positions table by ourself and create the next position in the same transaction.
         // Read comments from the following article: https://dev.to/kspeakman/event-storage-in-postgres-4dk2
-        var query = dbContext.Database.SqlQuery<long>($"EXEC UpdatePositionV2 {id}");
+        var query = dbContext.Database.SqlQuery<long>($"EXEC UpdatePositionsV2 {id}");
 
         return (await query.ToListAsync(ct)).Single();
     }
@@ -151,10 +148,13 @@ CREATE TYPE EventIdTableType AS TABLE
     {
         var dataTable = new DataTable();
         dataTable.Columns.Add("Id", typeof(Guid));
+        dataTable.Columns.Add("Index", typeof(int));
 
+        var i = 1;
         foreach (var id in ids)
         {
-            dataTable.Rows.Add(id);
+            dataTable.Rows.Add(id, i);
+            i++;
         }
 
         var parameter = new SqlParameter("@eventIds", SqlDbType.Structured)
