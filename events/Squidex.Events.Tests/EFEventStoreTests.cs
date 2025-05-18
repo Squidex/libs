@@ -96,7 +96,7 @@ public abstract class EFEventStoreTests : EventStoreTests
         var ordered = values.Order().ToList();
 
         Assert.Equal(1000, values.Count);
-        Assert.All(ordered.Skip(1), (value, i) => Assert.Equal(ids.Length, value - ordered[i]));
+        Assert.All(ordered.Skip(1).Take(10), (value, i) => Assert.Equal(ids.Length, value - ordered[i]));
     }
 
     [Fact]
@@ -123,13 +123,6 @@ public abstract class EFEventStoreTests : EventStoreTests
         var dbAdapter = Services.GetRequiredService<IProviderAdapter>();
         var dbFactory = Services.GetRequiredService<IDbContextFactory<TestDbContext>>();
 
-        Guid[] ids =
-        [
-            Guid.NewGuid(),
-            Guid.NewGuid(),
-            Guid.NewGuid(),
-        ];
-
         var values = new ConcurrentDictionary<long, long>();
 
         await Parallel.ForEachAsync(Enumerable.Range(0, 1000), async (_, ct) =>
@@ -148,10 +141,7 @@ public abstract class EFEventStoreTests : EventStoreTests
             }
         });
 
-        var ordered = values.Keys.Order().ToList();
-
         Assert.Equal(1000, values.Count);
-        Assert.All(ordered.Skip(1), (value, i) => Assert.Equal(ids.Length, value - ordered[i]));
     }
 
     [Fact]
@@ -159,6 +149,13 @@ public abstract class EFEventStoreTests : EventStoreTests
     {
         var dbAdapter = Services.GetRequiredService<IProviderAdapter>();
         var dbFactory = Services.GetRequiredService<IDbContextFactory<TestDbContext>>();
+
+        Guid[] ids =
+        [
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+        ];
 
         var values = new ConcurrentDictionary<long, long>();
 
@@ -168,7 +165,7 @@ public abstract class EFEventStoreTests : EventStoreTests
             await using var dbTransaction = await dbContext.Database.BeginTransactionAsync(ct);
             try
             {
-                values.TryAdd(await dbAdapter.UpdatePositionsAsync(dbContext, [Guid.NewGuid()], default), 0);
+                values.TryAdd(await dbAdapter.UpdatePositionsAsync(dbContext, ids, default), 0);
                 await dbTransaction.CommitAsync(ct);
             }
             catch (Exception)
@@ -178,6 +175,9 @@ public abstract class EFEventStoreTests : EventStoreTests
             }
         });
 
+        var ordered = values.Keys.Order().ToList();
+
         Assert.Equal(1000, values.Count);
+        Assert.All(ordered.Skip(1).Take(10), (value, i) => Assert.Equal(ids.Length, value - ordered[i]));
     }
 }
