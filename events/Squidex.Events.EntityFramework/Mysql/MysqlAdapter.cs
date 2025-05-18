@@ -25,7 +25,7 @@ public sealed class MysqlAdapter : IProviderAdapter
         try
         {
             var sql = $@"
-CREATE FUNCTION UpdatePositionV13(eventId CHAR(36)) RETURNS BIGINT
+CREATE FUNCTION UpdatePosition(eventId CHAR(36)) RETURNS BIGINT
 READS SQL DATA
 DETERMINISTIC
 BEGIN
@@ -60,7 +60,7 @@ END;";
         try
         {
             var sql = $@"
-CREATE FUNCTION UpdatePositions8(eventIds CHAR(36)) RETURNS BIGINT
+CREATE FUNCTION UpdatePositions(eventIds CHAR(36)) RETURNS BIGINT
 READS SQL DATA
 DETERMINISTIC
 BEGIN
@@ -125,7 +125,7 @@ ON DUPLICATE KEY UPDATE Id = Id;";
         // Autoincremented positions are not necessarily in the correct order.
         // Therefore we have to create a positions table by ourself and create the next position in the same transaction.
         // Read comments from the following article: https://dev.to/kspeakman/event-storage-in-postgres-4dk2
-        var query = dbContext.Database.SqlQuery<long>($"SELECT UpdatePositionV13({parameter})");
+        var query = dbContext.Database.SqlQuery<long>($"SELECT UpdatePosition({parameter})");
 
         return (await query.ToListAsync(ct)).Single();
     }
@@ -138,7 +138,7 @@ ON DUPLICATE KEY UPDATE Id = Id;";
         // Autoincremented positions are not necessarily in the correct order.
         // Therefore we have to create a positions table by ourself and create the next position in the same transaction.
         // Read comments from the following article: https://dev.to/kspeakman/event-storage-in-postgres-4dk2
-        var query = dbContext.Database.SqlQuery<long>($"SELECT UpdatePositions8({parameter})");
+        var query = dbContext.Database.SqlQuery<long>($"SELECT UpdatePositions({parameter})");
 
         return (await query.ToListAsync(ct)).Single();
     }

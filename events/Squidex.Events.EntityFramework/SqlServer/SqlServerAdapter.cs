@@ -16,12 +16,14 @@ public sealed class SqlServerAdapter : IProviderAdapter
     public async Task InitializeAsync(DbContext dbContext,
         CancellationToken ct)
     {
+        await CreateTemporaryTableAsync(dbContext, ct);
         await CreateUpdatePositionAsync(dbContext, ct);
         await CreateUpdatePositionsAsync(dbContext, ct);
         await InitialPositionAsync(dbContext, ct);
     }
 
-    private static async Task CreateUpdatePositionAsync(DbContext dbContext, CancellationToken ct)
+    private static async Task CreateUpdatePositionAsync(DbContext dbContext,
+        CancellationToken ct)
     {
         var sql = $@"
 CREATE OR ALTER PROCEDURE UpdatePosition2
@@ -52,22 +54,9 @@ END;";
         await dbContext.Database.ExecuteSqlRawAsync(sql, ct);
     }
 
-    private async Task CreateUpdatePositionsAsync(DbContext dbContext, CancellationToken ct)
+    private static async Task CreateUpdatePositionsAsync(DbContext dbContext,
+        CancellationToken ct)
     {
-        try
-        {
-            var sql1 = $@"
-CREATE TYPE EventIdTableType AS TABLE
-(
-    Id UNIQUEIDENTIFIER
-);";
-            await dbContext.Database.ExecuteSqlRawAsync(sql1, ct);
-        }
-        catch (Exception ex) when (IsDuplicateException(ex))
-        {
-            // Somehow the check above does not work reliably.
-        }
-
         var sql2 = $@"
 CREATE OR ALTER PROCEDURE UpdatePositions
     @eventIds EventIdTableType READONLY
@@ -105,7 +94,8 @@ END;";
         await dbContext.Database.ExecuteSqlRawAsync(sql2, ct);
     }
 
-    private async Task InitialPositionAsync(DbContext dbContext, CancellationToken ct)
+    private async Task InitialPositionAsync(DbContext dbContext,
+        CancellationToken ct)
     {
         try
         {
@@ -127,13 +117,31 @@ END;";
         }
     }
 
+    private async Task CreateTemporaryTableAsync(DbContext dbContext,
+        CancellationToken ct)
+    {
+        try
+        {
+            var sql1 = $@"
+CREATE TYPE EventIdTableType AS TABLE
+(
+    Id UNIQUEIDENTIFIER
+);";
+            await dbContext.Database.ExecuteSqlRawAsync(sql1, ct);
+        }
+        catch (Exception ex) when (IsDuplicateException(ex))
+        {
+            // Somehow the check above does not work reliably.
+        }
+    }
+
     public async Task<long> UpdatePositionAsync(DbContext dbContext, Guid id,
         CancellationToken ct)
     {
         // Autoincremented positions are not necessarily in the correct order.
         // Therefore we have to create a positions table by ourself and create the next position in the same transaction.
         // Read comments from the following article: https://dev.to/kspeakman/event-storage-in-postgres-4dk2
-        var query = dbContext.Database.SqlQuery<long>($"EXEC UpdatePosition2 {id}");
+        var query = dbContext.Database.SqlQuery<long>($"EXEC UpdatePosition {id}");
 
         return (await query.ToListAsync(ct)).Single();
     }
@@ -178,6 +186,12 @@ END;";
 
             // Unique Index constraint.
             if (ex.Message.Contains("unique index", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            // Table already exists.
+            if (ex.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }
