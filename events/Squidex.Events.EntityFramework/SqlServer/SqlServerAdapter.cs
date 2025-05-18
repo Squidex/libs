@@ -26,7 +26,7 @@ public sealed class SqlServerAdapter : IProviderAdapter
         CancellationToken ct)
     {
         var sql = $@"
-CREATE OR ALTER PROCEDURE UpdatePosition
+CREATE OR ALTER PROCEDURE UpdatePositionV2
     @eventId UNIQUEIDENTIFIER
 AS
 BEGIN
@@ -58,7 +58,7 @@ END;";
         CancellationToken ct)
     {
         var sql2 = $@"
-CREATE OR ALTER PROCEDURE UpdatePositions
+CREATE OR ALTER PROCEDURE UpdatePositionsV2
     @eventIds EventIdTableType READONLY
 AS
 BEGIN
@@ -141,7 +141,7 @@ CREATE TYPE EventIdTableType AS TABLE
         // Autoincremented positions are not necessarily in the correct order.
         // Therefore we have to create a positions table by ourself and create the next position in the same transaction.
         // Read comments from the following article: https://dev.to/kspeakman/event-storage-in-postgres-4dk2
-        var query = dbContext.Database.SqlQuery<long>($"EXEC UpdatePosition {id}");
+        var query = dbContext.Database.SqlQuery<long>($"EXEC UpdatePositionV2 {id}");
 
         return (await query.ToListAsync(ct)).Single();
     }
@@ -167,7 +167,7 @@ CREATE TYPE EventIdTableType AS TABLE
         // Autoincremented positions are not necessarily in the correct order.
         // Therefore we have to create a positions table by ourself and create the next position in the same transaction.
         // Read comments from the following article: https://dev.to/kspeakman/event-storage-in-postgres-4dk2
-        var query = dbContext.Database.SqlQueryRaw<long>($"EXEC UpdatePositions @eventIds", parameter);
+        var query = dbContext.Database.SqlQueryRaw<long>($"EXEC UpdatePositionsV2 @eventIds", parameter);
 
         return (await query.ToListAsync(ct)).Single();
     }

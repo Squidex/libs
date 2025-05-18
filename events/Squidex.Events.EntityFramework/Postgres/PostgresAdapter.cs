@@ -26,7 +26,7 @@ public sealed class PostgresAdapter : IProviderAdapter
         CancellationToken ct)
     {
         var sql = Format($@"
-CREATE OR REPLACE FUNCTION UpdatePosition(id UUID) RETURNS BIGINT AS $$
+CREATE OR REPLACE FUNCTION UpdatePositionV2(id UUID) RETURNS BIGINT AS $$
     DECLARE
         newPosition BIGINT;
     BEGIN
@@ -51,7 +51,7 @@ $$ LANGUAGE plpgsql;");
         CancellationToken ct)
     {
         var sql = Format($@"
-CREATE OR REPLACE FUNCTION UpdatePositions(IN ids JSON) RETURNS BIGINT AS $$
+CREATE OR REPLACE FUNCTION UpdatePositionsV2(IN ids JSON) RETURNS BIGINT AS $$
     DECLARE
         newPosition BIGINT;
         currentId UUID;
@@ -110,7 +110,7 @@ ON CONFLICT DO NOTHING;");
         // Autoincremented positions are not necessarily in the correct order.
         // Therefore we have to create a positions table by ourself and create the next position in the same transaction.
         // Read comments from the following article: https://dev.to/kspeakman/event-storage-in-postgres-4dk2
-        var query = dbContext.Database.SqlQueryRaw<long>("SELECT * FROM UpdatePosition(@id)", parameter);
+        var query = dbContext.Database.SqlQueryRaw<long>("SELECT * FROM UpdatePositionV2(@id)", parameter);
 
         return (await query.ToListAsync(ct)).Single();
     }
@@ -126,7 +126,7 @@ ON CONFLICT DO NOTHING;");
         // Autoincremented positions are not necessarily in the correct order.
         // Therefore we have to create a positions table by ourself and create the next position in the same transaction.
         // Read comments from the following article: https://dev.to/kspeakman/event-storage-in-postgres-4dk2
-        var query = dbContext.Database.SqlQueryRaw<long>("SELECT * FROM UpdatePositions(@ids)", parameter);
+        var query = dbContext.Database.SqlQueryRaw<long>("SELECT * FROM UpdatePositionsV2(@ids)", parameter);
 
         return (await query.ToListAsync(ct)).Single();
     }
