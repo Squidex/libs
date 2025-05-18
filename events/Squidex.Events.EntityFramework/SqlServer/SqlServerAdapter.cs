@@ -26,7 +26,7 @@ public sealed class SqlServerAdapter : IProviderAdapter
         CancellationToken ct)
     {
         var sql = $@"
-CREATE OR ALTER PROCEDURE UpdatePosition2
+CREATE OR ALTER PROCEDURE UpdatePosition
     @eventId UNIQUEIDENTIFIER
 AS
 BEGIN
