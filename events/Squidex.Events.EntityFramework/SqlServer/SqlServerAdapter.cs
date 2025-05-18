@@ -138,7 +138,7 @@ CREATE TYPE EventIdTableType AS TABLE
         // Autoincremented positions are not necessarily in the correct order.
         // Therefore we have to create a positions table by ourself and create the next position in the same transaction.
         // Read comments from the following article: https://dev.to/kspeakman/event-storage-in-postgres-4dk2
-        var query = dbContext.Database.SqlQuery<long>($"EXEC UpdatePositionsV2 {id}");
+        var query = dbContext.Database.SqlQuery<long>($"EXEC UpdatePositionV2 {id}");
 
         return (await query.ToListAsync(ct)).Single();
     }
