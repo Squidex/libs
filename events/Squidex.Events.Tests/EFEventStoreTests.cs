@@ -77,16 +77,26 @@ public abstract class EFEventStoreTests : EventStoreTests
         var dbAdapter = Services.GetRequiredService<IProviderAdapter>();
         var dbFactory = Services.GetRequiredService<IDbContextFactory<TestDbContext>>();
 
+        Guid[] ids =
+        [
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+        ];
+
         var values = new HashSet<long>();
 
         for (var i = 0; i < 1000; i++)
         {
             await using var dbContext = await dbFactory.CreateDbContextAsync();
 
-            values.Add(await dbAdapter.UpdatePositionsAsync(dbContext, [Guid.NewGuid()], default));
+            values.Add(await dbAdapter.UpdatePositionsAsync(dbContext, ids, default));
         }
 
+        var ordered = values.Order().ToList();
+
         Assert.Equal(1000, values.Count);
+        Assert.All(ordered.Skip(1), (value, i) => Assert.Equal(ids.Length, value - ordered[i]));
     }
 
     [Fact]
@@ -113,6 +123,13 @@ public abstract class EFEventStoreTests : EventStoreTests
         var dbAdapter = Services.GetRequiredService<IProviderAdapter>();
         var dbFactory = Services.GetRequiredService<IDbContextFactory<TestDbContext>>();
 
+        Guid[] ids =
+        [
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+        ];
+
         var values = new ConcurrentDictionary<long, long>();
 
         await Parallel.ForEachAsync(Enumerable.Range(0, 1000), async (_, ct) =>
@@ -131,7 +148,10 @@ public abstract class EFEventStoreTests : EventStoreTests
             }
         });
 
+        var ordered = values.Keys.Order().ToList();
+
         Assert.Equal(1000, values.Count);
+        Assert.All(ordered.Skip(1), (value, i) => Assert.Equal(ids.Length, value - ordered[i]));
     }
 
     [Fact]

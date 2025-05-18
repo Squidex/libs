@@ -64,7 +64,7 @@ CREATE OR REPLACE FUNCTION UpdatePositionsV2(IN ids JSON) RETURNS BIGINT AS $$
 
         -- Reserve a new positions
         UPDATE public.""EventPosition""
-		SET ""Position"" = ""Position"" + 1
+		SET ""Position"" = ""Position"" + total
 		WHERE ""Id"" = 1
 		RETURNING ""Position"" INTO newPosition;
 
