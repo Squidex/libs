@@ -9,7 +9,6 @@ using System.Globalization;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
-using System.Windows.Markup;
 
 namespace Squidex.Flows.Steps.Utils;
 

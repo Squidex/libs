@@ -7,7 +7,6 @@
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using MongoDB.Driver;
 using Squidex.Hosting;
 using Testcontainers.MariaDb;
 

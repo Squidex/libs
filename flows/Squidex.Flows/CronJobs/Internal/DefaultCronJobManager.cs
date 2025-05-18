@@ -12,7 +12,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NodaTime;
 using NodaTime.Extensions;
-using Squidex.Hosting;
 
 namespace Squidex.Flows.CronJobs.Internal;
 
