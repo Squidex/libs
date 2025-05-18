@@ -60,7 +60,7 @@ END;";
         try
         {
             var sql = $@"
-CREATE FUNCTION UpdatePositionsV2(eventIds CHAR(36)) RETURNS BIGINT
+CREATE FUNCTION UpdatePositionsV2(eventIds TEXT) RETURNS BIGINT
 READS SQL DATA
 DETERMINISTIC
 BEGIN
