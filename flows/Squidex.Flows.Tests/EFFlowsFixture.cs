@@ -7,6 +7,7 @@
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using PhenX.EntityFrameworkCore.BulkInsert.PostgreSql;
 using TestHelpers;
 using TestHelpers.EntityFramework;
 
@@ -16,6 +17,12 @@ namespace Squidex.Flows;
 
 public sealed class EFFlowsDbContext(DbContextOptions options) : DbContext(options)
 {
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.UseBulkInsertPostgreSql();
+        base.OnConfiguring(optionsBuilder);
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.UseFlows();

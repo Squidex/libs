@@ -7,7 +7,6 @@
 
 using System.Runtime.CompilerServices;
 using System.Text.Json;
-using EFCore.BulkExtensions;
 using Microsoft.EntityFrameworkCore;
 using NodaTime;
 using NodaTime.Extensions;
@@ -48,19 +47,16 @@ public sealed class EFCronJobStore<TDbContext, TContext>(
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
 
-        var entities =
-            updates.Select(x =>
-                new EFCronJobEntity
-                {
-                    Id = x.Id,
-                    DueTime = x.NextTime.ToDateTimeOffset(),
-                    Data = null!,
-                });
+        foreach (var update in updates)
+        {
+            var next = update.NextTime.ToDateTimeOffset();
 
-        await dbContext.BulkUpdateAsync(
-            entities,
-            new BulkConfig { PropertiesToIncludeOnUpdate = [nameof(EFCronJobEntity.DueTime)] },
-            cancellationToken: ct);
+            await dbContext.Set<EFCronJobEntity>()
+                .Where(x => x.Id == update.Id)
+                .ExecuteUpdateAsync(b => b
+                    .SetProperty(x => x.DueTime, next),
+                    ct);
+        }
     }
 
     public async Task StoreAsync(CronJobEntry<TContext> entry,

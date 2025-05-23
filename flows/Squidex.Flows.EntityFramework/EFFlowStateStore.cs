@@ -7,9 +7,10 @@
 
 using System.Runtime.CompilerServices;
 using System.Text.Json;
-using EFCore.BulkExtensions;
 using Microsoft.EntityFrameworkCore;
 using NodaTime;
+using PhenX.EntityFrameworkCore.BulkInsert.Extensions;
+using PhenX.EntityFrameworkCore.BulkInsert.Options;
 using Squidex.Flows.Internal.Execution;
 
 namespace Squidex.Flows.EntityFramework;
@@ -160,7 +161,14 @@ public sealed class EFFlowStateStore<TDbContext, TContext>(
                     State = JsonSerializer.Serialize(x, jsonSerializerOptions),
                 });
 
-        await dbContext.BulkInsertOrUpdateAsync(entities, cancellationToken: ct);
+        await dbContext.ExecuteBulkInsertAsync(
+            entities,
+            null,
+            new OnConflictOptions<EFFlowStateEntity>
+            {
+                Update = e => e,
+            },
+            ctk: ct);
     }
 
     private FlowExecutionState<TContext> ParseState(EFFlowStateEntity entity)

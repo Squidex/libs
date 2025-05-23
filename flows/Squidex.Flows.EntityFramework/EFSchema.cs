@@ -29,6 +29,7 @@ public static class EFSchema
         {
             b.ToTable("Flows");
             b.HasIndex(x => new { x.DueTime, x.SchedulePartition });
+            b.Property(x => x.Id).ValueGeneratedNever();
             b.Property(x => x.DefinitionId).HasMaxLength(255);
             b.Property(x => x.OwnerId).HasMaxLength(255);
         });
