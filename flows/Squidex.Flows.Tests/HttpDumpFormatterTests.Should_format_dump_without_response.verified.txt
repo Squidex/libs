@@ -1,0 +1,5 @@
+﻿REQUEST:
+POST: https://cloud.squidex.io/ HTTP/1.1
+Accept-Encoding: UTF-8
+Accept-Language: de; en
+User-Agent: Squidex/1.0

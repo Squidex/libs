@@ -5,9 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using FluentAssertions;
 using Squidex.AI.Implementation;
-using Xunit;
 
 namespace Squidex.AI;
 

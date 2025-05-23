@@ -17,7 +17,7 @@ using Squidex.AI.Utils;
 using Squidex.Assets;
 using Squidex.Assets.ImageSharp;
 using Squidex.Hosting;
-using Xunit;
+using TestHelpers;
 
 namespace Squidex.AI;
 
@@ -113,11 +113,11 @@ public class DalLETests
                 .AddSingleton<IAssetStore, MemoryAssetStore>()
                 .AddSingleton<IAssetThumbnailGenerator, ImageSharpThumbnailGenerator>()
                 .AddAI()
-                .AddDallE(TestHelpers.Configuration, options =>
+                .AddDallE(TestUtils.Configuration, options =>
                 {
                     options.DownloadImage = downloadImage;
                 })
-                .AddOpenAIChat(TestHelpers.Configuration, options =>
+                .AddOpenAIChat(TestUtils.Configuration, options =>
                 {
                     options.Seed = 42;
                 })

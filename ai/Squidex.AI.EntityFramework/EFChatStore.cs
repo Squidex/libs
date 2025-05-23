@@ -19,9 +19,9 @@ public sealed class EFChatStore<T>(IDbContextFactory<T> dbContextFactory) : ICha
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(conversationId);
 
-        await using var context = await dbContextFactory.CreateDbContextAsync(ct);
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
 
-        await context.Set<EFChatEntity>().Where(x => x.Id == conversationId)
+        await dbContext.Set<EFChatEntity>().Where(x => x.Id == conversationId)
             .ExecuteDeleteAsync(ct);
     }
 
@@ -30,9 +30,9 @@ public sealed class EFChatStore<T>(IDbContextFactory<T> dbContextFactory) : ICha
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(conversationId);
 
-        await using var context = await dbContextFactory.CreateDbContextAsync(ct);
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
 
-        var entity = await context.Set<EFChatEntity>().Where(x => x.Id == conversationId).FirstOrDefaultAsync(ct);
+        var entity = await dbContext.Set<EFChatEntity>().Where(x => x.Id == conversationId).FirstOrDefaultAsync(ct);
         if (entity == null)
         {
             return null;
@@ -53,9 +53,9 @@ public sealed class EFChatStore<T>(IDbContextFactory<T> dbContextFactory) : ICha
         var json = JsonSerializer.Serialize(conversation) ??
             throw new ChatException($"Cannot serialize conversion with ID '{conversationId}'.");
 
-        await using var context = await dbContextFactory.CreateDbContextAsync(ct);
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
 
-        var entity = await context.Set<EFChatEntity>().Where(x => x.Id == conversationId).FirstOrDefaultAsync(ct);
+        var entity = await dbContext.Set<EFChatEntity>().Where(x => x.Id == conversationId).FirstOrDefaultAsync(ct);
         if (entity != null)
         {
             entity.LastUpdated = now;
@@ -72,18 +72,18 @@ public sealed class EFChatStore<T>(IDbContextFactory<T> dbContextFactory) : ICha
                 Value = json,
             };
 
-            await context.Set<EFChatEntity>().AddAsync(entity, ct);
+            await dbContext.Set<EFChatEntity>().AddAsync(entity, ct);
         }
 
-        await context.SaveChangesAsync(ct);
+        await dbContext.SaveChangesAsync(ct);
     }
 
     public async IAsyncEnumerable<(string Id, Conversation Value)> QueryAsync(DateTime olderThan,
         [EnumeratorCancellation] CancellationToken ct)
     {
-        await using var context = await dbContextFactory.CreateDbContextAsync(ct);
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
 
-        var records = context.Set<EFChatEntity>().Where(x => x.LastUpdated < olderThan).ToAsyncEnumerable();
+        var records = dbContext.Set<EFChatEntity>().Where(x => x.LastUpdated < olderThan).AsAsyncEnumerable();
 
         await foreach (var entity in records.WithCancellation(ct))
         {

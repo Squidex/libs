@@ -6,7 +6,6 @@
 // ==========================================================================
 
 using System.Security.Cryptography;
-using Xunit;
 
 namespace Squidex.Assets;
 

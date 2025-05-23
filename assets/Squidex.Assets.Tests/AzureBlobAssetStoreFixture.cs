@@ -7,7 +7,6 @@
 
 using Squidex.Assets.Azure;
 using Squidex.Hosting;
-using Xunit;
 
 namespace Squidex.Assets;
 

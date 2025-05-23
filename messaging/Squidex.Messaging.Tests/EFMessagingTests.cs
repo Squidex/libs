@@ -6,7 +6,7 @@
 // ==========================================================================
 
 using Microsoft.EntityFrameworkCore;
-using Xunit;
+using TestHelpers;
 
 namespace Squidex.Messaging;
 
@@ -15,13 +15,13 @@ public class EFMessagingTests(EFMessagingFixture fixture)
 {
     protected override void Configure(MessagingBuilder builder)
     {
-        builder.Services.AddDbContextFactory<EFMessagingFixture.TestContext>(b =>
+        builder.Services.AddDbContextFactory<TestDbContext>(b =>
         {
-            b.UseNpgsql(fixture.PostgresSql.GetConnectionString());
+            b.UseNpgsql(fixture.PostgreSql.GetConnectionString());
         });
 
-        builder.AddEntityFrameworkDataStore<EFMessagingFixture.TestContext>(TestHelpers.Configuration);
-        builder.AddEntityFrameworkTransport<EFMessagingFixture.TestContext>(TestHelpers.Configuration, options =>
+        builder.AddEntityFrameworkDataStore<TestDbContext>(TestUtils.Configuration);
+        builder.AddEntityFrameworkTransport<TestDbContext>(TestUtils.Configuration, options =>
         {
             options.PollingInterval = TimeSpan.FromSeconds(0.1);
             options.UpdateInterval = TimeSpan.FromSeconds(0.1);

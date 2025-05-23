@@ -6,8 +6,6 @@
 // ==========================================================================
 
 using System.Globalization;
-using FluentAssertions;
-using Xunit;
 
 #pragma warning disable MA0040 // Forward the CancellationToken parameter to methods that take one
 
@@ -125,11 +123,7 @@ public abstract class EventStoreTests
         var streamName = $"test-{Guid.NewGuid()}";
         var streamFilter = StreamFilter.Name(streamName);
 
-        var commit1 = new[]
-        {
-            CreateEventData(1),
-            CreateEventData(2),
-        };
+        var commit1 = Enumerable.Range(0, 100).Select(x => CreateEventData(1)).ToArray();
 
         await sut.AppendUnsafeAsync(
         [
@@ -139,11 +133,7 @@ public abstract class EventStoreTests
         var readEvents1 = await sut.QueryStreamAsync(streamName, ct: ct);
         var readEvents2 = await sut.QueryAllAsync(streamFilter, ct: ct).ToListAsync();
 
-        var expected = new[]
-        {
-            new StoredEvent(streamName, "Position", 0, commit1[0]),
-            new StoredEvent(streamName, "Position", 1, commit1[1]),
-        };
+        var expected = commit1.Select((x, i) => new StoredEvent(streamName, "Position", i, x)).ToArray();
 
         ShouldBeEquivalentTo(readEvents1, expected);
         ShouldBeEquivalentTo(readEvents2, expected);
