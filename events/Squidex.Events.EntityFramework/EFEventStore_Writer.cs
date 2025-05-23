@@ -35,10 +35,7 @@ public sealed partial class EFEventStore<T>
                 Timestamp = timestamp,
             });
 
-        await dbContext.ExecuteBulkInsertAsync(efCommits, options =>
-        {
-            options.CopyGeneratedColumns = true;
-        }, ctk: ct);
+        await dbContext.ExecuteBulkInsertAsync(efCommits, ctk: ct);
 
         var ids = commits.Select(x => x.Id).ToArray();
         try
