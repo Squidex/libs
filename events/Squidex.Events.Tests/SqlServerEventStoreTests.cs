@@ -5,7 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using PhenX.EntityFrameworkCore.BulkInsert.SqlServer;
 using TestHelpers;
 using TestHelpers.EntityFramework;
 
@@ -13,11 +15,19 @@ using TestHelpers.EntityFramework;
 
 namespace Squidex.Events;
 
-public sealed class SqlServerEventStoreFixture() : SqlServerFixture<TestDbContext>("eventstore-sqlserver")
+public sealed class SqlServerDbContext(DbContextOptions options) : TestDbContext(options)
+{
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.UseBulkInsertSqlServer();
+    }
+}
+
+public sealed class SqlServerEventStoreFixture() : SqlServerFixture<SqlServerDbContext>("eventstore-sqlserver")
 {
     protected override void AddServices(IServiceCollection services)
     {
-        services.AddEntityFrameworkEventStore<TestDbContext>(TestUtils.Configuration, options =>
+        services.AddEntityFrameworkEventStore<SqlServerDbContext>(TestUtils.Configuration, options =>
             {
                 options.PollingInterval = TimeSpan.FromSeconds(0.1);
             })
@@ -26,7 +36,7 @@ public sealed class SqlServerEventStoreFixture() : SqlServerFixture<TestDbContex
 }
 
 public class SqlServerEventStoreTests(SqlServerEventStoreFixture fixture)
-    : EFEventStoreTests, IClassFixture<SqlServerEventStoreFixture>
+    : EFEventStoreTests<SqlServerDbContext>, IClassFixture<SqlServerEventStoreFixture>
 {
     public override IServiceProvider Services => fixture.Services;
 

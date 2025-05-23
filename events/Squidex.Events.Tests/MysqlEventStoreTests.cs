@@ -5,7 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using PhenX.EntityFrameworkCore.BulkInsert.MySql;
 using TestHelpers;
 using TestHelpers.EntityFramework;
 
@@ -13,11 +15,19 @@ using TestHelpers.EntityFramework;
 
 namespace Squidex.Events;
 
-public sealed class MySqlEventStoreFixture() : MySqlFixture<TestDbContext>("eventstore-mysql")
+public sealed class MySqlDbContext(DbContextOptions options) : TestDbContext(options)
+{
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.UseBulkInsertMySql();
+    }
+}
+
+public sealed class MySqlEventStoreFixture() : MySqlFixture<MySqlDbContext>("eventstore-mysql")
 {
     protected override void AddServices(IServiceCollection services)
     {
-        services.AddEntityFrameworkEventStore<TestDbContext>(TestUtils.Configuration, options =>
+        services.AddEntityFrameworkEventStore<MySqlDbContext>(TestUtils.Configuration, options =>
         {
             options.PollingInterval = TimeSpan.FromSeconds(0.1);
         })
@@ -26,7 +36,7 @@ public sealed class MySqlEventStoreFixture() : MySqlFixture<TestDbContext>("even
 }
 
 public class MySqlEventStoreTests(MySqlEventStoreFixture fixture)
-    : EFEventStoreTests, IClassFixture<MySqlEventStoreFixture>
+    : EFEventStoreTests<MySqlDbContext>, IClassFixture<MySqlEventStoreFixture>
 {
     public override IServiceProvider Services => fixture.Services;
 

@@ -15,6 +15,7 @@ public static class EFSchema
     {
         modelBuilder.Entity<EFEventCommit>(b =>
         {
+            b.Property(x => x.Id).ValueGeneratedNever();
             b.HasIndex(x => new { x.EventStream, x.EventStreamOffset }).IsUnique();
             b.HasIndex(x => new { x.EventStream, x.Position });
             b.HasIndex(x => new { x.EventStream, x.Timestamp });

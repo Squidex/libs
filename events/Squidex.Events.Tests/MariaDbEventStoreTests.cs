@@ -5,7 +5,10 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using PhenX.EntityFrameworkCore.BulkInsert.MySql;
+using SharpCompress.Compressors.PPMd;
 using TestHelpers;
 using TestHelpers.EntityFramework;
 
@@ -13,11 +16,19 @@ using TestHelpers.EntityFramework;
 
 namespace Squidex.Events;
 
-public sealed class MariaDbEventStoreFixture() : MariaDbFixture<TestDbContext>("eventstore-mariadb")
+public sealed class MariaDbContext(DbContextOptions options) : TestDbContext(options)
+{
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.UseBulkInsertMySql();
+    }
+}
+
+public sealed class MariaDbEventStoreFixture() : MariaDbFixture<MariaDbContext>("eventstore-mariadb")
 {
     protected override void AddServices(IServiceCollection services)
     {
-        services.AddEntityFrameworkEventStore<TestDbContext>(TestUtils.Configuration, options =>
+        services.AddEntityFrameworkEventStore<MariaDbContext>(TestUtils.Configuration, options =>
         {
             options.PollingInterval = TimeSpan.FromSeconds(0.1);
         })
@@ -26,7 +37,7 @@ public sealed class MariaDbEventStoreFixture() : MariaDbFixture<TestDbContext>("
 }
 
 public class MariaDbEventStoreTests(MariaDbEventStoreFixture fixture)
-    : EFEventStoreTests, IClassFixture<MariaDbEventStoreFixture>
+    : EFEventStoreTests<MariaDbContext>, IClassFixture<MariaDbEventStoreFixture>
 {
     public override IServiceProvider Services => fixture.Services;
 

@@ -5,7 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using PhenX.EntityFrameworkCore.BulkInsert.PostgreSql;
 using TestHelpers;
 using TestHelpers.EntityFramework;
 
@@ -13,11 +15,19 @@ using TestHelpers.EntityFramework;
 
 namespace Squidex.Events;
 
-public sealed class PostgresEventStoreFixture() : PostgresFixture<TestDbContext>("eventstore-postgres")
+public sealed class PostgresDbContext(DbContextOptions options) : TestDbContext(options)
+{
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.UseBulkInsertPostgreSql();
+    }
+}
+
+public sealed class PostgresEventStoreFixture() : PostgresFixture<PostgresDbContext>("eventstore-postgres")
 {
     protected override void AddServices(IServiceCollection services)
     {
-        services.AddEntityFrameworkEventStore<TestDbContext>(TestUtils.Configuration, options =>
+        services.AddEntityFrameworkEventStore<PostgresDbContext>(TestUtils.Configuration, options =>
         {
             options.PollingInterval = TimeSpan.FromSeconds(0.1);
         })
@@ -26,7 +36,7 @@ public sealed class PostgresEventStoreFixture() : PostgresFixture<TestDbContext>
 }
 
 public class PostgresEventStoreTests(PostgresEventStoreFixture fixture)
-    : EFEventStoreTests, IClassFixture<PostgresEventStoreFixture>
+    : EFEventStoreTests<PostgresDbContext>, IClassFixture<PostgresEventStoreFixture>
 {
     public override IServiceProvider Services => fixture.Services;
 
