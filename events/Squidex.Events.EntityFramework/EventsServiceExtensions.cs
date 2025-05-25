@@ -7,6 +7,7 @@
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Squidex.Events;
 using Squidex.Events.EntityFramework;
 using Squidex.Events.EntityFramework.Mysql;
@@ -22,8 +23,12 @@ public static class EventsServiceExtensions
     {
         services.Configure(config, configPath, configure);
 
+        services.TryAddSingleton<IDbEventStoreBulkInserter,
+            NullDbEventStoreBulkInserter>();
+
         services.AddSingletonAs<EFEventStore<T>>()
             .As<IEventStore>();
+
         services.AddSingleton(TimeProvider.System);
 
         return new EventStoreBuilder(services);

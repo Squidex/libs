@@ -6,7 +6,6 @@
 // ==========================================================================
 
 using Squidex.Assets.ImageSharp;
-using Xunit;
 
 namespace Squidex.Assets;
 

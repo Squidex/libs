@@ -7,7 +7,6 @@
 
 using System.Diagnostics;
 using Testcontainers.RabbitMq;
-using Xunit;
 
 namespace Squidex.Messaging;
 

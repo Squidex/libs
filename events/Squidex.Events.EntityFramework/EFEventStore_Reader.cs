@@ -22,10 +22,10 @@ public sealed partial class EFEventStore<T> : IEventStore
     public async Task<IReadOnlyList<StoredEvent>> QueryStreamAsync(string streamName, long afterStreamPosition = -1,
         CancellationToken ct = default)
     {
-        await using var context = await dbContextFactory.CreateDbContextAsync(ct);
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
 
         var commits =
-            await context.Set<EFEventCommit>()
+            await dbContext.Set<EFEventCommit>()
                 .WhereStreamMatches(StreamFilter.Name(streamName))
                 .WherePositionAfter(afterStreamPosition)
                 .WhereCommited()
@@ -36,7 +36,7 @@ public sealed partial class EFEventStore<T> : IEventStore
         if ((commits.Count == 0 || commits[0].EventStreamOffset != afterStreamPosition) && afterStreamPosition > EventsVersion.Empty)
         {
             commits =
-                await context.Set<EFEventCommit>()
+                await dbContext.Set<EFEventCommit>()
                     .WhereStreamMatches(StreamFilter.Name(streamName))
                     .WherePositionBefore(afterStreamPosition)
                     .WhereCommited()
@@ -58,11 +58,11 @@ public sealed partial class EFEventStore<T> : IEventStore
             yield break;
         }
 
-        await using var context = await dbContextFactory.CreateDbContextAsync(ct);
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
 
         DateTime streamTime = timestamp;
         var query =
-            await context.Set<EFEventCommit>()
+            await dbContext.Set<EFEventCommit>()
                 .WhereStreamMatches(filter)
                 .WhereTimestampAfter(streamTime)
                 .WhereCommited()
@@ -94,11 +94,11 @@ public sealed partial class EFEventStore<T> : IEventStore
             yield break;
         }
 
-        await using var context = await dbContextFactory.CreateDbContextAsync(ct);
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
 
         ParsedStreamPosition streamPosition = position;
         var query =
-            context.Set<EFEventCommit>()
+            dbContext.Set<EFEventCommit>()
                 .WhereStreamMatches(filter)
                 .WherePositionAfter(streamPosition)
                 .WhereCommited()

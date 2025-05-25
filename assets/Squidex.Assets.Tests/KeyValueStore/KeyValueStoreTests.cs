@@ -5,13 +5,11 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Xunit;
-
 namespace Squidex.Assets.KeyValueStore;
 
 public abstract class KeyValueStoreTests
 {
-    protected abstract Task<IAssetKeyValueStore<TestValue>> CreateSutAsync();
+    protected abstract Task<IAssetKeyValueStore<KeyValueTestData>> CreateSutAsync();
 
     [Fact]
     public async Task Should_insert_and_fetch_value()
@@ -19,7 +17,7 @@ public abstract class KeyValueStoreTests
         var sut = await CreateSutAsync();
 
         var key = Guid.NewGuid().ToString();
-        await sut.SetAsync(key, new TestValue { Value = key }, DateTimeOffset.Now.AddHours(1));
+        await sut.SetAsync(key, new KeyValueTestData { Value = key }, DateTimeOffset.Now.AddHours(1));
 
         var queried = await sut.GetAsync(key);
 
@@ -35,8 +33,8 @@ public abstract class KeyValueStoreTests
         var value0 = $"{key}_v0";
         var value1 = $"{key}_v1";
 
-        await sut.SetAsync(key, new TestValue { Value = value0 }, DateTimeOffset.UtcNow.AddHours(1));
-        await sut.SetAsync(key, new TestValue { Value = value1 }, DateTimeOffset.UtcNow.AddHours(1));
+        await sut.SetAsync(key, new KeyValueTestData { Value = value0 }, DateTimeOffset.UtcNow.AddHours(1));
+        await sut.SetAsync(key, new KeyValueTestData { Value = value1 }, DateTimeOffset.UtcNow.AddHours(1));
 
         var queried = await sut.GetAsync(key);
 
@@ -49,7 +47,7 @@ public abstract class KeyValueStoreTests
         var sut = await CreateSutAsync();
 
         var key = Guid.NewGuid().ToString();
-        await sut.SetAsync(key, new TestValue { Value = key }, DateTimeOffset.UtcNow.AddHours(1));
+        await sut.SetAsync(key, new KeyValueTestData { Value = key }, DateTimeOffset.UtcNow.AddHours(1));
         await sut.DeleteAsync(key);
 
         var queried = await sut.GetAsync(key);
@@ -66,9 +64,9 @@ public abstract class KeyValueStoreTests
         var key2 = Guid.NewGuid().ToString();
         var key3 = Guid.NewGuid().ToString();
 
-        await sut.SetAsync(key1, new TestValue { Value = key1 }, DateTimeOffset.UtcNow.AddHours(1));
-        await sut.SetAsync(key2, new TestValue { Value = key2 }, DateTimeOffset.UtcNow.AddHours(-3));
-        await sut.SetAsync(key3, new TestValue { Value = key3 }, DateTimeOffset.UtcNow.AddHours(1));
+        await sut.SetAsync(key1, new KeyValueTestData { Value = key1 }, DateTimeOffset.UtcNow.AddHours(1));
+        await sut.SetAsync(key2, new KeyValueTestData { Value = key2 }, DateTimeOffset.UtcNow.AddHours(-3));
+        await sut.SetAsync(key3, new KeyValueTestData { Value = key3 }, DateTimeOffset.UtcNow.AddHours(1));
 
         var query = sut.GetExpiredEntriesAsync(DateTimeOffset.UtcNow);
         var expired = new List<string>();

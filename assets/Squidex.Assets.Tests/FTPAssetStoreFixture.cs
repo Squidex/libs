@@ -5,10 +5,8 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using FakeItEasy;
 using Squidex.Assets.FTP;
 using Squidex.Hosting;
-using Xunit;
 
 namespace Squidex.Assets;
 

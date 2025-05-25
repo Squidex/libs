@@ -5,11 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using FakeItEasy;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using Squidex.Events.Mongo;
-using Xunit;
 
 namespace Squidex.Events;
 
