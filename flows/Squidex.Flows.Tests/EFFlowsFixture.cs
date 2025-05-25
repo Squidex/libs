@@ -5,9 +5,13 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Google.Api;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using PhenX.EntityFrameworkCore.BulkInsert.Extensions;
+using PhenX.EntityFrameworkCore.BulkInsert.Options;
 using PhenX.EntityFrameworkCore.BulkInsert.PostgreSql;
+using Squidex.Flows.EntityFramework;
 using TestHelpers;
 using TestHelpers.EntityFramework;
 
@@ -40,6 +44,24 @@ public sealed class EFFlowsFixture() : PostgresFixture<EFFlowsDbContext>("flows-
 
         services.AddCronJobs<TestFlowContext>(TestUtils.Configuration)
             .AddEntityFrameworkStore<EFFlowsDbContext, TestFlowContext>();
+
+        services.AddSingleton<IDbFlowsBulkInserter, BulkInserter>();
+    }
+}
+
+public sealed class BulkInserter : IDbFlowsBulkInserter
+{
+    public Task BulkUpsertAsync<T>(DbContext dbContext, IEnumerable<T> entities,
+        CancellationToken ct = default) where T : class
+    {
+        return dbContext.ExecuteBulkInsertAsync(
+            entities,
+            null,
+            new OnConflictOptions<T>
+            {
+                Update = e => e,
+            },
+            ct);
     }
 }
 

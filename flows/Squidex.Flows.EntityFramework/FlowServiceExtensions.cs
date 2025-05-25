@@ -6,6 +6,7 @@
 // ==========================================================================
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Squidex.Flows;
 using Squidex.Flows.CronJobs;
 using Squidex.Flows.CronJobs.Internal;
@@ -31,6 +32,9 @@ public static class FlowServiceExtensions
     {
         builder.Services.AddSingletonAs<EFFlowStateStore<TDbContext, TContext>>()
             .As<IFlowStateStore<TContext>>();
+
+        builder.Services.TryAddSingleton<IDbFlowsBulkInserter,
+            NullDbFlowsBulkInserter>();
 
         return builder;
     }

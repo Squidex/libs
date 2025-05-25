@@ -9,14 +9,13 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using NodaTime;
-using PhenX.EntityFrameworkCore.BulkInsert.Extensions;
-using PhenX.EntityFrameworkCore.BulkInsert.Options;
 using Squidex.Flows.Internal.Execution;
 
 namespace Squidex.Flows.EntityFramework;
 
 public sealed class EFFlowStateStore<TDbContext, TContext>(
     IDbContextFactory<TDbContext> dbContextFactory,
+    IDbFlowsBulkInserter bulkInserter,
     JsonSerializerOptions jsonSerializerOptions)
     : IFlowStateStore<TContext>
     where TContext : FlowContext
@@ -161,14 +160,7 @@ public sealed class EFFlowStateStore<TDbContext, TContext>(
                     State = JsonSerializer.Serialize(x, jsonSerializerOptions),
                 });
 
-        await dbContext.ExecuteBulkInsertAsync(
-            entities,
-            null,
-            new OnConflictOptions<EFFlowStateEntity>
-            {
-                Update = e => e,
-            },
-            ctk: ct);
+        await bulkInserter.BulkUpsertAsync(dbContext, entities, ct);
     }
 
     private FlowExecutionState<TContext> ParseState(EFFlowStateEntity entity)

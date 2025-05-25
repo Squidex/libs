@@ -8,6 +8,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PhenX.EntityFrameworkCore.BulkInsert.PostgreSql;
+using Squidex.Events.EntityFramework;
 using TestHelpers;
 using TestHelpers.EntityFramework;
 
@@ -27,6 +28,7 @@ public sealed class PostgresEventStoreFixture() : PostgresFixture<PostgresDbCont
 {
     protected override void AddServices(IServiceCollection services)
     {
+        services.AddSingleton<IDbEventStoreBulkInserter, BulkInserter>();
         services.AddEntityFrameworkEventStore<PostgresDbContext>(TestUtils.Configuration, options =>
         {
             options.PollingInterval = TimeSpan.FromSeconds(0.1);

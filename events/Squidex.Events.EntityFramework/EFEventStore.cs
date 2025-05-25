@@ -13,6 +13,7 @@ namespace Squidex.Events.EntityFramework;
 
 public sealed partial class EFEventStore<T>(
     IDbContextFactory<T> dbContextFactory,
+    IDbEventStoreBulkInserter bulkInserter,
     IProviderAdapter adapter,
     TimeProvider timeProvider,
     IOptions<EFEventStoreOptions> options)

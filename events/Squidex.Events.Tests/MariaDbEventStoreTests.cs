@@ -8,7 +8,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PhenX.EntityFrameworkCore.BulkInsert.MySql;
-using SharpCompress.Compressors.PPMd;
+using Squidex.Events.EntityFramework;
 using TestHelpers;
 using TestHelpers.EntityFramework;
 
@@ -28,6 +28,7 @@ public sealed class MariaDbEventStoreFixture() : MariaDbFixture<MariaDbContext>(
 {
     protected override void AddServices(IServiceCollection services)
     {
+        services.AddSingleton<IDbEventStoreBulkInserter, BulkInserter>();
         services.AddEntityFrameworkEventStore<MariaDbContext>(TestUtils.Configuration, options =>
         {
             options.PollingInterval = TimeSpan.FromSeconds(0.1);

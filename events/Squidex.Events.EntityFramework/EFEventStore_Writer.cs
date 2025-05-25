@@ -6,7 +6,6 @@
 // ==========================================================================
 
 using Microsoft.EntityFrameworkCore;
-using PhenX.EntityFrameworkCore.BulkInsert.Extensions;
 
 #pragma warning disable MA0048 // File name must match type name
 
@@ -35,7 +34,7 @@ public sealed partial class EFEventStore<T>
                 Timestamp = timestamp,
             });
 
-        await dbContext.ExecuteBulkInsertAsync(efCommits, ctk: ct);
+        await bulkInserter.BulkInsertAsync(dbContext, efCommits, ct);
 
         var ids = commits.Select(x => x.Id).ToArray();
         try

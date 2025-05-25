@@ -8,6 +8,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PhenX.EntityFrameworkCore.BulkInsert.MySql;
+using Squidex.Events.EntityFramework;
 using TestHelpers;
 using TestHelpers.EntityFramework;
 
@@ -27,6 +28,7 @@ public sealed class MySqlEventStoreFixture() : MySqlFixture<MySqlDbContext>("eve
 {
     protected override void AddServices(IServiceCollection services)
     {
+        services.AddSingleton<IDbEventStoreBulkInserter, BulkInserter>();
         services.AddEntityFrameworkEventStore<MySqlDbContext>(TestUtils.Configuration, options =>
         {
             options.PollingInterval = TimeSpan.FromSeconds(0.1);

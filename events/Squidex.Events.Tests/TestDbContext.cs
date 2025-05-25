@@ -10,6 +10,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using PhenX.EntityFrameworkCore.BulkInsert.Extensions;
+using Squidex.Events.EntityFramework;
 
 namespace Squidex.Events;
 
@@ -21,6 +23,15 @@ public class TestDbContext(DbContextOptions options) : DbContext(options)
     {
         modelBuilder.UseEventStore();
         base.OnModelCreating(modelBuilder);
+    }
+}
+
+public sealed class BulkInserter : IDbEventStoreBulkInserter
+{
+    public Task BulkInsertAsync<T>(DbContext dbContext, IEnumerable<T> entities,
+        CancellationToken ct = default) where T : class
+    {
+        return dbContext.ExecuteBulkInsertAsync(entities, null, null, ct);
     }
 }
 
