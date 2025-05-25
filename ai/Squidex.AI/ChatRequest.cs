@@ -16,4 +16,6 @@ public sealed class ChatRequest
     public string? Configuration { get; init; }
 
     public string? Tool { get; init; }
+
+    public bool LoadHistory { get; init; }
 }

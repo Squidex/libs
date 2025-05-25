@@ -117,6 +117,16 @@ public sealed class ChatAgent(
 
         var conversation = await GetOrCreateConversationAsync(request, configuration, ct);
 
+        if (string.IsNullOrWhiteSpace(request.Prompt) && request.LoadHistory && conversation.History.Count > 0)
+        {
+            foreach (var message in conversation.History.Where(x => x.Type != ChatMessageType.System))
+            {
+                yield return new ChatHistoryLoaded { Message = message };
+            }
+
+            yield break;
+        }
+
         var providerRequest = new ChatProviderRequest
         {
             ChatAgent = this,

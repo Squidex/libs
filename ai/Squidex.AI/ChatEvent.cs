@@ -17,6 +17,11 @@ public abstract record ChatEvent : InternalChatEvent
 {
 }
 
+public sealed record ChatHistoryLoaded : ChatEvent
+{
+    public ChatMessage Message { get; set; }
+}
+
 public sealed record ToolStartEvent : ChatEvent
 {
     required public IChatTool Tool { get; init; }
