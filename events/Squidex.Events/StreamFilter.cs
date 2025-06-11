@@ -67,17 +67,18 @@ public readonly struct StreamFilter(StreamFilterKind kind, IReadOnlySet<string>?
 
     public override int GetHashCode()
     {
-        var hashCode = 17 * Kind.GetHashCode();
+        HashCode hashCode = default;
+        hashCode.Add(Kind);
 
         if (Prefixes != null)
         {
-            foreach (var prefix in Prefixes)
+            foreach (var prefix in Prefixes.Order())
             {
-                hashCode ^= 23 * prefix.GetHashCode(StringComparison.Ordinal);
+                hashCode.Add(prefix, StringComparer.Ordinal);
             }
         }
 
-        return hashCode;
+        return hashCode.ToHashCode();
     }
 }
 

@@ -1,0 +1,36 @@
+﻿{
+  InstanceId: Guid_1,
+  OwnerId: Guid_2,
+  DefinitionId: Guid_3,
+  Definition: {
+    InitialStepId: StepId1,
+    Steps: {
+      StepId1: {
+        IgnoreError: false,
+        Step: {
+          Property: 
+        }
+      }
+    }
+  },
+  Context: {},
+  Description: ,
+  ScheduleKey: ,
+  SchedulePartition: 75,
+  Steps: {
+    StepId1: {
+      Status: Completed,
+      IsPrepared: true,
+      Attempts: [
+        {
+          Started: DateTimeOffset_1,
+          Completed: DateTimeOffset_1
+        }
+      ]
+    }
+  },
+  Created: DateTimeOffset_1,
+  Completed: DateTimeOffset_1,
+  Expires: DateTimeOffset_2,
+  Status: Completed
+}

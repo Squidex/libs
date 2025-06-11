@@ -5,7 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Xunit;
+using TestHelpers;
 
 namespace Squidex.Messaging;
 
@@ -18,7 +18,7 @@ public class RabbitMqTests(RabbitMqFixture fixture)
 
     protected override void Configure(MessagingBuilder builder)
     {
-        builder.AddRabbitMqTransport(TestHelpers.Configuration, options =>
+        builder.AddRabbitMqTransport(TestUtils.Configuration, options =>
         {
             options.Uri = new Uri(fixture.RabbitMq.GetConnectionString());
         });

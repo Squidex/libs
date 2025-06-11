@@ -13,6 +13,7 @@ namespace Squidex.Events.EntityFramework;
 
 public sealed partial class EFEventStore<T>(
     IDbContextFactory<T> dbContextFactory,
+    IDbEventStoreBulkInserter bulkInserter,
     IProviderAdapter adapter,
     TimeProvider timeProvider,
     IOptions<EFEventStoreOptions> options)
@@ -21,7 +22,7 @@ public sealed partial class EFEventStore<T>(
     public async Task InitializeAsync(
         CancellationToken ct)
     {
-        await using var context = await dbContextFactory.CreateDbContextAsync(ct);
-        await adapter.InitializeAsync(context, ct);
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
+        await adapter.InitializeAsync(dbContext, ct);
     }
 }

@@ -27,8 +27,7 @@ public sealed class GoogleCloudAssetStore(IOptions<GoogleCloudAssetOptions> opti
         try
         {
             storageClient = await StorageClient.CreateAsync();
-
-            await storageClient.GetBucketAsync(bucketName, cancellationToken: ct);
+            await this.UploadTestAssetAsync(ct);
         }
         catch (Exception ex)
         {

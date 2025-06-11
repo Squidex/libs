@@ -23,7 +23,7 @@ public sealed class MongoGridFsAssetStore(IGridFSBucket<string> bucket) : IAsset
     {
         try
         {
-            await bucket.Database.ListCollectionsAsync(cancellationToken: ct);
+            await this.UploadTestAssetAsync(ct);
         }
         catch (MongoException ex)
         {

@@ -8,7 +8,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Squidex.AI.Implementation.Pinecone;
 using Squidex.Hosting;
-using Xunit;
+using TestHelpers;
 
 namespace Squidex.AI;
 
@@ -39,12 +39,12 @@ public class PineconeTests
         var services =
             new ServiceCollection()
                 .AddAI()
-                .AddOpenAIChat(TestHelpers.Configuration, options =>
+                .AddOpenAIChat(TestUtils.Configuration, options =>
                 {
                     options.Seed = 42;
                 })
-                .AddOpenAIEmbeddings(TestHelpers.Configuration)
-                .AddPineconeTool(TestHelpers.Configuration, options =>
+                .AddOpenAIEmbeddings(TestUtils.Configuration)
+                .AddPineconeTool(TestUtils.Configuration, options =>
                 {
                     options.ToolDescription = "Answers questions about Squidex.";
                 })

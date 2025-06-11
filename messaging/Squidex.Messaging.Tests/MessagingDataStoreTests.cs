@@ -6,7 +6,6 @@
 // ==========================================================================
 
 using FluentAssertions;
-using Xunit;
 
 namespace Squidex.Messaging;
 

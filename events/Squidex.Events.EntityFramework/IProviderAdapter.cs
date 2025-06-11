@@ -14,7 +14,10 @@ public interface IProviderAdapter
     Task InitializeAsync(DbContext dbContext,
         CancellationToken ct);
 
-    Task<long> GetPositionAsync(DbContext dbContext,
+    Task<long> UpdatePositionAsync(DbContext dbContext, Guid id,
+        CancellationToken ct);
+
+    Task<long> UpdatePositionsAsync(DbContext dbContext, Guid[] ids,
         CancellationToken ct);
 
     bool IsDuplicateException(Exception exception);

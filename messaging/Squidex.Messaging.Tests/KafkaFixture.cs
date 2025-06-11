@@ -9,7 +9,6 @@ using System.Diagnostics;
 using Confluent.Kafka;
 using Confluent.Kafka.Admin;
 using Testcontainers.Kafka;
-using Xunit;
 
 namespace Squidex.Messaging;
 

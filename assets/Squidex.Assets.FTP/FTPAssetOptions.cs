@@ -21,6 +21,8 @@ public sealed class FTPAssetOptions : IValidatableOptions
 
     public string Password { get; set; }
 
+    public bool CreateFolder { get; set; } = true;
+
     public IEnumerable<ConfigurationError> Validate()
     {
         if (string.IsNullOrWhiteSpace(ServerHost))

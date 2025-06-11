@@ -1,0 +1,11 @@
+﻿REQUEST:
+POST: https://cloud.squidex.io/ HTTP/1.1
+Accept-Encoding: UTF-8
+Accept-Language: de; en
+User-Agent: Squidex/1.0
+
+RESPONSE:
+HTTP/1.1 200 OK
+Trailer: Expires
+Transfer-Encoding: UTF-8
+Elapsed: 00:01:00

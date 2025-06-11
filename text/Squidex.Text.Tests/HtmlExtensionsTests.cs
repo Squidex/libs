@@ -6,7 +6,6 @@
 // ==========================================================================
 
 using System.Text;
-using Xunit;
 
 namespace Squidex.Text;
 

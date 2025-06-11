@@ -16,7 +16,7 @@ public sealed class FolderAssetStore(IOptions<FolderAssetOptions> options, ILogg
     private const int BufferSize = 81920;
     private readonly DirectoryInfo directory = new DirectoryInfo(options.Value.Path);
 
-    public Task InitializeAsync(
+    public async Task InitializeAsync(
         CancellationToken ct)
     {
         try
@@ -26,9 +26,8 @@ public sealed class FolderAssetStore(IOptions<FolderAssetOptions> options, ILogg
                 directory.Create();
             }
 
+            await this.UploadTestAssetAsync(ct);
             log.LogInformation("Initialized with {folder}", directory.FullName);
-
-            return Task.CompletedTask;
         }
         catch (Exception ex)
         {

@@ -5,11 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using FakeItEasy;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Xunit;
 
 #pragma warning disable CA2253 // Named placeholders should not be numeric values
 

@@ -8,7 +8,7 @@
 namespace Squidex.Hosting.Configuration;
 
 [Serializable]
-public sealed class ConfigurationError
+public sealed record ConfigurationError
 {
     public string Message { get; }
 
@@ -16,14 +16,11 @@ public sealed class ConfigurationError
 
     public ConfigurationError(string message, string? path = null)
     {
-        if (string.IsNullOrWhiteSpace(message))
-        {
-            throw new ArgumentException("Message cannot be null or empty.", nameof(message));
-        }
-
-        Path = path;
+        ArgumentException.ThrowIfNullOrWhiteSpace(message);
 
         Message = message;
+
+        Path = path;
     }
 
     public override string ToString()

@@ -7,7 +7,6 @@
 
 using Squidex.Assets.S3;
 using Squidex.Hosting;
-using Xunit;
 
 namespace Squidex.Assets;
 

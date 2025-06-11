@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.002.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squidex.Flows", "Squidex.Flows\Squidex.Flows.csproj", "{48EC379A-1187-4B13-8C9C-B1C1811AB2B4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squidex.Flows.Tests", "Squidex.Flows.Tests\Squidex.Flows.Tests.csproj", "{AE5AC6BD-E2F0-4FF3-A2EA-10CBAEC14B15}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{48EC379A-1187-4B13-8C9C-B1C1811AB2B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{48EC379A-1187-4B13-8C9C-B1C1811AB2B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{48EC379A-1187-4B13-8C9C-B1C1811AB2B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{48EC379A-1187-4B13-8C9C-B1C1811AB2B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AE5AC6BD-E2F0-4FF3-A2EA-10CBAEC14B15}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE5AC6BD-E2F0-4FF3-A2EA-10CBAEC14B15}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE5AC6BD-E2F0-4FF3-A2EA-10CBAEC14B15}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE5AC6BD-E2F0-4FF3-A2EA-10CBAEC14B15}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {79981F43-E72C-4D7F-B465-EF20C6F4A873}
+	EndGlobalSection
+EndGlobal
