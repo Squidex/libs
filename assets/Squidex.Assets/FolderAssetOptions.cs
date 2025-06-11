@@ -13,6 +13,8 @@ public sealed class FolderAssetOptions : IValidatableOptions
 {
     public string Path { get; set; }
 
+    public bool CreateFolder { get; set; } = true;
+
     public IEnumerable<ConfigurationError> Validate()
     {
         if (string.IsNullOrWhiteSpace(Path))

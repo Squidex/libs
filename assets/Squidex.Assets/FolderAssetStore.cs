@@ -21,7 +21,7 @@ public sealed class FolderAssetStore(IOptions<FolderAssetOptions> options, ILogg
     {
         try
         {
-            if (!directory.Exists)
+            if (options.Value.CreateFolder && !directory.Exists)
             {
                 directory.Create();
             }
