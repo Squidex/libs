@@ -15,6 +15,8 @@ public sealed class AzureBlobAssetOptions : IValidatableOptions
 
     public string ContainerName { get; set; }
 
+    public bool CreateFolder { get; set; } = true;
+
     public IEnumerable<ConfigurationError> Validate()
     {
         if (string.IsNullOrWhiteSpace(ConnectionString))

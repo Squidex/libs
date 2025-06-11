@@ -11,7 +11,7 @@
     <PackageProjectUrl>https://github.com/squidex/squidex</PackageProjectUrl>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <Version>7.22.0</Version>
+    <Version>7.23.0</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">

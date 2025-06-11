@@ -31,10 +31,12 @@ public sealed class FTPAssetStore(IOptions<FTPAssetOptions> options, ILogger<FTP
         var client = await GetClientAsync(ct);
         try
         {
-            if (!await client.DirectoryExists(options.Path, ct))
+            if (options.CreateFolder && !await client.DirectoryExists(options.Path, ct))
             {
                 await client.CreateDirectory(options.Path, ct);
             }
+
+            await this.UploadTestAssetAsync(ct);
         }
         finally
         {

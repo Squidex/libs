@@ -42,9 +42,14 @@ public class AzureBlobAssetStore(IOptions<AzureBlobAssetOptions> options) : IAss
 
             blobContainer = blobServiceClient.GetBlobContainerClient(options.ContainerName);
 
-            await blobContainer.CreateIfNotExistsAsync(cancellationToken: ct);
+            if (options.CreateFolder)
+            {
+                await blobContainer.CreateIfNotExistsAsync(cancellationToken: ct);
 
-            blobContainerProperties = await blobContainer.GetPropertiesAsync(cancellationToken: ct);
+                blobContainerProperties = await blobContainer.GetPropertiesAsync(cancellationToken: ct);
+            }
+
+            await this.UploadTestAssetAsync(ct);
         }
         catch (Exception ex)
         {
