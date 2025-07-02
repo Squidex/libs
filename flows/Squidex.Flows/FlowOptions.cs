@@ -26,6 +26,8 @@ public sealed class FlowOptions : IValidatableOptions
 
     public int NumPartitions { get; set; } = 120;
 
+    public int BufferSizePerWorker { get; set; } = 2;
+
     public int WorkerIndex { get; set; }
 
     public Func<Exception, bool>? IsSafeException { get; set; } = _ => true;

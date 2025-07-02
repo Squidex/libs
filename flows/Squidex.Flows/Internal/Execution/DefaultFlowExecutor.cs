@@ -181,20 +181,29 @@ public sealed class DefaultFlowExecutor<TContext>(
     {
         ArgumentNullException.ThrowIfNull(nameof(state));
 
-        while (true)
+        try
         {
-            if (state.Status is FlowExecutionStatus.Completed or FlowExecutionStatus.Failed)
+            while (true)
             {
-                break;
-            }
+                if (state.Status is FlowExecutionStatus.Completed or FlowExecutionStatus.Failed)
+                {
+                    break;
+                }
 
-            var now = Clock.GetCurrentInstant();
-            if (state.NextRun > now)
-            {
-                break;
-            }
+                var now = Clock.GetCurrentInstant();
+                if (state.NextRun > now)
+                {
+                    break;
+                }
 
-            await ExecuteCoreAsync(state, false, DefaultTimeout, ct);
+                await ExecuteCoreAsync(state, false, DefaultTimeout, ct);
+            }
+        }
+        catch
+        {
+            // This method should never fail, when used properly.
+            state.Failed(Clock.GetCurrentInstant());
+            throw;
         }
     }
 
@@ -246,9 +255,11 @@ public sealed class DefaultFlowExecutor<TContext>(
                 throw new InvalidOperationException("Flow step has already been completed.");
             }
 
-            await PrepareAsync(executionContext, stepDefinition.Step, stepState, cts.Token);
             try
             {
+                // Ensure that we also catch errors in the preparation.
+                await PrepareAsync(executionContext, stepDefinition.Step, stepState, cts.Token);
+
                 stepState.Status = FlowExecutionStatus.Running;
 
                 var result = await pipeline(executionContext, ct) ??
@@ -296,7 +307,12 @@ public sealed class DefaultFlowExecutor<TContext>(
         // Ensure to take the time after the step execution and preparation.
         var now = Clock.GetCurrentInstant();
 
-        if (stepDefinition.IgnoreError)
+        if (!stepState.IsPrepared)
+        {
+            state.Failed(now);
+            stepState.Status = FlowExecutionStatus.Failed;
+        }
+        else if (stepDefinition.IgnoreError)
         {
             var nextId = state.GetNextStep(stepDefinition, default);
             if (nextId != null)
