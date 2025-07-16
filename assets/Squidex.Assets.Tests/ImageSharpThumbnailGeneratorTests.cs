@@ -57,7 +57,7 @@ public class ImageSharpThumbnailGeneratorTests : AssetThumbnailGeneratorTests
     {
         var (mimeType, source) = GetImage("landscape.png");
 
-        await using (var target = GetStream($"watermark_{anchor}"))
+        await using (var target = GetOutputStream($"watermark_{anchor}"))
         {
             await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
             {
@@ -79,7 +79,7 @@ public class ImageSharpThumbnailGeneratorTests : AssetThumbnailGeneratorTests
     {
         var (mimeType, source) = GetImage("landscape_small.png");
 
-        await using (var target = GetStream($"watermark_small_{anchor}"))
+        await using (var target = GetOutputStream($"watermark_small_{anchor}"))
         {
             await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
             {

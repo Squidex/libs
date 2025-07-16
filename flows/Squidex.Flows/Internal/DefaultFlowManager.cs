@@ -89,9 +89,28 @@ public sealed class DefaultFlowManager<TContext>(
         return flowStateStore.FindAsync(id, ct);
     }
 
-    public Task<(List<FlowExecutionState<TContext>> Items, long Total)> QueryInstancesByOwnerAsync(string ownerId, string? definitionId = null, int skip = 0, int take = 20,
+    public async Task<(List<FlowExecutionState<TContext>> Items, long Total)> QueryInstancesByOwnerAsync(string ownerId, string? definitionId = null, int skip = 0, int take = 20,
         CancellationToken ct = default)
     {
-        return flowStateStore.QueryByOwnerAsync(ownerId, definitionId, skip, take, ct);
+        var (states, total) = await flowStateStore.QueryByOwnerAsync(ownerId, definitionId, skip, take, ct);
+
+        foreach (var state in states)
+        {
+            if (state.NextRun == null &&
+                state.Status is not FlowExecutionStatus.Completed and not FlowExecutionStatus.Failed)
+            {
+                state.Status = FlowExecutionStatus.Cancelled;
+            }
+
+            foreach (var (_, step) in state.Steps)
+            {
+                if (step.Status is not FlowExecutionStatus.Completed and not FlowExecutionStatus.Failed)
+                {
+                    step.Status = FlowExecutionStatus.Cancelled;
+                }
+            }
+        }
+
+        return (states, total);
     }
 }

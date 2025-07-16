@@ -34,6 +34,8 @@ public sealed class ResizeOptions : IOptions
 
     public float WatermarkOpacity { get; set; } = 1;
 
+    public bool KeepMetadata { get; set; }
+
     public WatermarkAnchor WatermarkAnchor { get; set; }
 
     internal bool IsResize

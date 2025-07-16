@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using NodaTime;
 using Squidex.Flows.Internal;
 using Squidex.Flows.Internal.Execution;
 
@@ -138,6 +139,30 @@ public class DefaultFlowManagerTests
     }
 
     [Fact]
+    public async Task Should_query_states_and_mark_them_as_cancelled_if_no_nextrun_is_given()
+    {
+        var ownerId = Guid.NewGuid().ToString();
+        var pageOffset = 14;
+        var pageSize = 12;
+        var definitionid = Guid.NewGuid().ToString();
+
+        var items = new List<FlowExecutionState<TestFlowContext>>
+        {
+            CreateState(nextRun: true),
+            CreateState(nextRun: false),
+        };
+
+        A.CallTo(() => flowStateStore.QueryByOwnerAsync(ownerId, definitionid, pageOffset, pageSize, ct))
+            .Returns((items, 42));
+
+        var (result, total) = await sut.QueryInstancesByOwnerAsync(ownerId, definitionid, pageOffset, pageSize, ct);
+
+        Assert.Equal(42, total);
+        Assert.Equal(FlowExecutionStatus.Pending, result[0].Status);
+        Assert.Equal(FlowExecutionStatus.Cancelled, result[1].Status);
+    }
+
+    [Fact]
     public async Task Should_forward_simulation_to_executor()
     {
         await sut.SimulateAsync(default, ct);
@@ -164,7 +189,7 @@ public class DefaultFlowManagerTests
             .MustHaveHappened();
     }
 
-    private static FlowExecutionState<TestFlowContext> CreateState()
+    private static FlowExecutionState<TestFlowContext> CreateState(bool nextRun = true)
     {
         return new FlowExecutionState<TestFlowContext>
         {
@@ -173,6 +198,12 @@ public class DefaultFlowManagerTests
             Definition = null!,
             Context = new TestFlowContext(),
             OwnerId = Guid.NewGuid().ToString(),
+            NextRun = nextRun ? SystemClock.Instance.GetCurrentInstant() : null,
+            NextStepId = null,
+            Steps = new Dictionary<Guid, FlowExecutionStepState>
+            {
+                [Guid.NewGuid()] = new FlowExecutionStepState()
+            }
         };
     }
 }

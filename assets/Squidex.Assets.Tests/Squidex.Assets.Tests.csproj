@@ -10,23 +10,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Images\buggy1.jpeg" />
-    <None Remove="Images\feather.png" />
-    <None Remove="Images\landscape.png" />
-    <None Remove="Images\landscape_small.png" />
-    <None Remove="Images\logo-wide-rotated.jpeg" />
-    <None Remove="Images\logo.avif" />
-    <None Remove="Images\logo.bmp" />
-    <None Remove="Images\logo.gif" />
-    <None Remove="Images\logo.jpeg" />
-    <None Remove="Images\logo.png" />
-    <None Remove="Images\logo.tga" />
-    <None Remove="Images\logo.tiff" />
-    <None Remove="Images\logo.webp" />
-    <None Remove="Images\sample.pdf" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.4">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -60,27 +43,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Images\logo.avif" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="Images\buggy1.jpeg" />
-    <EmbeddedResource Include="Images\feather.png" />
-    <EmbeddedResource Include="Images\landscape.png" />
-	<EmbeddedResource Include="Images\landscape_small.png" />
-    <EmbeddedResource Include="Images\logo-wide-rotated.jpeg" />
-    <EmbeddedResource Include="Images\logo.avif" />
-    <EmbeddedResource Include="Images\logo.bmp" />
-    <EmbeddedResource Include="Images\logo.gif" />
-    <EmbeddedResource Include="Images\logo.jpeg" />
-    <EmbeddedResource Include="Images\logo.png" />
-    <EmbeddedResource Include="Images\logo.tga" />
-    <EmbeddedResource Include="Images\logo.tiff" />
-    <EmbeddedResource Include="Images\logo.webp" />
-    <EmbeddedResource Include="Images\sample.pdf" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\..\utils\TestHelpers\TestHelpers.csproj" />
     <ProjectReference Include="..\Squidex.Assets.Azure\Squidex.Assets.Azure.csproj" />
     <ProjectReference Include="..\Squidex.Assets.EntityFramework\Squidex.Assets.EntityFramework.csproj" />
@@ -93,6 +55,12 @@
     <ProjectReference Include="..\Squidex.Assets.TusAdapter\Squidex.Assets.TusAdapter.csproj" />
     <ProjectReference Include="..\Squidex.Assets.TusClient\Squidex.Assets.TusClient.csproj" />
     <ProjectReference Include="..\Squidex.Assets\Squidex.Assets.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Images\**\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

@@ -40,7 +40,7 @@ public sealed class EFFlowStateStore<TDbContext, TContext>(
 
         var numUpdates =
             await dbContext.Set<EFFlowStateEntity>()
-                .Where(x => x.Id == instanceId)
+                .Where(x => x.Id == instanceId && x.DueTime != null)
                 .ExecuteUpdateAsync(b => b
                     .SetProperty(x => x.DueTime, (DateTimeOffset?)null),
                     ct);

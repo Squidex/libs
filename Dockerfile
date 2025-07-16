@@ -21,6 +21,9 @@ RUN for file in $(ls *.csproj); do mkdir -p caching/${file%.*}/ && mv $file cach
 COPY events/*/*.csproj ./
 RUN for file in $(ls *.csproj); do mkdir -p events/${file%.*}/ && mv $file events/${file%.*}/; done
 
+COPY flows/*/*.csproj ./
+RUN for file in $(ls *.csproj); do mkdir -p flows/${file%.*}/ && mv $file flows/${file%.*}/; done
+
 COPY hosting/*/*.csproj ./
 RUN for file in $(ls *.csproj); do mkdir -p hosting/${file%.*}/ && mv $file hosting/${file%.*}/; done
 
@@ -32,6 +35,9 @@ RUN for file in $(ls *.csproj); do mkdir -p messaging/${file%.*}/ && mv $file me
 
 COPY text/*/*.csproj ./
 RUN for file in $(ls *.csproj); do mkdir -p text/${file%.*}/ && mv $file text/${file%.*}/; done
+
+COPY utils/*/*.csproj ./
+RUN for file in $(ls *.csproj); do mkdir -p utils/${file%.*}/ && mv $file utils/${file%.*}/; done
 
 RUN dotnet restore
 
