@@ -20,7 +20,7 @@ internal record struct ParsedStreamPosition(BsonTimestamp Timestamp, long Global
 
     public readonly bool IsEndOfCommit => CommitOffset == CommitSize - 1;
 
-    public StreamPosition ToGlobalPosition()
+    public readonly StreamPosition ToGlobalPosition()
     {
         var sb = DefaultPools.StringBuilder.Get();
         try
@@ -39,7 +39,7 @@ internal record struct ParsedStreamPosition(BsonTimestamp Timestamp, long Global
         }
     }
 
-    public StreamPosition ToTimestampPosition()
+    public readonly StreamPosition ToTimestampPosition()
     {
         var sb = DefaultPools.StringBuilder.Get();
         try
