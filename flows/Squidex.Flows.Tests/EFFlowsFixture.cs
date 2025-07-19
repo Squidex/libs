@@ -55,7 +55,7 @@ public sealed class BulkInserter : IDbFlowsBulkInserter
     {
         return dbContext.ExecuteBulkInsertAsync(
             entities,
-            null,
+            null!,
             new OnConflictOptions<T>
             {
                 Update = e => e,

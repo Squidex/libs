@@ -202,8 +202,8 @@ public class DefaultFlowManagerTests
             NextStepId = null,
             Steps = new Dictionary<Guid, FlowExecutionStepState>
             {
-                [Guid.NewGuid()] = new FlowExecutionStepState()
-            }
+                [Guid.NewGuid()] = new FlowExecutionStepState(),
+            },
         };
     }
 }

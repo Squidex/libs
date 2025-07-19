@@ -21,6 +21,10 @@ public sealed class MongoEventCommit
     [BsonElement(nameof(Timestamp))]
     public BsonTimestamp Timestamp { get; set; }
 
+    [BsonIgnoreIfDefault]
+    [BsonElement(nameof(GlobalPosition))]
+    public long GlobalPosition { get; set; }
+
     [BsonRequired]
     [BsonElement(nameof(Events))]
     public MongoEvent[] Events { get; set; }

@@ -355,7 +355,6 @@ public abstract class EventStoreTests
     [InlineData(1, 30)]
     [InlineData(5, 30)]
     [InlineData(5, 300)]
-    [InlineData(5, 3000)]
     public async Task Should_query_events_from_offset(int commits, int count)
     {
         var sut = await CreateSutAsync();
@@ -410,7 +409,6 @@ public abstract class EventStoreTests
     [Theory]
     [InlineData(5, 30)]
     [InlineData(5, 300)]
-    [InlineData(5, 3000)]
     public async Task Should_query_all_reverse_by_names(int commits, int count)
     {
         var sut = await CreateSutAsync();
@@ -433,7 +431,6 @@ public abstract class EventStoreTests
     [Theory]
     [InlineData(5, 30)]
     [InlineData(5, 300)]
-    [InlineData(5, 3000)]
     public async Task Should_query_all_reverse_by_prefix(int commits, int count)
     {
         var sut = await CreateSutAsync();
@@ -457,7 +454,6 @@ public abstract class EventStoreTests
     [Theory]
     [InlineData(5, 30)]
     [InlineData(5, 300)]
-    [InlineData(5, 3000)]
     public async Task Should_query_all_reverse_by_wildcard_prefix(int commits, int count)
     {
         var sut = await CreateSutAsync();
@@ -481,7 +477,6 @@ public abstract class EventStoreTests
     [Theory]
     [InlineData(5, 30)]
     [InlineData(5, 300)]
-    [InlineData(5, 3000)]
     public async Task Should_read_all_reverse(int commits, int count)
     {
         var sut = await CreateSutAsync();

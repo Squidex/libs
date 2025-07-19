@@ -13,7 +13,7 @@ using TestHelpers.MongoDb;
 
 namespace Squidex.Events;
 
-public sealed class MongoEventStoreReplicaFixture() : MongoReplicaSetFixture("eventstore-mongo-replicaset")
+public sealed class MongoEventStoreFerretDbFixture() : MongoFerretFixture("eventstore-mongo-ferretdb")
 {
     protected override void AddServices(IServiceCollection services)
     {
@@ -24,8 +24,8 @@ public sealed class MongoEventStoreReplicaFixture() : MongoReplicaSetFixture("ev
     }
 }
 
-public class MongoEventStoreReplicaTests(MongoEventStoreReplicaFixture fixture)
-    : EventStoreTests, IClassFixture<MongoEventStoreReplicaFixture>
+public class MongoEventStoreFerretDbTests(MongoEventStoreFerretDbFixture fixture)
+    : EventStoreTests, IClassFixture<MongoEventStoreFerretDbFixture>
 {
     protected override Task<IEventStore> CreateSutAsync()
     {
