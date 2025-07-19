@@ -51,7 +51,7 @@ public partial class MongoEventStore(
     {
         var versionInfo = await MongoVersionInfo.DetectAsync(database, ct);
 
-        queryStrategy = versionInfo.Dervivate != MongoDerivate.MongoDB ?
+        queryStrategy = versionInfo.Dervivate == MongoDerivate.MongoDB ?
             new QueryByTimestamp() :
             new QueryByGlobalPosition(collection);
         await queryStrategy.InitializeAsync(collection, ct);
