@@ -24,6 +24,7 @@ public sealed class MongoEventStoreFerretDbFixture() : MongoFerretFixture("event
     }
 }
 
+[Trait("Category", "Dependencies")]
 public class MongoEventStoreFerretDbTests(MongoEventStoreFerretDbFixture fixture)
     : EventStoreTests, IClassFixture<MongoEventStoreFerretDbFixture>
 {
