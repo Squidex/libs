@@ -12,46 +12,33 @@ using MongoDB.Driver;
 
 namespace Squidex.Events.Mongo;
 
-public delegate bool EventPredicate(MongoEvent data);
-
 public partial class MongoEventStore
 {
-    // Use a relatively small batch size to keep the memory pressure low.
-    private static readonly FindOptions BatchingOptions =
-        new FindOptions { BatchSize = 200 };
-
     public IEventSubscription CreateSubscription(IEventSubscriber<StoredEvent> subscriber, StreamFilter filter = default, StreamPosition position = default)
     {
         ArgumentNullException.ThrowIfNull(subscriber);
 
         if (CanUseChangeStreams)
         {
-            return new MongoEventStoreSubscription(this, subscriber, filter, position);
+            return new MongoEventStoreSubscription(this, subscriber, filter, position, queryStrategy);
         }
-        else
-        {
-            return new PollingSubscription(this, subscriber, filter, position, options.Value.PollingInterval);
-        }
+
+        return new PollingSubscription(this, subscriber, filter, position, options.Value.PollingInterval);
     }
 
     public async Task<IReadOnlyList<StoredEvent>> QueryStreamAsync(string streamName, long afterStreamPosition = EventsVersion.Empty,
         CancellationToken ct = default)
     {
         var commits =
-            await collection.Find(CreateFilter(StreamFilter.Name(streamName), afterStreamPosition))
+            await collection.Find(queryStrategy.ByNameAfter(streamName, afterStreamPosition))
                 .ToListAsync(ct);
 
         var result = Convert(commits, afterStreamPosition);
 
         if ((commits.Count == 0 || commits[0].EventStreamOffset != afterStreamPosition) && afterStreamPosition > EventsVersion.Empty)
         {
-            var filterBefore =
-                Builders<MongoEventCommit>.Filter.And(
-                    FilterBuilder.ByStream(StreamFilter.Name(streamName)),
-                    Builders<MongoEventCommit>.Filter.Lt(x => x.EventStreamOffset, afterStreamPosition));
-
             commits =
-                await collection.Find(filterBefore).SortByDescending(x => x.EventStreamOffset).Limit(1)
+                await collection.Find(queryStrategy.ByNameBefore(streamName, afterStreamPosition)).SortByDescending(x => x.EventStreamOffset).Limit(1)
                     .ToListAsync(ct);
 
             result = Convert(commits, afterStreamPosition).ToList();
@@ -60,85 +47,64 @@ public partial class MongoEventStore
         return result;
     }
 
-    public async IAsyncEnumerable<StoredEvent> QueryAllReverseAsync(StreamFilter filter = default, DateTime timestamp = default, int take = int.MaxValue,
-        [EnumeratorCancellation] CancellationToken ct = default)
+    public IAsyncEnumerable<StoredEvent> QueryAllReverseAsync(StreamFilter filter = default, DateTime timestamp = default, int take = int.MaxValue,
+        CancellationToken ct = default)
     {
         if (take <= 0)
         {
-            yield break;
+            return Extensions.Empty<StoredEvent>();
         }
 
-        ParsedStreamPosition lastPosition = timestamp;
-        var findFilter = CreateFilter(filter, lastPosition);
-        var findQuery =
-            collection.Find(findFilter, BatchingOptions)
-                .Limit(take).Sort(Sort.Descending(x => x.Timestamp).Ascending(x => x.EventStream));
-
-        var taken = 0;
-        using (var cursor = await findQuery.ToCursorAsync(ct))
+        async IAsyncEnumerable<StoredEvent> QueryCoreAsync(
+            [EnumeratorCancellation] CancellationToken ct = default)
         {
-            while (taken < take && await cursor.MoveNextAsync(ct))
-            {
-                foreach (var current in cursor.Current)
-                {
-                    foreach (var @event in current.Filtered(lastPosition).Reverse())
-                    {
-                        yield return @event;
+            ParsedStreamPosition lastPosition = timestamp;
 
-                        taken++;
-                        if (taken == take)
-                        {
-                            yield break;
-                        }
-                    }
+            var findFilter = queryStrategy.ByFilter(filter, lastPosition);
+            var findQuery = collection.Find(findFilter).Limit(take).Sort(queryStrategy.SortDescending());
+
+            await foreach (var commit in findQuery.ToAsyncEnumerable(ct))
+            {
+                foreach (var @event in queryStrategy.Filtered(commit, lastPosition).Reverse())
+                {
+                    yield return @event;
                 }
             }
         }
+
+        return QueryCoreAsync(ct).Take(take);
     }
 
-    public async IAsyncEnumerable<StoredEvent> QueryAllAsync(StreamFilter filter = default, StreamPosition position = default, int take = int.MaxValue,
-        [EnumeratorCancellation] CancellationToken ct = default)
+    public IAsyncEnumerable<StoredEvent> QueryAllAsync(StreamFilter filter = default, StreamPosition position = default, int take = int.MaxValue,
+        CancellationToken ct = default)
     {
         if (take <= 0 || position.ReadFromEnd)
         {
-            yield break;
+            return Extensions.Empty<StoredEvent>();
         }
 
-        ParsedStreamPosition lastPosition = position;
-        var findFilter = CreateFilter(filter, lastPosition);
-        var findQuery =
-            collection.Find(findFilter).SortBy(x => x.Timestamp).ThenByDescending(x => x.EventStream)
-                .Limit(take);
-
-        var taken = 0;
-
-        await foreach (var current in findQuery.ToAsyncEnumerable(ct))
+        async IAsyncEnumerable<StoredEvent> QueryCoreAsync(
+            [EnumeratorCancellation] CancellationToken ct = default)
         {
-            foreach (var @event in current.Filtered(lastPosition))
-            {
-                yield return @event;
+            ParsedStreamPosition lastPosition = position;
 
-                taken++;
-                if (taken == take)
+            var findFilter = queryStrategy.ByFilter(filter, lastPosition);
+            var findQuery = collection.Find(findFilter).Limit(take).Sort(queryStrategy.SortAscending());
+
+            await foreach (var commit in findQuery.ToAsyncEnumerable(ct))
+            {
+                foreach (var @event in queryStrategy.Filtered(commit, lastPosition))
                 {
-                    yield break;
+                    yield return @event;
                 }
             }
         }
+
+        return QueryCoreAsync(ct).Take(take);
     }
 
-    private static List<StoredEvent> Convert(IEnumerable<MongoEventCommit> commits, long streamPosition)
+    private List<StoredEvent> Convert(IEnumerable<MongoEventCommit> commits, long streamPosition)
     {
-        return commits.OrderBy(x => x.EventStreamOffset).ThenBy(x => x.Timestamp).SelectMany(x => x.Filtered(streamPosition)).ToList();
-    }
-
-    private static FilterDefinition<MongoEventCommit> CreateFilter(StreamFilter filter, ParsedStreamPosition streamPosition)
-    {
-        return Filter.And(FilterBuilder.ByPosition(streamPosition), FilterBuilder.ByStream(filter));
-    }
-
-    private static FilterDefinition<MongoEventCommit> CreateFilter(StreamFilter filter, long streamPosition)
-    {
-        return Filter.And(FilterBuilder.ByStream(filter), FilterBuilder.ByOffset(streamPosition));
+        return commits.OrderBy(x => x.EventStreamOffset).ThenBy(x => x.Timestamp).SelectMany(x => queryStrategy.Filtered(x, streamPosition)).ToList();
     }
 }

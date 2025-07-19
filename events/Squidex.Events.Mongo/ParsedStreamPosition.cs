@@ -14,9 +14,9 @@ using Squidex.Events.Utils;
 
 namespace Squidex.Events.Mongo;
 
-internal record struct ParsedStreamPosition(BsonTimestamp Timestamp, long CommitOffset, long CommitSize)
+internal record struct ParsedStreamPosition(BsonTimestamp Timestamp, long GlobalPosition, long CommitOffset, long CommitSize)
 {
-    public static readonly ParsedStreamPosition Start = new ParsedStreamPosition(new BsonTimestamp(0, 0), -1, -1);
+    public static readonly ParsedStreamPosition Start = new ParsedStreamPosition(new BsonTimestamp(0, 0), 0, -1, -1);
 
     public readonly bool IsEndOfCommit => CommitOffset == CommitSize - 1;
 
@@ -50,24 +50,42 @@ internal record struct ParsedStreamPosition(BsonTimestamp Timestamp, long Commit
         }
 
         var parts = token.Split('-');
-        if (parts.Length != 4)
+        if (parts.Length == 4)
         {
-            return Start;
+            var culture = CultureInfo.InvariantCulture;
+            if (!int.TryParse(parts[0], NumberStyles.Integer, culture, out var timestamp) ||
+                !int.TryParse(parts[1], NumberStyles.Integer, culture, out var increment) ||
+                !int.TryParse(parts[2], NumberStyles.Integer, culture, out var commitOffset) ||
+                !int.TryParse(parts[3], NumberStyles.Integer, culture, out var commitSize))
+            {
+                return default;
+            }
+
+            return new ParsedStreamPosition(
+                new BsonTimestamp(timestamp, increment),
+                0,
+                commitOffset,
+                commitSize);
         }
 
-        var culture = CultureInfo.InvariantCulture;
-        if (!int.TryParse(parts[0], NumberStyles.Integer, culture, out var timestamp) ||
-            !int.TryParse(parts[1], NumberStyles.Integer, culture, out var increment) ||
-            !int.TryParse(parts[2], NumberStyles.Integer, culture, out var commitOffset) ||
-            !int.TryParse(parts[3], NumberStyles.Integer, culture, out var commitSize))
+        if (parts.Length == 3)
         {
-            return default;
+            var culture = CultureInfo.InvariantCulture;
+            if (!int.TryParse(parts[1], NumberStyles.Integer, culture, out var globalPosition) ||
+                !int.TryParse(parts[2], NumberStyles.Integer, culture, out var commitOffset) ||
+                !int.TryParse(parts[3], NumberStyles.Integer, culture, out var commitSize))
+            {
+                return default;
+            }
+
+            return new ParsedStreamPosition(
+                new BsonTimestamp(0, 0),
+                globalPosition,
+                commitOffset,
+                commitSize);
         }
 
-        return new ParsedStreamPosition(
-            new BsonTimestamp(timestamp, increment),
-            commitOffset,
-            commitSize);
+        return Start;
     }
 
     public static implicit operator ParsedStreamPosition(DateTime timestamp)
@@ -87,6 +105,6 @@ internal record struct ParsedStreamPosition(BsonTimestamp Timestamp, long Commit
             return Start;
         }
 
-        return new ParsedStreamPosition(new BsonTimestamp((int)timestamp.ToUnixTimeSeconds(), 0), 0, 0);
+        return new ParsedStreamPosition(new BsonTimestamp((int)timestamp.ToUnixTimeSeconds(), 0), 0, 0, 0);
     }
 }

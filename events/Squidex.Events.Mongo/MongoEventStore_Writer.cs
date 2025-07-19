@@ -25,7 +25,7 @@ public partial class MongoEventStore
     public Task DeleteAsync(StreamFilter filter,
         CancellationToken ct = default)
     {
-        return collection.DeleteManyAsync(FilterBuilder.ByStream(filter), ct);
+        return collection.DeleteManyAsync(queryStrategy.ByFilter(filter, default), ct);
     }
 
     public async Task AppendAsync(Guid commitId, string streamName, long expectedVersion, ICollection<EventData> events,
@@ -53,6 +53,7 @@ public partial class MongoEventStore
             try
             {
                 await collection.InsertOneAsync(commit, cancellationToken: ct);
+                await queryStrategy.CompleteAsync([commit.Id], ct);
                 return;
             }
             catch (MongoWriteException ex) when (ex.WriteError?.Category == ServerErrorCategory.DuplicateKey)
@@ -89,6 +90,7 @@ public partial class MongoEventStore
         if (writes.Count > 0)
         {
             await collection.BulkWriteAsync(writes, BulkUnordered, ct);
+            await queryStrategy.CompleteAsync(commits.Select(x => x.Id).ToArray(), ct);
         }
     }
 
@@ -113,6 +115,7 @@ public partial class MongoEventStore
 
     private static MongoEventCommit BuildCommit(Guid commitId, string streamName, long expectedVersion, ICollection<EventData> events)
     {
+        // The global position is also used to identify zombies.
         var mongoCommit = new MongoEventCommit
         {
             Id = commitId,
@@ -120,6 +123,7 @@ public partial class MongoEventStore
             EventsCount = events.Count,
             EventStream = streamName,
             EventStreamOffset = expectedVersion,
+            GlobalPosition = 0,
             Timestamp = EmptyTimestamp,
         };
 

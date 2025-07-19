@@ -7,9 +7,13 @@
 
 namespace Squidex.Events.Mongo;
 
-public interface IVersionedEntity<T>
+internal sealed class MongoGlobalPosition
 {
-    T DocumentId { get; }
+    public long Id { get; set; }
 
-    long Version { get; }
+    public long Position { get; set; }
+
+    public DateTimeOffset Expired { get; set; }
+
+    public Guid OwnerId { get; set; }
 }
