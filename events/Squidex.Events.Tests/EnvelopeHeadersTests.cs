@@ -15,7 +15,7 @@ public class EnvelopeHeadersTests
 {
     static EnvelopeHeadersTests()
     {
-        BsonSerializer.TryRegisterSerializer(new HeaderValueSerializer());
+        BsonSerializer.TryRegisterSerializer(new MongoHeaderValueSerializer());
     }
 
     [Fact]

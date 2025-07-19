@@ -5,25 +5,32 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Text.RegularExpressions;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Squidex.Events.Utils;
 
 namespace Squidex.Events.Mongo;
 
-public sealed class MongoEventStoreSubscription : IEventSubscription
+internal sealed class MongoEventStoreSubscription : IEventSubscription
 {
     private readonly MongoEventStore eventStore;
     private readonly IEventSubscriber<StoredEvent> eventSubscriber;
+    private readonly QueryStrategy queryStrategy;
     private readonly CancellationTokenSource stopToken = new CancellationTokenSource();
 
     public TimeProvider Clock { get; set; } = TimeProvider.System;
 
-    public MongoEventStoreSubscription(MongoEventStore eventStore, IEventSubscriber<StoredEvent> eventSubscriber, StreamFilter streamFilter, StreamPosition position)
+    public MongoEventStoreSubscription(
+        MongoEventStore eventStore,
+        IEventSubscriber<StoredEvent> eventSubscriber,
+        StreamFilter streamFilter,
+        StreamPosition position,
+        QueryStrategy queryStrategy)
     {
         this.eventStore = eventStore;
         this.eventSubscriber = eventSubscriber;
-
+        this.queryStrategy = queryStrategy;
         QueryAsync(streamFilter, position).Forget();
     }
 
@@ -105,7 +112,7 @@ public sealed class MongoEventStoreSubscription : IEventSubscription
                 var isRead = false;
                 await cursor.ForEachAsync(async change =>
                 {
-                    foreach (var storedEvent in change.FullDocument.Filtered(lastPosition))
+                    foreach (var storedEvent in queryStrategy.Filtered(change.FullDocument, lastPosition))
                     {
                         await eventSubscriber.OnNextAsync(this, storedEvent);
                     }
@@ -148,20 +155,29 @@ public sealed class MongoEventStoreSubscription : IEventSubscription
         return lastRawPosition;
     }
 
-    private static PipelineDefinition<ChangeStreamDocument<MongoEventCommit>, ChangeStreamDocument<MongoEventCommit>>? Match(StreamFilter streamFilter)
+    private static PipelineDefinition<ChangeStreamDocument<MongoEventCommit>, ChangeStreamDocument<MongoEventCommit>>? Match(StreamFilter filter)
     {
-        var filterBuilder = Builders<ChangeStreamDocument<MongoEventCommit>>.Filter;
-        var filterResult = filterBuilder.Eq(x => x.OperationType, ChangeStreamOperationType.Insert);
+        var builder = Builders<ChangeStreamDocument<MongoEventCommit>>.Filter;
 
-        var byStream = FilterBuilder.ByChangeInStream(streamFilter);
-        if (byStream != null)
+        var result = builder.Eq(x => x.OperationType, ChangeStreamOperationType.Insert);
+        if (filter.Prefixes != null)
         {
-            filterResult = filterBuilder.And(filterResult, byStream);
+            FilterDefinition<ChangeStreamDocument<MongoEventCommit>> byStream;
+            if (filter.Kind == StreamFilterKind.MatchStart)
+            {
+                byStream = builder.Or(filter.Prefixes.Select(p => builder.Regex(x => x.FullDocument.EventStream, $"^{Regex.Escape(p)}")));
+            }
+            else
+            {
+                byStream = builder.In(x => x.FullDocument.EventStream, filter.Prefixes);
+            }
+
+            result = builder.And(result, byStream);
         }
 
         var emptyPipeline = new EmptyPipelineDefinition<ChangeStreamDocument<MongoEventCommit>>();
 
-        return emptyPipeline.Match(filterResult);
+        return emptyPipeline.Match(result);
     }
 
     public void Dispose()

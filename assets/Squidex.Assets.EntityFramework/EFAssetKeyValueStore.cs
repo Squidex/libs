@@ -71,12 +71,12 @@ public sealed class EFAssetKeyValueStore<TContext, TEntity>(
         try
         {
             await dbContext.Set<EFAssetKeyValueEntity<TEntity>>().AddAsync(entity, ct);
-            await dbContext.SaveChangesAsync();
+            await dbContext.SaveChangesAsync(ct);
         }
         catch (DbUpdateException)
         {
             dbContext.Entry(entity).State = EntityState.Modified;
-            await dbContext.SaveChangesAsync();
+            await dbContext.SaveChangesAsync(ct);
         }
     }
 }

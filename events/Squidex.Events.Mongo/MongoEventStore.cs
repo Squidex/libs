@@ -19,20 +19,26 @@ public partial class MongoEventStore(
     IOptions<MongoEventStoreOptions> options)
     : IEventStore, IInitializable
 {
-    public static readonly FilterDefinitionBuilder<MongoEventCommit> Filter =
+    private static readonly FilterDefinitionBuilder<MongoEventCommit> Filter =
         Builders<MongoEventCommit>.Filter;
 
-    public static readonly ProjectionDefinitionBuilder<MongoEventCommit> Projection =
+    private static readonly ProjectionDefinitionBuilder<MongoEventCommit> Projection =
         Builders<MongoEventCommit>.Projection;
 
-    public static readonly SortDefinitionBuilder<MongoEventCommit> Sort =
+    private static readonly SortDefinitionBuilder<MongoEventCommit> Sort =
         Builders<MongoEventCommit>.Sort;
 
     private readonly IMongoCollection<MongoEventCommit> collection =
-        database.GetCollection<MongoEventCommit>("Events2", new MongoCollectionSettings { WriteConcern = WriteConcern.WMajority });
+        database.GetCollection<MongoEventCommit>(
+            options.Value.CollectionName,
+            new MongoCollectionSettings { WriteConcern = WriteConcern.WMajority });
 
     private readonly IMongoCollection<BsonDocument> rawCollection =
-        database.GetCollection<BsonDocument>("Events2", new MongoCollectionSettings { WriteConcern = WriteConcern.WMajority });
+        database.GetCollection<BsonDocument>(
+            options.Value.CollectionName,
+            new MongoCollectionSettings { WriteConcern = WriteConcern.WMajority });
+
+    private QueryStrategy queryStrategy;
 
     public IMongoCollection<BsonDocument> RawCollection => rawCollection;
 
@@ -43,16 +49,14 @@ public partial class MongoEventStore(
     public async Task InitializeAsync(
         CancellationToken ct)
     {
-        await collection.Indexes.CreateManyAsync(
-        [
-            new CreateIndexModel<MongoEventCommit>(
-                Builders<MongoEventCommit>.IndexKeys
-                    .Ascending(x => x.EventStream)
-                    .Ascending(x => x.Timestamp)),
-            new CreateIndexModel<MongoEventCommit>(
-                Builders<MongoEventCommit>.IndexKeys
-                    .Descending(x => x.Timestamp)
-                    .Ascending(x => x.EventStream)),
+        var versionInfo = await MongoVersionInfo.DetectAsync(database, ct);
+
+        queryStrategy = versionInfo.Dervivate == MongoDerivate.MongoDB ?
+            new QueryByTimestamp() :
+            new QueryByGlobalPosition(collection);
+        await queryStrategy.InitializeAsync(collection, ct);
+
+        await collection.Indexes.CreateOneAsync(
             new CreateIndexModel<MongoEventCommit>(
                 Builders<MongoEventCommit>.IndexKeys
                     .Ascending(x => x.EventStream)
@@ -61,13 +65,13 @@ public partial class MongoEventStore(
                 {
                     Unique = true,
                 }),
-        ], ct);
+            cancellationToken: ct);
 
-        var clusterVersion = await database.GetMajorVersionAsync(ct);
+        var clusterVersion = versionInfo.Major;
         var clusteredAsReplica = database.Client.Cluster.Description.Type == ClusterType.ReplicaSet;
 
         CanUseChangeStreams = clusteredAsReplica && clusterVersion >= 4;
 
-        BsonSerializer.TryRegisterSerializer(new HeaderValueSerializer());
+        BsonSerializer.TryRegisterSerializer(new MongoHeaderValueSerializer());
     }
 }

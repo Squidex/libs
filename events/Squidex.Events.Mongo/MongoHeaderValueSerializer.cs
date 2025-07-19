@@ -11,7 +11,7 @@ using MongoDB.Bson.Serialization.Serializers;
 
 namespace Squidex.Events.Mongo;
 
-public sealed class HeaderValueSerializer : SerializerBase<HeaderValue>
+public sealed class MongoHeaderValueSerializer : SerializerBase<HeaderValue>
 {
     public override HeaderValue Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
     {

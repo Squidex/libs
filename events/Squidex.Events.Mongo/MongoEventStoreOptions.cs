@@ -13,6 +13,10 @@ public sealed class MongoEventStoreOptions : IValidatableOptions
 {
     public TimeSpan PollingInterval { get; set; } = TimeSpan.FromSeconds(5);
 
+    public string CollectionName { get; set; } = "Events2";
+
+    public string PositionCollectionName { get; set; } = "Event2Position";
+
     public IEnumerable<ConfigurationError> Validate()
     {
         if (PollingInterval < TimeSpan.Zero || PollingInterval > TimeSpan.FromMinutes(10))
