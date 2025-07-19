@@ -31,7 +31,7 @@ public sealed class BulkInserter : IDbEventStoreBulkInserter
     public Task BulkInsertAsync<T>(DbContext dbContext, IEnumerable<T> entities,
         CancellationToken ct = default) where T : class
     {
-        return dbContext.ExecuteBulkInsertAsync(entities, null, null, ct);
+        return dbContext.ExecuteBulkInsertAsync(entities, cancellationToken: ct);
     }
 }
 

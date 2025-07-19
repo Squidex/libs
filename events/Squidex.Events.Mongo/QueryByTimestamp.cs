@@ -47,26 +47,43 @@ internal class QueryByTimestamp : QueryStrategy
         return Filter.And(byTimestamp, ByStream(filter));
     }
 
+    public override IEnumerable<StoredEvent> Filtered(MongoEventCommit commit, long position)
+    {
+        for (long offset = 0, streamOffset = commit.EventStreamOffset + 1; offset < commit.Events.Length; offset++, streamOffset++)
+        {
+            var @event = commit.Events[offset];
+            if (streamOffset > position)
+            {
+                yield return Convert(commit, @event, offset, streamOffset);
+            }
+        }
+    }
+
     public override IEnumerable<StoredEvent> Filtered(MongoEventCommit commit, ParsedStreamPosition position)
     {
-        var eventStreamOffset = commit.EventStreamOffset;
-
-        var commitTimestamp = commit.Timestamp;
-        var commitOffset = 0;
-
-        foreach (var @event in commit.Events)
+        for (long i = 0, streamOffset = commit.EventStreamOffset + 1; i < commit.Events.Length; i++, streamOffset++)
         {
-            eventStreamOffset++;
-
-            if (commitOffset > position.CommitOffset || commitTimestamp > position.Timestamp)
+            var @event = commit.Events[i];
+            if (i > position.CommitOffset || commit.Timestamp > position.Timestamp)
             {
-                var eventData = @event.ToEventData();
-                var eventPosition = new ParsedStreamPosition(commitTimestamp, commit.GlobalPosition, commitOffset, commit.Events.Length);
-
-                yield return new StoredEvent(commit.EventStream, eventPosition, eventStreamOffset, eventData);
+                yield return Convert(commit, @event, i, streamOffset);
             }
-
-            commitOffset++;
         }
+    }
+
+    private static StoredEvent Convert(MongoEventCommit commit, MongoEvent @event, long commitOffset, long eventStreamNumber)
+    {
+        var eventPosition =
+            new ParsedStreamPosition(
+                commit.Timestamp,
+                commit.GlobalPosition,
+                commitOffset,
+                commit.Events.Length);
+
+        return new StoredEvent(
+            commit.EventStream,
+            eventPosition.ToTimestampPosition(),
+            eventStreamNumber,
+            @event.ToEventData());
     }
 }

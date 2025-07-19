@@ -5,8 +5,8 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using MongoDB.Driver;
 using System.Text.RegularExpressions;
+using MongoDB.Driver;
 
 namespace Squidex.Events.Mongo;
 
@@ -23,6 +23,10 @@ internal abstract class QueryStrategy
 
     public abstract Task InitializeAsync(IMongoCollection<MongoEventCommit> collection,
         CancellationToken ct);
+
+    public abstract IEnumerable<StoredEvent> Filtered(MongoEventCommit commit, ParsedStreamPosition position);
+
+    public abstract IEnumerable<StoredEvent> Filtered(MongoEventCommit commit, long position);
 
     public abstract SortDefinition<MongoEventCommit> SortAscending();
 
@@ -59,54 +63,6 @@ internal abstract class QueryStrategy
         CancellationToken ct)
     {
         return Task.CompletedTask;
-    }
-
-    public virtual IEnumerable<StoredEvent> Filtered(MongoEventCommit commit, ParsedStreamPosition position)
-    {
-        var eventStreamOffset = commit.EventStreamOffset;
-
-        var commitGlobalPosition = commit.GlobalPosition;
-        var commitTimestamp = commit.Timestamp;
-        var commitOffset = 0;
-
-        foreach (var @event in commit.Events)
-        {
-            eventStreamOffset++;
-
-            if (commitOffset > position.CommitOffset || commitTimestamp > position.Timestamp || commitGlobalPosition < position.GlobalPosition)
-            {
-                var eventData = @event.ToEventData();
-                var eventPosition = new ParsedStreamPosition(commitTimestamp, commitGlobalPosition, commitOffset, commit.Events.Length);
-
-                yield return new StoredEvent(commit.EventStream, eventPosition, eventStreamOffset, eventData);
-            }
-
-            commitOffset++;
-        }
-    }
-
-    public virtual IEnumerable<StoredEvent> Filtered(MongoEventCommit commit, long position)
-    {
-        var eventStreamOffset = commit.EventStreamOffset;
-
-        var commitGlobalPosition = commit.GlobalPosition;
-        var commitTimestamp = commit.Timestamp;
-        var commitOffset = 0;
-
-        foreach (var @event in commit.Events)
-        {
-            eventStreamOffset++;
-
-            if (eventStreamOffset > position)
-            {
-                var eventData = @event.ToEventData();
-                var eventPosition = new ParsedStreamPosition(commitTimestamp, commitGlobalPosition, commitOffset, commit.Events.Length);
-
-                yield return new StoredEvent(commit.EventStream, eventPosition, eventStreamOffset, eventData);
-            }
-
-            commitOffset++;
-        }
     }
 
     protected static FilterDefinition<MongoEventCommit> ByStream(StreamFilter filter)

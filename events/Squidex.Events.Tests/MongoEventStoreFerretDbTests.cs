@@ -6,49 +6,21 @@
 // ==========================================================================
 
 using Microsoft.Extensions.DependencyInjection;
-using MongoDB.Driver;
-using Squidex.Hosting;
 using TestHelpers;
+using TestHelpers.MongoDb;
 
 #pragma warning disable MA0048 // File name must match type name
 
 namespace Squidex.Events;
 
-public sealed class MongoEventStoreFerretDbFixture : IAsyncLifetime
+public sealed class MongoEventStoreFerretDbFixture() : MongoFerretFixture("eventstore-mongo-ferretdb")
 {
-    public IServiceProvider Services { get; private set; }
-
-    public IMongoClient MongoClient
-        => Services.GetRequiredService<IMongoClient>();
-
-    public IMongoDatabase MongoDatabase
-        => Services.GetRequiredService<IMongoDatabase>();
-
-    public async Task InitializeAsync()
+    protected override void AddServices(IServiceCollection services)
     {
-        var serviceCollection = new ServiceCollection()
-            .AddSingleton<IMongoClient>(_ => new MongoClient("mongodb://username:password@localhost:27018/"))
-            .AddSingleton(c => c.GetRequiredService<IMongoClient>().GetDatabase("Test"));
-
-        serviceCollection.AddMongoEventStore(TestUtils.Configuration, options =>
+        services.AddMongoEventStore(TestUtils.Configuration, options =>
         {
             options.PollingInterval = TimeSpan.FromSeconds(0.1);
         });
-
-        Services = serviceCollection.BuildServiceProvider();
-
-        foreach (var service in Services.GetRequiredService<IEnumerable<IInitializable>>())
-        {
-            await service.InitializeAsync(default);
-        }
-    }
-
-    public async Task DisposeAsync()
-    {
-        foreach (var service in Services.GetRequiredService<IEnumerable<IInitializable>>())
-        {
-            await service.ReleaseAsync(default);
-        }
     }
 }
 

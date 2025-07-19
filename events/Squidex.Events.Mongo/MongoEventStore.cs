@@ -49,9 +49,9 @@ public partial class MongoEventStore(
     public async Task InitializeAsync(
         CancellationToken ct)
     {
-        var canUseTimestamp = !await database.IsFerretDbAsync(ct);
+        var versionInfo = await MongoVersionInfo.DetectAsync(database, ct);
 
-        queryStrategy = canUseTimestamp ?
+        queryStrategy = versionInfo.Dervivate != MongoDerivate.MongoDB ?
             new QueryByTimestamp() :
             new QueryByGlobalPosition(collection);
         await queryStrategy.InitializeAsync(collection, ct);
@@ -67,7 +67,7 @@ public partial class MongoEventStore(
                 }),
             cancellationToken: ct);
 
-        var clusterVersion = await database.GetMajorVersionAsync(ct);
+        var clusterVersion = versionInfo.Major;
         var clusteredAsReplica = database.Client.Cluster.Description.Type == ClusterType.ReplicaSet;
 
         CanUseChangeStreams = clusteredAsReplica && clusterVersion >= 4;

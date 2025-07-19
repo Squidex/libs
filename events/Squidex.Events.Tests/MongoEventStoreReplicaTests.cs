@@ -13,7 +13,7 @@ using TestHelpers.MongoDb;
 
 namespace Squidex.Events;
 
-public sealed class MongoEventStoreReplicaFixture() : MongoReplicaSetFixture("eventstore-mongo-standalone")
+public sealed class MongoEventStoreReplicaFixture() : MongoReplicaSetFixture("eventstore-mongo-replicaset")
 {
     protected override void AddServices(IServiceCollection services)
     {

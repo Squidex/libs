@@ -13,7 +13,5 @@ internal sealed class MongoGlobalPosition
 
     public long Position { get; set; }
 
-    public DateTimeOffset Expired { get; set; }
-
-    public Guid OwnerId { get; set; }
+    public DateTime? LockTaken { get; set; }
 }

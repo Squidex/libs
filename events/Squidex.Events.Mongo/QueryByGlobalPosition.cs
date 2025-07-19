@@ -9,18 +9,36 @@ using MongoDB.Driver;
 
 namespace Squidex.Events.Mongo;
 
-internal class QueryByGlobalPosition(IMongoCollection<MongoEventCommit> collection) : QueryStrategy
+internal sealed class QueryByGlobalPosition(IMongoCollection<MongoEventCommit> collection) : QueryStrategy
 {
     private IMongoCollection<MongoGlobalPosition> positionCollection;
 
-    public override Task InitializeAsync(IMongoCollection<MongoEventCommit> collection, CancellationToken ct)
+    private static readonly FilterDefinitionBuilder<MongoGlobalPosition> PositionFilter =
+        Builders<MongoGlobalPosition>.Filter;
+
+    private static readonly UpdateDefinitionBuilder<MongoGlobalPosition> PositionUpdate =
+        Builders<MongoGlobalPosition>.Update;
+
+    public override async Task InitializeAsync(IMongoCollection<MongoEventCommit> collection, CancellationToken ct)
     {
         positionCollection =
             collection.Database.GetCollection<MongoGlobalPosition>(
                 $"{collection.CollectionNamespace.CollectionName}_Position",
                 new MongoCollectionSettings { WriteConcern = WriteConcern.WMajority });
 
-        return collection.Indexes.CreateManyAsync(
+        try
+        {
+            // Start with one so that we can filter out zombies.
+            await positionCollection.InsertOneAsync(
+                new MongoGlobalPosition { Position = 1 },
+                cancellationToken: ct);
+        }
+        catch (MongoWriteException ex) when (ex.WriteError?.Category == ServerErrorCategory.DuplicateKey)
+        {
+            // Already inserted.
+        }
+
+        await collection.Indexes.CreateManyAsync(
             [
                 new CreateIndexModel<MongoEventCommit>(
                     Builders<MongoEventCommit>.IndexKeys
@@ -74,27 +92,44 @@ internal class QueryByGlobalPosition(IMongoCollection<MongoEventCommit> collecti
         return Filter.And(byPosition, ByStream(filter));
     }
 
+    public override IEnumerable<StoredEvent> Filtered(MongoEventCommit commit, long position)
+    {
+        for (long offset = 0, streamOffset = commit.EventStreamOffset + 1; offset < commit.Events.Length; offset++, streamOffset++)
+        {
+            var @event = commit.Events[offset];
+            if (streamOffset > position)
+            {
+                yield return Convert(commit, @event, offset, streamOffset);
+            }
+        }
+    }
+
     public override IEnumerable<StoredEvent> Filtered(MongoEventCommit commit, ParsedStreamPosition position)
     {
-        var eventStreamOffset = commit.EventStreamOffset;
-
-        var commitPosition = commit.GlobalPosition;
-        var commitOffset = 0;
-
-        foreach (var @event in commit.Events)
+        for (long offset = 0, streamOffset = commit.EventStreamOffset + 1; offset < commit.Events.Length; offset++, streamOffset++)
         {
-            eventStreamOffset++;
-
-            if (commitOffset > position.CommitOffset || commit.GlobalPosition < position.GlobalPosition)
+            var @event = commit.Events[offset];
+            if (offset > position.CommitOffset || commit.GlobalPosition > position.GlobalPosition)
             {
-                var eventData = @event.ToEventData();
-                var eventPosition = new ParsedStreamPosition(commit.Timestamp, commitPosition, commitOffset, commit.Events.Length);
-
-                yield return new StoredEvent(commit.EventStream, eventPosition, eventStreamOffset, eventData);
+                yield return Convert(commit, @event, offset, streamOffset);
             }
-
-            commitOffset++;
         }
+    }
+
+    private static StoredEvent Convert(MongoEventCommit commit, MongoEvent @event, long commitOffset, long eventStreamNumber)
+    {
+        var eventPosition =
+            new ParsedStreamPosition(
+                commit.Timestamp,
+                commit.GlobalPosition,
+                commitOffset,
+                commit.Events.Length);
+
+        return new StoredEvent(
+            commit.EventStream,
+            eventPosition.ToGlobalPosition(),
+            eventStreamNumber,
+            @event.ToEventData());
     }
 
     public override async Task CompleteAsync(Guid[] ids,
@@ -102,37 +137,62 @@ internal class QueryByGlobalPosition(IMongoCollection<MongoEventCommit> collecti
     {
         try
         {
-            using var session = await collection.Database.Client.StartSessionAsync(cancellationToken: ct);
-
-            // Assigns the IDs in a single transaction so that the monotonic order is guaranteed.
-            await session.WithTransactionAsync(async (session, ct) =>
+            MongoGlobalPosition? position = null;
+            try
             {
-                var positionDocument =
-                    await positionCollection.FindOneAndUpdateAsync(
-                        Builders<MongoGlobalPosition>.Filter.Eq(x => x.Id, 0),
-                        Builders<MongoGlobalPosition>.Update
-                            .Inc(x => x.Position, ids.Length),
-                        new FindOneAndUpdateOptions<MongoGlobalPosition>
-                        {
-                            IsUpsert = true,
-                        },
-                        ct);
+                var now = DateTime.UtcNow;
+                while (!ct.IsCancellationRequested)
+                {
+                    position =
+                        await positionCollection.FindOneAndUpdateAsync(
+                            PositionFilter
+                                .And(
+                                    PositionFilter.Eq(x => x.Id, 0),
+                                    PositionFilter.Or(
+                                        PositionFilter.Eq(x => x.LockTaken, null),
+                                        PositionFilter.Lt(x => x.LockTaken, now))),
+                            PositionUpdate
+                                .Set(x => x.LockTaken, now.AddMinutes(5))
+                                .Inc(x => x.Position, ids.Length),
+                            cancellationToken: ct);
 
-                // Start with one so that we can filter out zombies.
-                var startPosition = 1 + positionDocument.Position - ids.Length;
+                    if (position != null)
+                    {
+                        break;
+                    }
 
-                var writes = ids.Select((x, i) =>
-                    new UpdateOneModel<MongoEventCommit>(
-                        Filter.Eq(x => x.Id, x),
-                        Builders<MongoEventCommit>.Update.Set(x => x.GlobalPosition, startPosition + i )));
-                await collection.BulkWriteAsync(writes, cancellationToken: ct);
-                return true;
-            }, null, ct);
+                    await Task.Delay(5, ct);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+
+            if (position == null)
+            {
+                throw new InvalidOperationException("Failed to get position lock.");
+            }
+
+            var writes = ids.Select((x, i) =>
+                new UpdateOneModel<MongoEventCommit>(
+                    Filter.Eq(x => x.Id, x),
+                    Builders<MongoEventCommit>.Update.Set(x => x.GlobalPosition, position.Position + i)));
+
+            // Do not use a cancellation token, because the hard part is actually done and it would be a waste.
+            await collection.BulkWriteAsync(writes, cancellationToken: default);
         }
         catch
         {
             // Do not use a cancellation token to ensure that we get rid of zombies.
             await collection.DeleteManyAsync(x => x.GlobalPosition == 0, default);
+        }
+        finally
+        {
+            // Do not use a cancellation token to ensure that unlock the position.
+            await positionCollection.UpdateOneAsync(
+                x => x.Id == 0,
+                PositionUpdate.Set(x => x.LockTaken, null),
+                cancellationToken: default);
         }
     }
 }

@@ -20,18 +20,37 @@ internal record struct ParsedStreamPosition(BsonTimestamp Timestamp, long Global
 
     public readonly bool IsEndOfCommit => CommitOffset == CommitSize - 1;
 
-    public static implicit operator StreamPosition(ParsedStreamPosition position)
+    public StreamPosition ToGlobalPosition()
     {
         var sb = DefaultPools.StringBuilder.Get();
         try
         {
-            sb.Append(position.Timestamp.Timestamp);
+            sb.Append(GlobalPosition);
             sb.Append('-');
-            sb.Append(position.Timestamp.Increment);
+            sb.Append(CommitOffset);
             sb.Append('-');
-            sb.Append(position.CommitOffset);
+            sb.Append(CommitSize);
+
+            return new StreamPosition(sb.ToString(), false);
+        }
+        finally
+        {
+            DefaultPools.StringBuilder.Return(sb);
+        }
+    }
+
+    public StreamPosition ToTimestampPosition()
+    {
+        var sb = DefaultPools.StringBuilder.Get();
+        try
+        {
+            sb.Append(Timestamp.Timestamp);
             sb.Append('-');
-            sb.Append(position.CommitSize);
+            sb.Append(Timestamp.Increment);
+            sb.Append('-');
+            sb.Append(CommitOffset);
+            sb.Append('-');
+            sb.Append(CommitSize);
 
             return new StreamPosition(sb.ToString(), false);
         }
@@ -71,9 +90,9 @@ internal record struct ParsedStreamPosition(BsonTimestamp Timestamp, long Global
         if (parts.Length == 3)
         {
             var culture = CultureInfo.InvariantCulture;
-            if (!int.TryParse(parts[1], NumberStyles.Integer, culture, out var globalPosition) ||
-                !int.TryParse(parts[2], NumberStyles.Integer, culture, out var commitOffset) ||
-                !int.TryParse(parts[3], NumberStyles.Integer, culture, out var commitSize))
+            if (!int.TryParse(parts[0], NumberStyles.Integer, culture, out var globalPosition) ||
+                !int.TryParse(parts[1], NumberStyles.Integer, culture, out var commitOffset) ||
+                !int.TryParse(parts[2], NumberStyles.Integer, culture, out var commitSize))
             {
                 return default;
             }
