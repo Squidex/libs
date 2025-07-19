@@ -21,7 +21,7 @@ public abstract class MongoFerretFixture(string reuseId = "libs-mongodb") : IAsy
         new ContainerBuilder()
             .WithReuse(Debugger.IsAttached)
             .WithLabel("reuse-id", reuseId)
-            .WithImage("ghcr.io/ferretdb/ferretdb-eval")
+            .WithImage("ghcr.io/ferretdb/ferretdb-eval:2.4")
             .WithPortBinding(27017, true)
             .WithWaitStrategy(Wait.ForUnixContainer().AddCustomWaitStrategy(new WaitIndicateReadiness()))
             .WithEnvironment("POSTGRES_USER", "username")
@@ -81,7 +81,7 @@ public abstract class MongoFerretFixture(string reuseId = "libs-mongodb") : IAsy
                     .Concat(stderr.Split(LineEndings, StringSplitOptions.RemoveEmptyEntries))
                     .Count(line => line.Contains("database system is ready to accept connections", StringComparison.Ordinal));
 
-            return waitingLogs > 0;
+            return waitingLogs == 2;
         }
     }
 }
