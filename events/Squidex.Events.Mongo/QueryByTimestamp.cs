@@ -37,24 +37,24 @@ internal class QueryByTimestamp : QueryStrategy
         return Sort.Descending(x => x.Timestamp).Ascending(x => x.EventStream);
     }
 
-    public override FilterDefinition<MongoEventCommit> ByFilter(StreamFilter filter, ParsedStreamPosition streamPosition)
+    public override FilterDefinition<MongoEventCommit> FilterAfter(StreamFilter filter, ParsedStreamPosition streamPosition)
     {
         var byTimestamp =
             streamPosition.IsEndOfCommit ?
-                Filter.Gt(x => x.Timestamp, streamPosition.Timestamp) :
-                Filter.Gte(x => x.Timestamp, streamPosition.Timestamp);
+                Filters.Gt(x => x.Timestamp, streamPosition.Timestamp) :
+                Filters.Gte(x => x.Timestamp, streamPosition.Timestamp);
 
-        return Filter.And(byTimestamp, ByStream(filter));
+        return Filters.And(byTimestamp, ByStream(filter));
     }
 
     public override IEnumerable<StoredEvent> Filtered(MongoEventCommit commit, long position)
     {
-        for (long offset = 0, streamOffset = commit.EventStreamOffset + 1; offset < commit.Events.Length; offset++, streamOffset++)
+        for (long i = 0, streamOffset = commit.EventStreamOffset + 1; i < commit.Events.Length; i++, streamOffset++)
         {
-            var @event = commit.Events[offset];
+            var @event = commit.Events[i];
             if (streamOffset > position)
             {
-                yield return Convert(commit, @event, offset, streamOffset);
+                yield return Convert(commit, @event, i, streamOffset);
             }
         }
     }

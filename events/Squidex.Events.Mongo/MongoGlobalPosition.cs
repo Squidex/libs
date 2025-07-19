@@ -14,4 +14,6 @@ internal sealed class MongoGlobalPosition
     public long Position { get; set; }
 
     public DateTime? LockTaken { get; set; }
+
+    public Guid LockOwner { get; set; }
 }

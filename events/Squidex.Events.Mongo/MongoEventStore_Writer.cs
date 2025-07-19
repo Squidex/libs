@@ -25,7 +25,7 @@ public partial class MongoEventStore
     public Task DeleteAsync(StreamFilter filter,
         CancellationToken ct = default)
     {
-        return collection.DeleteManyAsync(queryStrategy.ByFilter(filter, default), ct);
+        return collection.DeleteManyAsync(queryStrategy.Filter(filter), ct);
     }
 
     public async Task AppendAsync(Guid commitId, string streamName, long expectedVersion, ICollection<EventData> events,
@@ -123,7 +123,6 @@ public partial class MongoEventStore
             EventsCount = events.Count,
             EventStream = streamName,
             EventStreamOffset = expectedVersion,
-            GlobalPosition = 0,
             Timestamp = EmptyTimestamp,
         };
 

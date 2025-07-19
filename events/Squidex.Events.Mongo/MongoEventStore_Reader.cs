@@ -30,7 +30,7 @@ public partial class MongoEventStore
         CancellationToken ct = default)
     {
         var commits =
-            await collection.Find(queryStrategy.ByNameAfter(streamName, afterStreamPosition))
+            await collection.Find(queryStrategy.FilterAfter(streamName, afterStreamPosition))
                 .ToListAsync(ct);
 
         var result = Convert(commits, afterStreamPosition);
@@ -38,7 +38,7 @@ public partial class MongoEventStore
         if ((commits.Count == 0 || commits[0].EventStreamOffset != afterStreamPosition) && afterStreamPosition > EventsVersion.Empty)
         {
             commits =
-                await collection.Find(queryStrategy.ByNameBefore(streamName, afterStreamPosition)).SortByDescending(x => x.EventStreamOffset).Limit(1)
+                await collection.Find(queryStrategy.FilterBefore(streamName, afterStreamPosition)).SortByDescending(x => x.EventStreamOffset).Limit(1)
                     .ToListAsync(ct);
 
             result = Convert(commits, afterStreamPosition).ToList();
@@ -60,7 +60,7 @@ public partial class MongoEventStore
         {
             ParsedStreamPosition lastPosition = timestamp;
 
-            var findFilter = queryStrategy.ByFilter(filter, lastPosition);
+            var findFilter = queryStrategy.FilterAfter(filter, lastPosition);
             var findQuery = collection.Find(findFilter).Limit(take).Sort(queryStrategy.SortDescending());
 
             await foreach (var commit in findQuery.ToAsyncEnumerable(ct))
@@ -88,7 +88,7 @@ public partial class MongoEventStore
         {
             ParsedStreamPosition lastPosition = position;
 
-            var findFilter = queryStrategy.ByFilter(filter, lastPosition);
+            var findFilter = queryStrategy.FilterAfter(filter, lastPosition);
             var findQuery = collection.Find(findFilter).Limit(take).Sort(queryStrategy.SortAscending());
 
             await foreach (var commit in findQuery.ToAsyncEnumerable(ct))

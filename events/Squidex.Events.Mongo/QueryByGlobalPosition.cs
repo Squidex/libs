@@ -6,14 +6,19 @@
 // ==========================================================================
 
 using MongoDB.Driver;
+using MongoDB.Driver.Linq;
+
+#pragma warning disable RECS0022 // Empty general catch clauses suppresses any error
 
 namespace Squidex.Events.Mongo;
 
 internal sealed class QueryByGlobalPosition(IMongoCollection<MongoEventCommit> collection) : QueryStrategy
 {
+    private static readonly TimeSpan LockTimeout = TimeSpan.FromMinutes(5);
+
     private IMongoCollection<MongoGlobalPosition> positionCollection;
 
-    private static readonly FilterDefinitionBuilder<MongoGlobalPosition> PositionFilter =
+    private static readonly FilterDefinitionBuilder<MongoGlobalPosition> PositionFilters =
         Builders<MongoGlobalPosition>.Filter;
 
     private static readonly UpdateDefinitionBuilder<MongoGlobalPosition> PositionUpdate =
@@ -62,34 +67,34 @@ internal sealed class QueryByGlobalPosition(IMongoCollection<MongoEventCommit> c
         return Sort.Descending(x => x.GlobalPosition).Ascending(x => x.EventStream);
     }
 
-    public override FilterDefinition<MongoEventCommit> ByNameAfter(string name, long streamPosition)
+    public override FilterDefinition<MongoEventCommit> FilterAfter(string name, long streamPosition)
     {
         // Also filter out zombies.
-        return Filter.And(base.ByNameAfter(name, streamPosition), Filter.Gt(x => x.GlobalPosition, 0));
+        return Filters.And(base.FilterAfter(name, streamPosition), Filters.Gt(x => x.GlobalPosition, 0));
     }
 
-    public override FilterDefinition<MongoEventCommit> ByNameBefore(string name, long streamPosition)
+    public override FilterDefinition<MongoEventCommit> FilterBefore(string name, long streamPosition)
     {
         // Also filter out zombies.
-        return Filter.And(base.ByNameBefore(name, streamPosition), Filter.Gt(x => x.GlobalPosition, 0));
+        return Filters.And(base.FilterBefore(name, streamPosition), Filters.Gt(x => x.GlobalPosition, 0));
     }
 
     public override FilterDefinition<ChangeStreamDocument<MongoEventCommit>> ByFilterInStream(StreamFilter filter)
     {
         // Also filter out zombies.
-        return FilterInStream.And(base.ByFilterInStream(filter), FilterInStream.Gt(x => x.FullDocument.GlobalPosition, 0));
+        return FiltersIsStream.And(base.ByFilterInStream(filter), FiltersIsStream.Gt(x => x.FullDocument.GlobalPosition, 0));
     }
 
-    public override FilterDefinition<MongoEventCommit> ByFilter(StreamFilter filter, ParsedStreamPosition streamPosition)
+    public override FilterDefinition<MongoEventCommit> FilterAfter(StreamFilter filter, ParsedStreamPosition streamPosition)
     {
         var globalPosition = Math.Max(1, streamPosition.GlobalPosition);
 
         var byPosition =
             streamPosition.IsEndOfCommit ?
-                Filter.Gt(x => x.GlobalPosition, globalPosition) :
-                Filter.Gte(x => x.GlobalPosition, globalPosition);
+                Filters.Gt(x => x.GlobalPosition, globalPosition) :
+                Filters.Gte(x => x.GlobalPosition, globalPosition);
 
-        return Filter.And(byPosition, ByStream(filter));
+        return Filters.And(byPosition, ByStream(filter));
     }
 
     public override IEnumerable<StoredEvent> Filtered(MongoEventCommit commit, long position)
@@ -135,37 +140,49 @@ internal sealed class QueryByGlobalPosition(IMongoCollection<MongoEventCommit> c
     public override async Task CompleteAsync(Guid[] ids,
         CancellationToken ct)
     {
+        var lockOwner = Guid.NewGuid();
         try
         {
             MongoGlobalPosition? position = null;
-            try
+            using (var cts = new CancellationTokenSource(LockTimeout))
             {
-                var now = DateTime.UtcNow;
-                while (!ct.IsCancellationRequested)
+                using var ctsLinked = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, ct);
+                try
                 {
-                    position =
-                        await positionCollection.FindOneAndUpdateAsync(
-                            PositionFilter
-                                .And(
-                                    PositionFilter.Eq(x => x.Id, 0),
-                                    PositionFilter.Or(
-                                        PositionFilter.Eq(x => x.LockTaken, null),
-                                        PositionFilter.Lt(x => x.LockTaken, now))),
-                            PositionUpdate
-                                .Set(x => x.LockTaken, now.AddMinutes(5))
-                                .Inc(x => x.Position, ids.Length),
-                            cancellationToken: ct);
+                    // Exponential Backoff
+                    var delayMs = 1;
 
-                    if (position != null)
+                    var now = DateTime.UtcNow;
+                    while (!ctsLinked.Token.IsCancellationRequested)
                     {
-                        break;
-                    }
+                        position =
+                            await positionCollection.FindOneAndUpdateAsync(
+                                PositionFilters
+                                    .And(
+                                        PositionFilters.Eq(x => x.Id, 0),
+                                        PositionFilters.Or(
+                                            PositionFilters.Eq(x => x.LockTaken, null),
+                                            PositionFilters.Lt(x => x.LockTaken, now))),
+                                PositionUpdate
+                                    .Set(x => x.LockTaken, now.Add(LockTimeout))
+                                    .Set(x => x.LockOwner, lockOwner)
+                                    .Inc(x => x.Position, ids.Length),
+                                cancellationToken: ctsLinked.Token);
 
-                    await Task.Delay(5, ct);
+                        if (position != null)
+                        {
+                            break;
+                        }
+
+                        await Task.Delay(delayMs, ctsLinked.Token);
+
+                        // Cap the delay at 200ms.
+                        delayMs = Math.Min(delayMs * 2, 200);
+                    }
                 }
-            }
-            catch (OperationCanceledException)
-            {
+                catch (OperationCanceledException)
+                {
+                }
             }
 
             if (position == null)
@@ -175,7 +192,7 @@ internal sealed class QueryByGlobalPosition(IMongoCollection<MongoEventCommit> c
 
             var writes = ids.Select((x, i) =>
                 new UpdateOneModel<MongoEventCommit>(
-                    Filter.Eq(x => x.Id, x),
+                    Filters.Eq(x => x.Id, x),
                     Builders<MongoEventCommit>.Update.Set(x => x.GlobalPosition, position.Position + i)));
 
             // Do not use a cancellation token, because the hard part is actually done and it would be a waste.
@@ -183,16 +200,34 @@ internal sealed class QueryByGlobalPosition(IMongoCollection<MongoEventCommit> c
         }
         catch
         {
-            // Do not use a cancellation token to ensure that we get rid of zombies.
-            await collection.DeleteManyAsync(x => x.GlobalPosition == 0, default);
+            try
+            {
+                // Do not use a cancellation token to ensure that we get rid of zombies.
+                await collection.DeleteManyAsync(x => x.GlobalPosition == 0, default);
+            }
+            catch
+            {
+                // Throw original exception.
+            }
+
+            throw;
         }
         finally
         {
-            // Do not use a cancellation token to ensure that unlock the position.
-            await positionCollection.UpdateOneAsync(
-                x => x.Id == 0,
-                PositionUpdate.Set(x => x.LockTaken, null),
-                cancellationToken: default);
+            try
+            {
+                // Ensure that we own the lock and not someone else, because there was a timeout.
+                await positionCollection.UpdateOneAsync(
+                    PositionFilters.And(
+                        PositionFilters.Eq(x => x.Id, 0),
+                        PositionFilters.Eq(x => x.LockOwner, lockOwner)),
+                    PositionUpdate.Set(x => x.LockTaken, null),
+                    cancellationToken: default);
+            }
+            catch
+            {
+                // The main part is done.
+            }
         }
     }
 }

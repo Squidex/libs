@@ -15,10 +15,10 @@ internal abstract class QueryStrategy
     protected static readonly SortDefinitionBuilder<MongoEventCommit> Sort =
         Builders<MongoEventCommit>.Sort;
 
-    protected static readonly FilterDefinitionBuilder<MongoEventCommit> Filter =
+    protected static readonly FilterDefinitionBuilder<MongoEventCommit> Filters =
         Builders<MongoEventCommit>.Filter;
 
-    protected static readonly FilterDefinitionBuilder<ChangeStreamDocument<MongoEventCommit>> FilterInStream =
+    protected static readonly FilterDefinitionBuilder<ChangeStreamDocument<MongoEventCommit>> FiltersIsStream =
         Builders<ChangeStreamDocument<MongoEventCommit>>.Filter;
 
     public abstract Task InitializeAsync(IMongoCollection<MongoEventCommit> collection,
@@ -32,31 +32,36 @@ internal abstract class QueryStrategy
 
     public abstract SortDefinition<MongoEventCommit> SortDescending();
 
-    public abstract FilterDefinition<MongoEventCommit> ByFilter(StreamFilter filter, ParsedStreamPosition streamPosition);
+    public abstract FilterDefinition<MongoEventCommit> FilterAfter(StreamFilter filter, ParsedStreamPosition streamPosition);
 
-    public virtual FilterDefinition<MongoEventCommit> ByNameAfter(string name, long streamPosition)
+    public virtual FilterDefinition<MongoEventCommit> FilterAfter(string name, long streamPosition)
     {
-        return Filter.And(ByStream(StreamFilter.Name(name)), Filter.Gte(x => x.EventStreamOffset, streamPosition));
+        return Filters.And(ByStream(StreamFilter.Name(name)), Filters.Gte(x => x.EventStreamOffset, streamPosition));
     }
 
-    public virtual FilterDefinition<MongoEventCommit> ByNameBefore(string name, long streamPosition)
+    public virtual FilterDefinition<MongoEventCommit> FilterBefore(string name, long streamPosition)
     {
-        return Filter.And(ByStream(StreamFilter.Name(name)), Filter.Lt(x => x.EventStreamOffset, streamPosition));
+        return Filters.And(ByStream(StreamFilter.Name(name)), Filters.Lt(x => x.EventStreamOffset, streamPosition));
+    }
+
+    public virtual FilterDefinition<MongoEventCommit> Filter(StreamFilter filter)
+    {
+        return ByStream(filter);
     }
 
     public virtual FilterDefinition<ChangeStreamDocument<MongoEventCommit>> ByFilterInStream(StreamFilter filter)
     {
         if (filter.Prefixes == null)
         {
-            return FilterInStream.Exists(x => x.FullDocument.EventStream);
+            return FiltersIsStream.Exists(x => x.FullDocument.EventStream);
         }
 
         if (filter.Kind == StreamFilterKind.MatchStart)
         {
-            return FilterInStream.Or(filter.Prefixes.Select(p => FilterInStream.Regex(x => x.FullDocument.EventStream, $"^{Regex.Escape(p)}")));
+            return FiltersIsStream.Or(filter.Prefixes.Select(p => FiltersIsStream.Regex(x => x.FullDocument.EventStream, $"^{Regex.Escape(p)}")));
         }
 
-        return FilterInStream.In(x => x.FullDocument.EventStream, filter.Prefixes);
+        return FiltersIsStream.In(x => x.FullDocument.EventStream, filter.Prefixes);
     }
 
     public virtual Task CompleteAsync(Guid[] ids,
