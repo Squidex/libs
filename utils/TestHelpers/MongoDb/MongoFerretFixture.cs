@@ -24,6 +24,7 @@ public abstract class MongoFerretFixture(string reuseId = "libs-mongodb") : IAsy
             .WithPortBinding(27017, true)
             .WithEnvironment("POSTGRES_USER", "username")
             .WithEnvironment("POSTGRES_PASSWORD", "password")
+            .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(27017, o => o.WithTimeout(TimeSpan.FromSeconds(60))))
             .Build();
 
     public IServiceProvider Services { get; private set; }
