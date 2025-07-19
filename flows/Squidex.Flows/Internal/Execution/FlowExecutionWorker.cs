@@ -18,7 +18,7 @@ namespace Squidex.Flows.Internal.Execution;
 public sealed class FlowExecutionWorker<TContext> : BackgroundService, IBackgroundProcess where TContext : FlowContext
 {
     private readonly ConcurrentDictionary<Guid, bool> executing = new ConcurrentDictionary<Guid, bool>();
-    private readonly PartitionedScheduler<FlowExecutionState<TContext>> requestScheduler;
+    private readonly PartitionedScheduler<FlowExecutionState<TContext>> scheduler;
     private readonly FlowOptions options;
     private readonly IFlowExecutor<TContext> executor;
     private readonly IFlowStateStore<TContext> store;
@@ -35,11 +35,14 @@ public sealed class FlowExecutionWorker<TContext> : BackgroundService, IBackgrou
     {
         this.executor = executor;
         this.options = options.Value;
-        partitions = options.Value.GetPartitions();
+        this.partitions = options.Value.GetPartitions();
         this.store = store;
         this.log = log;
 
-        requestScheduler = new PartitionedScheduler<FlowExecutionState<TContext>>(HandleAsync, 32, 2);
+        scheduler = new PartitionedScheduler<FlowExecutionState<TContext>>(
+            HandleAsync,
+            options.Value.NumWorker,
+            options.Value.BufferSizePerWorker);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -65,7 +68,7 @@ public sealed class FlowExecutionWorker<TContext> : BackgroundService, IBackgrou
             var now = Clock.GetCurrentInstant();
             await foreach (var next in store.QueryPendingAsync(partitions, now, ct))
             {
-                await requestScheduler.ScheduleAsync(next.ScheduleKey, next, ct);
+                await scheduler.ScheduleAsync(next.ScheduleKey, next, ct);
             }
         }
         catch (Exception ex)
@@ -85,11 +88,21 @@ public sealed class FlowExecutionWorker<TContext> : BackgroundService, IBackgrou
         try
         {
             await executor.ExecuteAsync(state, ct);
-            await store.StoreAsync([state], default);
+        }
+        catch (Exception ex)
+        {
+            log.LogError(ex, "Failed to execute flow.");
         }
         finally
         {
-            executing.Remove(state.InstanceId, out _);
+            try
+            {
+                await store.StoreAsync([state], default);
+            }
+            finally
+            {
+                executing.Remove(state.InstanceId, out _);
+            }
         }
     }
 }

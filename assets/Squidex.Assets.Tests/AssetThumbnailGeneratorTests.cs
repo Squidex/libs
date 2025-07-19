@@ -69,7 +69,7 @@ public abstract class AssetThumbnailGeneratorTests
 
         var (mimeType, source) = GetImage(sourceFormat);
 
-        await using (var target = GetStream($"transform.{sourceFormat.ToString().ToLowerInvariant()}", targetFormat.ToString().ToLowerInvariant()))
+        await using (var target = GetOutputStream($"transform.{sourceFormat.ToString().ToLowerInvariant()}", targetFormat.ToString().ToLowerInvariant()))
         {
             await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions { Format = targetFormat });
 
@@ -86,7 +86,7 @@ public abstract class AssetThumbnailGeneratorTests
     {
         var (mimeType, source) = GetImage(ImageFormat.PNG);
 
-        await using (var target = GetStream("resize-copy"))
+        await using (var target = GetOutputStream("resize-copy"))
         {
             await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions());
 
@@ -99,7 +99,7 @@ public abstract class AssetThumbnailGeneratorTests
     {
         var (mimeType, source) = GetImage(ImageFormat.PNG);
 
-        await using (var target = GetStream("resize-copy"))
+        await using (var target = GetOutputStream("resize-copy"))
         {
             await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions { Format = ImageFormat.PNG });
 
@@ -112,7 +112,7 @@ public abstract class AssetThumbnailGeneratorTests
     {
         var (mimeType, source) = GetImage(ImageFormat.PNG);
 
-        await using (var target = GetStream("upsize"))
+        await using (var target = GetOutputStream("upsize"))
         {
             await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
             {
@@ -130,7 +130,7 @@ public abstract class AssetThumbnailGeneratorTests
     {
         var (mimeType, source) = GetImage(ImageFormat.PNG);
 
-        await using (var target = GetStream("downsize"))
+        await using (var target = GetOutputStream("downsize"))
         {
             await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
             {
@@ -148,7 +148,7 @@ public abstract class AssetThumbnailGeneratorTests
     {
         var (mimeType, source) = GetImage(ImageFormat.JPEG);
 
-        await using (var target = GetStream("quality", "jpg"))
+        await using (var target = GetOutputStream("quality", "jpg"))
         {
             await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
             {
@@ -164,7 +164,7 @@ public abstract class AssetThumbnailGeneratorTests
     {
         var (mimeType, source) = GetImage(ImageFormat.PNG);
 
-        await using (var target = GetStream("quality", "png"))
+        await using (var target = GetOutputStream("quality", "png"))
         {
             await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
             {
@@ -249,7 +249,7 @@ public abstract class AssetThumbnailGeneratorTests
     {
         var (mimeType, source) = GetImage("logo.png");
 
-        await using (var target = GetStream(name))
+        await using (var target = GetOutputStream(name))
         {
             const int w = 1500;
             const int h = 1500;
@@ -283,7 +283,7 @@ public abstract class AssetThumbnailGeneratorTests
     {
         var (mimeType, source) = GetRotatedJpeg();
 
-        await using (var target = GetStream("oriented", "jpeg"))
+        await using (var target = GetOutputStream("oriented", "jpeg"))
         {
             await sut.FixAsync(source, mimeType, target);
 
@@ -307,7 +307,7 @@ public abstract class AssetThumbnailGeneratorTests
     {
         var (mimeType, source) = GetImage("landscape.png");
 
-        await using (var target = GetStream("landscape.stretch"))
+        await using (var target = GetOutputStream("landscape.stretch"))
         {
             await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
             {
@@ -323,7 +323,7 @@ public abstract class AssetThumbnailGeneratorTests
     {
         var (mimeType, source) = GetImage("landscape.png");
 
-        await using (var target = GetStream("landscape.max"))
+        await using (var target = GetOutputStream("landscape.max"))
         {
             await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
             {
@@ -339,7 +339,7 @@ public abstract class AssetThumbnailGeneratorTests
     {
         var (mimeType, source) = GetImage("landscape.png");
 
-        await using (var target = GetStream("landscape.min"))
+        await using (var target = GetOutputStream("landscape.min"))
         {
             await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
             {
@@ -355,7 +355,7 @@ public abstract class AssetThumbnailGeneratorTests
     {
         var (mimeType, source) = GetImage("landscape.png");
 
-        await using (var target = GetStream("landscape.boxpad"))
+        await using (var target = GetOutputStream("landscape.boxpad"))
         {
             await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
             {
@@ -371,7 +371,7 @@ public abstract class AssetThumbnailGeneratorTests
     {
         var (mimeType, source) = GetImage("landscape.png");
 
-        await using (var target = GetStream("landscape.crop"))
+        await using (var target = GetOutputStream("landscape.crop"))
         {
             await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
             {
@@ -387,7 +387,7 @@ public abstract class AssetThumbnailGeneratorTests
     {
         var (mimeType, source) = GetImage("landscape.png");
 
-        await using (var target = GetStream("landscape.cropup"))
+        await using (var target = GetOutputStream("landscape.cropup"))
         {
             await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
             {
@@ -403,7 +403,7 @@ public abstract class AssetThumbnailGeneratorTests
     {
         var (mimeType, source) = GetImage("landscape.png");
 
-        await using (var target = GetStream("landscape.pad"))
+        await using (var target = GetOutputStream("landscape.pad"))
         {
             await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
             {
@@ -414,12 +414,14 @@ public abstract class AssetThumbnailGeneratorTests
         }
     }
 
-    [Fact]
-    public async Task Should_convert_buggy_image()
+    [Theory]
+    [InlineData("buggy1.jpeg", "buggy1")]
+    [InlineData("buggy2.jpeg", "buggy2")]
+    public async Task Should_convert_buggy_images(string fileName, string output)
     {
-        var (mimeType, source) = GetImage("buggy1.jpeg");
+        var (mimeType, source) = GetImage(fileName);
 
-        await using (var target = GetStream("buggy1", "webp"))
+        await using (var target = GetOutputStream(output, "webp"))
         {
             await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
             {
@@ -512,19 +514,19 @@ public abstract class AssetThumbnailGeneratorTests
         Assert.Null(imageInfo);
     }
 
-    protected FileStream GetStream(string type, string? extension = null)
+    protected FileStream GetOutputStream(string prefix, string? extension = null)
     {
-        Directory.CreateDirectory("images");
+        Directory.CreateDirectory("images/out");
 
-        return new FileStream($"images/{type}.{Name()}.{extension ?? "png"}", FileMode.Create);
+        return new FileStream($"images/out/{prefix}.{Name()}.{extension ?? "png"}", FileMode.Create);
     }
 
     protected (string, Stream) GetImage(string fileName)
     {
-        var filePath = $"Squidex.Assets.Images.{fileName}";
+        var filePath = Path.Combine("Images", fileName);
         var fileType = GetMimeType(fileName);
 
-        return (fileType, GetType().Assembly.GetManifestResourceStream(filePath)!);
+        return (fileType, new FileStream(filePath, FileMode.Open));
     }
 
     protected static string GetMimeType(string fileName)

@@ -40,30 +40,33 @@ internal static class Extensions
         }
 
         var encoder = imageFormatsManager.GetEncoder(format) ?? throw new NotSupportedException();
-        if (encoder is PngEncoder png && png.ColorType != PngColorType.RgbWithAlpha)
-        {
-            encoder = new PngEncoder
-            {
-                ColorType = PngColorType.RgbWithAlpha,
-            };
-        }
 
         var quality = options.Quality ?? 80;
-
-        if (encoder is JpegEncoder jpg && jpg.Quality != quality)
+        switch (encoder)
         {
-            encoder = new JpegEncoder
-            {
-                Quality = quality,
-            };
-        }
+            case PngEncoder:
+                encoder = new PngEncoder
+                {
+                    // Always support alpha.
+                    ColorType = PngColorType.RgbWithAlpha,
+                };
+                break;
 
-        if (encoder is WebpEncoder webp && webp.Quality != quality)
-        {
-            encoder = new WebpEncoder
-            {
-                Quality = quality,
-            };
+            case JpegEncoder:
+                encoder = new JpegEncoder
+                {
+                    Quality = quality,
+                };
+                break;
+
+            case WebpEncoder:
+                encoder = new WebpEncoder
+                {
+                    Quality = quality,
+                    // Some browsers have issues with metadata, therefore we skip all of them.
+                    SkipMetadata = !options.KeepMetadata,
+                };
+                break;
         }
 
         return encoder;

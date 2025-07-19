@@ -45,7 +45,6 @@ public sealed class Startup(IConfiguration configuration)
         app.Use((context, next) =>
         {
             var requestSizeFeature = context.Features.Get<IHttpMaxRequestBodySizeFeature>();
-
             if (requestSizeFeature != null)
             {
                 requestSizeFeature.MaxRequestBodySize = null;
@@ -54,9 +53,6 @@ public sealed class Startup(IConfiguration configuration)
             return next();
         });
 
-        app.UseEndpoints(endpoints =>
-        {
-            resizer.Map(endpoints);
-        });
+        app.UseEndpoints(resizer.Map);
     }
 }

@@ -12,7 +12,6 @@ namespace Squidex.Flows.Internal.Execution.Utils;
 public sealed class PartitionedScheduler<T> : IAsyncDisposable
 {
     private readonly Consumer[] consumers;
-    private Exception? exception;
 
     private sealed class Consumer
     {
@@ -30,9 +29,18 @@ public sealed class PartitionedScheduler<T> : IAsyncDisposable
 
             worker = Task.Run(async () =>
             {
-                await foreach (var item in channel.Reader.ReadAllAsync(ct))
+                try
                 {
-                    await action(item, ct);
+                    await foreach (var item in channel.Reader.ReadAllAsync(ct))
+                    {
+                        await action(item, ct);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    var flatten = Flatten(ex);
+
+                    channel.Writer.Complete(flatten);
                 }
             }, ct);
         }
@@ -43,11 +51,25 @@ public sealed class PartitionedScheduler<T> : IAsyncDisposable
             return channel.Writer.WriteAsync(item, ct);
         }
 
+        public void TryFail(Exception exception)
+        {
+            channel.Writer.TryComplete(exception);
+        }
+
         public Task CompleteAsync()
         {
             channel.Writer.TryComplete();
-
             return worker;
+        }
+
+        internal static Exception Flatten(Exception ex)
+        {
+            while (ex is ChannelClosedException closed && closed.InnerException is ChannelClosedException)
+            {
+                ex = closed.InnerException;
+            }
+
+            return ex;
         }
     }
 
@@ -67,21 +89,23 @@ public sealed class PartitionedScheduler<T> : IAsyncDisposable
     public async ValueTask ScheduleAsync(object key, T item,
         CancellationToken ct = default)
     {
-        if (exception != null)
-        {
-            throw exception;
-        }
-
-        var consumerIndex = Math.Abs((key?.GetHashCode() ?? 0) % consumers.Length);
-        var consumerInstance = consumers[consumerIndex];
-
         try
         {
+            var consumerIndex = Math.Abs((key?.GetHashCode() ?? 0) % consumers.Length);
+            var consumerInstance = consumers[consumerIndex];
+
             await consumerInstance.ScheduleAsync(item, ct);
         }
         catch (Exception ex)
         {
-            exception = ex;
+            var flatten = Consumer.Flatten(ex);
+
+            foreach (var consumer in consumers)
+            {
+                consumer.TryFail(flatten);
+            }
+
+            throw flatten;
         }
     }
 

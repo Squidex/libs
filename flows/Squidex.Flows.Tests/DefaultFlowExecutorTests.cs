@@ -154,6 +154,38 @@ public class DefaultFlowExecutorTests
     }
 
     [Fact]
+    public async Task Should_abort_flow_when_preparation_fails()
+    {
+        var step1 = A.Fake<FlowStep>();
+
+        A.CallTo(() => step1.PrepareAsync(A<FlowExecutionContext>._, A<CancellationToken>._))
+            .Throws(new InvalidOperationException("Step Error"));
+
+        var state = sut.CreateState(
+            new CreateFlowInstanceRequest<TestFlowContext>
+            {
+                Context = new TestFlowContext(),
+                DefinitionId = Guid.NewGuid().ToString(),
+                Definition = new FlowDefinition
+                {
+                    Steps = new Dictionary<Guid, FlowStepDefinition>
+                    {
+                        [stepId1] = new FlowStepDefinition { Step = step1 },
+                    },
+                    InitialStepId = stepId1,
+                },
+                OwnerId = Guid.NewGuid().ToString(),
+            });
+
+        await sut.ExecuteAsync(state, default);
+
+        AssertPrepared(step1, 1);
+        AssertExecuted(step1, 0);
+
+        await Verify(state).AddNamedGuid(stepId1, "StepId1");
+    }
+
+    [Fact]
     public async Task Should_execute_first_step_again_after_error()
     {
         var step1 = A.Fake<FlowStep>();
@@ -226,7 +258,7 @@ public class DefaultFlowExecutorTests
     }
 
     [Fact]
-    public async Task Should_execute_too_end_when_simulating()
+    public async Task Should_execute_to_end_when_simulating()
     {
         var step1 = A.Fake<FlowStep>();
 
@@ -338,7 +370,7 @@ public class DefaultFlowExecutorTests
     }
 
     [Fact]
-    public async Task Should_not_execute_next_step_if_steps_completes_flow()
+    public async Task Should_not_execute_next_step_if_step_completes_flow()
     {
         var step1 = A.Fake<FlowStep>();
         var step2 = A.Fake<FlowStep>();
