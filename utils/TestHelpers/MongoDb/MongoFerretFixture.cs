@@ -22,9 +22,13 @@ public abstract class MongoFerretFixture(string reuseId = "libs-mongodb") : IAsy
             .WithLabel("reuse-id", reuseId)
             .WithImage("ghcr.io/ferretdb/ferretdb-eval:2.4")
             .WithPortBinding(27017, true)
+            .WithPortBinding(8088, true)
             .WithEnvironment("POSTGRES_USER", "username")
             .WithEnvironment("POSTGRES_PASSWORD", "password")
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(27017, o => o.WithTimeout(TimeSpan.FromSeconds(60))))
+            .WithWaitStrategy(
+                 Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(
+                     x => x.ForPath("/debug/readyz").ForPort(8088),
+                     x => x.WithTimeout(TimeSpan.FromSeconds(60))))
             .Build();
 
     public IServiceProvider Services { get; private set; }
@@ -39,10 +43,8 @@ public abstract class MongoFerretFixture(string reuseId = "libs-mongodb") : IAsy
     {
         await MongoDb.StartAsync();
 
-        var mongoClient = await TryConnectAsync();
-
         var serviceCollection = new ServiceCollection()
-            .AddSingleton<IMongoClient>(mongoClient)
+            .AddSingleton<IMongoClient>(_ => new MongoClient($"mongodb://username:password@localhost:{MongoDb.GetMappedPublicPort(27017)}/"))
             .AddSingleton(c => c.GetRequiredService<IMongoClient>().GetDatabase("Test"));
 
         AddServices(serviceCollection);
@@ -53,29 +55,6 @@ public abstract class MongoFerretFixture(string reuseId = "libs-mongodb") : IAsy
         {
             await service.InitializeAsync(default);
         }
-    }
-
-    private async Task<MongoClient> TryConnectAsync()
-    {
-        using var cts = new CancellationTokenSource(30_000);
-        while (!cts.Token.IsCancellationRequested)
-        {
-            try
-            {
-                var mongoClient = new MongoClient($"mongodb://username:password@localhost:{MongoDb.GetMappedPublicPort(27017)}/");
-                await mongoClient.ListDatabasesAsync(cts.Token);
-
-                return mongoClient;
-            }
-            catch
-            {
-                continue;
-            }
-        }
-
-        var (stdOut, stdError) = await MongoDb.GetLogsAsync(ct: default);
-
-        throw new InvalidOperationException($"Failed connect to ferred DB\n{stdOut}\n{stdError}");
     }
 
     protected abstract void AddServices(IServiceCollection services);
