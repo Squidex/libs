@@ -41,6 +41,7 @@ public partial class MongoEventStore
 
         var currentVersion = await GetEventStreamOffsetAsync(streamName, ct);
 
+        // Make a cheaper check first to detect concurrency issues.
         if (expectedVersion > EventsVersion.Any && expectedVersion != currentVersion)
         {
             throw new WrongEventVersionException(currentVersion, expectedVersion);
@@ -53,6 +54,7 @@ public partial class MongoEventStore
             try
             {
                 await collection.InsertOneAsync(commit, cancellationToken: ct);
+                // Depending on the query strategy, we confirm the write after the insert.
                 await queryStrategy.CompleteAsync([commit.Id], ct);
                 return;
             }
@@ -67,8 +69,14 @@ public partial class MongoEventStore
 
                 if (attempt >= MaxWriteAttempts)
                 {
-                    throw new TimeoutException("Could not acquire a free slot for the commit within the provided time.");
+                    throw new EventStoreConcurrencyException("Could not acquire a free slot for the commit within the provided time.");
                 }
+            }
+            catch (MongoWriteException ex) when (ex.WriteError?.Code == 16908292)
+            {
+                // This error code happens in ferret-db only when a deadlock happens.
+                // It can only happen when a lot of writes happen concurrently on the same unique constraint.
+                throw new EventStoreConcurrencyException("Failed to acquire lock in database", ex);
             }
         }
     }
@@ -123,6 +131,7 @@ public partial class MongoEventStore
             EventsCount = events.Count,
             EventStream = streamName,
             EventStreamOffset = expectedVersion,
+            GlobalPosition = 0,
             Timestamp = EmptyTimestamp,
         };
 

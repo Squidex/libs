@@ -140,56 +140,9 @@ internal sealed class QueryByGlobalPosition(IMongoCollection<MongoEventCommit> c
     public override async Task CompleteAsync(Guid[] ids,
         CancellationToken ct)
     {
-        var lockOwner = Guid.NewGuid();
+        await using var position = await TryAcquirePositionAsync(ids.Length, ct);
         try
         {
-            MongoGlobalPosition? position = null;
-            using (var cts = new CancellationTokenSource(LockTimeout))
-            {
-                using var ctsLinked = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, ct);
-                try
-                {
-                    // Exponential Backoff
-                    var delayMs = 1;
-
-                    var now = DateTime.UtcNow;
-                    while (!ctsLinked.Token.IsCancellationRequested)
-                    {
-                        position =
-                            await positionCollection.FindOneAndUpdateAsync(
-                                PositionFilters
-                                    .And(
-                                        PositionFilters.Eq(x => x.Id, 0),
-                                        PositionFilters.Or(
-                                            PositionFilters.Eq(x => x.LockTaken, null),
-                                            PositionFilters.Lt(x => x.LockTaken, now))),
-                                PositionUpdate
-                                    .Set(x => x.LockTaken, now.Add(LockTimeout))
-                                    .Set(x => x.LockOwner, lockOwner)
-                                    .Inc(x => x.Position, ids.Length),
-                                cancellationToken: ctsLinked.Token);
-
-                        if (position != null)
-                        {
-                            break;
-                        }
-
-                        await Task.Delay(delayMs, ctsLinked.Token);
-
-                        // Cap the delay at 200ms.
-                        delayMs = Math.Min(delayMs * 2, 200);
-                    }
-                }
-                catch (OperationCanceledException)
-                {
-                }
-            }
-
-            if (position == null)
-            {
-                throw new InvalidOperationException("Failed to get position lock.");
-            }
-
             var writes = ids.Select((x, i) =>
                 new UpdateOneModel<MongoEventCommit>(
                     Filters.Eq(x => x.Id, x),
@@ -212,7 +165,59 @@ internal sealed class QueryByGlobalPosition(IMongoCollection<MongoEventCommit> c
 
             throw;
         }
-        finally
+    }
+
+    private async Task<GlobalPosition> TryAcquirePositionAsync(int count,
+        CancellationToken ct)
+    {
+        var lockOwner = Guid.NewGuid();
+
+        MongoGlobalPosition? position = null;
+        using var ctsTimeout = new CancellationTokenSource(LockTimeout);
+        using var ctsLinked = CancellationTokenSource.CreateLinkedTokenSource(ctsTimeout.Token, ct);
+        try
+        {
+            // Exponential Backoff
+            var delayMs = 1;
+
+            var now = DateTime.UtcNow;
+            while (!ctsLinked.Token.IsCancellationRequested)
+            {
+                position =
+                    await positionCollection.FindOneAndUpdateAsync(
+                        PositionFilters
+                            .And(
+                                PositionFilters.Eq(x => x.Id, 0),
+                                PositionFilters.Or(
+                                    PositionFilters.Eq(x => x.LockTaken, null),
+                                    PositionFilters.Lt(x => x.LockTaken, now))),
+                        PositionUpdate
+                            .Set(x => x.LockTaken, now.Add(LockTimeout))
+                            .Set(x => x.LockOwner, lockOwner)
+                            .Inc(x => x.Position, count),
+                        cancellationToken: ctsLinked.Token);
+
+                if (position != null)
+                {
+                    break;
+                }
+
+                await Task.Delay(delayMs, ctsLinked.Token);
+
+                // Use exponential backup for the timeout, but do not wait more than 200 milliseconds.
+                delayMs = Math.Min(delayMs * 2, 200);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+
+        if (position == null)
+        {
+            throw new EventStoreConcurrencyException("Failed to get position lock.");
+        }
+
+        return new GlobalPosition(position.Position, async () =>
         {
             try
             {
@@ -228,6 +233,16 @@ internal sealed class QueryByGlobalPosition(IMongoCollection<MongoEventCommit> c
             {
                 // The main part is done.
             }
+        });
+    }
+
+    private sealed class GlobalPosition(long position, Func<ValueTask> cleanup) : IAsyncDisposable
+    {
+        public long Position { get; } = position;
+
+        public ValueTask DisposeAsync()
+        {
+            return cleanup();
         }
     }
 }
