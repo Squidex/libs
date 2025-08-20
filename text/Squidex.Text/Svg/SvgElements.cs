@@ -14,6 +14,7 @@ public static class SvgElements
         "altGlyph",
         "altGlyphDef",
         "altGlyphItem",
+        "animate",
         "animateColor",
         "animateMotion",
         "animateTransform",

@@ -55,17 +55,17 @@ public class ImageSharpThumbnailGeneratorTests : AssetThumbnailGeneratorTests
     [InlineData(WatermarkAnchor.Center)]
     public async Task Should_add_watermark(WatermarkAnchor anchor)
     {
-        var (mimeType, source) = GetImage("landscape.png");
+        await using var testImage = GetImage("landscape.jpeg");
 
         await using (var target = GetOutputStream($"watermark_{anchor}"))
         {
-            await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
+            await sut.CreateThumbnailAsync(testImage.Stream, testImage.MimeType, target, new ResizeOptions
             {
                 WatermarkAnchor = anchor,
                 WatermarkUrl = "https://github.com/Squidex/squidex/blob/master/media/logo-wide.png?raw=true",
             });
 
-            Assert.True(target.Length > source.Length);
+            Assert.True(target.Length > testImage.Length);
         }
     }
 
@@ -77,17 +77,17 @@ public class ImageSharpThumbnailGeneratorTests : AssetThumbnailGeneratorTests
     [InlineData(WatermarkAnchor.Center)]
     public async Task Should_add_watermark_to_small_image(WatermarkAnchor anchor)
     {
-        var (mimeType, source) = GetImage("landscape_small.png");
+        await using var testImage = GetImage("landscape_small.png");
 
         await using (var target = GetOutputStream($"watermark_small_{anchor}"))
         {
-            await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
+            await sut.CreateThumbnailAsync(testImage.Stream, testImage.MimeType, target, new ResizeOptions
             {
                 WatermarkAnchor = anchor,
                 WatermarkUrl = "https://github.com/Squidex/squidex/blob/master/media/logo-wide.png?raw=true",
             });
 
-            Assert.True(target.Length > source.Length);
+            Assert.True(target.Length > testImage.Length);
         }
     }
 }

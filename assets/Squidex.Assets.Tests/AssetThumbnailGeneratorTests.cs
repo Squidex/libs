@@ -67,14 +67,14 @@ public abstract class AssetThumbnailGeneratorTests
             return;
         }
 
-        var (mimeType, source) = GetImage(sourceFormat);
-
+        await using var testImage = GetImage(sourceFormat);
         await using (var target = GetOutputStream($"transform.{sourceFormat.ToString().ToLowerInvariant()}", targetFormat.ToString().ToLowerInvariant()))
         {
-            await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions { Format = targetFormat });
+            var options = new ResizeOptions { Format = targetFormat };
+
+            await sut.CreateThumbnailAsync(testImage.Stream, testImage.MimeType, target, options);
 
             target.Position = 0;
-
             var imageInfo = await sut.GetImageInfoAsync(target, targetFormat.ToMimeType()!);
 
             Assert.Equal(targetFormat, imageInfo?.Format);
@@ -84,95 +84,94 @@ public abstract class AssetThumbnailGeneratorTests
     [Fact]
     public async Task Should_return_same_image_if_no_size_and_quality_is_passed_for_thumbnail()
     {
-        var (mimeType, source) = GetImage(ImageFormat.PNG);
-
+        await using var testImage = GetImage(ImageFormat.PNG);
         await using (var target = GetOutputStream("resize-copy"))
         {
-            await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions());
+            var options = new ResizeOptions();
 
-            Assert.Equal(target.Length, source.Length);
+            await sut.CreateThumbnailAsync(testImage.Stream, testImage.MimeType, target, options);
+
+            Assert.Equal(target.Length, testImage.Length);
         }
     }
 
     [Fact]
     public async Task Should_return_same_image_if_no_target_format_is_same_as_source_type()
     {
-        var (mimeType, source) = GetImage(ImageFormat.PNG);
-
+        await using var testImage = GetImage(ImageFormat.PNG);
         await using (var target = GetOutputStream("resize-copy"))
         {
-            await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions { Format = ImageFormat.PNG });
+            var options = new ResizeOptions { Format = ImageFormat.PNG };
 
-            Assert.Equal(target.Length, source.Length);
+            await sut.CreateThumbnailAsync(testImage.Stream, testImage.MimeType, target, options);
+
+            Assert.Equal(target.Length, testImage.Length);
         }
     }
 
     [Fact]
     public async Task Should_upsize_image_to_target()
     {
-        var (mimeType, source) = GetImage(ImageFormat.PNG);
-
+        await using var testImage = GetImage(ImageFormat.PNG);
         await using (var target = GetOutputStream("upsize"))
         {
-            await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
+            var options = new ResizeOptions
             {
                 TargetWidth = 1000,
                 TargetHeight = 1000,
                 Mode = ResizeMode.Stretch,
-            });
+            };
 
-            Assert.True(target.Length > source.Length);
+            await sut.CreateThumbnailAsync(testImage.Stream, testImage.MimeType, target, options);
+
+            Assert.True(target.Length > testImage.Length);
         }
     }
 
     [Fact]
     public async Task Should_downsize_image_to_target()
     {
-        var (mimeType, source) = GetImage(ImageFormat.PNG);
-
+        await using var testImage = GetImage(ImageFormat.PNG);
         await using (var target = GetOutputStream("downsize"))
         {
-            await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
+            var options = new ResizeOptions
             {
                 TargetWidth = 100,
                 TargetHeight = 100,
                 Mode = ResizeMode.Stretch,
-            });
+            };
 
-            Assert.True(target.Length < source.Length);
+            await sut.CreateThumbnailAsync(testImage.Stream, testImage.MimeType, target, options);
+
+            Assert.True(target.Length < testImage.Length);
         }
     }
 
     [Fact]
     public async Task Should_change_jpeg_quality_and_write_to_target()
     {
-        var (mimeType, source) = GetImage(ImageFormat.JPEG);
-
+        await using var testImage = GetImage(ImageFormat.JPEG);
         await using (var target = GetOutputStream("quality", "jpg"))
         {
-            await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
-            {
-                Quality = 10,
-            });
+            var options = new ResizeOptions { Quality = 10 };
 
-            Assert.True(target.Length < source.Length);
+            await sut.CreateThumbnailAsync(testImage.Stream, testImage.MimeType, target, options);
+
+            Assert.True(target.Length < testImage.Length);
         }
     }
 
     [Fact]
     public async Task Should_change_png_quality_and_write_to_target()
     {
-        var (mimeType, source) = GetImage(ImageFormat.PNG);
-
+        await using var testImage = GetImage(ImageFormat.PNG);
         await using (var target = GetOutputStream("quality", "png"))
         {
-            await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
-            {
-                Quality = 10,
-                Format = ImageFormat.JPEG,
-            });
+            var options = new ResizeOptions { Quality = 10, Format = ImageFormat.JPEG };
 
-            Assert.True(target.Length < source.Length);
+            await sut.CreateThumbnailAsync(testImage.Stream, testImage.MimeType, target, options);
+
+            Assert.True(target.Length < testImage.Length);
         }
     }
 
@@ -247,23 +246,23 @@ public abstract class AssetThumbnailGeneratorTests
 
     private async Task Resize(string name, string? color, ResizeMode mode)
     {
-        var (mimeType, source) = GetImage("logo.png");
-
+        await using var testImage = GetImage("logo.png");
         await using (var target = GetOutputStream(name))
         {
             const int w = 1500;
             const int h = 1500;
 
-            await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
+            var options = new ResizeOptions
             {
                 Background = color,
                 TargetWidth = w,
                 TargetHeight = h,
                 Mode = mode,
-            });
+            };
+
+            await sut.CreateThumbnailAsync(testImage.Stream, testImage.MimeType, target, options);
 
             target.Position = 0;
-
             var image = await Image.LoadAsync<Rgba32>(target);
 
             Assert.Equal(w, image.Width);
@@ -281,15 +280,14 @@ public abstract class AssetThumbnailGeneratorTests
     [Fact]
     public async Task Should_auto_orient_image()
     {
-        var (mimeType, source) = GetRotatedJpeg();
+        await using var testImage = GetRotatedJpeg();
 
         await using (var target = GetOutputStream("oriented", "jpeg"))
         {
-            await sut.FixAsync(source, mimeType, target);
+            await sut.FixAsync(testImage.Stream, testImage.MimeType, target);
 
             target.Position = 0;
-
-            var imageInfo = await sut.GetImageInfoAsync(target, mimeType);
+            var imageInfo = await sut.GetImageInfoAsync(target, testImage.MimeType);
 
             Assert.Equal(
                 new ImageInfo(
@@ -305,137 +303,252 @@ public abstract class AssetThumbnailGeneratorTests
     [Fact]
     public async Task Should_resize_landscape_stretch()
     {
-        var (mimeType, source) = GetImage("landscape.png");
-
+        await using var testImage = GetImage("landscape.jpeg");
         await using (var target = GetOutputStream("landscape.stretch"))
         {
-            await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
+            var options = new ResizeOptions
             {
                 TargetWidth = 1000,
                 TargetHeight = 200,
                 Mode = ResizeMode.Stretch,
-            });
+            };
+
+            await sut.CreateThumbnailAsync(testImage.Stream, testImage.MimeType, target, options);
+
+            target.Position = 0;
+            var imageInfo = await sut.GetImageInfoAsync(target, "image/webp");
+
+            Assert.Equal(
+                new ImageInfo(
+                    ImageFormat.JPEG,
+                    PixelWidth: 1000,
+                    PixelHeight: 200,
+                    ImageOrientation.TopLeft,
+                    true),
+                imageInfo!);
         }
     }
 
     [Fact]
     public async Task Should_resize_landscape_max()
     {
-        var (mimeType, source) = GetImage("landscape.png");
-
+        await using var testImage = GetImage("landscape.jpeg");
         await using (var target = GetOutputStream("landscape.max"))
         {
-            await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
+            var options = new ResizeOptions
             {
                 TargetWidth = 400,
                 TargetHeight = 0,
                 Mode = ResizeMode.Max,
-            });
+            };
+
+            await sut.CreateThumbnailAsync(testImage.Stream, testImage.MimeType, target, options);
+
+            target.Position = 0;
+            var imageInfo = await sut.GetImageInfoAsync(target, "image/png");
+
+            Assert.Equal(
+                new ImageInfo(
+                    ImageFormat.JPEG,
+                    PixelWidth: 400,
+                    PixelHeight: 300,
+                    ImageOrientation.TopLeft,
+                    true),
+                imageInfo!);
         }
     }
 
     [Fact]
     public async Task Should_resize_landscape_min()
     {
-        var (mimeType, source) = GetImage("landscape.png");
-
+        await using var testImage = GetImage("landscape.jpeg");
         await using (var target = GetOutputStream("landscape.min"))
         {
-            await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
+            var options = new ResizeOptions
             {
                 TargetWidth = 100,
                 TargetHeight = 0,
                 Mode = ResizeMode.Min,
-            });
+            };
+
+            await sut.CreateThumbnailAsync(testImage.Stream, testImage.MimeType, target, options);
+
+            target.Position = 0;
+            var imageInfo = await sut.GetImageInfoAsync(target, "image/png");
+
+            Assert.Equal(
+                new ImageInfo(
+                    ImageFormat.JPEG,
+                    PixelWidth: 100,
+                    PixelHeight: 75,
+                    ImageOrientation.TopLeft,
+                    true),
+                imageInfo!);
         }
     }
 
     [Fact]
     public async Task Should_resize_landscape_boxpad()
     {
-        var (mimeType, source) = GetImage("landscape.png");
-
+        await using var testImage = GetImage("landscape.jpeg");
         await using (var target = GetOutputStream("landscape.boxpad"))
         {
-            await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
+            var options = new ResizeOptions
             {
                 TargetWidth = 300,
                 TargetHeight = 300,
                 Mode = ResizeMode.BoxPad,
-            });
+            };
+
+            await sut.CreateThumbnailAsync(testImage.Stream, testImage.MimeType, target, options);
+
+            target.Position = 0;
+            var imageInfo = await sut.GetImageInfoAsync(target, "image/png");
+
+            Assert.Equal(
+                new ImageInfo(
+                    ImageFormat.JPEG,
+                    PixelWidth: 300,
+                    PixelHeight: 300,
+                    ImageOrientation.TopLeft,
+                    true),
+                imageInfo!);
         }
     }
 
     [Fact]
     public async Task Should_resize_landscape_crop()
     {
-        var (mimeType, source) = GetImage("landscape.png");
-
+        await using var testImage = GetImage("landscape.jpeg");
         await using (var target = GetOutputStream("landscape.crop"))
         {
-            await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
+            var options = new ResizeOptions
             {
                 TargetWidth = 100,
                 TargetHeight = 100,
                 Mode = ResizeMode.Crop,
-            });
+            };
+
+            await sut.CreateThumbnailAsync(testImage.Stream, testImage.MimeType, target, options);
+
+            target.Position = 0;
+            var imageInfo = await sut.GetImageInfoAsync(target, "image/png");
+
+            Assert.Equal(
+                new ImageInfo(
+                    ImageFormat.JPEG,
+                    PixelWidth: 100,
+                    PixelHeight: 100,
+                    ImageOrientation.TopLeft,
+                    true),
+                imageInfo!);
         }
     }
 
     [Fact]
     public async Task Should_resize_landscape_crop_upsize()
     {
-        var (mimeType, source) = GetImage("landscape.png");
-
+        await using var testImage = GetImage("landscape.jpeg");
         await using (var target = GetOutputStream("landscape.cropup"))
         {
-            await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
+            var options = new ResizeOptions
             {
                 TargetWidth = 600,
                 TargetHeight = 600,
                 Mode = ResizeMode.CropUpsize,
-            });
+            };
+
+            await sut.CreateThumbnailAsync(testImage.Stream, testImage.MimeType, target, options);
+
+            target.Position = 0;
+            var imageInfo = await sut.GetImageInfoAsync(target, "image/webp");
+
+            Assert.Equal(
+                new ImageInfo(
+                    ImageFormat.JPEG,
+                    PixelWidth: 600,
+                    PixelHeight: 600,
+                    ImageOrientation.TopLeft,
+                    true),
+                imageInfo!);
         }
     }
 
     [Fact]
     public async Task Should_resize_landscape_pad()
     {
-        var (mimeType, source) = GetImage("landscape.png");
-
+        await using var testImage = GetImage("landscape.jpeg");
         await using (var target = GetOutputStream("landscape.pad"))
         {
-            await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
+            var options = new ResizeOptions
             {
                 TargetWidth = 50,
                 TargetHeight = 0,
                 Mode = ResizeMode.Pad,
-            });
+            };
+
+            await sut.CreateThumbnailAsync(testImage.Stream, testImage.MimeType, target, options);
+
+            target.Position = 0;
+            var imageInfo = await sut.GetImageInfoAsync(target, "image/jpeg");
+
+            Assert.Equal(
+                new ImageInfo(
+                    ImageFormat.JPEG,
+                    PixelWidth: 50,
+                    PixelHeight: 38,
+                    ImageOrientation.TopLeft,
+                    true),
+                imageInfo!);
         }
     }
 
     [Theory]
-    [InlineData("buggy1.jpeg", "buggy1")]
-    [InlineData("buggy2.jpeg", "buggy2")]
+    [InlineData("buggy1.jpeg", "buggy_converted1")]
+    [InlineData("buggy2.jpeg", "buggy_converted2")]
+    [InlineData("buggy3.jpeg", "buggy_converted3")]
     public async Task Should_convert_buggy_images(string fileName, string output)
     {
-        var (mimeType, source) = GetImage(fileName);
-
+        await using var testImage = GetImage(fileName);
         await using (var target = GetOutputStream(output, "webp"))
         {
-            await sut.CreateThumbnailAsync(source, mimeType, target, new ResizeOptions
-            {
-                Format = ImageFormat.WEBP,
-            });
+            var options = new ResizeOptions { Format = ImageFormat.WEBP };
+
+            await sut.CreateThumbnailAsync(testImage.Stream, testImage.MimeType, target, options);
+
+            target.Position = 0;
+            var imageInfo = await sut.GetImageInfoAsync(target, "image/jpeg");
+
+            Assert.Equal(ImageFormat.WEBP, imageInfo?.Format);
+        }
+    }
+
+    [Theory]
+    [InlineData("buggy1.jpeg", "buggy_resized1")]
+    [InlineData("buggy2.jpeg", "buggy_resized2")]
+    [InlineData("buggy3.jpeg", "buggy_resized3")]
+    public async Task Should_resize_buggy_images(string fileName, string output)
+    {
+        await using var testImage = GetImage(fileName);
+        await using (var target = GetOutputStream(output, "jpeg"))
+        {
+            var options = new ResizeOptions { TargetHeight = 300 };
+
+            await sut.CreateThumbnailAsync(testImage.Stream, testImage.MimeType, target, options);
+
+            target.Position = 0;
+            var imageInfo = await sut.GetImageInfoAsync(target, "image/jpeg");
+
+            Assert.Equal(300, imageInfo?.PixelHeight);
         }
     }
 
     [Fact]
     public async Task Should_return_image_information_if_image_is_valid()
     {
-        var (mimeType, source) = GetImage(ImageFormat.PNG);
+        await using var testImage = GetImage(ImageFormat.PNG);
 
-        var imageInfo = await sut.GetImageInfoAsync(source, mimeType);
+        var imageInfo = await sut.GetImageInfoAsync(testImage.Stream, testImage.MimeType);
 
         Assert.Equal(
             new ImageInfo(
@@ -450,9 +563,9 @@ public abstract class AssetThumbnailGeneratorTests
     [Fact]
     public async Task Should_return_image_information_if_rotated()
     {
-        var (mimeType, source) = GetRotatedJpeg();
+        await using var testImage = GetRotatedJpeg();
 
-        var imageInfo = await sut.GetImageInfoAsync(source, mimeType);
+        var imageInfo = await sut.GetImageInfoAsync(testImage.Stream, testImage.MimeType);
 
         Assert.Equal(
             new ImageInfo(
@@ -467,9 +580,9 @@ public abstract class AssetThumbnailGeneratorTests
     [Fact]
     public async Task Should_compute_blur_hash_from_jpg()
     {
-        var (mimeType, source) = GetImage(ImageFormat.JPEG);
+        await using var testImage = GetImage(ImageFormat.JPEG);
 
-        var blurHash = await sut.ComputeBlurHashAsync(source, mimeType, new BlurOptions());
+        var blurHash = await sut.ComputeBlurHashAsync(testImage.Stream, testImage.MimeType, new BlurOptions());
 
         Assert.True(SupportsBlurHash ? blurHash != null : blurHash == null);
     }
@@ -477,9 +590,9 @@ public abstract class AssetThumbnailGeneratorTests
     [Fact]
     public async Task Should_compute_blur_hash_from_png()
     {
-        var (mimeType, source) = GetImage(ImageFormat.PNG);
+        await using var testImage = GetImage(ImageFormat.PNG);
 
-        var blurHash = await sut.ComputeBlurHashAsync(source, mimeType, new BlurOptions());
+        var blurHash = await sut.ComputeBlurHashAsync(testImage.Stream, testImage.MimeType, new BlurOptions());
 
         Assert.True(SupportsBlurHash ? blurHash != null : blurHash == null);
     }
@@ -487,9 +600,9 @@ public abstract class AssetThumbnailGeneratorTests
     [Fact]
     public async Task Should_compute_blur_hash_from_webp()
     {
-        var (mimeType, source) = GetImage(ImageFormat.WEBP);
+        await using var testImage = GetImage(ImageFormat.WEBP);
 
-        var blurHash = await sut.ComputeBlurHashAsync(source, mimeType, new BlurOptions());
+        var blurHash = await sut.ComputeBlurHashAsync(testImage.Stream, testImage.MimeType, new BlurOptions());
 
         Assert.True(SupportsBlurHash ? blurHash != null : blurHash == null);
     }
@@ -507,9 +620,9 @@ public abstract class AssetThumbnailGeneratorTests
     [Fact]
     public async Task Should_return_null_if_stream_is_an_pdf()
     {
-        var (mimeType, source) = GetImage("sample.pdf");
+        await using var testImage = GetImage("sample.pdf");
 
-        var imageInfo = await sut.GetImageInfoAsync(source, mimeType);
+        var imageInfo = await sut.GetImageInfoAsync(testImage.Stream, testImage.MimeType);
 
         Assert.Null(imageInfo);
     }
@@ -521,35 +634,47 @@ public abstract class AssetThumbnailGeneratorTests
         return new FileStream($"images/out/{prefix}.{Name()}.{extension ?? "png"}", FileMode.Create);
     }
 
-    protected (string, Stream) GetImage(string fileName)
-    {
-        var filePath = Path.Combine("Images", fileName);
-        var fileType = GetMimeType(fileName);
-
-        return (fileType, new FileStream(filePath, FileMode.Open));
-    }
-
-    protected static string GetMimeType(string fileName)
-    {
-        var extension = fileName.Split('.')[^1];
-
-        var mimeType = $"image/{extension}";
-
-        if (string.Equals(extension, "tga", StringComparison.OrdinalIgnoreCase))
-        {
-            mimeType = "image/x-tga";
-        }
-
-        return mimeType;
-    }
-
-    protected (string, Stream) GetImage(ImageFormat format)
+    protected TestImage GetImage(ImageFormat format)
     {
         return GetImage($"logo.{format.ToString().ToLowerInvariant()}");
     }
 
-    protected (string, Stream) GetRotatedJpeg()
+    protected TestImage GetRotatedJpeg()
     {
         return GetImage("logo-wide-rotated.jpeg");
+    }
+
+    protected TestImage GetImage(string fileName)
+    {
+        static string GetMimeType(string fileName)
+        {
+            var extension = fileName.Split('.')[^1];
+
+            var mimeType = $"image/{extension}";
+
+            if (string.Equals(extension, "tga", StringComparison.OrdinalIgnoreCase))
+            {
+                mimeType = "image/x-tga";
+            }
+
+            return mimeType;
+        }
+
+        var filePath = Path.Combine("Images", fileName);
+        var fileType = GetMimeType(fileName);
+
+        return new TestImage(fileType, new FileStream(filePath, FileMode.Open));
+    }
+
+#pragma warning disable SA1313 // Parameter names should begin with lower-case letter
+    protected sealed record TestImage(string MimeType, Stream Stream) : IAsyncDisposable
+#pragma warning restore SA1313 // Parameter names should begin with lower-case letter
+    {
+        public long Length => Stream.Length;
+
+        public ValueTask DisposeAsync()
+        {
+            return Stream.DisposeAsync();
+        }
     }
 }
