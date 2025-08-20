@@ -11,10 +11,11 @@
     <PackageProjectUrl>https://github.com/squidex/squidex</PackageProjectUrl>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <Version>7.28.0</Version>
+    <Version>7.29.0</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
   </PropertyGroup> 
 </Project>
+
