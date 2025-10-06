@@ -10,7 +10,8 @@ using Squidex.Log;
 
 namespace Squidex.Hosting;
 
-public sealed class InitializerHost(ISemanticLog log, IEnumerable<IInitializable> systems) : SystemHost<IInitializable>(log, systems), IHostedService
+public sealed class InitializerHost(ISemanticLog log, IEnumerable<IInitializable> systems)
+    : SystemHost<IInitializable>(log, systems), IHostedService
 {
     public async Task StartAsync(
         CancellationToken cancellationToken)
@@ -31,9 +32,15 @@ public sealed class InitializerHost(ISemanticLog log, IEnumerable<IInitializable
 
         foreach (var (system, name) in Systems)
         {
-            await system.InitializeAsync(cancellationToken);
-
-            Log.LogInformation(w => w.WriteProperty("initializedSystem", name));
+            try
+            {
+                await system.InitializeAsync(cancellationToken);
+                Log.LogInformation(w => w.WriteProperty("initializedSystem", name));
+            }
+            catch (Exception ex) when (system.IsOptional)
+            {
+                Log.LogError(ex, w => w.WriteProperty("initializedSystem", name));
+            }
         }
     }
 

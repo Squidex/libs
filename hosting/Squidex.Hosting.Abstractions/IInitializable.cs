@@ -9,6 +9,8 @@ namespace Squidex.Hosting;
 
 public interface IInitializable : ISystem
 {
+    bool IsOptional => false;
+
     Task InitializeAsync(
         CancellationToken ct);
 

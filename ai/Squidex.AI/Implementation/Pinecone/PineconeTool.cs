@@ -27,6 +27,8 @@ public sealed class PineconeTool : IChatTool, IInitializable
 
     public ToolSpec Spec { get; }
 
+    public bool IsOptional => true;
+
     public PineconeTool(IEmbeddings embeddings, IOptions<PineconeOptions> options)
     {
         client = new PineconeClient(options.Value.ApiKey);
