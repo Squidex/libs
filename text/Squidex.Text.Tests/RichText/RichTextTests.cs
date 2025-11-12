@@ -481,4 +481,18 @@ Link Text",
 
         Assert.Equal("Para", actual);
     }
+
+    [Fact]
+    public void Should_render_custom_type()
+    {
+        var source = new Node
+        {
+            Type = "custom",
+            Text = "Paragraph1",
+        };
+
+        var actual = RenderUtils.RenderText(source);
+
+        Assert.Equal(string.Empty, actual);
+    }
 }

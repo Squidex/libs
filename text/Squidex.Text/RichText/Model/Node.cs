@@ -14,8 +14,7 @@ public sealed class Node : INode
     private int currentMark;
 
     [JsonPropertyName("type")]
-    [JsonConverter(typeof(JsonStringEnumConverter<NodeType>))]
-    public NodeType Type { get; set; }
+    public string Type { get; set; }
 
     [JsonPropertyName("text")]
     public string Text { get; set; }
@@ -34,7 +33,7 @@ public sealed class Node : INode
         currentMark = 0;
     }
 
-    public IMark? GetNextMark()
+    public IMark? GetNextMark(RichTextOptions options)
     {
         if (Marks == null || currentMark >= Marks.Length)
         {
@@ -44,7 +43,7 @@ public sealed class Node : INode
         return Marks[currentMark++];
     }
 
-    public void IterateContent<T>(T state, Action<INode, T, bool, bool> action)
+    public void IterateContent<T>(T state, RichTextOptions options, Action<INode, T, bool, bool> action)
     {
         if (Content == null)
         {

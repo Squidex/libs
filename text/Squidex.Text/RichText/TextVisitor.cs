@@ -10,15 +10,16 @@ using Squidex.Text.RichText.Model;
 
 namespace Squidex.Text.RichText;
 
-public sealed class TextVisitor(StringBuilder stringBuilder, int maxLength) : Visitor
+public sealed class TextVisitor(StringBuilder stringBuilder, int maxLength, RichTextOptions options) : Visitor(options)
 {
     private readonly StringBuilder stringBuilder = stringBuilder;
     private readonly int maxLength = maxLength;
-    private NodeType previousNodeType;
+    private string previousNodeType;
 
-    public static void Render(INode node, StringBuilder stringBuilder, int maxLength = int.MaxValue)
+    public static void Render(INode node, StringBuilder stringBuilder, int maxLength = int.MaxValue, RichTextOptions? options = null)
     {
-        new TextVisitor(stringBuilder, maxLength).VisitRoot(node);
+        options ??= RichTextOptions.Default;
+        new TextVisitor(stringBuilder, maxLength, options).VisitRoot(node);
     }
 
     protected override void Visit(INode node)

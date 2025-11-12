@@ -7,13 +7,17 @@
 
 namespace Squidex.Text.RichText.Model;
 
-public enum MarkType
+public static class MarkType
 {
-    Undefined,
-    Bold,
-    ClassName,
-    Code,
-    Italic,
-    Link,
-    Underline,
+    public const string Bold = "bold";
+
+    public const string Italic = "italic";
+
+    public const string Code = "code";
+
+    public const string Link = "link";
+
+    public const string Underline = "underline";
+
+    public const string ClassName = "className";
 }

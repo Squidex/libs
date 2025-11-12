@@ -6,7 +6,7 @@
 // ==========================================================================
 
 using System.Text.Json;
-using Squidex.RichText.Json;
+using Squidex.Text.RichText.Json;
 using Squidex.Text.RichText.Model;
 
 namespace Squidex.Text.RichText;
@@ -206,7 +206,7 @@ Paragraph2
         };
 
         var node = new JsonNode();
-        node.TryUse(source, false);
+        node.TryUse(source, false, RichTextOptions.Default);
 
         RenderUtils.AssertNode(node,
             markdown: @"

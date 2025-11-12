@@ -9,5 +9,5 @@ namespace Squidex.Text.RichText.Model;
 
 public interface IMark : IAttributed
 {
-    MarkType Type { get; }
+    string Type { get; }
 }

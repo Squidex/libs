@@ -31,25 +31,27 @@ public sealed class HtmlWriterVisitor : Visitor
     private readonly string indent;
     private bool hasBlockChildren;
 
-    private HtmlWriterVisitor(IWriter writer, string indent)
+    private HtmlWriterVisitor(IWriter writer, string indent, RichTextOptions options)
+        : base(options)
     {
         this.writer = writer;
         this.indent = indent;
     }
 
-    public static void Render(INode node, StringBuilder stringBuilder, HtmlWriterOptions options)
+    public static void Render(INode node, StringBuilder stringBuilder, HtmlWriterOptions htmlOptions, RichTextOptions? options = null)
     {
-        var newIndent = options.Indentation switch
+        var newIndent = htmlOptions.Indentation switch
         {
             0 => string.Empty,
             2 => Indent2,
             4 => Indent4,
-            _ => new string(' ', options.Indentation),
+            _ => new string(' ', htmlOptions.Indentation),
         };
 
-        IWriter newWriter = options.Indentation > 0 ? new IndentedWriter(stringBuilder) : new PlainWriter(stringBuilder);
+        IWriter newWriter = htmlOptions.Indentation > 0 ? new IndentedWriter(stringBuilder) : new PlainWriter(stringBuilder);
 
-        new HtmlWriterVisitor(newWriter, newIndent).VisitRoot(node);
+        options ??= RichTextOptions.Default;
+        new HtmlWriterVisitor(newWriter, newIndent, options).VisitRoot(node);
     }
 
     protected override void VisitImage(INode node, string? src, string? alt, string? title)

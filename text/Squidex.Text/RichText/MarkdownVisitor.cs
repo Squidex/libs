@@ -17,16 +17,18 @@ public sealed class MarkdownVisitor : Visitor
     private readonly IWriter writer;
     private int currentIndex;
 
-    private MarkdownVisitor(IWriter writer)
+    private MarkdownVisitor(IWriter writer, RichTextOptions options)
+        : base(options)
     {
         this.writer = writer;
     }
 
-    public static void Render(INode node, StringBuilder stringBuilder)
+    public static void Render(INode node, StringBuilder stringBuilder, RichTextOptions? options = null)
     {
         var newWriter = new IndentedWriter(stringBuilder);
 
-        new MarkdownVisitor(newWriter).VisitRoot(node);
+        options ??= RichTextOptions.Default;
+        new MarkdownVisitor(newWriter, options).VisitRoot(node);
     }
 
     protected override void VisitBlockquote(INode node)

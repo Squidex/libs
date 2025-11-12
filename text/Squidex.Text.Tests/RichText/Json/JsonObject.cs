@@ -5,7 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.RichText.Json;
+namespace Squidex.Text.RichText.Json;
 
 public class JsonObject : Dictionary<string, object>
 {

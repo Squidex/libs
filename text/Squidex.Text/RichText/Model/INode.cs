@@ -9,13 +9,13 @@ namespace Squidex.Text.RichText.Model;
 
 public interface INode : IAttributed
 {
-    NodeType Type { get; }
+    string Type { get; }
 
     string? Text { get; }
 
-    IMark? GetNextMark();
+    IMark? GetNextMark(RichTextOptions options);
 
-    void IterateContent<T>(T state, Action<INode, T, bool, bool> action);
+    void IterateContent<T>(T state, RichTextOptions options, Action<INode, T, bool, bool> action);
 
     public void Reset()
     {

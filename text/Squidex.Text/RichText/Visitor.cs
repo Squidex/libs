@@ -12,14 +12,16 @@ namespace Squidex.Text.RichText;
 public abstract class Visitor
 {
     private readonly Action visitInner;
+    private readonly RichTextOptions options;
     private INode currentNode;
 
     public bool IsLastInContainer { get; private set; }
 
     public bool IsFirstInContainer { get; private set; }
 
-    protected Visitor()
+    protected Visitor(RichTextOptions options)
     {
+        this.options = options;
         visitInner = VisitCurrentMarkOrNode;
     }
 
@@ -41,7 +43,7 @@ public abstract class Visitor
 
     private void VisitCurrentMarkOrNode()
     {
-        var mark = currentNode.GetNextMark();
+        var mark = currentNode.GetNextMark(options);
 
         if (mark != null)
         {
@@ -235,7 +237,7 @@ public abstract class Visitor
         var prevIsLastInContainer = IsLastInContainer;
         var prevIsFirstInContainer = IsFirstInContainer;
 
-        node.IterateContent((self: this, state, action), static (child, s, isFirst, isLast) =>
+        node.IterateContent((self: this, state, action), options, static (child, s, isFirst, isLast) =>
         {
             s.self.IsFirstInContainer = isFirst;
             s.self.IsLastInContainer = isLast;

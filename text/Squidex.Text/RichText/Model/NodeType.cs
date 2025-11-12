@@ -7,19 +7,29 @@
 
 namespace Squidex.Text.RichText.Model;
 
-public enum NodeType
+public static class NodeType
 {
-    Undefined,
-    Blockquote,
-    BulletList,
-    CodeBlock,
-    Doc,
-    HardBreak,
-    HorizontalRule,
-    Image,
-    ListItem,
-    OrderedList,
-    Paragraph,
-    Heading,
-    Text,
+    public const string Doc = "doc";
+
+    public const string Paragraph = "paragraph";
+
+    public const string Blockquote = "blockquote";
+
+    public const string HorizontalRule = "horizontalRule";
+
+    public const string Heading = "heading";
+
+    public const string CodeBlock = "codeBlock";
+
+    public const string Text = "text";
+
+    public const string Image = "image";
+
+    public const string BulletList = "bulletList";
+
+    public const string OrderedList = "orderedList";
+
+    public const string ListItem = "listItem";
+
+    public const string HardBreak = "hardBreak";
 }

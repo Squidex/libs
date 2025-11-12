@@ -7,15 +7,15 @@
 
 using Squidex.Text.RichText.Model;
 
-namespace Squidex.RichText.Json;
+namespace Squidex.Text.RichText.Json;
 
 internal sealed class JsonMark : IMark
 {
     private JsonObject? attrs;
 
-    public MarkType Type { get; private set; }
+    public string Type { get; private set; }
 
-    public bool TryUse(JsonObject source)
+    public bool TryUse(JsonObject source, RichTextOptions options)
     {
         attrs = null;
 
@@ -24,7 +24,7 @@ internal sealed class JsonMark : IMark
         {
             switch (key)
             {
-                case "type" when value.TryGetEnum<MarkType>(out var type):
+                case "type" when value is string type && options.MarkTypes.Contains(type):
                     Type = type;
                     break;
                 case "attrs" when value is JsonObject attrs:

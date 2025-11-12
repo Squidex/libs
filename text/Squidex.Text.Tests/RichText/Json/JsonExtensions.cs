@@ -5,17 +5,10 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-namespace Squidex.RichText.Json;
+namespace Squidex.Text.RichText.Json;
 
 internal static class JsonExtensions
 {
-    public static bool TryGetEnum<T>(this object value, out T enumValue) where T : struct
-    {
-        enumValue = default;
-
-        return value is string text && Enum.TryParse(text, true, out enumValue);
-    }
-
     public static int GetIntAttr(this JsonObject? attrs, string name, int defaultValue = 0)
     {
         if (attrs?.TryGetValue(name, out var value) == true && value is int attr)

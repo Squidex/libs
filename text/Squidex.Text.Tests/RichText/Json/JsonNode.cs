@@ -7,7 +7,7 @@
 
 using Squidex.Text.RichText.Model;
 
-namespace Squidex.RichText.Json;
+namespace Squidex.Text.RichText.Json;
 
 internal sealed class JsonNode : INode
 {
@@ -16,7 +16,7 @@ internal sealed class JsonNode : INode
 
     internal struct State
     {
-        public NodeType Type;
+        public string Type;
         public JsonArray? Marks;
         public JsonObject? Attrs;
         public JsonArray? Content;
@@ -24,7 +24,7 @@ internal sealed class JsonNode : INode
         public int MarkIndex;
     }
 
-    public NodeType Type
+    public string Type
     {
         get => currentState.Type;
     }
@@ -34,7 +34,7 @@ internal sealed class JsonNode : INode
         get => currentState.Text;
     }
 
-    public bool TryUse(JsonObject source, bool recursive)
+    public bool TryUse(JsonObject source, bool recursive, RichTextOptions options)
     {
         State state = default;
 
@@ -43,7 +43,7 @@ internal sealed class JsonNode : INode
         {
             switch (key)
             {
-                case "type" when value.TryGetEnum<NodeType>(out var type):
+                case "type" when value is string type && options.NodeTypes.Contains(type):
                     state.Type = type;
                     break;
                 case "attrs" when value is JsonObject attrs:
@@ -72,7 +72,7 @@ internal sealed class JsonNode : INode
             {
                 foreach (var content in state.Content)
                 {
-                    isValid &= TryUse((JsonObject)content, recursive);
+                    isValid &= TryUse((JsonObject)content, recursive, options);
                 }
             }
 
@@ -80,7 +80,7 @@ internal sealed class JsonNode : INode
             {
                 foreach (var markObj in state.Marks)
                 {
-                    isValid &= mark.TryUse((JsonObject)markObj);
+                    isValid &= mark.TryUse((JsonObject)markObj, options);
                 }
             }
         }
@@ -98,18 +98,18 @@ internal sealed class JsonNode : INode
         return currentState.Attrs.GetStringAttr(name, defaultValue);
     }
 
-    public IMark? GetNextMark()
+    public IMark? GetNextMark(RichTextOptions options)
     {
         if (currentState.Marks == null || currentState.MarkIndex >= currentState.Marks.Count)
         {
             return null;
         }
 
-        mark.TryUse((JsonObject)currentState.Marks[currentState.MarkIndex++]);
+        mark.TryUse((JsonObject)currentState.Marks[currentState.MarkIndex++], options);
         return mark;
     }
 
-    public void IterateContent<T>(T state, Action<INode, T, bool, bool> action)
+    public void IterateContent<T>(T state, RichTextOptions options, Action<INode, T, bool, bool> action)
     {
         var prevState = currentState;
 
@@ -124,7 +124,7 @@ internal sealed class JsonNode : INode
             var isFirst = i == 0;
             var isLast = i == prevState.Content.Count - 1;
 
-            TryUse((JsonObject)item, false);
+            TryUse((JsonObject)item, false, options);
             action(this, state, isFirst, isLast);
             i++;
         }

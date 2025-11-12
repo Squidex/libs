@@ -12,8 +12,7 @@ namespace Squidex.Text.RichText.Model;
 public class Mark : IMark
 {
     [JsonPropertyName("type")]
-    [JsonConverter(typeof(JsonStringEnumConverter<MarkType>))]
-    public MarkType Type { get; set; }
+    public string Type { get; set; }
 
     [JsonPropertyName("attrs")]
     public Attributes? Attributes { get; set; }
