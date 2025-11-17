@@ -43,7 +43,7 @@ internal sealed class JsonNode : INode
         {
             switch (key)
             {
-                case "type" when value is string type && options.NodeTypes.Contains(type):
+                case "type" when value is string type && options.IsSupportedNodeType(type):
                     state.Type = type;
                     break;
                 case "attrs" when value is JsonObject attrs:

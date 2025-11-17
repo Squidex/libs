@@ -24,7 +24,7 @@ internal sealed class JsonMark : IMark
         {
             switch (key)
             {
-                case "type" when value is string type && options.MarkTypes.Contains(type):
+                case "type" when value is string type && options.IsSupportedMarkType(type):
                     Type = type;
                     break;
                 case "attrs" when value is JsonObject attrs:

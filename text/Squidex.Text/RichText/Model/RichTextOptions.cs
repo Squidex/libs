@@ -7,11 +7,21 @@
 
 namespace Squidex.Text.RichText.Model;
 
-public sealed class RichTextOptions
+public class RichTextOptions
 {
-    required public HashSet<string> NodeTypes { get; init; }
+    required public HashSet<string> NodeTypes { get; init; } = [];
 
-    required public HashSet<string> MarkTypes { get; init; }
+    required public HashSet<string> MarkTypes { get; init; } = [];
+
+    public virtual bool IsSupportedNodeType(string type)
+    {
+        return NodeTypes.Contains(type, StringComparer.OrdinalIgnoreCase);
+    }
+
+    public virtual bool IsSupportedMarkType(string type)
+    {
+        return MarkTypes.Contains(type, StringComparer.OrdinalIgnoreCase);
+    }
 
     public static readonly RichTextOptions Default = new RichTextOptions
     {
