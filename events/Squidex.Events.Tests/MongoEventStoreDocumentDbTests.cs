@@ -5,12 +5,12 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Squidex.Hosting;
-using System.Security.Cryptography.X509Certificates;
 using TestHelpers;
 
 #pragma warning disable MA0048 // File name must match type name

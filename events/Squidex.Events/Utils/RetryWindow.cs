@@ -9,7 +9,7 @@ namespace Squidex.Events.Utils;
 
 public sealed class RetryWindow(TimeSpan windowDuration, int windowSize, TimeProvider? clock = null)
 {
-    private readonly int windowSize = windowSize + 1;
+    private readonly int windowToKeep = windowSize + 1;
     private readonly Queue<DateTimeOffset> retries = new Queue<DateTimeOffset>();
     private readonly TimeProvider clock = clock ?? TimeProvider.System;
 
@@ -22,13 +22,29 @@ public sealed class RetryWindow(TimeSpan windowDuration, int windowSize, TimePro
     {
         var now = clock.GetUtcNow();
 
-        retries.Enqueue(now);
+        if (windowSize <= 0)
+        {
+            // First attempt is always allowed
+            if (retries.Count == 0)
+            {
+                retries.Enqueue(now);
+                return true;
+            }
 
-        while (retries.Count > windowSize)
+            var last = retries.Dequeue();
+            retries.Enqueue(now);
+            return (now - last) > windowDuration;
+        }
+
+        retries.Enqueue(now);
+        while (retries.Count > windowToKeep)
         {
             retries.Dequeue();
         }
 
-        return retries.Count < windowSize || (retries.Count > 0 && (now - retries.Peek()) > windowDuration);
+        // Allow retry if:
+        // 1. Haven't reached the window size limit yet, OR
+        // 2. The oldest retry in the queue is older than windowDuration (window has "expired")
+        return retries.Count < windowToKeep || (retries.Count > 0 && (now - retries.Peek()) > windowDuration);
     }
 }
