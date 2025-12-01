@@ -16,7 +16,7 @@ namespace Squidex.Events.Mongo;
 
 internal record struct ParsedStreamPosition(BsonTimestamp Timestamp, long GlobalPosition, long CommitOffset, long CommitSize)
 {
-    public static readonly ParsedStreamPosition Start = new ParsedStreamPosition(new BsonTimestamp(0, 0), 0, -1, -1);
+    public static readonly ParsedStreamPosition Start = new ParsedStreamPosition(new BsonTimestamp(1, 0), 0, -1, -1);
 
     public readonly bool IsEndOfCommit => CommitOffset == CommitSize - 1;
 

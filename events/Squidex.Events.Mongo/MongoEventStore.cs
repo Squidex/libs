@@ -70,7 +70,7 @@ public partial class MongoEventStore(
         var clusterVersion = versionInfo.Major;
         var clusteredAsReplica = database.Client.Cluster.Description.Type == ClusterType.ReplicaSet;
 
-        CanUseChangeStreams = clusteredAsReplica && clusterVersion >= 4;
+        CanUseChangeStreams = (clusteredAsReplica && clusterVersion >= 4) || options.Value.UseChangeStreams;
 
         BsonSerializer.TryRegisterSerializer(new MongoHeaderValueSerializer());
     }

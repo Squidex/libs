@@ -17,6 +17,8 @@ public sealed class MongoEventStoreOptions : IValidatableOptions
 
     public string PositionCollectionName { get; set; } = "Event2Position";
 
+    public bool UseChangeStreams { get; set; }
+
     public IEnumerable<ConfigurationError> Validate()
     {
         if (PollingInterval < TimeSpan.Zero || PollingInterval > TimeSpan.FromMinutes(10))

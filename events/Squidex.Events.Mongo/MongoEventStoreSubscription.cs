@@ -81,7 +81,7 @@ internal sealed class MongoEventStoreSubscription : IEventSubscription
     private async Task QueryCurrentAsync(StreamFilter streamFilter, ParsedStreamPosition lastPosition)
     {
         var watchStartInSeconds =
-            lastPosition.Timestamp.Timestamp > 0 ?
+            lastPosition.Timestamp.Timestamp > ParsedStreamPosition.Start.Timestamp.Timestamp ?
             lastPosition.Timestamp.Timestamp :
             (int)Clock.GetUtcNow().ToUnixTimeSeconds();
 
