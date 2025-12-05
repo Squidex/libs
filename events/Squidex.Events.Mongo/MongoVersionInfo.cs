@@ -16,7 +16,7 @@ namespace Squidex.Events.Mongo;
 
 public record struct MongoVersionInfo(MongoDerivate Dervivate, int Major)
 {
-    public static async Task<MongoVersionInfo> DetectAsync(IMongoDatabase database,
+    public static async Task<MongoVersionInfo> DetectAsync(IMongoDatabase database, MongoDerivate derivate,
         CancellationToken ct = default)
     {
         var command =

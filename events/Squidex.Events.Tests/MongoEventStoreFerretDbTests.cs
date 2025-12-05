@@ -6,6 +6,7 @@
 // ==========================================================================
 
 using Microsoft.Extensions.DependencyInjection;
+using Squidex.Events.Mongo;
 using TestHelpers;
 using TestHelpers.MongoDb;
 
@@ -20,6 +21,7 @@ public sealed class MongoEventStoreFerretDbFixture() : MongoFerretFixture("event
         services.AddMongoEventStore(TestUtils.Configuration, options =>
         {
             options.PollingInterval = TimeSpan.FromSeconds(0.1);
+            options.Derivate = MongoDerivate.FerretDB;
         });
     }
 }

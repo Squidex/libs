@@ -52,6 +52,7 @@ public sealed class MongoEventStoreDocumentDbFixture : IAsyncLifetime
             {
                 options.PollingInterval = TimeSpan.FromSeconds(0.1);
                 options.UseChangeStreams = true;
+                options.Derivate = Mongo.MongoDerivate.DocumentDB;
             }).Services;
 
         Services = serviceCollection.BuildServiceProvider();

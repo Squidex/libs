@@ -17,6 +17,8 @@ public sealed class MongoEventStoreOptions : IValidatableOptions
 
     public string PositionCollectionName { get; set; } = "Event2Position";
 
+    public MongoDerivate Derivate { get; set; }
+
     public bool UseChangeStreams { get; set; }
 
     public IEnumerable<ConfigurationError> Validate()
