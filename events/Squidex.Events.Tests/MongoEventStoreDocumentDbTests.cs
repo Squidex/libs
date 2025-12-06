@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using Squidex.Events.Mongo;
 using Squidex.Hosting;
 using TestHelpers;
 
@@ -52,7 +53,7 @@ public sealed class MongoEventStoreDocumentDbFixture : IAsyncLifetime
             {
                 options.PollingInterval = TimeSpan.FromSeconds(0.1);
                 options.UseChangeStreams = true;
-                options.Derivate = Mongo.MongoDerivate.DocumentDB;
+                options.Derivate = MongoDerivate.DocumentDB;
             }).Services;
 
         Services = serviceCollection.BuildServiceProvider();

@@ -49,7 +49,7 @@ public partial class MongoEventStore(
     public async Task InitializeAsync(
         CancellationToken ct)
     {
-        var versionInfo = await MongoVersionInfo.DetectAsync(database, ct);
+        var versionInfo = await MongoVersionInfo.DetectAsync(database, options.Value.Derivate, ct);
 
         queryStrategy = versionInfo.Dervivate == MongoDerivate.MongoDB ?
             new QueryByTimestamp() :

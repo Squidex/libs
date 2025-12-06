@@ -32,26 +32,6 @@ public record struct MongoVersionInfo(MongoDerivate Dervivate, int Major)
 
         int.TryParse(versionMajor, NumberStyles.Integer, CultureInfo.InvariantCulture, out int version);
 
-        var serverString = document.ToString().ToLowerInvariant();
-        bool Contains(string expected)
-        {
-            return serverString.Contains(expected, StringComparison.OrdinalIgnoreCase);
-        }
-
-        var derivate = MongoDerivate.MongoDB;
-        if (Contains("ferret"))
-        {
-            derivate = MongoDerivate.FerretDB;
-        }
-        else if (Contains("cosmos"))
-        {
-            derivate = MongoDerivate.CosmosDB;
-        }
-        else if (Contains("amazon") || Contains("docdb") || Contains("documentdb"))
-        {
-            derivate = MongoDerivate.DocumentDB;
-        }
-
         return new MongoVersionInfo(derivate, version);
     }
 }
