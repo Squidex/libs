@@ -15,7 +15,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 public static class EventsServiceExtensions
 {
     public static EventStoreBuilder AddMongoEventStore(this IServiceCollection services, IConfiguration config, Action<MongoEventStoreOptions>? configure = null,
-        string configPath = "eventStore:sql")
+        string configPath = "eventStore:mongoDb")
     {
         services.Configure(config, configPath, configure);
 
