@@ -41,4 +41,4 @@ jobs:
 
     - name: publish
       run: |
-        dotnet nuget push **/*.nupkg --source 'https://api.nuget.org/v3/index.json' --skip-duplicate -k ${{ secrets.nuget }}
+        dotnet nuget push **/Squidex*.nupkg --source 'https://api.nuget.org/v3/index.json' --skip-duplicate -k ${{ secrets.nuget }}
