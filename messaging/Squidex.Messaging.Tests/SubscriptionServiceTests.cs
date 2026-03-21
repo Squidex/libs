@@ -5,7 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System.Reactive.Linq;
 using Squidex.Messaging.Implementation;
 using Squidex.Messaging.Internal;
 using Squidex.Messaging.Subscriptions;

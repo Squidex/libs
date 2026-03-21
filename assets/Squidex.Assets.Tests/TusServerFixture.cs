@@ -26,53 +26,57 @@ public class TusServerFixture
 
     public TusServerFixture()
     {
-        TestServer = new TestServer(new WebHostBuilder()
-            .ConfigureLogging((context, builder) =>
+        var builder = WebApplication.CreateBuilder();
+        builder.Logging.ClearProviders();
+        builder.Logging.ConfigureSemanticLog(builder.Configuration);
+
+        builder.Services.AddSingleton(() =>
+        {
+            var mongoClient = new MongoClient("mongodb://localhost");
+            var mongoDatabase = mongoClient.GetDatabase("TusTest");
+
+            return mongoDatabase;
+        });
+        builder.Services.AddInitializer();
+        builder.Services.AddMongoAssetStore(c =>
+        {
+            var mongoDatabase = c.GetRequiredService<IMongoDatabase>();
+
+            var gridFSBucket = new GridFSBucket<string>(mongoDatabase, new GridFSBucketOptions
             {
-                builder.ClearProviders();
-                builder.ConfigureSemanticLog(context.Configuration);
-            })
-            .ConfigureServices(services =>
+                BucketName = "fs",
+            });
+
+            return gridFSBucket;
+        });
+        builder.Services.AddMongoAssetKeyValueStore();
+        builder.Services.AddAssetTus();
+        builder.Services.AddRouting();
+        builder.Services.AddMvc();
+        builder.WebHost.UseTestServer();
+
+        var app = builder.Build();
+        app.UseTus(httpContext => new DefaultTusConfiguration
+        {
+            Store = httpContext.RequestServices.GetRequiredService<ITusStore>(),
+            Events = new Events
             {
-                var mongoClient = new MongoClient("mongodb://localhost");
-                var mongoDatabase = mongoClient.GetDatabase("TusTest");
-
-                var gridFSBucket = new GridFSBucket<string>(mongoDatabase, new GridFSBucketOptions
+                OnFileCompleteAsync = async eventContext =>
                 {
-                    BucketName = "fs",
-                });
+                    var file = (AssetTusFile)(await eventContext.GetFileAsync());
 
-                services.AddSingleton(mongoDatabase);
-                services.AddInitializer();
-                services.AddMongoAssetStore(c => gridFSBucket);
-                services.AddMongoAssetKeyValueStore();
-                services.AddAssetTus();
-                services.AddRouting();
-                services.AddMvc();
-            })
-            .Configure(app =>
-            {
-                app.UseTus(httpContext => new DefaultTusConfiguration
-                {
-                    Store = httpContext.RequestServices.GetRequiredService<ITusStore>(),
-                    Events = new Events
-                    {
-                        OnFileCompleteAsync = async eventContext =>
-                        {
-                            var file = (AssetTusFile)(await eventContext.GetFileAsync());
+                    Files.Add(file);
+                },
+            },
+            UrlPath = "/files/middleware",
+        });
 
-                            Files.Add(file);
-                        },
-                    },
-                    UrlPath = "/files/middleware",
-                });
+        app.UseRouting();
+        app.MapControllers();
 
-                app.UseRouting();
-                app.UseEndpoints(builder =>
-                {
-                    builder.MapControllers();
-                });
-            }));
+        app.Start();
+
+        TestServer = app.GetTestServer();
 
         Client = TestServer.CreateClient();
     }

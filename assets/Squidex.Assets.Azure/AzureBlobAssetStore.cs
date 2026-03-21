@@ -184,7 +184,7 @@ public class AzureBlobAssetStore(IOptions<AzureBlobAssetOptions> options) : IAss
     {
         var name = GetFileName(prefix, nameof(prefix));
 
-        var items = blobContainer.GetBlobsAsync(prefix: name, cancellationToken: ct);
+        var items = blobContainer.GetBlobsAsync(BlobTraits.All, BlobStates.All, prefix: name, cancellationToken: ct);
 
         await foreach (var item in items.WithCancellation(ct))
         {

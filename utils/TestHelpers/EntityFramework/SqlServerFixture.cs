@@ -16,8 +16,7 @@ namespace TestHelpers.EntityFramework;
 public abstract class SqlServerFixture<TContext>(string? reuseId = null) : IAsyncLifetime where TContext : DbContext
 {
     public MsSqlContainer SqlServer { get; } =
-        new MsSqlBuilder()
-            .WithImage("vibs2006/sql_server_fts")
+        new MsSqlBuilder("vibs2006/sql_server_fts")
             .WithReuse(true)
             .WithLabel("reuse-id", reuseId)
             .Build();

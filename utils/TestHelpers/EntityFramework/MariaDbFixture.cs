@@ -15,7 +15,7 @@ namespace TestHelpers.EntityFramework;
 public abstract class MariaDbFixture<TContext>(string? reuseId = null) : IAsyncLifetime where TContext : DbContext
 {
     public MariaDbContainer MariaDb { get; } =
-        new MariaDbBuilder()
+        new MariaDbBuilder("mariadb:10.10")
             .WithReuse(true)
             .WithLabel("reuse-id", reuseId)
             .WithCommand("--log-bin-trust-function-creators=1", "--local-infile=1")

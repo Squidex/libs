@@ -15,8 +15,7 @@ namespace TestHelpers.EntityFramework;
 public abstract class PostgresFixture<TContext>(string? reuseId = null) : IAsyncLifetime where TContext : DbContext
 {
     public PostgreSqlContainer PostgreSql { get; } =
-        new PostgreSqlBuilder()
-            .WithImage("postgis/postgis")
+        new PostgreSqlBuilder("postgis/postgis")
             .WithReuse(true)
             .WithLabel("reuse-id", reuseId)
             .Build();

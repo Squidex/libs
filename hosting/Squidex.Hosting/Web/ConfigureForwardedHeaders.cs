@@ -26,8 +26,7 @@ public sealed class ConfigureForwardedHeaders(IOptions<UrlOptions> urlOptions, I
         options.ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
         options.ForwardLimit = null;
         options.RequireHeaderSymmetry = false;
-
-        options.KnownNetworks.Clear();
+        options.KnownIPNetworks.Clear();
         options.KnownProxies.Clear();
 
         if (urlOptions.KnownProxies != null)

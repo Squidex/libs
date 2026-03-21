@@ -6,19 +6,20 @@
 // ==========================================================================
 
 using Betalgo.Ranul.OpenAI;
+using Betalgo.Ranul.OpenAI.Contracts.Enums.Image;
 using Betalgo.Ranul.OpenAI.ObjectModels;
 
 namespace Squidex.AI.Implementation.OpenAI;
 
 public sealed class DallEOptions : OpenAIOptions
 {
-    public string? Model { get; set; } = Models.Dall_e_3;
+    public string Model { get; set; } = Models.Dall_e_3;
 
-    public string? Style { get; set; }
+    public string Style { get; set; } = ImageStyle.Natural;
 
-    public string? Size { get; set; }
+    public string Size { get; set; } = ImageSize.Size1792x1024;
 
-    public string? Quality { get; set; }
+    public string Quality { get; set; } = ImageQuality.Medium;
 
     public string DefaultResult { get; set; } = "{ \"url\": \"{url}\" }";
 

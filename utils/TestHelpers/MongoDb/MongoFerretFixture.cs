@@ -17,14 +17,13 @@ namespace TestHelpers.MongoDb;
 public abstract class MongoFerretFixture(string reuseId = "libs-mongodb") : IAsyncLifetime
 {
     public IContainer MongoDb { get; } =
-        new ContainerBuilder()
+        new ContainerBuilder("ghcr.io/ferretdb/ferretdb-eval:2.4")
             .WithReuse(Debugger.IsAttached)
             .WithLabel("reuse-id", reuseId)
-            .WithImage("ghcr.io/ferretdb/ferretdb-eval:2.4")
             .WithPortBinding(27017, true)
             .WithEnvironment("POSTGRES_USER", "username")
             .WithEnvironment("POSTGRES_PASSWORD", "password")
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(27017, o => o.WithTimeout(TimeSpan.FromSeconds(60))))
+            .WithWaitStrategy(Wait.ForUnixContainer().UntilExternalTcpPortIsAvailable(27017, o => o.WithTimeout(TimeSpan.FromSeconds(60))))
             .Build();
 
     public IServiceProvider Services { get; private set; }

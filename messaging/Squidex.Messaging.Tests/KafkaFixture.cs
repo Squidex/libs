@@ -15,7 +15,7 @@ namespace Squidex.Messaging;
 public class KafkaFixture : IAsyncLifetime
 {
     public KafkaContainer Kafka { get; } =
-        new KafkaBuilder()
+        new KafkaBuilder("confluentinc/cp-kafka:7.5.12")
             .WithReuse(Debugger.IsAttached)
             .WithLabel("reuse-id", "messaging-kafka")
             .Build();

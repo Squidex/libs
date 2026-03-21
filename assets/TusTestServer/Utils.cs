@@ -16,7 +16,7 @@ namespace TusTestServer;
 
 public static class Utils
 {
-    public static void UseMyTus<T>(this WebApplication app, string path) where T : IAssetStore
+    public static void UseMyTus<T>(this IApplicationBuilder app, string path) where T : IAssetStore
     {
         app.UseTus(httpContext =>
         {

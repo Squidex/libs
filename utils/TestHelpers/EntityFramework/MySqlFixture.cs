@@ -15,7 +15,7 @@ namespace TestHelpers.EntityFramework;
 public abstract class MySqlFixture<TContext>(string? reuseId = null) : IAsyncLifetime where TContext : DbContext
 {
     public MySqlContainer Mysql { get; } =
-        new MySqlBuilder()
+        new MySqlBuilder("mysql:8.0")
             .WithReuse(true)
             .WithLabel("reuse-id", reuseId)
             .WithCommand("--log-bin-trust-function-creators=1", "--local-infile=1")

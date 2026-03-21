@@ -58,7 +58,7 @@ public sealed class BulkInserter : IDbFlowsBulkInserter
             null!,
             new OnConflictOptions<T>
             {
-                Update = e => e,
+                Update = (lhs, rhs) => lhs,
             },
             ct);
     }

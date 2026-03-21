@@ -16,7 +16,7 @@ namespace TestHelpers.MongoDb;
 public abstract class MongoReplicaSetFixture(string reuseId = "libs-mongodb") : IAsyncLifetime
 {
     public MongoDbContainer MongoDb { get; } =
-        new MongoDbBuilder()
+        new MongoDbBuilder("mongo:latest")
             .WithReuse(Debugger.IsAttached)
             .WithLabel("reuse-id", reuseId)
             .WithReplicaSet()

@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using Betalgo.Ranul.OpenAI.Contracts.Requests.Image;
 using Betalgo.Ranul.OpenAI.Managers;
 using Betalgo.Ranul.OpenAI.ObjectModels.RequestModels;
 using Microsoft.Extensions.Options;
@@ -78,7 +79,7 @@ public sealed class DallETool(
             throw new ChatException("Missing argument 'query'.");
         }
 
-        var request = new ImageCreateRequest(queryArg.ToString())
+        var request = new CreateImageRequest(queryArg.ToString())
         {
             Model = options.Model,
             Size = options.Size,
@@ -98,9 +99,9 @@ public sealed class DallETool(
             throw new ChatException($"Request failed with unknown error. HTTP {response.HttpStatusCode}.");
         }
 
-        var url = response.Results[0].Url;
+        var url = response.Data[0].Url;
 
-        if (options.DownloadImage)
+        if (options.DownloadImage && !string.IsNullOrWhiteSpace(url))
         {
             url = await DownloadImageAsync(url, null, ct);
         }

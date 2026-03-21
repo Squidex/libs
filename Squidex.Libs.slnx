@@ -1,0 +1,68 @@
+<Solution>
+  <Folder Name="/ai/">
+    <Project Path="ai/Squidex.AI.EntityFramework/Squidex.AI.EntityFramework.csproj" />
+    <Project Path="ai/Squidex.AI.Mongo/Squidex.AI.Mongo.csproj" />
+    <Project Path="ai/Squidex.AI.Tests/Squidex.AI.Tests.csproj" />
+    <Project Path="ai/Squidex.AI/Squidex.AI.csproj" />
+  </Folder>
+  <Folder Name="/assets/">
+    <Project Path="assets/Benchmarks/Benchmarks.csproj" />
+    <Project Path="assets/Squidex.Assets.Azure/Squidex.Assets.Azure.csproj" />
+    <Project Path="assets/Squidex.Assets.EntityFramework/Squidex.Assets.EntityFramework.csproj" />
+    <Project Path="assets/Squidex.Assets.FTP/Squidex.Assets.FTP.csproj" />
+    <Project Path="assets/Squidex.Assets.GoogleCloud/Squidex.Assets.GoogleCloud.csproj" />
+    <Project Path="assets/Squidex.Assets.ImageMagick/Squidex.Assets.ImageMagick.csproj" />
+    <Project Path="assets/Squidex.Assets.ImageSharp/Squidex.Assets.ImageSharp.csproj" />
+    <Project Path="assets/Squidex.Assets.Mongo/Squidex.Assets.Mongo.csproj" />
+    <Project Path="assets/Squidex.Assets.ResizeService/Squidex.Assets.ResizeService.csproj" />
+    <Project Path="assets/Squidex.Assets.S3/Squidex.Assets.S3.csproj" />
+    <Project Path="assets/Squidex.Assets.Tests/Squidex.Assets.Tests.csproj" />
+    <Project Path="assets/Squidex.Assets.TusAdapter/Squidex.Assets.TusAdapter.csproj" />
+    <Project Path="assets/Squidex.Assets.TusClient/Squidex.Assets.TusClient.csproj" />
+    <Project Path="assets/Squidex.Assets/Squidex.Assets.csproj" />
+    <Project Path="assets/TusTestServer/TusTestServer.csproj" />
+  </Folder>
+  <Folder Name="/caching/">
+    <Project Path="caching/Squidex.Caching.Tests/Squidex.Caching.Tests.csproj" />
+    <Project Path="caching/Squidex.Caching/Squidex.Caching.csproj" />
+  </Folder>
+  <Folder Name="/events/">
+    <Project Path="events/Squidex.Events.EntityFramework/Squidex.Events.EntityFramework.csproj" />
+    <Project Path="events/Squidex.Events.Mongo/Squidex.Events.Mongo.csproj" />
+    <Project Path="events/Squidex.Events.Tests/Squidex.Events.Tests.csproj" />
+    <Project Path="events/Squidex.Events/Squidex.Events.csproj" />
+  </Folder>
+  <Folder Name="/flows/">
+    <Project Path="flows/Squidex.Flows.EntityFramework/Squidex.Flows.EntityFramework.csproj" />
+    <Project Path="flows/Squidex.Flows.Mongo/Squidex.Flows.Mongo.csproj" />
+    <Project Path="flows/Squidex.Flows.Tests/Squidex.Flows.Tests.csproj" />
+    <Project Path="flows/Squidex.Flows/Squidex.Flows.csproj" />
+  </Folder>
+  <Folder Name="/hosting/">
+    <Project Path="hosting/Squidex.Hosting.Abstractions/Squidex.Hosting.Abstractions.csproj" />
+    <Project Path="hosting/Squidex.Hosting.TestRunner/Squidex.Hosting.TestRunner.csproj" />
+    <Project Path="hosting/Squidex.Hosting.Tests/Squidex.Hosting.Tests.csproj" />
+    <Project Path="hosting/Squidex.Hosting/Squidex.Hosting.csproj" />
+  </Folder>
+  <Folder Name="/log/">
+    <Project Path="log/Squidex.Log.Tests/Squidex.Log.Tests.csproj" />
+    <Project Path="log/Squidex.Log/Squidex.Log.csproj" />
+  </Folder>
+  <Folder Name="/messaging/">
+    <Project Path="messaging/Squidex.Messaging.All/Squidex.Messaging.All.csproj" />
+    <Project Path="messaging/Squidex.Messaging.EntityFramework/Squidex.Messaging.EntityFramework.csproj" />
+    <Project Path="messaging/Squidex.Messaging.GoogleCloud/Squidex.Messaging.GoogleCloud.csproj" />
+    <Project Path="messaging/Squidex.Messaging.Kafka/Squidex.Messaging.Kafka.csproj" />
+    <Project Path="messaging/Squidex.Messaging.Mongo/Squidex.Messaging.Mongo.csproj" />
+    <Project Path="messaging/Squidex.Messaging.RabbitMq/Squidex.Messaging.RabbitMq.csproj" />
+    <Project Path="messaging/Squidex.Messaging.Redis/Squidex.Messaging.Redis.csproj" />
+    <Project Path="messaging/Squidex.Messaging.Subscriptions/Squidex.Messaging.Subscriptions.csproj" />
+    <Project Path="messaging/Squidex.Messaging.Tests/Squidex.Messaging.Tests.csproj" />
+    <Project Path="messaging/Squidex.Messaging/Squidex.Messaging.csproj" />
+  </Folder>
+  <Folder Name="/text/">
+    <Project Path="text/Squidex.Text.Tests/Squidex.Text.Tests.csproj" />
+    <Project Path="text/Squidex.Text/Squidex.Text.csproj" />
+  </Folder>
+  <Project Path="utils/TestHelpers/TestHelpers.csproj" />
+</Solution>

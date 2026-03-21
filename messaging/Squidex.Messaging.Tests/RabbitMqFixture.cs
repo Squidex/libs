@@ -13,7 +13,7 @@ namespace Squidex.Messaging;
 public class RabbitMqFixture : IAsyncLifetime
 {
     public RabbitMqContainer RabbitMq { get; } =
-        new RabbitMqBuilder()
+        new RabbitMqBuilder("rabbitmq:3.11")
             .WithReuse(Debugger.IsAttached)
             .WithLabel("reuse-id", "messaging-rabbit")
             .Build();
