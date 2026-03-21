@@ -118,11 +118,8 @@ public sealed class DefaultFlowExecutor<TContext>(
 #pragma warning disable MA0015 // Specify the parameter name in ArgumentException
         ArgumentNullException.ThrowIfNull(request.Definition);
         ArgumentNullException.ThrowIfNull(request.Context);
-        ArgumentNullException.ThrowIfNull(request.ScheduleKey);
         ArgumentException.ThrowIfNullOrWhiteSpace(request.OwnerId);
         ArgumentException.ThrowIfNullOrWhiteSpace(request.DefinitionId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(request.Description);
-        ArgumentException.ThrowIfNullOrWhiteSpace(request.ScheduleKey);
 #pragma warning restore MA0015 // Specify the parameter name in ArgumentException
 
         if (request.Definition.Steps.Count == 0)
