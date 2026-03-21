@@ -15,6 +15,7 @@ public sealed class MongoEventCommit
     [BsonId]
     [BsonElement]
     [BsonRepresentation(BsonType.String)]
+    [BsonGuidRepresentation(GuidRepresentation.CSharpLegacy)]
     public Guid Id { get; set; }
 
     [BsonRequired]

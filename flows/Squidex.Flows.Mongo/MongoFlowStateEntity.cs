@@ -13,6 +13,7 @@ namespace Squidex.Flows.Mongo;
 public sealed class MongoFlowStateEntity
 {
     [BsonRepresentation(BsonType.String)]
+    [BsonGuidRepresentation(GuidRepresentation.CSharpLegacy)]
     public Guid Id { get; set; }
 
     [BsonElement("o")]

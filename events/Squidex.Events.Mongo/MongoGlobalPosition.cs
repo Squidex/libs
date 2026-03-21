@@ -5,6 +5,9 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+
 namespace Squidex.Events.Mongo;
 
 internal sealed class MongoGlobalPosition
@@ -15,5 +18,7 @@ internal sealed class MongoGlobalPosition
 
     public DateTime? LockTaken { get; set; }
 
+    [BsonRepresentation(BsonType.Binary)]
+    [BsonGuidRepresentation(GuidRepresentation.CSharpLegacy)]
     public Guid LockOwner { get; set; }
 }
