@@ -21,7 +21,7 @@
     </PackageReference>
     <PackageReference Include="FakeItEasy" Version="9.0.1" />
     <PackageReference Include="FluentAssertions" Version="8.9.0" />
-    <PackageReference Include="Meziantou.Analyzer" Version="3.0.25">
+    <PackageReference Include="Meziantou.Analyzer" Version="3.0.26">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

@@ -12,8 +12,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FluentFTP" Version="53.0.2" />
-    <PackageReference Include="Meziantou.Analyzer" Version="3.0.25">
+    <PackageReference Include="FluentFTP" Version="54.0.2" />
+    <PackageReference Include="Meziantou.Analyzer" Version="3.0.26">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

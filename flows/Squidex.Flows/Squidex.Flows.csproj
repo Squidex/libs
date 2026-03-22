@@ -13,7 +13,7 @@
   
   <ItemGroup>
     <PackageReference Include="Cronos" Version="0.11.1" />
-    <PackageReference Include="Meziantou.Analyzer" Version="3.0.25">
+    <PackageReference Include="Meziantou.Analyzer" Version="3.0.26">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

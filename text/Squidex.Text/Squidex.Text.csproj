@@ -14,7 +14,7 @@
   <ItemGroup>
     <PackageReference Include="Google.Cloud.Translate.V3" Version="3.10.0" />
     <PackageReference Include="HtmlPerformanceKit" Version="1.0.0" />
-    <PackageReference Include="Meziantou.Analyzer" Version="3.0.25">
+    <PackageReference Include="Meziantou.Analyzer" Version="3.0.26">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
