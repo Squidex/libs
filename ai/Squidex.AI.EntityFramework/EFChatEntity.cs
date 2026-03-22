@@ -7,7 +7,7 @@
 
 using System.ComponentModel.DataAnnotations;
 
-namespace Squidex.AI.Mongo;
+namespace Squidex.AI.EntityFramework;
 
 public sealed class EFChatEntity
 {

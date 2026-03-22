@@ -12,7 +12,7 @@ namespace Squidex.Log;
 public sealed class FileChannel : IDisposable, ILogChannel
 {
     private readonly FileLogProcessor processor;
-    private readonly object lockObject = new object();
+    private readonly Lock lockObject = new Lock();
     private volatile bool isInitialized;
 
     public FileChannel(string path)

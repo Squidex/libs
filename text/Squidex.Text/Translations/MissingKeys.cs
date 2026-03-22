@@ -10,7 +10,7 @@ namespace Squidex.Text.Translations;
 public sealed class MissingKeys
 {
     private const string MissingFileName = "__missing.txt";
-    private readonly object lockObject = new object();
+    private readonly Lock lockObject = new Lock();
     private readonly HashSet<string> missingTranslations;
 
     public MissingKeys()

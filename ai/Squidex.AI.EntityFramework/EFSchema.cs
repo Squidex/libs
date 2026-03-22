@@ -5,7 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using Squidex.AI.Mongo;
+using Squidex.AI.EntityFramework;
 
 namespace Microsoft.EntityFrameworkCore;
 

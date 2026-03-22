@@ -8,6 +8,7 @@
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Squidex.AI.EntityFramework;
 using Squidex.AI.Implementation;
 
 namespace Squidex.AI.Mongo;

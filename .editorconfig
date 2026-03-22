@@ -13,6 +13,8 @@ insert_final_newline = true
 indent_style = space
 indent_size = 4
 
+MA0015.consider_member_access_as_parameter = true
+
 csharp_style_namespace_declarations = file_scoped
 
 # FAILING ANALYZERS
