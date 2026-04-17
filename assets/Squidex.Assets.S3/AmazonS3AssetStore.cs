@@ -254,11 +254,12 @@ public sealed class AmazonS3AssetStore(IOptions<AmazonS3AssetOptions> options) :
                 DisableDefaultChecksumValidation = false,
             };
 
-            if (stream.GetLengthOrZero() <= 0)
+            if (!stream.CanSeek)
             {
                 await using (var tempStream = TempHelper.GetTempStream())
                 {
                     await stream.CopyToAsync(tempStream, ct);
+                    tempStream.Position = 0;
 
                     request.InputStream = tempStream;
 
@@ -267,7 +268,7 @@ public sealed class AmazonS3AssetStore(IOptions<AmazonS3AssetOptions> options) :
             }
             else
             {
-                request.InputStream = new SeekFakerStream(stream);
+                request.InputStream = stream;
                 request.AutoCloseStream = false;
 
                 await s3Transfer.UploadAsync(request, ct);
