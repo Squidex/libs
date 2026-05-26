@@ -99,7 +99,7 @@ internal sealed class EFSubscription<T> : IAsyncDisposable, IMessageAck where T 
 
         if (result.Data is not string id)
         {
-            log.LogWarning("Transport message has no MongoDb ID.");
+            LogMessages.TransportMessageHasNoMongoDbId(log);
             return;
         }
 
@@ -115,7 +115,7 @@ internal sealed class EFSubscription<T> : IAsyncDisposable, IMessageAck where T 
         }
         catch (Exception ex)
         {
-            log.LogError(ex, "Failed to put the message back into the queue '{queue}'.", channelName);
+            LogMessages.FailedToPutMessageBackIntoQueue(log, ex, channelName);
         }
     }
 
@@ -129,7 +129,7 @@ internal sealed class EFSubscription<T> : IAsyncDisposable, IMessageAck where T 
 
         if (result.Data is not string id)
         {
-            log.LogWarning("Transport message has no MongoDb ID.");
+            LogMessages.TransportMessageHasNoMongoDbId(log);
             return;
         }
 
@@ -142,7 +142,7 @@ internal sealed class EFSubscription<T> : IAsyncDisposable, IMessageAck where T 
         }
         catch (Exception ex)
         {
-            log.LogError(ex, "Failed to remove message from queue '{queue}'.", channelName);
+            LogMessages.FailedToRemoveMessageFromQueue(log, ex, channelName);
         }
     }
 }

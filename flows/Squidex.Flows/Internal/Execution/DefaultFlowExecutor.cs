@@ -288,7 +288,7 @@ public sealed class DefaultFlowExecutor<TContext>(
             }
             catch (Exception ex)
             {
-                log.LogError(ex, "Failed to execute {callback}.", callback);
+                LogMessages.FailedToExecuteCallback(log, ex, callback);
             }
         }
     }

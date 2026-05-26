@@ -28,7 +28,7 @@ internal sealed class RedisTopicSubscription : IAsyncDisposable, IMessageAck
             }
             catch (Exception ex)
             {
-                log.LogError(ex, "Failed to deserialize message.");
+                LogMessages.FailedToDeserializeMessage(log, ex);
             }
         });
 

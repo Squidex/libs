@@ -43,7 +43,7 @@ public sealed class FTPAssetStore(IOptions<FTPAssetOptions> options, ILogger<FTP
             pool.Return(client);
         }
 
-        log.LogInformation("Initialized with {path}", options.Path);
+        LogMessages.InitializedWithPath(log, options.Path);
     }
 
     public async Task<long> GetSizeAsync(string fileName,

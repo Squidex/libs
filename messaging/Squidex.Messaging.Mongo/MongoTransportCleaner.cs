@@ -35,7 +35,7 @@ internal sealed class MongoTransportCleaner(
 
         if (update.IsModifiedCountAvailable && update.ModifiedCount > 0)
         {
-            log.LogInformation("{collectionName}: Items reset: {count}.", channelName, update.ModifiedCount);
+            LogMessages.ItemsReset(log, channelName, update.ModifiedCount);
         }
     }, updateInterval, log);
 

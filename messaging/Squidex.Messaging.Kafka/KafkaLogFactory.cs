@@ -62,24 +62,24 @@ internal static class KafkaLogFactory<TKey, TValue>
 
     private static void Log(ILogger log, string stats)
     {
-        log.LogInformation("Kafka stastics received: {stats}.", stats);
+        LogMessages.KafkaStatisticsReceived(log, stats);
     }
 
     private static void Log(ILogger log, Error error)
     {
-        log.LogInformation("Kafka error with code {code} happened: {details}.", error.Code, error.Reason);
+        LogMessages.KafkaError(log, error.Code, error.Reason);
     }
 
     private static void Log(ILogger log, LogMessage message)
     {
         var level = GetLogLevel(message.Level);
 
-        if (log.IsEnabled(level))
+        if (!log.IsEnabled(level))
         {
             return;
         }
 
-        log.Log(level, "Kafka log recieved from system {system}: {message}.", message.Name, message.Message);
+        LogMessages.KafkaLog(log, level, message.Name, message.Message);
     }
 
     private static LogLevel GetLogLevel(SyslogLevel level)
