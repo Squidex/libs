@@ -46,7 +46,7 @@ internal sealed class GooglePubSubSubscription : IMessageAck, IAsyncDisposable
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            log.LogError(ex, "Failed to consume message from subscription '{subscription}'.", subscriberClient.SubscriptionName.SubscriptionId);
+            LogMessages.FailedToConsumeMessageFromSubscription(log, ex, subscriberClient.SubscriptionName.SubscriptionId);
         }
     }
 

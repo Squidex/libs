@@ -58,9 +58,7 @@ public class DefaultCronJobManager<TContext>(
                 if (!TryGetCronExpression(cronJob.CronExpression, false, out var expression))
                 {
                     failedJobs.TryAdd(cronJob.Id, true);
-                    log.LogWarning("Failed parse expression '{expression}' for id '{id}'",
-                        cronJob.Id,
-                        cronJob.CronExpression);
+                    LogMessages.FailedToParseExpression(log, cronJob.CronExpression, cronJob.Id);
                     continue;
                 }
 
@@ -85,9 +83,7 @@ public class DefaultCronJobManager<TContext>(
 
                 if (next == default)
                 {
-                    log.LogWarning("Failed to get next occurrency for cron job '{id}' and expression '{expression}'",
-                        cronJob.Id,
-                        cronJob.CronExpression);
+                    LogMessages.FailedToGetNextOccurrency(log, cronJob.Id, cronJob.CronExpression);
                     continue;
                 }
 
@@ -96,7 +92,7 @@ public class DefaultCronJobManager<TContext>(
             catch (Exception ex)
             {
                 failedJobs.TryAdd(cronJob.Id, true);
-                log.LogError(ex, "Failed to handle cron job with id '{id}'", cronJob.Id);
+                LogMessages.FailedToHandleCronJob(log, ex, cronJob.Id);
             }
         }
 
@@ -111,7 +107,7 @@ public class DefaultCronJobManager<TContext>(
         }
         catch (Exception ex)
         {
-            log.LogCritical(ex, "Failed to reschedule cron jobs.");
+            LogMessages.FailedToRescheduleCronJobs(log, ex);
             foreach (var (id, _) in currentUpdates)
             {
                 failedJobs.TryAdd(id, true);

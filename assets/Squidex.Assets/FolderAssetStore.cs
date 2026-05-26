@@ -27,7 +27,7 @@ public sealed class FolderAssetStore(IOptions<FolderAssetOptions> options, ILogg
             }
 
             await this.UploadTestAssetAsync(ct);
-            log.LogInformation("Initialized with {folder}", directory.FullName);
+            LogMessages.InitializedWithFolder(log, directory.FullName);
         }
         catch (Exception ex)
         {
