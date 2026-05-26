@@ -24,12 +24,12 @@ internal static partial class LogMessages
     [LoggerMessage(EventId = 4, Level = LogLevel.Error, Message = "Failed to commit the message.")]
     public static partial void FailedToCommitMessage(ILogger logger, Exception exception);
 
-    [LoggerMessage(EventId = 5, Level = LogLevel.Information, Message = "Kafka stastics received: {stats}.")]
+    [LoggerMessage(EventId = 5, Level = LogLevel.Information, Message = "Kafka statistics received: {stats}.")]
     public static partial void KafkaStatisticsReceived(ILogger logger, string stats);
 
     [LoggerMessage(EventId = 6, Level = LogLevel.Information, Message = "Kafka error with code {code} happened: {details}.")]
     public static partial void KafkaError(ILogger logger, ErrorCode code, string details);
 
-    [LoggerMessage(EventId = 7, Message = "Kafka log recieved from system {system}: {message}.")]
+    [LoggerMessage(EventId = 7, Message = "Kafka log received from system {system}: {message}.")]
     public static partial void KafkaLog(ILogger logger, LogLevel level, string system, string message);
 }

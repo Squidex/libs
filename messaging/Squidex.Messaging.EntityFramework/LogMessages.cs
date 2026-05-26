@@ -11,7 +11,7 @@ namespace Squidex.Messaging.EntityFramework;
 
 internal static partial class LogMessages
 {
-    [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Transport message has no MongoDb ID.")]
+    [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Transport message has no database ID.")]
     public static partial void TransportMessageHasNoMongoDbId(ILogger logger);
 
     [LoggerMessage(EventId = 2, Level = LogLevel.Error, Message = "Failed to put the message back into the queue '{queue}'.")]

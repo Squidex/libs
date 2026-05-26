@@ -11,10 +11,10 @@ namespace Squidex.Flows.CronJobs.Internal;
 
 internal static partial class LogMessages
 {
-    [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Failed parse expression '{expression}' for id '{id}'")]
+    [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Failed to parse expression '{expression}' for id '{id}'")]
     public static partial void FailedToParseExpression(ILogger logger, string expression, string id);
 
-    [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "Failed to get next occurrency for cron job '{id}' and expression '{expression}'")]
+    [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "Failed to get next occurrence for cron job '{id}' and expression '{expression}'")]
     public static partial void FailedToGetNextOccurrency(ILogger logger, string id, string expression);
 
     [LoggerMessage(EventId = 3, Level = LogLevel.Error, Message = "Failed to handle cron job with id '{id}'")]
