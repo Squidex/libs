@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Text.Json;
@@ -19,7 +20,7 @@ public sealed class DeepLTranslationService(IHttpClientFactory httpClientFactory
     private const string UrlPaid = "https://api.deepl.com/v2/translate";
     private const string UrlFree = "https://api-free.deepl.com/v2/translate";
     private readonly DeepLTranslationOptions options = options.Value;
-    private string? resolvedGlossaryId;
+    private readonly ConcurrentDictionary<string, string?> glossaryCache = new ();
     private bool glossaryResolved;
 
     private sealed class TranslationsDto
@@ -55,10 +56,10 @@ public sealed class DeepLTranslationService(IHttpClientFactory httpClientFactory
         public bool Ready { get; set; } // true
 
         [JsonPropertyName("source_lang")]
-        public string SourceLang { get; set; } // "EN"
+        public string SourceLang { get; set; } // "en"
 
         [JsonPropertyName("target_lang")]
-        public string TargetLang { get; set; } // "DE"
+        public string TargetLang { get; set; } // "de"
 
         [JsonPropertyName("creation_time")]
         public DateTime CreationTime { get; set; } // "2021-08-03T14:16:18.329Z"
@@ -91,9 +92,12 @@ public sealed class DeepLTranslationService(IHttpClientFactory httpClientFactory
             return results;
         }
 
+        var sourceCode = sourceLanguage != null ? GetLanguageCode(sourceLanguage) : null;
+        var targetCode = GetLanguageCode(targetLanguage);
+
         var parameters = new List<KeyValuePair<string, string>>
         {
-            new KeyValuePair<string, string>("target_lang", GetLanguageCode(targetLanguage)),
+            new KeyValuePair<string, string>("target_lang", targetCode),
         };
 
         foreach (var text in textsArray)
@@ -101,9 +105,9 @@ public sealed class DeepLTranslationService(IHttpClientFactory httpClientFactory
             parameters.Add(new KeyValuePair<string, string>("text", text));
         }
 
-        if (sourceLanguage != null)
+        if (sourceCode != null)
         {
-            parameters.Add(new KeyValuePair<string, string>("source_lang", GetLanguageCode(sourceLanguage)));
+            parameters.Add(new KeyValuePair<string, string>("source_lang", sourceCode));
         }
 
         var url =
@@ -115,48 +119,46 @@ public sealed class DeepLTranslationService(IHttpClientFactory httpClientFactory
 
         var glossaryId = options.GlossaryById;
 
-        if (string.IsNullOrWhiteSpace(glossaryId) && glossaryResolved)
+        if (string.IsNullOrWhiteSpace(glossaryId) && sourceCode != null)
         {
-            glossaryId = resolvedGlossaryId;
-        }
+            var langPairKey = $"{sourceCode}_{targetCode}";
 
-        if (!string.IsNullOrWhiteSpace(options.GlossaryByName) && string.IsNullOrWhiteSpace(glossaryId) && !glossaryResolved)
-        {
-            glossaryResolved = true;
-
-            var glossaryUrl = url.Replace("/translate", "/glossaries");
-            using var glossaryHttpRequest = new HttpRequestMessage(HttpMethod.Get, glossaryUrl);
-            using var glossaryHttpResponse = await httpClient.SendAsync(glossaryHttpRequest, ct);
-
-            try
+            if (glossaryResolved && glossaryCache.TryGetValue(langPairKey, out var cachedId))
             {
-                glossaryHttpResponse.EnsureSuccessStatusCode();
-
-                var glossaryJsonString = await glossaryHttpResponse.Content.ReadAsStringAsync(ct);
-                var glossaryJsonResponse = JsonSerializer.Deserialize<GlossariesDto>(glossaryJsonString)!;
-
-                foreach (var glossary in glossaryJsonResponse.Glossaries)
-                {
-                    if (options.GlossaryByName.Equals(glossary.Name, StringComparison.Ordinal))
-                    {
-                        if (glossary.Ready)
-                        {
-                            glossaryId = glossary.GlossaryId;
-                            resolvedGlossaryId = glossaryId;
-                        }
-                        else
-                        {
-                            glossaryResolved = false;
-                        }
-
-                        break;
-                    }
-                }
+                glossaryId = cachedId;
             }
-            catch (Exception ex)
+
+            if (!string.IsNullOrWhiteSpace(options.GlossaryByName) && string.IsNullOrWhiteSpace(glossaryId) && !glossaryResolved)
             {
-                glossaryResolved = false;
-                AddError(TranslationResult.Failed(ex));
+                glossaryResolved = true;
+
+                var glossaryUrl = url.Replace("/translate", "/glossaries");
+                using var glossaryHttpRequest = new HttpRequestMessage(HttpMethod.Get, glossaryUrl);
+                using var glossaryHttpResponse = await httpClient.SendAsync(glossaryHttpRequest, ct);
+
+                try
+                {
+                    glossaryHttpResponse.EnsureSuccessStatusCode();
+
+                    var glossaryJsonString = await glossaryHttpResponse.Content.ReadAsStringAsync(ct);
+                    var glossaryJsonResponse = JsonSerializer.Deserialize<GlossariesDto>(glossaryJsonString)!;
+
+                    foreach (var glossary in glossaryJsonResponse.Glossaries)
+                    {
+                        if (options.GlossaryByName.Equals(glossary.Name, StringComparison.Ordinal) && glossary.Ready)
+                        {
+                            var key = $"{GetLanguageCode(glossary.SourceLang)}_{GetLanguageCode(glossary.TargetLang)}";
+                            glossaryCache[key] = glossary.GlossaryId;
+                        }
+                    }
+
+                    glossaryCache.TryGetValue(langPairKey, out glossaryId);
+                }
+                catch (Exception ex)
+                {
+                    glossaryResolved = false;
+                    AddError(TranslationResult.Failed(ex));
+                }
             }
         }
 
@@ -237,10 +239,19 @@ public sealed class DeepLTranslationService(IHttpClientFactory httpClientFactory
 
     private void InvalidateGlossaryCacheIfResolved(string? glossaryId)
     {
-        if (!string.IsNullOrWhiteSpace(glossaryId) && glossaryId == resolvedGlossaryId)
+        if (string.IsNullOrWhiteSpace(glossaryId))
         {
-            resolvedGlossaryId = null;
-            glossaryResolved = false;
+            return;
+        }
+
+        foreach (var kvp in glossaryCache)
+        {
+            if (kvp.Value == glossaryId)
+            {
+                glossaryCache.TryRemove(kvp.Key, out _);
+                glossaryResolved = false;
+                break;
+            }
         }
     }
 
