@@ -198,7 +198,13 @@ public sealed class DeepLTranslationService(IHttpClientFactory httpClientFactory
         }
         catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.BadRequest)
         {
+            InvalidateGlossaryCacheIfResolved(glossaryId);
             AddError(TranslationResult.LanguageNotSupported);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.NotFound)
+        {
+            InvalidateGlossaryCacheIfResolved(glossaryId);
+            AddError(TranslationResult.Failed(ex));
         }
         catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
         {
@@ -227,6 +233,15 @@ public sealed class DeepLTranslationService(IHttpClientFactory httpClientFactory
         httpClient.DefaultRequestHeaders.Add("Authorization", $"DeepL-Auth-Key {options.AuthKey}");
 
         return httpClient;
+    }
+
+    private void InvalidateGlossaryCacheIfResolved(string? glossaryId)
+    {
+        if (!string.IsNullOrWhiteSpace(glossaryId) && glossaryId == resolvedGlossaryId)
+        {
+            resolvedGlossaryId = null;
+            glossaryResolved = false;
+        }
     }
 
     private static string GetSourceLanguage(string language, string? fallback)
