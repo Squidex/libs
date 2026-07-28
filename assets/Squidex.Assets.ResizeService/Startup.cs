@@ -24,6 +24,7 @@ public sealed class Startup(IConfiguration configuration)
         services.AddSingleton<ImageResizer>();
         services.AddSingleton<ImageSharpThumbnailGenerator>();
         services.AddSingleton<ImageMagickThumbnailGenerator>();
+        services.AddSsrfProtectedHttpClient(configuration);
 
         services.AddSingletonAs(c => new CompositeThumbnailGenerator(
         [

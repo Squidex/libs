@@ -62,7 +62,7 @@ public sealed partial class EFEventStore<T>
     public async Task AppendAsync(Guid commitId, string streamName, long expectedVersion, ICollection<EventData> events,
         CancellationToken ct = default)
     {
-        ArgumentException.ThrowIfNullOrEmpty(nameof(streamName));
+        ArgumentException.ThrowIfNullOrEmpty(streamName);
         ArgumentNullException.ThrowIfNull(events);
 
         if (events.Count == 0)

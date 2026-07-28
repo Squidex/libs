@@ -147,7 +147,7 @@ public sealed class DallETool(
         var imagePath = options.ImagePathPattern.Replace("{IMAGE_ID}", imageId, StringComparison.Ordinal);
         var imageUrl = httpImageEndpoint.GetUrl(imagePath);
 
-        using var httpClient = httpClientFactory.CreateClient(url);
+        using var httpClient = httpClientFactory.CreateClient();
         using var httpResponse = await httpClient.GetAsync(url, ct);
 
         await using var imageSource = await httpResponse.Content.ReadAsStreamAsync(ct);

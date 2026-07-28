@@ -15,6 +15,7 @@ using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.Processing;
+using Squidex.Hosting.Ssrf;
 using ImageSharpMode = SixLabors.ImageSharp.Processing.ResizeMode;
 using ImageSharpOptions = SixLabors.ImageSharp.Processing.ResizeOptions;
 
@@ -110,7 +111,7 @@ internal static class Extensions
     public static async Task<Image> GetImageAsync(this IHttpClientFactory httpClientFactory, string url,
         CancellationToken ct)
     {
-        using var httpClient = httpClientFactory.CreateClient();
+        using var httpClient = httpClientFactory.CreateClient(SsrfClient.Name);
         using var httpResponse = await httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
 
         await using var httpStream = await httpResponse.Content.ReadAsStreamAsync(ct);

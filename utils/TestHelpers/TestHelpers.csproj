@@ -24,7 +24,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.5" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.5" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.3.0" />
-    <PackageReference Include="MongoDB.Driver" Version="3.7.1" />
+    <PackageReference Include="MongoDB.Driver" Version="3.10.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
 	<PackageReference Include="PhenX.EntityFrameworkCore.BulkInsert.MySql" Version="0.5.0" />
     <PackageReference Include="PhenX.EntityFrameworkCore.BulkInsert.PostgreSql" Version="0.5.0" />
