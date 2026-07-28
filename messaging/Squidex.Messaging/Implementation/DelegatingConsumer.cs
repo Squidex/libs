@@ -103,7 +103,7 @@ internal sealed class DelegatingConsumer : IBackgroundProcess
             catch (Exception ex)
             {
                 // The message is broken, we cannot handle it, even if we would retry.
-                log.LogError(ex, "Failed to deserialize message with type {type}.", source.TypeString);
+                LogMessages.FailedToDeserializeMessage(log, ex, source.TypeString);
                 return;
             }
 
@@ -127,7 +127,7 @@ internal sealed class DelegatingConsumer : IBackgroundProcess
                 {
                     if (shouldLog)
                     {
-                        log.LogInformation("Handling {message} for {channel} with {handler}.", deserialized.Message, channelName, handler);
+                        LogMessages.HandlingMessage(log, deserialized.Message, channelName, handler);
                     }
 
                     using (var linked = CancellationTokenSource.CreateLinkedTokenSource(ct))
@@ -139,7 +139,7 @@ internal sealed class DelegatingConsumer : IBackgroundProcess
 
                     if (shouldLog)
                     {
-                        log.LogInformation("Handled {message} for {channel} with {handler}.", deserialized.Message, channelName, handler);
+                        LogMessages.HandledMessage(log, deserialized.Message, channelName, handler);
                     }
                 }
                 catch (OperationCanceledException)
@@ -148,13 +148,13 @@ internal sealed class DelegatingConsumer : IBackgroundProcess
                 }
                 catch (Exception ex)
                 {
-                    log.LogInformation(ex, "Failed to handle {message} for {channel} with {handler}.", deserialized.Message, channelName, handler);
+                    LogMessages.FailedToHandleMessage(log, ex, deserialized.Message, channelName, handler);
                 }
             }
         }
         catch (Exception ex)
         {
-            log.LogError(ex, "Failed to consume message with type {type}.", source.TypeString);
+            LogMessages.FailedToConsumeMessage(log, ex, source.TypeString);
         }
         finally
         {
@@ -192,7 +192,7 @@ internal sealed class DelegatingConsumer : IBackgroundProcess
                 // The message is broken, we cannot handle it, even if we would retry.
                 await ack.OnSuccessAsync(transportResult, default);
 
-                log.LogWarning("Message has no type header.");
+                LogMessages.MessageHasNoTypeHeader(log);
                 return;
             }
 

@@ -22,9 +22,7 @@ internal sealed class LoggerTextWriter(ILogger log) : TextWriter
     {
         if (log.IsEnabled(LogLevel.Debug))
         {
-#pragma warning disable CA2254 // Template should be a static expression
-            log.LogDebug(new EventId(100, "RedisConnectionLog"), value);
-#pragma warning restore CA2254 // Template should be a static expression
+            LogMessages.RedisConnectionLog(log, value);
         }
     }
 }

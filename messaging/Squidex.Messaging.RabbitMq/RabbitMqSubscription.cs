@@ -75,7 +75,7 @@ internal sealed class RabbitMqSubscription : IMessageAck, IAsyncDisposable
             }
             catch (Exception ex)
             {
-                log.LogError(ex, "Failed to handle message from queue {queue}.", queueName);
+                LogMessages.FailedToHandleMessageFromQueue(log, ex, queueName);
             }
         };
 
@@ -105,7 +105,7 @@ internal sealed class RabbitMqSubscription : IMessageAck, IAsyncDisposable
 
         if (result.Data is not ulong deliverTag)
         {
-            log.LogWarning("Transport message has no RabbitMq delivery tag.");
+            LogMessages.TransportMessageHasNoRabbitMqDeliveryTag(log);
             return;
         }
 
@@ -115,7 +115,7 @@ internal sealed class RabbitMqSubscription : IMessageAck, IAsyncDisposable
         }
         catch (Exception ex)
         {
-            log.LogError(ex, "Failed to acknowledge message from queue {queue}.", queueName);
+            LogMessages.FailedToAcknowledgeMessageFromQueue(log, ex, queueName);
         }
     }
 
@@ -129,7 +129,7 @@ internal sealed class RabbitMqSubscription : IMessageAck, IAsyncDisposable
 
         if (result.Data is not ulong deliverTag)
         {
-            log.LogWarning("Transport message has no RabbitMq delivery tag.");
+            LogMessages.TransportMessageHasNoRabbitMqDeliveryTag(log);
             return;
         }
 
@@ -139,7 +139,7 @@ internal sealed class RabbitMqSubscription : IMessageAck, IAsyncDisposable
         }
         catch (Exception ex)
         {
-            log.LogError(ex, "Failed to reject message from queue {queue}.", queueName);
+            LogMessages.FailedToRejectMessageFromQueue(log, ex, queueName);
         }
     }
 }

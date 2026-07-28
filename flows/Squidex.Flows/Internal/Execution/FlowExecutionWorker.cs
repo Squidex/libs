@@ -73,7 +73,7 @@ public sealed class FlowExecutionWorker<TContext> : BackgroundService, IBackgrou
         }
         catch (Exception ex)
         {
-            log.LogError(ex, "Failed to query rule events.");
+            LogMessages.FailedToQueryRuleEvents(log, ex);
         }
     }
 
@@ -91,7 +91,7 @@ public sealed class FlowExecutionWorker<TContext> : BackgroundService, IBackgrou
         }
         catch (Exception ex)
         {
-            log.LogError(ex, "Failed to execute flow.");
+            LogMessages.FailedToExecuteFlow(log, ex);
         }
         finally
         {

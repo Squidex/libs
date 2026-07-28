@@ -64,7 +64,7 @@ internal sealed class KafkaSubscription : IMessageAck, IAsyncDisposable
                 }
                 catch (Exception ex)
                 {
-                    log.LogError(ex, "Subscription failed.");
+                    LogMessages.SubscriptionFailed(log, ex);
                 }
                 finally
                 {
@@ -91,7 +91,7 @@ internal sealed class KafkaSubscription : IMessageAck, IAsyncDisposable
         }
         catch (Exception ex)
         {
-            log.LogError(ex, "Kafka shutdown failed.");
+            LogMessages.KafkaShutdownFailed(log, ex);
         }
     }
 
@@ -118,7 +118,7 @@ internal sealed class KafkaSubscription : IMessageAck, IAsyncDisposable
 
         if (result.Data is not ConsumeResult<string, byte[]> consumeResult)
         {
-            log.LogWarning("Transport message has no consume result.");
+            LogMessages.TransportMessageHasNoConsumeResult(log);
             return;
         }
 
@@ -128,7 +128,7 @@ internal sealed class KafkaSubscription : IMessageAck, IAsyncDisposable
         }
         catch (Exception ex)
         {
-            log.LogError(ex, "Failed to commit the message.");
+            LogMessages.FailedToCommitMessage(log, ex);
         }
     }
 }

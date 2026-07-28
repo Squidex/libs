@@ -39,7 +39,10 @@ public sealed class SimpleTimer : IAsyncDisposable
                     }
                     catch (Exception ex)
                     {
-                        log?.LogWarning(ex, "Failed to execute timer.");
+                        if (log != null)
+                        {
+                            LogMessages.FailedToExecuteTimer(log, ex);
+                        }
                     }
                 }
             }

@@ -38,7 +38,7 @@ internal sealed class EFTransportCleaner<T>(
 
         if (updated > 0)
         {
-            log.LogInformation("{collectionName}: Items reset: {count}.", channelName, updated);
+            LogMessages.ItemsReset(log, channelName, updated);
         }
     }, updateInterval, log);
 

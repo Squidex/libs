@@ -42,7 +42,7 @@ public sealed class ImageResizer(IAssetThumbnailGenerator assetThumbnailGenerato
         catch (Exception ex)
         {
             var log = context.RequestServices.GetRequiredService<ILogger<ImageResizer>>();
-            log.LogError(ex, "Failed to orient image.");
+            LogMessages.FailedToOrientImage(log, ex);
 
             context.Response.StatusCode = 400;
         }
@@ -64,7 +64,7 @@ public sealed class ImageResizer(IAssetThumbnailGenerator assetThumbnailGenerato
         catch (Exception ex)
         {
             var log = context.RequestServices.GetRequiredService<ILogger<ImageResizer>>();
-            log.LogError(ex, "Failed to orient image.");
+            LogMessages.FailedToOrientImage(log, ex);
 
             context.Response.StatusCode = 400;
         }
@@ -89,7 +89,7 @@ public sealed class ImageResizer(IAssetThumbnailGenerator assetThumbnailGenerato
         catch (Exception ex)
         {
             var log = context.RequestServices.GetRequiredService<ILogger<ImageResizer>>();
-            log.LogError(ex, "Failed to resize image.");
+            LogMessages.FailedToResizeImage(log, ex);
 
             context.Response.StatusCode = 400;
         }

@@ -46,7 +46,7 @@ public sealed class SubscriptionService(
             return Task.CompletedTask;
         }
 
-        log.LogDebug("Received payload of type {type} from {sender}", message.GetUntypedPayload()?.GetType(), message.SourceId);
+        LogMessages.ReceivedPayload(log, message.GetUntypedPayload()?.GetType(), message.SourceId);
 
         foreach (var subscriptionId in message.SubscriptionIds)
         {
