@@ -1,6 +1,6 @@
 # Performance Backlog — Top 20
 
-> Items 1-10 are fixed; the rest are open.
+> Items 1-14 are fixed. Item 15 is partly done (filters yes, ack batching deliberately not). The rest are open.
 
 Findings from a read-through of the non-test source in this repository, ranked roughly by
 expected impact (throughput / latency / allocations) weighted by how hot the code path is.
@@ -178,7 +178,7 @@ to the file/console.
 
 ---
 
-## 11. A new `Utf8JsonWriter` is allocated per log entry despite the writer being pooled
+## 11. [DONE] A new `Utf8JsonWriter` is allocated per log entry despite the writer being pooled
 
 `log/Squidex.Log/JsonLogWriter.cs:236`
 
@@ -195,7 +195,7 @@ dispose it from the pool policy.
 
 ---
 
-## 12. Stream-prefix filter bakes prefixes into the expression tree as constants
+## 12. [DONE] Stream-prefix filter bakes prefixes into the expression tree as constants
 
 `events/Squidex.Events.EntityFramework/FilterBuilder.cs:78`
 
@@ -215,7 +215,7 @@ the OR-of-LIKEs into a single parameterised predicate.
 
 ---
 
-## 13. EF read paths do not opt out of change tracking
+## 13. [DONE] EF read paths do not opt out of change tracking
 
 - `events/Squidex.Events.EntityFramework/EFEventStore_Reader.cs:28,39,65,101`
 - `flows/Squidex.Flows.EntityFramework/EFFlowStateStore.cs:93,107,132`
@@ -234,7 +234,7 @@ counts through one context, so the tracker grows for the whole enumeration.
 
 ---
 
-## 14. Polling event subscription issues an unbounded query per tick
+## 14. [DONE] Polling event subscription issues an unbounded query per tick
 
 `events/Squidex.Events/PollingSubscription.cs:36` → `EFEventStore_Reader.QueryAllAsync`
 
@@ -248,7 +248,7 @@ delay.
 
 ---
 
-## 15. Mongo queue subscription rebuilds a LINQ expression per poll and acks one-by-one
+## 15. [PARTIAL] Mongo queue subscription rebuilds a LINQ expression per poll and acks one-by-one
 
 `messaging/Squidex.Messaging.Mongo/MongoSubscription.cs:141,69,90,198`
 
@@ -258,8 +258,15 @@ subscription, per polling interval, forever. Separately `OnSuccessAsync` issues 
 round trip per consumed message, and `PollPrefetchAsync` needs three round trips (find candidates →
 `UpdateMany` → find again) to fetch one batch.
 
-**Fix:** build a `FilterDefinition<MongoMessage>` once with `Builders<>.Filter` and substitute only the
-timestamp; batch acks into `DeleteManyAsync` over a short window.
+**Fix (done):** build a `FilterDefinition<MongoMessage>` once with `Builders<>.Filter` and substitute
+only the timestamp. Every per-call LINQ lambda in this class is now a `FilterDefinition`, so the driver
+no longer translates an expression tree on each poll and each ack.
+
+**Not done, deliberately:** batching acks into `DeleteManyAsync`. It was implemented and then reverted.
+Deferring the delete means that after a crash, acked-but-undeleted rows keep `TimeHandled` set and
+linger until their TTL instead of disappearing. Nothing is lost or redelivered, but it changes the
+durability characteristics of the queue for a throughput gain, which is not a trade worth making
+silently in this code path. `OnSuccessAsync` still costs one round trip per message.
 
 ---
 

@@ -36,6 +36,8 @@ public sealed class JsonLogWriterFactory(bool indended = false, bool formatLine 
         {
             if (obj.BufferSize > MaxCapacity)
             {
+                // The writer is dropped, so release the buffer it holds back to the array pool.
+                obj.Dispose();
                 return false;
             }
 

@@ -27,7 +27,7 @@ public sealed class EFCronJobStore<TDbContext, TContext>(
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
 
         var queryLimit = now.ToDateTimeOffset();
-        var queryItems = dbContext.Set<EFCronJobEntity>().Where(x => x.DueTime < queryLimit).AsAsyncEnumerable();
+        var queryItems = dbContext.Set<EFCronJobEntity>().AsNoTracking().Where(x => x.DueTime < queryLimit).AsAsyncEnumerable();
 
         await foreach (var item in queryItems.WithCancellation(ct))
         {

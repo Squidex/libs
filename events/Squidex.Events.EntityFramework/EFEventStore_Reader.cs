@@ -26,6 +26,7 @@ public sealed partial class EFEventStore<T> : IEventStore
 
         var commits =
             await dbContext.Set<EFEventCommit>()
+                .AsNoTracking()
                 .WhereStreamMatches(StreamFilter.Name(streamName))
                 .WherePositionAfter(afterStreamPosition)
                 .WhereCommited()
@@ -37,6 +38,7 @@ public sealed partial class EFEventStore<T> : IEventStore
         {
             commits =
                 await dbContext.Set<EFEventCommit>()
+                    .AsNoTracking()
                     .WhereStreamMatches(StreamFilter.Name(streamName))
                     .WherePositionBefore(afterStreamPosition)
                     .WhereCommited()
@@ -63,6 +65,7 @@ public sealed partial class EFEventStore<T> : IEventStore
         DateTime streamTime = timestamp;
         var query =
             await dbContext.Set<EFEventCommit>()
+                .AsNoTracking()
                 .WhereStreamMatches(filter)
                 .WhereTimestampAfter(streamTime)
                 .WhereCommited()
@@ -99,6 +102,7 @@ public sealed partial class EFEventStore<T> : IEventStore
         ParsedStreamPosition streamPosition = position;
         var query =
             dbContext.Set<EFEventCommit>()
+                .AsNoTracking()
                 .WhereStreamMatches(filter)
                 .WherePositionAfter(streamPosition)
                 .WhereCommited()

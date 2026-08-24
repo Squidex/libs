@@ -11,12 +11,16 @@ using System.Text.Json;
 
 namespace Squidex.Log;
 
-public sealed class JsonLogWriter : IRootWriter, IArrayWriter
+public sealed class JsonLogWriter : IRootWriter, IArrayWriter, IDisposable
 {
     private static readonly byte[] NewLine = Encoding.UTF8.GetBytes(Environment.NewLine);
-    private readonly JsonWriterOptions formatting;
     private readonly bool formatLine;
     private readonly MemoryStream stream = new MemoryStream();
+
+    // The actual writer is expensive, because it owns a pooled buffer, therefore it is created once
+    // and reused for every entry. The nullable field is only an alias while an entry is written.
+    private readonly Utf8JsonWriter reusedWriter;
+    // The writer is used to track whether Start() has been called.
     private Utf8JsonWriter? jsonWriter;
 
     public long BufferSize
@@ -27,7 +31,13 @@ public sealed class JsonLogWriter : IRootWriter, IArrayWriter
     internal JsonLogWriter(JsonWriterOptions formatting, bool formatLine)
     {
         this.formatLine = formatLine;
-        this.formatting = formatting;
+
+        reusedWriter = new Utf8JsonWriter(stream, formatting);
+    }
+
+    public void Dispose()
+    {
+        reusedWriter.Dispose();
     }
 
     internal void Reset()
@@ -231,7 +241,10 @@ public sealed class JsonLogWriter : IRootWriter, IArrayWriter
             throw new InvalidOperationException("Already started.");
         }
 
-        jsonWriter = new Utf8JsonWriter(stream, formatting);
+        // Reuse the writer instead of allocating a new one (and a new pooled buffer) per entry.
+        reusedWriter.Reset();
+
+        jsonWriter = reusedWriter;
         jsonWriter.WriteStartObject();
     }
 

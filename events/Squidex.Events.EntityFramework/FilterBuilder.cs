@@ -18,6 +18,20 @@ internal static class FilterBuilder
     private static readonly MethodInfo DbLikeMethod = typeof(DbFunctionsExtensions).GetMethod("Like", [typeof(DbFunctions), typeof(string), typeof(string)])!;
     private static readonly ConstantExpression DbFunctions = Expression.Constant(EF.Functions);
 
+    // EF Core inlines a ConstantExpression into the SQL as a literal, but turns a member access on a
+    // captured object into a parameter, the same way it treats a compiler generated closure. Without
+    // this every distinct prefix would produce its own SQL string and therefore its own entry in the
+    // EF compiled query cache and in the database plan cache.
+    private sealed class Capture(string value)
+    {
+        public readonly string Value = value;
+    }
+
+    private static Expression Parameterize(string value)
+    {
+        return Expression.Field(Expression.Constant(new Capture(value)), nameof(Capture.Value));
+    }
+
     public static IQueryable<EFEventCommit> WhereCommited(this IQueryable<EFEventCommit> q)
     {
         return q.Where(x => x.Position != null);
@@ -75,7 +89,7 @@ internal static class FilterBuilder
             Expression combinedExpression = null!;
             foreach (var prefix in filter.Prefixes)
             {
-                var like = Expression.Call(DbLikeMethod, DbFunctions, EventStreamMember, Expression.Constant($"{prefix}%"));
+                var like = Expression.Call(DbLikeMethod, DbFunctions, EventStreamMember, Parameterize($"{prefix}%"));
 
                 combinedExpression = combinedExpression == null ?
                     like :

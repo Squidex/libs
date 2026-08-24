@@ -33,7 +33,7 @@ public sealed class EFChatStore<T>(IDbContextFactory<T> dbContextFactory) : ICha
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
 
-        var entity = await dbContext.Set<EFChatEntity>().Where(x => x.Id == conversationId).FirstOrDefaultAsync(ct);
+        var entity = await dbContext.Set<EFChatEntity>().AsNoTracking().Where(x => x.Id == conversationId).FirstOrDefaultAsync(ct);
         if (entity == null)
         {
             return null;
@@ -86,7 +86,7 @@ public sealed class EFChatStore<T>(IDbContextFactory<T> dbContextFactory) : ICha
     {
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
 
-        var records = dbContext.Set<EFChatEntity>().Where(x => x.LastUpdated < olderThan).AsAsyncEnumerable();
+        var records = dbContext.Set<EFChatEntity>().AsNoTracking().Where(x => x.LastUpdated < olderThan).AsAsyncEnumerable();
 
         await foreach (var entity in records.WithCancellation(ct))
         {

@@ -36,7 +36,7 @@ public sealed class EFAssetKeyValueStore<TContext, TEntity>(
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
 
-        var entity = await dbContext.Set<EFAssetKeyValueEntity<TEntity>>().Where(x => x.Key == key)
+        var entity = await dbContext.Set<EFAssetKeyValueEntity<TEntity>>().AsNoTracking().Where(x => x.Key == key)
             .FirstOrDefaultAsync(ct);
 
         if (entity == null)
@@ -52,7 +52,7 @@ public sealed class EFAssetKeyValueStore<TContext, TEntity>(
     {
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
 
-        var query = dbContext.Set<EFAssetKeyValueEntity<TEntity>>().Where(x => x.Expires < now);
+        var query = dbContext.Set<EFAssetKeyValueEntity<TEntity>>().AsNoTracking().Where(x => x.Expires < now);
 
         foreach (var entity in query)
         {

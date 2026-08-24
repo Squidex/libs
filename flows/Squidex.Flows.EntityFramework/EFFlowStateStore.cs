@@ -90,7 +90,7 @@ public sealed class EFFlowStateStore<TDbContext, TContext>(
     {
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
 
-        var entity = await dbContext.Set<EFFlowStateEntity>().Where(x => x.Id == id).FirstOrDefaultAsync(ct);
+        var entity = await dbContext.Set<EFFlowStateEntity>().AsNoTracking().Where(x => x.Id == id).FirstOrDefaultAsync(ct);
         if (entity == null)
         {
             return null;
@@ -104,7 +104,7 @@ public sealed class EFFlowStateStore<TDbContext, TContext>(
     {
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
 
-        var query = dbContext.Set<EFFlowStateEntity>().Where(x => x.OwnerId == ownerId);
+        var query = dbContext.Set<EFFlowStateEntity>().AsNoTracking().Where(x => x.OwnerId == ownerId);
 
         if (definitionId != null)
         {
@@ -129,7 +129,7 @@ public sealed class EFFlowStateStore<TDbContext, TContext>(
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
 
         var queryLimit = now.ToDateTimeOffset();
-        var queryItems = dbContext.Set<EFFlowStateEntity>().Where(x => x.DueTime != null && x.DueTime < queryLimit && partitions.Contains(x.SchedulePartition)).AsAsyncEnumerable();
+        var queryItems = dbContext.Set<EFFlowStateEntity>().AsNoTracking().Where(x => x.DueTime != null && x.DueTime < queryLimit && partitions.Contains(x.SchedulePartition)).AsAsyncEnumerable();
 
         await foreach (var item in queryItems.WithCancellation(ct))
         {
