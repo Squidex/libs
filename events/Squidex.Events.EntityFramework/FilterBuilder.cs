@@ -24,12 +24,12 @@ internal static class FilterBuilder
     // EF compiled query cache and in the database plan cache.
     private sealed class Capture(string value)
     {
-        public readonly string Value = value;
+        public string Value { get; } = value;
     }
 
     private static Expression Parameterize(string value)
     {
-        return Expression.Field(Expression.Constant(new Capture(value)), nameof(Capture.Value));
+        return Expression.Property(Expression.Constant(new Capture(value)), nameof(Capture.Value));
     }
 
     public static IQueryable<EFEventCommit> WhereCommited(this IQueryable<EFEventCommit> q)
@@ -127,6 +127,33 @@ internal static class FilterBuilder
             }
 
             commitOffset++;
+        }
+    }
+
+    /// <summary>
+    /// Yields the events of a commit from last to first. Enumerable.Reverse would first buffer and
+    /// deserialize every event of the commit, even when the caller stops after the first one.
+    /// </summary>
+    public static IEnumerable<StoredEvent> FilteredReverse(this EFEventCommit commit, long position)
+    {
+        if (!commit.Position.HasValue)
+        {
+            yield break;
+        }
+
+        var commitPosition = commit.Position.Value;
+
+        for (var commitOffset = commit.Events.Length - 1; commitOffset >= 0; commitOffset--)
+        {
+            var eventStreamOffset = commit.EventStreamOffset + commitOffset + 1;
+
+            if (eventStreamOffset > position)
+            {
+                var eventData = EventData.DeserializeFromJson(commit.Events[commitOffset]);
+                var eventPosition = new ParsedStreamPosition(commitPosition, commitOffset, commit.Events.Length);
+
+                yield return new StoredEvent(commit.EventStream, eventPosition, eventStreamOffset, eventData);
+            }
         }
     }
 

@@ -22,4 +22,17 @@ public interface IMessagingDataStore
 
     Task DeleteAsync(string group, string key,
         CancellationToken ct);
+
+    /// <summary>
+    /// Deletes several keys of the same group. Implementations should override this to use a single
+    /// statement, the default implementation just deletes the keys one after the other.
+    /// </summary>
+    async Task DeleteManyAsync(string group, IReadOnlyList<string> keys,
+        CancellationToken ct)
+    {
+        foreach (var key in keys)
+        {
+            await DeleteAsync(group, key, ct);
+        }
+    }
 }

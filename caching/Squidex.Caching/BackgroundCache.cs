@@ -47,7 +47,7 @@ public sealed class BackgroundCache(IMemoryCache memoryCache, TimeProvider timeP
             {
                 if (cached2 is Entry<T> entry)
                 {
-                    RefreshInBackground(entry, key, expiration, now, isValid, creator).Forget();
+                    RefreshIfNeeded(entry, key, expiration, now, isValid, creator);
                     return entry.Value;
                 }
 
@@ -70,8 +70,11 @@ public sealed class BackgroundCache(IMemoryCache memoryCache, TimeProvider timeP
         return newEntry;
     }
 
-    private async Task RefreshInBackground<T>(Entry<T> entry, object key, TimeSpan expiration, DateTimeOffset now, Func<T, Task<bool>>? isValid, Func<object, Task<T>> creator)
+    private void RefreshIfNeeded<T>(Entry<T> entry, object key, TimeSpan expiration, DateTimeOffset now, Func<T, Task<bool>>? isValid, Func<object, Task<T>> creator)
     {
+        // This runs on every cache hit, so decide synchronously whether there is anything to do at
+        // all. Calling the async method would allocate a state machine and a task per hit, just to
+        // find out that the entry is still fresh.
         if (entry.Value.Status != TaskStatus.RanToCompletion)
         {
             return;
@@ -82,6 +85,17 @@ public sealed class BackgroundCache(IMemoryCache memoryCache, TimeProvider timeP
             return;
         }
 
+        // Without a validator a fresh entry needs no work, which is the common case.
+        if (entry.Expires > now && isValid == null)
+        {
+            return;
+        }
+
+        RefreshInBackground(entry, key, expiration, now, isValid, creator).Forget();
+    }
+
+    private async Task RefreshInBackground<T>(Entry<T> entry, object key, TimeSpan expiration, DateTimeOffset now, Func<T, Task<bool>>? isValid, Func<object, Task<T>> creator)
+    {
         var snapshot = await entry.Value;
 
         if (entry.Expires > now && (isValid == null || await isValid(snapshot)))
@@ -110,7 +124,9 @@ public sealed class BackgroundCache(IMemoryCache memoryCache, TimeProvider timeP
 
     private object GetLock(object key)
     {
-        var index = Math.Abs(key.GetHashCode() % locks.Length);
+        // Math.Abs would throw for int.MinValue, so mask the sign bit instead. The length is a power
+        // of two, so the modulo stays uniform.
+        var index = (key.GetHashCode() & int.MaxValue) % locks.Length;
 
         return locks[index];
     }

@@ -55,8 +55,6 @@ public sealed class LRUCache<TKey, TValue> where TKey : notnull
             cacheHistory.Remove(node);
             cacheHistory.AddLast(node);
 
-            cacheMap[key] = node;
-
             return true;
         }
 

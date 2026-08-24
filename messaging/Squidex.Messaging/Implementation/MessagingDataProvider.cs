@@ -79,12 +79,16 @@ public sealed class MessagingDataProvider(
 
         var now = timeProvider.GetUtcNow().UtcDateTime;
 
+        List<string>? expiredKeys = null;
         foreach (var entry in await messagingDataStore.GetEntriesAsync(group, ct))
         {
             // Check for expiration again.
             if (entry.Expiration < now)
             {
-                await messagingDataStore.DeleteAsync(group, entry.Key, ct);
+                // Collect the keys and delete them after the loop, so that a group with many expired
+                // entries does not cost one round trip per entry before returning anything.
+                expiredKeys ??= [];
+                expiredKeys.Add(entry.Key);
                 continue;
             }
 
@@ -95,6 +99,11 @@ public sealed class MessagingDataProvider(
             {
                 result[entry.Key] = typed;
             }
+        }
+
+        if (expiredKeys != null)
+        {
+            await messagingDataStore.DeleteManyAsync(group, expiredKeys, ct);
         }
 
         return result;

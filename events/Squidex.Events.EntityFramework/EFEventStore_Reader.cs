@@ -76,7 +76,7 @@ public sealed partial class EFEventStore<T> : IEventStore
         var taken = 0;
         foreach (var commit in query)
         {
-            foreach (var @event in commit.Filtered(EventsVersion.Empty).Reverse())
+            foreach (var @event in commit.FilteredReverse(EventsVersion.Empty))
             {
                 yield return @event;
 

@@ -22,6 +22,8 @@ public class DefaultCronJobManager<TContext>(
     ILogger<DefaultCronJobManager<TContext>> log)
     : ICronJobManager<TContext>
 {
+    private const int MaxCachedExpressions = 1000;
+    private readonly ConcurrentDictionary<string, CronExpression> parsedExpressions = [];
     private readonly ConcurrentDictionary<string, bool> failedJobs = [];
     private Func<CronJob<TContext>, CancellationToken, Task>? handler;
 
@@ -195,9 +197,20 @@ public class DefaultCronJobManager<TContext>(
             return false;
         }
 
-        if (!CronExpression.TryParse(expression, out var parsed))
+        // The scheduler resolves the expression of every due job on every tick, so parsing is cached.
+        if (!parsedExpressions.TryGetValue(expression, out var parsed))
         {
-            return false;
+            if (!CronExpression.TryParse(expression, out parsed))
+            {
+                return false;
+            }
+
+            // The set of expressions is bounded by the number of jobs, but guard against a job store
+            // that produces a very large number of distinct expressions anyway.
+            if (parsedExpressions.Count < MaxCachedExpressions)
+            {
+                parsedExpressions.TryAdd(expression, parsed);
+            }
         }
 
         if (validateInterval)

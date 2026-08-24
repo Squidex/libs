@@ -148,7 +148,12 @@ public sealed class SemanticLog : ISemanticLog
             return this;
         }
 
-        var newAppenders = appenders.Union(Enumerable.Repeat(appender, 1));
+        // Union would build a hash set and silently drop the appender if an equal one is already
+        // registered. This is a plain append.
+        var newAppenders = new ILogAppender[appenders.Length + 1];
+
+        Array.Copy(appenders, newAppenders, appenders.Length);
+        newAppenders[^1] = appender;
 
         return new SemanticLog(options, channels, newAppenders, writerFactory);
     }

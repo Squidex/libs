@@ -137,6 +137,22 @@ internal class EFMessagingDataStore<T>(
             .ExecuteDeleteAsync(ct);
     }
 
+    public async Task DeleteManyAsync(string group, IReadOnlyList<string> keys,
+        CancellationToken ct)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(group);
+
+        if (keys.Count == 0)
+        {
+            return;
+        }
+
+        await using var context = await dbContextFactory.CreateDbContextAsync(ct);
+
+        await context.Set<EFMessagingDataEntity>().Where(x => x.Group == group && keys.Contains(x.Key))
+            .ExecuteDeleteAsync(ct);
+    }
+
     public async Task CleanupAsync(
         CancellationToken ct)
     {

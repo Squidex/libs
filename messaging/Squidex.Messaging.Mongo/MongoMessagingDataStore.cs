@@ -112,6 +112,19 @@ public sealed class MongoMessagingDataStore(
         return collection.DeleteOneAsync(x => x.Id == id, ct);
     }
 
+    public Task DeleteManyAsync(string group, IReadOnlyList<string> keys,
+        CancellationToken ct)
+    {
+        if (keys.Count == 0)
+        {
+            return Task.CompletedTask;
+        }
+
+        var ids = keys.Select(x => GetId(group, x)).ToList();
+
+        return collection.DeleteManyAsync(Builders<Entity>.Filter.In(x => x.Id, ids), ct);
+    }
+
     private static string GetId(string group, string key)
     {
         return $"{group}/{key}";

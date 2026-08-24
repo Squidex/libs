@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Collections.Concurrent;
 using System.Text;
 using Microsoft.Extensions.Logging;
 
@@ -12,6 +13,9 @@ namespace Squidex.Log.Adapter;
 
 internal sealed class SemanticLogLogger(ISemanticLog semanticLog) : ILogger
 {
+    private const int MaxCachedNames = 1000;
+    private static readonly ConcurrentDictionary<string, string?> PropertyNames = new ConcurrentDictionary<string, string?>(StringComparer.Ordinal);
+
     public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
     {
         var semanticLogLevel = MapLevel(logLevel);
@@ -66,17 +70,40 @@ internal sealed class SemanticLogLogger(ISemanticLog semanticLog) : ILogger
                         continue;
                     }
 
-                    var trimmedName = key.Trim('{', '}', ' ');
+                    var propertyName = GetPropertyName(key);
 
-                    if (ShouldIgnoreKey(trimmedName))
+                    if (propertyName == null)
                     {
                         continue;
                     }
 
-                    writer.WriteProperty(ToCamelCase(trimmedName), value.ToString());
+                    writer.WriteProperty(propertyName, value.ToString());
                 }
             }
         });
+    }
+
+    /// <summary>
+    /// Resolves the property name for a message template key, or null when it should be ignored. The
+    /// trim and the camel casing would otherwise allocate two strings per property and per log entry.
+    /// </summary>
+    private static string? GetPropertyName(string key)
+    {
+        if (PropertyNames.TryGetValue(key, out var cached))
+        {
+            return cached;
+        }
+
+        var trimmedName = key.Trim('{', '}', ' ');
+        var resolved = ShouldIgnoreKey(trimmedName) ? null : ToCamelCase(trimmedName);
+
+        // Message template keys are a small fixed set, but guard against unbounded growth anyway.
+        if (PropertyNames.Count < MaxCachedNames)
+        {
+            PropertyNames.TryAdd(key, resolved);
+        }
+
+        return resolved;
     }
 
     private static bool ShouldIgnoreKey(string name)

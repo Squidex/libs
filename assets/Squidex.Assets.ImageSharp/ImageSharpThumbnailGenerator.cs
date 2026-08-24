@@ -109,15 +109,19 @@ public sealed class ImageSharpThumbnailGenerator(IHttpClientFactory httpClientFa
     {
         var isCropUpsize = options.Mode == ResizeMode.CropUpsize;
 
-        if (!Enum.TryParse<ImageSharpMode>(options.Mode.ToString(), true, out var resizeMode))
+        // Map explicitly. Going through Enum.ToString and a case insensitive Enum.TryParse for every
+        // single resize is needless work and silently depends on both enums using the same names.
+        var resizeMode = options.Mode switch
         {
-            resizeMode = ImageSharpMode.Max;
-        }
-
-        if (isCropUpsize)
-        {
-            resizeMode = ImageSharpMode.Crop;
-        }
+            ResizeMode.Crop => ImageSharpMode.Crop,
+            ResizeMode.CropUpsize => ImageSharpMode.Crop,
+            ResizeMode.Pad => ImageSharpMode.Pad,
+            ResizeMode.BoxPad => ImageSharpMode.BoxPad,
+            ResizeMode.Max => ImageSharpMode.Max,
+            ResizeMode.Min => ImageSharpMode.Min,
+            ResizeMode.Stretch => ImageSharpMode.Stretch,
+            _ => ImageSharpMode.Max,
+        };
 
         if (w >= image.Width && h >= image.Height && resizeMode == ImageSharpMode.Crop && !isCropUpsize)
         {
