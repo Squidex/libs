@@ -45,12 +45,15 @@ public sealed class FileLogProcessor : IDisposable
 
             var fs = new FileStream(fileInfo.FullName, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
 
+            // Do not flush after every write. The queue is drained by a single thread and we flush
+            // as soon as it runs empty, so that bursts of messages result in one write to disk.
             writer = new StreamWriter(fs, Encoding.UTF8)
             {
-                AutoFlush = true,
+                AutoFlush = false,
             };
 
             writer.WriteLine($"--- Started Logging {DateTime.UtcNow} ---", 1);
+            writer.Flush();
 
             outputThread.Start();
         }
@@ -76,24 +79,12 @@ public sealed class FileLogProcessor : IDisposable
         {
             foreach (var entry in messageQueue.GetConsumingEnumerable())
             {
-                for (var i = 1; i <= Retries; i++)
-                {
-                    try
-                    {
-                        writer.WriteLine(entry.Message);
-                        break;
-                    }
-                    catch (Exception ex)
-                    {
-                        Thread.Sleep(i * 10);
-
-                        if (i == Retries)
-                        {
-                            Console.WriteLine($"Failed to write to log file '{path}': {ex}");
-                        }
-                    }
-                }
+                // Only hit the disk when there is nothing left to write, so that a burst of
+                // messages is written with a single flush.
+                WriteWithRetries(entry.Message, messageQueue.Count == 0);
             }
+
+            WriteWithRetries(null, true);
         }
         catch
         {
@@ -104,6 +95,40 @@ public sealed class FileLogProcessor : IDisposable
             catch
             {
                 return;
+            }
+        }
+    }
+
+    private void WriteWithRetries(string? message, bool flush)
+    {
+        var isWritten = message == null;
+
+        for (var i = 1; i <= Retries; i++)
+        {
+            try
+            {
+                // Never write the message twice when only the flush has failed before.
+                if (!isWritten)
+                {
+                    writer!.WriteLine(message);
+                    isWritten = true;
+                }
+
+                if (flush)
+                {
+                    writer!.Flush();
+                }
+
+                return;
+            }
+            catch (Exception ex)
+            {
+                Thread.Sleep(i * 10);
+
+                if (i == Retries)
+                {
+                    Console.WriteLine($"Failed to write to log file '{path}': {ex}");
+                }
             }
         }
     }

@@ -289,11 +289,6 @@ public sealed class AmazonS3AssetStore(IOptions<AmazonS3AssetOptions> options) :
 
         try
         {
-            var request = new DeleteObjectRequest
-            {
-                BucketName = options.Bucket,
-            };
-
             string? continuationToken = null;
 
             while (!ct.IsCancellationRequested)
@@ -305,17 +300,26 @@ public sealed class AmazonS3AssetStore(IOptions<AmazonS3AssetOptions> options) :
                     ContinuationToken = continuationToken,
                 }, ct);
 
-                foreach (var item in items.S3Objects)
+                // A listing returns up to 1000 objects, which is also the limit for a batch delete,
+                // so one page of results is always deleted with a single request.
+                if (items.S3Objects.Count > 0)
                 {
                     try
                     {
-                        request.Key = item.Key;
-
-                        await s3Client.DeleteObjectAsync(request, ct);
+                        await s3Client.DeleteObjectsAsync(new DeleteObjectsRequest
+                        {
+                            BucketName = options.Bucket,
+                            Objects = items.S3Objects.Select(x => new KeyVersion { Key = x.Key }).ToList(),
+                            Quiet = true,
+                        }, ct);
+                    }
+                    catch (DeleteObjectsException)
+                    {
+                        // Some keys could not be deleted, most likely because they are already gone.
                     }
                     catch (AmazonS3Exception ex) when (ex.StatusCode == HttpStatusCode.NotFound)
                     {
-                        continue;
+                        // The objects are already gone.
                     }
                 }
 

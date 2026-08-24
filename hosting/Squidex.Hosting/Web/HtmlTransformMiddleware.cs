@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Buffers;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.IO;
@@ -44,7 +45,11 @@ public sealed class HtmlTransformMiddleware(HtmlTransformOptions options, Reques
 
             try
             {
-                var html = Encoding.UTF8.GetString(memoryStream.ToArray());
+                // Decode from the pooled buffer directly. ToArray would allocate another copy of the
+                // full body and defeat the purpose of the recyclable stream.
+                var buffer = memoryStream.GetBuffer();
+
+                var html = Encoding.UTF8.GetString(buffer, 0, (int)memoryStream.Length);
 
                 if (options.AdjustBase)
                 {
@@ -56,14 +61,24 @@ public sealed class HtmlTransformMiddleware(HtmlTransformOptions options, Reques
                     html = await options.Transform(html, context);
                 }
 
-                var bytes = Encoding.UTF8.GetBytes(html);
-
-                if (!context.Response.HasStarted)
+                // Encode into a pooled buffer instead of allocating a byte array for the full body.
+                var bytesLength = Encoding.UTF8.GetByteCount(html);
+                var bytesRented = ArrayPool<byte>.Shared.Rent(bytesLength);
+                try
                 {
-                    context.Response.ContentLength = bytes.Length;
-                }
+                    Encoding.UTF8.GetBytes(html, bytesRented);
 
-                await originalBody.WriteAsync(bytes, context.RequestAborted);
+                    if (!context.Response.HasStarted)
+                    {
+                        context.Response.ContentLength = bytesLength;
+                    }
+
+                    await originalBody.WriteAsync(bytesRented.AsMemory(0, bytesLength), context.RequestAborted);
+                }
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(bytesRented);
+                }
             }
             finally
             {

@@ -87,7 +87,7 @@ public sealed class FolderAssetStore(IOptions<FolderAssetOptions> options, ILogg
 
         try
         {
-            await using (var fileStream = file.OpenRead())
+            await using (var fileStream = OpenRead(file))
             {
                 await fileStream.CopyToAsync(stream, range, ct);
             }
@@ -113,7 +113,7 @@ public sealed class FolderAssetStore(IOptions<FolderAssetOptions> options, ILogg
 
         try
         {
-            await using (var fileStream = file.Open(overwrite ? FileMode.Create : FileMode.CreateNew, FileAccess.Write))
+            await using (var fileStream = OpenWrite(file, overwrite))
             {
                 await stream.CopyToAsync(fileStream, BufferSize, ct);
             }
@@ -136,7 +136,8 @@ public sealed class FolderAssetStore(IOptions<FolderAssetOptions> options, ILogg
             return Task.CompletedTask;
         }
 
-        foreach (var file in directory.GetFiles("*.*", SearchOption.AllDirectories))
+        // Enumerate lazily, otherwise the whole directory tree is materialized before the first match.
+        foreach (var file in directory.EnumerateFiles("*.*", SearchOption.AllDirectories))
         {
             var relativeName = GetFileName(Path.GetRelativePath(directory.FullName, file.FullName), string.Empty);
 
@@ -188,6 +189,20 @@ public sealed class FolderAssetStore(IOptions<FolderAssetOptions> options, ILogg
         {
             return false;
         }
+    }
+
+    // FileInfo.OpenRead and FileInfo.Open do not use asynchronous IO, therefore every read and write
+    // would block a thread pool thread for the duration of the operation.
+    private static FileStream OpenRead(FileInfo file)
+    {
+        return new FileStream(file.FullName, FileMode.Open, FileAccess.Read, FileShare.Read, BufferSize,
+            FileOptions.Asynchronous | FileOptions.SequentialScan);
+    }
+
+    private static FileStream OpenWrite(FileInfo file, bool overwrite)
+    {
+        return new FileStream(file.FullName, overwrite ? FileMode.Create : FileMode.CreateNew, FileAccess.Write, FileShare.None, BufferSize,
+            FileOptions.Asynchronous | FileOptions.SequentialScan);
     }
 
     private FileInfo GetFile(string fileName, string parameterName)

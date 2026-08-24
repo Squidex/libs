@@ -14,31 +14,12 @@ internal sealed class SemanticLogLogger(ISemanticLog semanticLog) : ILogger
 {
     public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
     {
-        SemanticLogLevel semanticLogLevel;
+        var semanticLogLevel = MapLevel(logLevel);
 
-        switch (logLevel)
+        // The message is dropped by the log anyway, so we do not scan the state or allocate a context.
+        if (!semanticLog.IsEnabled(semanticLogLevel))
         {
-            case LogLevel.Trace:
-                semanticLogLevel = SemanticLogLevel.Trace;
-                break;
-            case LogLevel.Debug:
-                semanticLogLevel = SemanticLogLevel.Debug;
-                break;
-            case LogLevel.Information:
-                semanticLogLevel = SemanticLogLevel.Information;
-                break;
-            case LogLevel.Warning:
-                semanticLogLevel = SemanticLogLevel.Warning;
-                break;
-            case LogLevel.Error:
-                semanticLogLevel = SemanticLogLevel.Error;
-                break;
-            case LogLevel.Critical:
-                semanticLogLevel = SemanticLogLevel.Fatal;
-                break;
-            default:
-                semanticLogLevel = SemanticLogLevel.Debug;
-                break;
+            return;
         }
 
         if (state is IReadOnlyList<KeyValuePair<string, object>> parameters)
@@ -115,7 +96,33 @@ internal sealed class SemanticLogLogger(ISemanticLog semanticLog) : ILogger
 
     public bool IsEnabled(LogLevel logLevel)
     {
-        return true;
+        if (logLevel == LogLevel.None)
+        {
+            return false;
+        }
+
+        return semanticLog.IsEnabled(MapLevel(logLevel));
+    }
+
+    private static SemanticLogLevel MapLevel(LogLevel logLevel)
+    {
+        switch (logLevel)
+        {
+            case LogLevel.Trace:
+                return SemanticLogLevel.Trace;
+            case LogLevel.Debug:
+                return SemanticLogLevel.Debug;
+            case LogLevel.Information:
+                return SemanticLogLevel.Information;
+            case LogLevel.Warning:
+                return SemanticLogLevel.Warning;
+            case LogLevel.Error:
+                return SemanticLogLevel.Error;
+            case LogLevel.Critical:
+                return SemanticLogLevel.Fatal;
+            default:
+                return SemanticLogLevel.Debug;
+        }
     }
 
     public IDisposable BeginScope<TState>(TState state) where TState : notnull

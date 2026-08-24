@@ -56,11 +56,13 @@ public sealed class EFChatStore<T>(IDbContextFactory<T> dbContextFactory) : ICha
 
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
 
-        var entity = await dbContext.Set<EFChatEntity>().Where(x => x.Id == conversationId).FirstOrDefaultAsync(ct);
+        // The entity is updated below, so it has to be tracked. The context of the host can be
+        // configured with QueryTrackingBehavior.NoTracking, and then the update would be lost.
+        var entity = await dbContext.Set<EFChatEntity>().AsTracking().Where(x => x.Id == conversationId).FirstOrDefaultAsync(ct);
         if (entity != null)
         {
             entity.LastUpdated = now;
-            entity.Version = Guid.NewGuid();
+            entity.LastVersion = Guid.NewGuid();
             entity.Value = json;
         }
         else
@@ -69,7 +71,7 @@ public sealed class EFChatStore<T>(IDbContextFactory<T> dbContextFactory) : ICha
             {
                 Id = conversationId,
                 LastUpdated = now,
-                Version = Guid.NewGuid(),
+                LastVersion = Guid.NewGuid(),
                 Value = json,
             };
 

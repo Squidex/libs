@@ -13,10 +13,10 @@ namespace Squidex.Log;
 
 public sealed class JsonLogWriter : IRootWriter, IArrayWriter
 {
+    private static readonly byte[] NewLine = Encoding.UTF8.GetBytes(Environment.NewLine);
     private readonly JsonWriterOptions formatting;
     private readonly bool formatLine;
     private readonly MemoryStream stream = new MemoryStream();
-    private readonly StreamReader streamReader;
     private Utf8JsonWriter? jsonWriter;
 
     public long BufferSize
@@ -28,8 +28,6 @@ public sealed class JsonLogWriter : IRootWriter, IArrayWriter
     {
         this.formatLine = formatLine;
         this.formatting = formatting;
-
-        streamReader = new StreamReader(stream, Encoding.UTF8);
     }
 
     internal void Reset()
@@ -249,17 +247,15 @@ public sealed class JsonLogWriter : IRootWriter, IArrayWriter
             jsonWriter.WriteEndObject();
             jsonWriter.Flush();
 
-            stream.Position = 0;
-            streamReader.DiscardBufferedData();
-
-            var json = streamReader.ReadToEnd();
-
             if (formatLine)
             {
-                json += Environment.NewLine;
+                // Append the line break to the buffer, so that the whole result is turned into a
+                // string with a single allocation below.
+                stream.Write(NewLine, 0, NewLine.Length);
             }
 
-            return json;
+            // Decode the buffer directly. A StreamReader would also allocate an intermediate char buffer.
+            return Encoding.UTF8.GetString(stream.GetBuffer(), 0, (int)stream.Length);
         }
         finally
         {

@@ -61,7 +61,10 @@ internal sealed class EFSubscription<T> : IAsyncDisposable, IMessageAck where T 
             query = query.Where(x => x.QueueName == queueFilter);
         }
 
-        var efMessage = await query.FirstOrDefaultAsync(ct);
+        // The message is claimed by changing it below, so it has to be tracked. The context of the
+        // host can be configured with QueryTrackingBehavior.NoTracking, and then the claim would
+        // never be written and the message would be delivered again and again.
+        var efMessage = await query.AsTracking().FirstOrDefaultAsync(ct);
         if (efMessage == null)
         {
             return false;

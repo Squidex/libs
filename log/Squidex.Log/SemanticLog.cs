@@ -33,11 +33,16 @@ public sealed class SemanticLog : ISemanticLog
         this.writerFactory = writerFactory;
     }
 
+    public bool IsEnabled(SemanticLogLevel logLevel)
+    {
+        return logLevel >= options.Value.Level;
+    }
+
     public void Log<T>(SemanticLogLevel logLevel, T context, Exception? exception, LogFormatter<T> action)
     {
         Guard.NotNull(action, nameof(action));
 
-        if (logLevel < options.Value.Level)
+        if (!IsEnabled(logLevel))
         {
             return;
         }
@@ -51,7 +56,7 @@ public sealed class SemanticLog : ISemanticLog
     {
         Guard.NotNull(action, nameof(action));
 
-        if (logLevel < options.Value.Level)
+        if (!IsEnabled(logLevel))
         {
             return;
         }
