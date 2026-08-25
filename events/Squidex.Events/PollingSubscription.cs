@@ -11,6 +11,7 @@ namespace Squidex.Events;
 
 public sealed class PollingSubscription : IEventSubscription
 {
+    private const int PageSize = 1000;
     private readonly CompletionTimer timer;
 #pragma warning disable IDE0052 // Remove unread private members
     private int eventsTotal;
@@ -33,7 +34,10 @@ public sealed class PollingSubscription : IEventSubscription
                 while (true)
                 {
                     var eventsInAttempt = 0;
-                    await foreach (var storedEvent in eventStore.QueryAllAsync(streamFilter, streamPosition, ct: ct))
+
+                    // Query in pages. Without a limit the store would be asked for the whole stream in
+                    // one go, which keeps an unbounded number of events in memory while catching up.
+                    await foreach (var storedEvent in eventStore.QueryAllAsync(streamFilter, streamPosition, PageSize, ct))
                     {
                         await eventSubscriber.OnNextAsync(this, storedEvent);
 
@@ -47,7 +51,12 @@ public sealed class PollingSubscription : IEventSubscription
                         break;
                     }
 
-                    await Task.Delay(100, ct);
+                    if (eventsInAttempt < PageSize)
+                    {
+                        // Close to the end of the stream, so do not query the store in a tight loop.
+                        // A full page means we are still catching up and continue immediately.
+                        await Task.Delay(100, ct);
+                    }
                 }
             }
             catch (Exception ex)

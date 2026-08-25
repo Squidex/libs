@@ -15,6 +15,7 @@ namespace Squidex.Assets.Azure;
 
 public class AzureBlobAssetStore(IOptions<AzureBlobAssetOptions> options) : IAssetStore, IInitializable
 {
+    private const int DeleteParallelism = 16;
     private static readonly BlobUploadOptions NoOverwriteUpload = new BlobUploadOptions
     {
         Conditions = new BlobRequestConditions
@@ -184,14 +185,20 @@ public class AzureBlobAssetStore(IOptions<AzureBlobAssetOptions> options) : IAss
     {
         var name = GetFileName(prefix, nameof(prefix));
 
-        var items = blobContainer.GetBlobsAsync(BlobTraits.All, BlobStates.All, prefix: name, cancellationToken: ct);
+        // Only the name is needed, so do not ask for the metadata and tags of every blob. The states
+        // are unchanged, because they decide which blobs are listed and therefore deleted.
+        var items = blobContainer.GetBlobsAsync(BlobTraits.None, BlobStates.All, prefix: name, cancellationToken: ct);
 
-        await foreach (var item in items.WithCancellation(ct))
+        // Deleting the blobs one after the other means one full round trip of latency per blob.
+        await Parallel.ForEachAsync(items, new ParallelOptions
         {
-            ct.ThrowIfCancellationRequested();
-
-            await blobContainer.DeleteBlobIfExistsAsync(item.Name, cancellationToken: ct);
-        }
+            CancellationToken = ct,
+            MaxDegreeOfParallelism = DeleteParallelism,
+        },
+        async (item, innerCt) =>
+        {
+            await blobContainer.DeleteBlobIfExistsAsync(item.Name, cancellationToken: innerCt);
+        });
     }
 
     public Task DeleteAsync(string fileName,

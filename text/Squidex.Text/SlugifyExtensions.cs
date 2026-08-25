@@ -577,8 +577,6 @@ public static partial class SlugifyExtensions
             {
                 lastChar = character;
 
-                var lower = char.ToLowerInvariant(character);
-
                 if (LowerCaseDiacritics.TryGetValue(character, out var replacement))
                 {
                     if (singleCharDiactric && replacement.Length == 2)
@@ -592,7 +590,8 @@ public static partial class SlugifyExtensions
                 }
                 else
                 {
-                    result.Append(lower);
+                    // Only lowercase when there is no replacement, the lookup usually makes it unnecessary.
+                    result.Append(char.ToLowerInvariant(character));
                 }
             }
             else if ((i < value.Length - 1) && (i > 0 && lastChar != separator))
@@ -603,7 +602,23 @@ public static partial class SlugifyExtensions
             }
         }
 
-        return result.ToString().Trim(separator);
+        // Trim within the builder.
+        // Building the full string first and then trimming it would allocate
+        // the whole result twice.
+        var trimStart = 0;
+        var trimEnd = result.Length;
+
+        while (trimStart < trimEnd && result[trimStart] == separator)
+        {
+            trimStart++;
+        }
+
+        while (trimEnd > trimStart && result[trimEnd - 1] == separator)
+        {
+            trimEnd--;
+        }
+
+        return result.ToString(trimStart, trimEnd - trimStart);
     }
 
     [GeneratedRegex("^[a-z0-9]+(\\-[a-z0-9]+)*$", RegexOptions.Compiled | RegexOptions.ExplicitCapture)]

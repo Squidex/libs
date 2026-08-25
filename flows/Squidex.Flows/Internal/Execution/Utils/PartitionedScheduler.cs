@@ -91,7 +91,8 @@ public sealed class PartitionedScheduler<T> : IAsyncDisposable
     {
         try
         {
-            var consumerIndex = Math.Abs((key?.GetHashCode() ?? 0) % consumers.Length);
+            // Math.Abs would throw for int.MinValue, so mask the sign bit instead.
+            var consumerIndex = ((key?.GetHashCode() ?? 0) & int.MaxValue) % consumers.Length;
             var consumerInstance = consumers[consumerIndex];
 
             await consumerInstance.ScheduleAsync(item, ct);

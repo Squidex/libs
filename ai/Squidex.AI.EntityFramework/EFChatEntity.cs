@@ -6,6 +6,7 @@
 // ==========================================================================
 
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Squidex.AI.EntityFramework;
 
@@ -18,5 +19,6 @@ public sealed class EFChatEntity
     public DateTime LastUpdated { get; set; }
 
     [ConcurrencyCheck]
-    public Guid Version { get; set; }
+    [Column("Version")]
+    public Guid LastVersion { get; set; }
 }

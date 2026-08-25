@@ -11,7 +11,9 @@ namespace Squidex.Assets
     {
         public static FileStream GetTempStream()
         {
-            var tempFileName = Path.GetTempFileName();
+            // Path.GetTempFileName scans for a free name, creates the file and gives up after 65535
+            // files in the temp folder. A random name has neither problem.
+            var tempFileName = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
 
             return new FileStream(tempFileName,
                 FileMode.Create,

@@ -12,8 +12,6 @@ namespace Squidex.Text;
 
 public static class HtmlExtensions
 {
-    private static readonly char[] TrimChars = [' ', '\n', '\r'];
-
     public static string Html2Text(this string html)
     {
         var htmlWriter = new StringBuilder();
@@ -21,7 +19,28 @@ public static class HtmlExtensions
 
         WriteTextTo(htmlReader, htmlWriter);
 
-        return htmlWriter.ToString().Trim(TrimChars);
+        static bool IsTrimmed(char value)
+        {
+            return value == ' ' || value == '\n' || value == '\r';
+        }
+
+        // Trim within the builder.
+        // Building the full string first and then trimming it would allocate
+        // the whole result twice.
+        var trimStart = 0;
+        var trimEnd = htmlWriter.Length;
+
+        while (trimStart < trimEnd && IsTrimmed(htmlWriter[trimStart]))
+        {
+            trimStart++;
+        }
+
+        while (trimEnd > trimStart && IsTrimmed(htmlWriter[trimEnd - 1]))
+        {
+            trimEnd--;
+        }
+
+        return htmlWriter.ToString(trimStart, trimEnd - trimStart);
     }
 
     private static void WriteTextTo(HtmlReader reader, StringBuilder sb)

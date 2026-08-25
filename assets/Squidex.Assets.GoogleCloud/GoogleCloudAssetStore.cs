@@ -16,6 +16,7 @@ namespace Squidex.Assets.GoogleCloud;
 
 public sealed class GoogleCloudAssetStore(IOptions<GoogleCloudAssetOptions> options) : IAssetStore, IInitializable
 {
+    private const int DeleteParallelism = 16;
     private static readonly UploadObjectOptions IfNotExists = new UploadObjectOptions { IfGenerationMatch = 0 };
     private static readonly CopyObjectOptions IfNotExistsCopy = new CopyObjectOptions { IfGenerationMatch = 0 };
     private readonly string bucketName = options.Value.Bucket;
@@ -130,17 +131,23 @@ public sealed class GoogleCloudAssetStore(IOptions<GoogleCloudAssetOptions> opti
         {
             var items = storageClient.ListObjectsAsync(bucketName, name);
 
-            await foreach (var item in items.WithCancellation(ct))
+            // Deleting the objects one after the other means one full round trip of latency per object.
+            await Parallel.ForEachAsync(items, new ParallelOptions
+            {
+                CancellationToken = ct,
+                MaxDegreeOfParallelism = DeleteParallelism,
+            },
+            async (item, innerCt) =>
             {
                 try
                 {
-                    await storageClient.DeleteObjectAsync(item.Bucket, item.Name, cancellationToken: ct);
+                    await storageClient.DeleteObjectAsync(item.Bucket, item.Name, cancellationToken: innerCt);
                 }
                 catch (GoogleApiException ex) when (ex.HttpStatusCode == HttpStatusCode.NotFound)
                 {
-                    continue;
+                    // The object is already gone.
                 }
-            }
+            });
         }
         catch (GoogleApiException ex) when (ex.HttpStatusCode == HttpStatusCode.NotFound)
         {

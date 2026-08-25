@@ -5,7 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System.Linq.Expressions;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using Squidex.Hosting;
@@ -15,8 +14,9 @@ namespace Squidex.Messaging.Mongo;
 internal sealed class MongoSubscription : IAsyncDisposable, IMessageAck
 {
     private static readonly UpdateDefinitionBuilder<MongoMessage> Update = Builders<MongoMessage>.Update;
+    private static readonly FilterDefinitionBuilder<MongoMessage> Filter = Builders<MongoMessage>.Filter;
+    private readonly FilterDefinition<MongoMessage> unhandledFilter;
     private readonly string? channelName;
-    private readonly string? queueFilter;
     private readonly IMongoCollection<MongoMessage> collection;
     private readonly MongoTransportOptions options;
     private readonly TimeProvider timeProvider;
@@ -36,8 +36,18 @@ internal sealed class MongoSubscription : IAsyncDisposable, IMessageAck
         this.collection = collection;
         this.log = log;
         this.options = options;
-        this.queueFilter = queueFilter;
         this.timeProvider = timeProvider;
+
+        // Build the constant part of the filter once. A LINQ expression would have to be translated to
+        // BSON by the driver on every single poll, forever, even when the queue is empty.
+        unhandledFilter =
+            queueFilter != null ?
+                Filter.And(
+                    Filter.Eq(x => x.TimeHandled, null),
+                    Filter.Eq(x => x.QueueName, queueFilter)) :
+                Filter.And(
+                    Filter.Eq(x => x.TimeHandled, null),
+                    Filter.Ne(x => x.QueueName, null));
 
         timer = new SimpleTimer(async ct =>
         {
@@ -103,7 +113,7 @@ internal sealed class MongoSubscription : IAsyncDisposable, IMessageAck
         var updateId = Guid.NewGuid().ToString();
 
         var update =
-            await collection.UpdateManyAsync(x => ids.Contains(x.Id) && x.PrefetchId == null,
+            await collection.UpdateManyAsync(Filter.And(Filter.In(x => x.Id, ids), Filter.Eq(x => x.PrefetchId, null)),
                 Update
                     .Set(x => x.TimeHandled, now)
                     .Set(x => x.PrefetchId, updateId),
@@ -117,7 +127,7 @@ internal sealed class MongoSubscription : IAsyncDisposable, IMessageAck
 
         // Get the documents that just have been updated.
         var mongoMessages =
-            await collection.Find(x => x.PrefetchId == updateId)
+            await collection.Find(Filter.Eq(x => x.PrefetchId, updateId))
                 .ToListAsync(ct);
 
         if (mongoMessages.Count == 0)
@@ -138,16 +148,9 @@ internal sealed class MongoSubscription : IAsyncDisposable, IMessageAck
         return true;
     }
 
-    private Expression<Func<MongoMessage, bool>> CreateFilter(DateTime now)
+    private FilterDefinition<MongoMessage> CreateFilter(DateTime now)
     {
-        if (queueFilter != null)
-        {
-            return x => x.TimeHandled == null && x.QueueName == queueFilter && x.TimeToLive > now;
-        }
-        else
-        {
-            return x => x.TimeHandled == null && x.QueueName != null && x.TimeToLive > now;
-        }
+        return Filter.And(unhandledFilter, Filter.Gt(x => x.TimeToLive, now));
     }
 
     public ValueTask DisposeAsync()
@@ -171,7 +174,7 @@ internal sealed class MongoSubscription : IAsyncDisposable, IMessageAck
 
         try
         {
-            await collection.UpdateOneAsync(x => x.Id == id, Update.Set(x => x.TimeHandled, null), null, ct);
+            await collection.UpdateOneAsync(Filter.Eq(x => x.Id, id), Update.Set(x => x.TimeHandled, null), null, ct);
         }
         catch (Exception ex)
         {
@@ -195,7 +198,7 @@ internal sealed class MongoSubscription : IAsyncDisposable, IMessageAck
 
         try
         {
-            await collection.DeleteOneAsync(x => x.Id == id, ct);
+            await collection.DeleteOneAsync(Filter.Eq(x => x.Id, id), ct);
         }
         catch (Exception ex)
         {

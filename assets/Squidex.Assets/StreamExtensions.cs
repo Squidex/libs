@@ -7,18 +7,17 @@
 
 using System.Buffers;
 
-#pragma warning disable CA1835 // Prefer the 'Memory'-based overloads for 'ReadAsync' and 'WriteAsync'
-
 namespace Squidex.Assets;
 
 public static class StreamExtensions
 {
-    private static readonly ArrayPool<byte> Pool = ArrayPool<byte>.Create();
+    private const int BufferSize = 81920;
 
     public static async Task CopyToAsync(this Stream source, Stream target, BytesRange range,
         CancellationToken ct, bool skip = true)
     {
-        var buffer = Pool.Rent(8192);
+        // The shared pool is per core and lock free, a custom pool would be slower for no benefit.
+        var buffer = ArrayPool<byte>.Shared.Rent(BufferSize);
 
         try
         {
@@ -39,7 +38,7 @@ public static class StreamExtensions
                 ct.ThrowIfCancellationRequested();
 
                 var readLength = (int)Math.Min(buffer.Length, bytesLeft);
-                var readBytes = await source.ReadAsync(buffer, 0, readLength, ct);
+                var readBytes = await source.ReadAsync(buffer.AsMemory(0, readLength), ct);
 
                 bytesLeft -= readBytes;
 
@@ -50,12 +49,12 @@ public static class StreamExtensions
 
                 ct.ThrowIfCancellationRequested();
 
-                await target.WriteAsync(buffer, 0, readBytes, ct);
+                await target.WriteAsync(buffer.AsMemory(0, readBytes), ct);
             }
         }
         finally
         {
-            Pool.Return(buffer);
+            ArrayPool<byte>.Shared.Return(buffer);
         }
     }
 

@@ -15,6 +15,11 @@ public delegate void LogFormatter<in T>(T context, IObjectWriter writer);
 
 public interface ISemanticLog
 {
+    bool IsEnabled(SemanticLogLevel logLevel)
+    {
+        return true;
+    }
+
     void Log<T>(SemanticLogLevel logLevel, T context, Exception? exception, LogFormatter<T> action);
 
     void Log(SemanticLogLevel logLevel, Exception? exception, LogFormatter action);

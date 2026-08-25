@@ -71,18 +71,35 @@ internal class EFMessagingDataStore<T>(
         await using var context = await dbContextFactory.CreateDbContextAsync(ct);
         foreach (var (group, key, value, expiration) in entries)
         {
+            // Entries are re-stored on every keep-alive, so the update is by far the common case.
+            // Try it first, otherwise every keep-alive would raise (and catch) a duplicate key error.
+            var numUpdates =
+                await context.Set<EFMessagingDataEntity>()
+                    .Where(x => x.Group == group && x.Key == key)
+                    .ExecuteUpdateAsync(b => b
+                        .SetProperty(x => x.Expiration, expiration)
+                        .SetProperty(x => x.ValueData, value.Data)
+                        .SetProperty(x => x.ValueFormat, value.Format)
+                        .SetProperty(x => x.ValueType, value.TypeString),
+                        ct);
+
+            if (numUpdates > 0)
+            {
+                continue;
+            }
+
+            var entity = new EFMessagingDataEntity
+            {
+                Expiration = expiration,
+                Key = key,
+                ValueData = value.Data,
+                ValueFormat = value.Format,
+                ValueType = value.TypeString,
+                Group = group,
+            };
+
             try
             {
-                var entity = new EFMessagingDataEntity
-                {
-                    Expiration = expiration,
-                    Key = key,
-                    ValueData = value.Data,
-                    ValueFormat = value.Format,
-                    ValueType = value.TypeString,
-                    Group = group,
-                };
-
                 try
                 {
                     await context.Set<EFMessagingDataEntity>().AddAsync(entity, ct);
@@ -95,6 +112,7 @@ internal class EFMessagingDataStore<T>(
             }
             catch (DbUpdateException)
             {
+                // Another instance has inserted the entry between the update and the insert.
                 await context.Set<EFMessagingDataEntity>()
                     .Where(x => x.Group == group && x.Key == key)
                     .ExecuteUpdateAsync(b => b
@@ -116,6 +134,22 @@ internal class EFMessagingDataStore<T>(
         await using var context = await dbContextFactory.CreateDbContextAsync(ct);
 
         await context.Set<EFMessagingDataEntity>().Where(x => x.Group == group && x.Key == key)
+            .ExecuteDeleteAsync(ct);
+    }
+
+    public async Task DeleteManyAsync(string group, IReadOnlyList<string> keys,
+        CancellationToken ct)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(group);
+
+        if (keys.Count == 0)
+        {
+            return;
+        }
+
+        await using var context = await dbContextFactory.CreateDbContextAsync(ct);
+
+        await context.Set<EFMessagingDataEntity>().Where(x => x.Group == group && keys.Contains(x.Key))
             .ExecuteDeleteAsync(ct);
     }
 

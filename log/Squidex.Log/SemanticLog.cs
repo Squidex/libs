@@ -33,11 +33,16 @@ public sealed class SemanticLog : ISemanticLog
         this.writerFactory = writerFactory;
     }
 
+    public bool IsEnabled(SemanticLogLevel logLevel)
+    {
+        return logLevel >= options.Value.Level;
+    }
+
     public void Log<T>(SemanticLogLevel logLevel, T context, Exception? exception, LogFormatter<T> action)
     {
         Guard.NotNull(action, nameof(action));
 
-        if (logLevel < options.Value.Level)
+        if (!IsEnabled(logLevel))
         {
             return;
         }
@@ -51,7 +56,7 @@ public sealed class SemanticLog : ISemanticLog
     {
         Guard.NotNull(action, nameof(action));
 
-        if (logLevel < options.Value.Level)
+        if (!IsEnabled(logLevel))
         {
             return;
         }
@@ -143,7 +148,12 @@ public sealed class SemanticLog : ISemanticLog
             return this;
         }
 
-        var newAppenders = appenders.Union(Enumerable.Repeat(appender, 1));
+        // Union would build a hash set and silently drop the appender if an equal one is already
+        // registered. This is a plain append.
+        var newAppenders = new ILogAppender[appenders.Length + 1];
+
+        Array.Copy(appenders, newAppenders, appenders.Length);
+        newAppenders[^1] = appender;
 
         return new SemanticLog(options, channels, newAppenders, writerFactory);
     }

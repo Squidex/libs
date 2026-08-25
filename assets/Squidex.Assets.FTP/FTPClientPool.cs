@@ -28,9 +28,8 @@ internal sealed class FTPClientPool(Func<IAsyncFtpClient> clientFactory, int cli
         {
             if (clientTask.Status == TaskStatus.RanToCompletion)
             {
-#pragma warning disable MA0042 // Do not use blocking calls in an async method
-                Return(clientTask.Result.Client);
-#pragma warning restore MA0042 // Do not use blocking calls in an async method
+                // The task has already completed, so this does not block.
+                Return(clientTask.GetAwaiter().GetResult().Client);
             }
 
             throw;
@@ -56,7 +55,10 @@ internal sealed class FTPClientPool(Func<IAsyncFtpClient> clientFactory, int cli
             }
             else
             {
-                var waiting = new TaskCompletionSource<(IAsyncFtpClient, bool)>();
+                // Run continuations asynchronously, otherwise the waiter resumes inline on the thread
+                // that returns the client, while that thread still holds the lock below.
+                var waiting = new TaskCompletionSource<(IAsyncFtpClient, bool)>(
+                    TaskCreationOptions.RunContinuationsAsynchronously);
 
                 queue.Enqueue(waiting);
 
@@ -67,20 +69,21 @@ internal sealed class FTPClientPool(Func<IAsyncFtpClient> clientFactory, int cli
 
     public void Return(IAsyncFtpClient client)
     {
+        TaskCompletionSource<(IAsyncFtpClient, bool)>? waiting = null;
+
         lock (queue)
         {
             if (client.IsDisposed)
             {
                 created--;
             }
-            else if (queue.TryDequeue(out var waiting))
-            {
-                waiting.TrySetResult((client, false));
-            }
-            else
+            else if (!queue.TryDequeue(out waiting))
             {
                 pool.Enqueue(client);
             }
         }
+
+        // Complete the waiter outside of the lock, so that no continuation can run while it is held.
+        waiting?.TrySetResult((client, false));
     }
 }

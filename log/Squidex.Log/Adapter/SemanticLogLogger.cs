@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Collections.Concurrent;
 using System.Text;
 using Microsoft.Extensions.Logging;
 
@@ -12,33 +13,17 @@ namespace Squidex.Log.Adapter;
 
 internal sealed class SemanticLogLogger(ISemanticLog semanticLog) : ILogger
 {
+    private const int MaxCachedNames = 1000;
+    private static readonly ConcurrentDictionary<string, string?> PropertyNames = new ConcurrentDictionary<string, string?>(StringComparer.Ordinal);
+
     public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
     {
-        SemanticLogLevel semanticLogLevel;
+        var semanticLogLevel = MapLevel(logLevel);
 
-        switch (logLevel)
+        // The message is dropped by the log anyway, so we do not scan the state or allocate a context.
+        if (!semanticLog.IsEnabled(semanticLogLevel))
         {
-            case LogLevel.Trace:
-                semanticLogLevel = SemanticLogLevel.Trace;
-                break;
-            case LogLevel.Debug:
-                semanticLogLevel = SemanticLogLevel.Debug;
-                break;
-            case LogLevel.Information:
-                semanticLogLevel = SemanticLogLevel.Information;
-                break;
-            case LogLevel.Warning:
-                semanticLogLevel = SemanticLogLevel.Warning;
-                break;
-            case LogLevel.Error:
-                semanticLogLevel = SemanticLogLevel.Error;
-                break;
-            case LogLevel.Critical:
-                semanticLogLevel = SemanticLogLevel.Fatal;
-                break;
-            default:
-                semanticLogLevel = SemanticLogLevel.Debug;
-                break;
+            return;
         }
 
         if (state is IReadOnlyList<KeyValuePair<string, object>> parameters)
@@ -85,17 +70,40 @@ internal sealed class SemanticLogLogger(ISemanticLog semanticLog) : ILogger
                         continue;
                     }
 
-                    var trimmedName = key.Trim('{', '}', ' ');
+                    var propertyName = GetPropertyName(key);
 
-                    if (ShouldIgnoreKey(trimmedName))
+                    if (propertyName == null)
                     {
                         continue;
                     }
 
-                    writer.WriteProperty(ToCamelCase(trimmedName), value.ToString());
+                    writer.WriteProperty(propertyName, value.ToString());
                 }
             }
         });
+    }
+
+    /// <summary>
+    /// Resolves the property name for a message template key, or null when it should be ignored. The
+    /// trim and the camel casing would otherwise allocate two strings per property and per log entry.
+    /// </summary>
+    private static string? GetPropertyName(string key)
+    {
+        if (PropertyNames.TryGetValue(key, out var cached))
+        {
+            return cached;
+        }
+
+        var trimmedName = key.Trim('{', '}', ' ');
+        var resolved = ShouldIgnoreKey(trimmedName) ? null : ToCamelCase(trimmedName);
+
+        // Message template keys are a small fixed set, but guard against unbounded growth anyway.
+        if (PropertyNames.Count < MaxCachedNames)
+        {
+            PropertyNames.TryAdd(key, resolved);
+        }
+
+        return resolved;
     }
 
     private static bool ShouldIgnoreKey(string name)
@@ -115,7 +123,33 @@ internal sealed class SemanticLogLogger(ISemanticLog semanticLog) : ILogger
 
     public bool IsEnabled(LogLevel logLevel)
     {
-        return true;
+        if (logLevel == LogLevel.None)
+        {
+            return false;
+        }
+
+        return semanticLog.IsEnabled(MapLevel(logLevel));
+    }
+
+    private static SemanticLogLevel MapLevel(LogLevel logLevel)
+    {
+        switch (logLevel)
+        {
+            case LogLevel.Trace:
+                return SemanticLogLevel.Trace;
+            case LogLevel.Debug:
+                return SemanticLogLevel.Debug;
+            case LogLevel.Information:
+                return SemanticLogLevel.Information;
+            case LogLevel.Warning:
+                return SemanticLogLevel.Warning;
+            case LogLevel.Error:
+                return SemanticLogLevel.Error;
+            case LogLevel.Critical:
+                return SemanticLogLevel.Fatal;
+            default:
+                return SemanticLogLevel.Debug;
+        }
     }
 
     public IDisposable BeginScope<TState>(TState state) where TState : notnull
