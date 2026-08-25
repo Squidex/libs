@@ -313,9 +313,10 @@ public sealed class AmazonS3AssetStore(IOptions<AmazonS3AssetOptions> options) :
                             Quiet = true,
                         }, ct);
                     }
-                    catch (DeleteObjectsException)
+                    catch (DeleteObjectsException ex) when (IsAlreadyGone(ex))
                     {
-                        // Some keys could not be deleted, most likely because they are already gone.
+                        // The objects are already gone. Any other error, for example a denied
+                        // permission, must not be swallowed or assets would silently stay behind.
                     }
                     catch (AmazonS3Exception ex) when (ex.StatusCode == HttpStatusCode.NotFound)
                     {
@@ -356,6 +357,14 @@ public sealed class AmazonS3AssetStore(IOptions<AmazonS3AssetOptions> options) :
         {
             return;
         }
+    }
+
+    private static bool IsAlreadyGone(DeleteObjectsException exception)
+    {
+        var errors = exception.Response?.DeleteErrors;
+
+        return errors != null && errors.Count > 0 && errors.TrueForAll(x =>
+            string.Equals(x.Code, "NoSuchKey", StringComparison.Ordinal));
     }
 
     private string GetKey(string fileName, string parameterName)
