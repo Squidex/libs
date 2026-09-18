@@ -55,6 +55,24 @@ public class RetrySubscriptionTests
     }
 
     [Fact]
+    public async Task Should_not_reopen_subscription_if_disposed_while_waiting_for_reconnect()
+    {
+        sut.ReconnectWaitMs = 500;
+
+        var reconnectTask = OnErrorAsync(eventSubscription, new InvalidOperationException(), times: 1);
+
+        sut.Dispose();
+
+        await reconnectTask;
+        await Task.Delay(1000);
+
+        Assert.False(sut.IsSubscribed);
+
+        A.CallTo(() => eventStore.CreateSubscription(A<IEventSubscriber<StoredEvent>>._, A<StreamFilter>._, A<StreamPosition>._))
+            .MustHaveHappenedOnceExactly();
+    }
+
+    [Fact]
     public async Task Should_forward_error_from_inner_subscription_if_failed_often()
     {
         var ex = new InvalidOperationException();

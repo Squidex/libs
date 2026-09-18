@@ -352,6 +352,134 @@ public abstract class EventStoreTests
     }
 
     [Theory]
+    [InlineData(0)]
+    [InlineData(4)]
+    [InlineData(7)]
+    [InlineData(9)]
+    [InlineData(13)]
+    [InlineData(14)]
+    public async Task Should_query_stream_from_any_offset(int offset)
+    {
+        var sut = await CreateSutAsync();
+
+        var streamName = $"test-{Guid.NewGuid()}";
+
+        // 3 commits with 5 events each, so most offsets point into the middle of a commit.
+        var eventsWritten = await AppendEventsAsync(sut, streamName, 15, 5);
+
+        var readEvents = await sut.QueryStreamAsync(streamName, offset, ct);
+
+        var expected =
+            eventsWritten
+                .Select((x, i) => new StoredEvent(streamName, "Position", i, x))
+                .Skip(offset + 1)
+                .ToArray();
+
+        ShouldBeEquivalentTo(readEvents, expected);
+    }
+
+    [Fact]
+    public async Task Should_append_events_in_parallel_with_any_version()
+    {
+        var sut = await CreateSutAsync();
+
+        var streamName = $"test-{Guid.NewGuid()}";
+
+        await Parallel.ForEachAsync(Enumerable.Range(0, 20), new ParallelOptions { MaxDegreeOfParallelism = 20, CancellationToken = ct }, async (i, ct) =>
+        {
+            await sut.AppendAsync(Guid.NewGuid(), streamName, EventsVersion.Any, [CreateEventData(i)], ct);
+        });
+
+        var readEvents = await sut.QueryStreamAsync(streamName, ct: ct);
+
+        Assert.Equal(Enumerable.Range(0, 20).Select(x => (long)x), readEvents.Select(x => x.EventStreamNumber));
+        Assert.Equal(Enumerable.Range(0, 20).Select(x => $"Type{x}").Order(), readEvents.Select(x => x.Data.Type).Order());
+    }
+
+    [Fact]
+    public async Task Should_accept_only_one_of_parallel_writes_with_same_expected_version()
+    {
+        var sut = await CreateSutAsync();
+
+        var streamName = $"test-{Guid.NewGuid()}";
+
+        var results = await Task.WhenAll(Enumerable.Range(0, 10).Select(async i =>
+        {
+            try
+            {
+                await sut.AppendAsync(Guid.NewGuid(), streamName, EventsVersion.Empty, [CreateEventData(i)], ct);
+                return true;
+            }
+            catch (WrongEventVersionException)
+            {
+                return false;
+            }
+        }));
+
+        var readEvents = await sut.QueryStreamAsync(streamName, ct: ct);
+
+        Assert.Single(results, true);
+        Assert.Single(readEvents);
+    }
+
+    [Fact]
+    public async Task Should_match_prefix_literally()
+    {
+        var sut = await CreateSutAsync();
+
+        var randomPart = Guid.NewGuid();
+        var streamName1 = $"t_.[{randomPart}]-1";
+        var streamName2 = $"tX.[{randomPart}]-1";
+
+        var commit1 = new[] { CreateEventData(1) };
+        var commit2 = new[] { CreateEventData(2) };
+
+        await sut.AppendAsync(Guid.NewGuid(), streamName1, EventsVersion.Any, commit1, ct);
+        await sut.AppendAsync(Guid.NewGuid(), streamName2, EventsVersion.Any, commit2, ct);
+
+        var readEvents = await sut.QueryAllAsync(StreamFilter.Prefix($"t_.[{randomPart}]"), ct: ct).ToListAsync();
+
+        var expected = new[]
+        {
+            new StoredEvent(streamName1, "Position", 0, commit1[0]),
+        };
+
+        ShouldBeEquivalentTo(readEvents, expected);
+    }
+
+    [Fact]
+    public async Task Should_subscribe_with_wildcard_prefix()
+    {
+        var sut = await CreateSutAsync();
+
+        var randomPart = Guid.NewGuid();
+        var streamName = $"test-{randomPart}-suffix";
+        var streamFilter = StreamFilter.Prefix($"%-{randomPart}");
+
+        var commit1 = new[]
+        {
+            CreateEventData(1),
+            CreateEventData(2),
+        };
+
+        var readEvents = await QueryWithSubscriptionAsync(sut, streamFilter, 2, async () =>
+        {
+            // Give the subscription time to finish the initial query, so that the events are delivered by the live part.
+            await Task.Delay(2000, ct);
+
+            await sut.AppendAsync(Guid.NewGuid(), streamName, EventsVersion.Any, commit1, ct);
+        }, fromBeginning: true);
+
+        var expected = new[]
+        {
+            new StoredEvent(streamName, "Position", 0, commit1[0]),
+            new StoredEvent(streamName, "Position", 1, commit1[1]),
+        };
+
+        ShouldBeEquivalentTo(readEvents, expected);
+    }
+
+    [Theory]
     [InlineData(1, 30)]
     [InlineData(5, 30)]
     [InlineData(5, 300)]
@@ -552,7 +680,7 @@ public abstract class EventStoreTests
         Assert.Empty(readEvents!);
     }
 
-    private static EventData CreateEventData(int i)
+    protected static EventData CreateEventData(int i)
     {
         var headers = new EnvelopeHeaders
         {

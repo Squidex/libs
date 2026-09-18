@@ -99,7 +99,7 @@ END;";
 IF NOT EXISTS(
     SELECT 1
     FROM EventPosition
-    WHERE Position = 1
+    WHERE Id = 1
 )
 BEGIN
     INSERT INTO EventPosition(Id, Position)
@@ -107,9 +107,9 @@ BEGIN
 END;";
             await dbContext.Database.ExecuteSqlRawAsync(sql, ct);
         }
-        catch (Exception ex) when (IsDuplicateException(ex))
+        catch (Exception ex) when (HasErrorNumber(ex, 2627))
         {
-            // Somehow the check above does not work reliably.
+            // Another instance has inserted the row between the check and the insert.
         }
     }
 
@@ -126,9 +126,9 @@ CREATE TYPE EventIdTableType AS TABLE
 );";
             await dbContext.Database.ExecuteSqlRawAsync(sql1, ct);
         }
-        catch (Exception ex) when (IsDuplicateException(ex))
+        catch (Exception ex) when (HasErrorNumber(ex, 219, 2714))
         {
-            // Somehow the check above does not work reliably.
+            // The type already exists.
         }
     }
 
@@ -174,24 +174,18 @@ CREATE TYPE EventIdTableType AS TABLE
 
     public bool IsDuplicateException(Exception exception)
     {
+        // Error messages are localized, therefore use the error numbers.
+        // 2601: Unique index, 2627: Primary key, 1205: Deadlock victim, which has been rolled back and can be retried.
+        return HasErrorNumber(exception, 2601, 2627, 1205);
+    }
+
+    private static bool HasErrorNumber(Exception exception, params int[] numbers)
+    {
         Exception? ex = exception;
 
         while (ex != null)
         {
-            // Primary Key constraint
-            if (ex.Message.Contains("PRIMARY KEY constraint", StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-
-            // Unique Index constraint.
-            if (ex.Message.Contains("unique index", StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-
-            // Table already exists.
-            if (ex.Message.Contains("already exists", StringComparison.OrdinalIgnoreCase))
+            if (ex is SqlException sqlException && numbers.Contains(sqlException.Number))
             {
                 return true;
             }

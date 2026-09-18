@@ -20,7 +20,7 @@ public partial class MongoEventStore
 
         if (CanUseChangeStreams)
         {
-            return new MongoEventStoreSubscription(this, subscriber, filter, position, queryStrategy);
+            return new MongoEventStoreSubscription(this, subscriber, filter, position, queryStrategy, timeProvider);
         }
 
         return new PollingSubscription(this, subscriber, filter, position, options.Value.PollingInterval);
@@ -33,18 +33,17 @@ public partial class MongoEventStore
             await collection.Find(queryStrategy.FilterAfter(streamName, afterStreamPosition))
                 .ToListAsync(ct);
 
-        var result = Convert(commits, afterStreamPosition);
-
-        if ((commits.Count == 0 || commits[0].EventStreamOffset != afterStreamPosition) && afterStreamPosition > EventsVersion.Empty)
+        // If no commit starts exactly at the position, the position points into the middle of the previous commit.
+        if (afterStreamPosition > EventsVersion.Empty && !commits.Exists(x => x.EventStreamOffset == afterStreamPosition))
         {
-            commits =
+            var previous =
                 await collection.Find(queryStrategy.FilterBefore(streamName, afterStreamPosition)).SortByDescending(x => x.EventStreamOffset).Limit(1)
                     .ToListAsync(ct);
 
-            result = Convert(commits, afterStreamPosition).ToList();
+            commits.AddRange(previous);
         }
 
-        return result;
+        return Convert(commits, afterStreamPosition);
     }
 
     public IAsyncEnumerable<StoredEvent> QueryAllReverseAsync(StreamFilter filter = default, DateTime timestamp = default, int take = int.MaxValue,

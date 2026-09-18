@@ -32,11 +32,10 @@ public sealed partial class EFEventStore<T> : IEventStore
                 .WhereCommited()
                 .ToListAsync(ct);
 
-        var result = Convert(commits, afterStreamPosition);
-
-        if ((commits.Count == 0 || commits[0].EventStreamOffset != afterStreamPosition) && afterStreamPosition > EventsVersion.Empty)
+        // If no commit starts exactly at the position, the position points into the middle of the previous commit.
+        if (afterStreamPosition > EventsVersion.Empty && !commits.Exists(x => x.EventStreamOffset == afterStreamPosition))
         {
-            commits =
+            var previous =
                 await dbContext.Set<EFEventCommit>()
                     .AsNoTracking()
                     .WhereStreamMatches(StreamFilter.Name(streamName))
@@ -46,10 +45,10 @@ public sealed partial class EFEventStore<T> : IEventStore
                     .Take(1)
                     .ToListAsync(ct);
 
-            result = Convert(commits, afterStreamPosition).ToList();
+            commits.AddRange(previous);
         }
 
-        return result;
+        return Convert(commits, afterStreamPosition);
     }
 
     public async IAsyncEnumerable<StoredEvent> QueryAllReverseAsync(StreamFilter filter = default, DateTime timestamp = default, int take = int.MaxValue,

@@ -19,7 +19,7 @@ public partial class MongoEventStore
     private static readonly BsonTimestamp EmptyTimestamp =
         new BsonTimestamp(0);
 
-    private static readonly BulkWriteOptions BulkUnordered =
+    private static readonly BulkWriteOptions BulkOrdered =
         new BulkWriteOptions { IsOrdered = true };
 
     public Task DeleteAsync(StreamFilter filter,
@@ -39,45 +39,36 @@ public partial class MongoEventStore
             return;
         }
 
-        var currentVersion = await GetEventStreamOffsetAsync(streamName, ct);
-
-        // Make a cheaper check first to detect concurrency issues.
-        if (expectedVersion > EventsVersion.Any && expectedVersion != currentVersion)
+        for (var attempt = 1; ; attempt++)
         {
-            throw new WrongEventVersionException(currentVersion, expectedVersion);
-        }
+            var currentVersion = await GetEventStreamOffsetAsync(streamName, ct);
+            if (expectedVersion > EventsVersion.Any && expectedVersion != currentVersion)
+            {
+                throw new WrongEventVersionException(currentVersion, expectedVersion);
+            }
 
-        var commit = BuildCommit(commitId, streamName, expectedVersion >= -1 ? expectedVersion : currentVersion, events);
+            // Calculate the offset for each attempt, otherwise we would retry the same conflicting slot.
+            var commit = BuildCommit(commitId, streamName, expectedVersion > EventsVersion.Any ? expectedVersion : currentVersion, events);
 
-        for (var attempt = 1; attempt <= MaxWriteAttempts; attempt++)
-        {
             try
             {
                 await collection.InsertOneAsync(commit, cancellationToken: ct);
-                // Depending on the query strategy, we confirm the write after the insert.
-                await queryStrategy.CompleteAsync([commit.Id], ct);
-                return;
             }
-            catch (MongoWriteException ex) when (ex.WriteError?.Category == ServerErrorCategory.DuplicateKey)
+            catch (MongoWriteException ex) when (IsConflict(ex))
             {
-                currentVersion = await GetEventStreamOffsetAsync(streamName, ct);
-
-                if (expectedVersion > EventsVersion.Any)
-                {
-                    throw new WrongEventVersionException(currentVersion, expectedVersion);
-                }
-
                 if (attempt >= MaxWriteAttempts)
                 {
-                    throw new EventStoreConcurrencyException("Could not acquire a free slot for the commit within the provided time.");
+                    throw new EventStoreConcurrencyException("Could not acquire a free slot for the commit within the provided time.", ex);
                 }
+
+                // Reduce the chance that the same writers collide again.
+                await Task.Delay(Random.Shared.Next(attempt * 5), ct);
+                continue;
             }
-            catch (MongoWriteException ex) when (ex.WriteError?.Code == 16908292)
-            {
-                // This error code happens in ferret-db only when a deadlock happens.
-                // It can only happen when a lot of writes happen concurrently on the same unique constraint.
-                throw new EventStoreConcurrencyException("Failed to acquire lock in database", ex);
-            }
+
+            // Depending on the query strategy, we confirm the write after the insert.
+            await queryStrategy.CompleteAsync([commit.Id], ct);
+            return;
         }
     }
 
@@ -87,19 +78,38 @@ public partial class MongoEventStore
         ArgumentNullException.ThrowIfNull(commits);
 
         var writes = new List<WriteModel<MongoEventCommit>>();
+        var writeIds = new List<Guid>();
 
         foreach (var commit in commits)
         {
             var document = BuildCommit(commit.Id, commit.StreamName, commit.Offset, commit.Events);
 
             writes.Add(new InsertOneModel<MongoEventCommit>(document));
+            writeIds.Add(commit.Id);
         }
 
-        if (writes.Count > 0)
+        if (writes.Count == 0)
         {
-            await collection.BulkWriteAsync(writes, BulkUnordered, ct);
-            await queryStrategy.CompleteAsync(commits.Select(x => x.Id).ToArray(), ct);
+            return;
         }
+
+        try
+        {
+            await collection.BulkWriteAsync(writes, BulkOrdered, ct);
+        }
+        catch
+        {
+            await queryStrategy.AbortAsync([.. writeIds]);
+            throw;
+        }
+
+        await queryStrategy.CompleteAsync([.. writeIds], ct);
+    }
+
+    private static bool IsConflict(MongoWriteException ex)
+    {
+        // Code 16908292 only happens in ferret-db, when many writers insert into the same unique constraint concurrently.
+        return ex.WriteError?.Category == ServerErrorCategory.DuplicateKey || ex.WriteError?.Code == 16908292;
     }
 
     private async Task<long> GetEventStreamOffsetAsync(string streamName,

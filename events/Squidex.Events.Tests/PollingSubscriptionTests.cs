@@ -40,6 +40,37 @@ public class PollingSubscriptionTests
     }
 
     [Fact]
+    public async Task Should_stop_polling_after_exception()
+    {
+        var ex = new InvalidOperationException();
+
+        A.CallTo(() => eventStore.QueryAllAsync(filter, position, A<int>._, A<CancellationToken>._))
+            .Throws(ex);
+
+        var sut = new PollingSubscription(eventStore, eventSubscriber, filter, position, TimeSpan.FromSeconds(5));
+        try
+        {
+            for (var i = 0; i < 3; i++)
+            {
+                await Task.Delay(200);
+                sut.WakeUp();
+            }
+
+            await Task.Delay(200);
+        }
+        finally
+        {
+            sut.Dispose();
+        }
+
+        A.CallTo(() => eventStore.QueryAllAsync(filter, A<StreamPosition>._, A<int>._, A<CancellationToken>._))
+            .MustHaveHappenedOnceExactly();
+
+        A.CallTo(() => eventSubscriber.OnErrorAsync(sut, ex))
+            .MustHaveHappenedOnceExactly();
+    }
+
+    [Fact]
     public async Task Should_forward_operation_cancelled_exception_to_subscriber()
     {
         var ex = new OperationCanceledException();

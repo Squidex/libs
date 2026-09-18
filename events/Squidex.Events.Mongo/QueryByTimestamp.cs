@@ -64,7 +64,10 @@ internal class QueryByTimestamp : QueryStrategy
         for (long i = 0, streamOffset = commit.EventStreamOffset + 1; i < commit.Events.Length; i++, streamOffset++)
         {
             var @event = commit.Events[i];
-            if (i > position.CommitOffset || commit.Timestamp > position.Timestamp)
+
+            // The offset within the commit is only relevant for the commit the position points to.
+            var compare = commit.Timestamp.CompareTo(position.Timestamp);
+            if (compare > 0 || (compare == 0 && i > position.CommitOffset))
             {
                 yield return Convert(commit, @event, i, streamOffset);
             }

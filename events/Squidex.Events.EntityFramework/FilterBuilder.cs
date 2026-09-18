@@ -7,16 +7,19 @@
 
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 
 namespace Squidex.Events.EntityFramework;
 
 internal static class FilterBuilder
 {
+    private const char LikeEscape = '\\';
     private static readonly ParameterExpression CommitParameterType = Expression.Parameter(typeof(EFEventCommit));
     private static readonly MemberExpression EventStreamMember = Expression.Property(CommitParameterType, nameof(EFEventCommit.EventStream));
-    private static readonly MethodInfo DbLikeMethod = typeof(DbFunctionsExtensions).GetMethod("Like", [typeof(DbFunctions), typeof(string), typeof(string)])!;
+    private static readonly MethodInfo DbLikeMethod = typeof(DbFunctionsExtensions).GetMethod("Like", [typeof(DbFunctions), typeof(string), typeof(string), typeof(string)])!;
     private static readonly ConstantExpression DbFunctions = Expression.Constant(EF.Functions);
+    private static readonly ConstantExpression DbLikeEscape = Expression.Constant(LikeEscape.ToString());
 
     // EF Core inlines a ConstantExpression into the SQL as a literal, but turns a member access on a
     // captured object into a parameter, the same way it treats a compiler generated closure. Without
@@ -89,7 +92,7 @@ internal static class FilterBuilder
             Expression combinedExpression = null!;
             foreach (var prefix in filter.Prefixes)
             {
-                var like = Expression.Call(DbLikeMethod, DbFunctions, EventStreamMember, Parameterize($"{prefix}%"));
+                var like = Expression.Call(DbLikeMethod, DbFunctions, EventStreamMember, Parameterize(ToLikePattern(prefix)), DbLikeEscape);
 
                 combinedExpression = combinedExpression == null ?
                     like :
@@ -100,6 +103,32 @@ internal static class FilterBuilder
         }
 
         return q.Where(x => filter.Prefixes.Contains(x.EventStream));
+    }
+
+    public static string ToLikePattern(string prefix)
+    {
+        var sb = new StringBuilder(prefix.Length + 2);
+
+        // A leading '%' is a wildcard for the first segment of the stream name, everything else is matched literally.
+        var literal = prefix;
+        if (literal.StartsWith('%'))
+        {
+            sb.Append('%');
+            literal = literal[1..];
+        }
+
+        foreach (var c in literal)
+        {
+            if (c is LikeEscape or '%' or '_' or '[')
+            {
+                sb.Append(LikeEscape);
+            }
+
+            sb.Append(c);
+        }
+
+        sb.Append('%');
+        return sb.ToString();
     }
 
     public static IEnumerable<StoredEvent> Filtered(this EFEventCommit commit, ParsedStreamPosition position)
@@ -118,7 +147,8 @@ internal static class FilterBuilder
         {
             eventStreamOffset++;
 
-            if (commitOffset > position.CommitOffset || commitPosition > position.Position)
+            // The offset within the commit is only relevant for the commit the position points to.
+            if (commitPosition > position.Position || (commitPosition == position.Position && commitOffset > position.CommitOffset))
             {
                 var eventData = EventData.DeserializeFromJson(@event);
                 var eventPosition = new ParsedStreamPosition(commitPosition, commitOffset, commit.Events.Length);
@@ -130,10 +160,6 @@ internal static class FilterBuilder
         }
     }
 
-    /// <summary>
-    /// Yields the events of a commit from last to first. Enumerable.Reverse would first buffer and
-    /// deserialize every event of the commit, even when the caller stops after the first one.
-    /// </summary>
     public static IEnumerable<StoredEvent> FilteredReverse(this EFEventCommit commit, long position)
     {
         if (!commit.Position.HasValue)

@@ -16,6 +16,7 @@ public sealed class PollingSubscription : IEventSubscription
 #pragma warning disable IDE0052 // Remove unread private members
     private int eventsTotal;
 #pragma warning restore IDE0052 // Remove unread private members
+    private bool isFailed;
 
     public PollingSubscription(
         IEventStore eventStore,
@@ -29,6 +30,12 @@ public sealed class PollingSubscription : IEventSubscription
 
         timer = new CompletionTimer(intervalMs, async ct =>
         {
+            // The subscription ends with the first error, like the other subscription implementations.
+            if (isFailed)
+            {
+                return;
+            }
+
             try
             {
                 while (true)
@@ -61,6 +68,8 @@ public sealed class PollingSubscription : IEventSubscription
             }
             catch (Exception ex)
             {
+                isFailed = true;
+
                 await eventSubscriber.OnErrorAsync(this, ex);
             }
         });

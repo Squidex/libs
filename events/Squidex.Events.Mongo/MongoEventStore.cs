@@ -16,9 +16,12 @@ namespace Squidex.Events.Mongo;
 
 public partial class MongoEventStore(
     IMongoDatabase database,
-    IOptions<MongoEventStoreOptions> options)
+    IOptions<MongoEventStoreOptions> options,
+    TimeProvider? timeProvider = null)
     : IEventStore, IInitializable
 {
+    private readonly TimeProvider timeProvider = timeProvider ?? TimeProvider.System;
+
     private static readonly FilterDefinitionBuilder<MongoEventCommit> Filter =
         Builders<MongoEventCommit>.Filter;
 
@@ -70,7 +73,10 @@ public partial class MongoEventStore(
         var clusterVersion = versionInfo.Major;
         var clusteredAsReplica = database.Client.Cluster.Description.Type == ClusterType.ReplicaSet;
 
-        CanUseChangeStreams = (clusteredAsReplica && clusterVersion >= 4) || options.Value.UseChangeStreams;
+        // Commits get their global position after the insert, therefore change streams (which only watch inserts) cannot provide them.
+        CanUseChangeStreams =
+            queryStrategy is QueryByTimestamp &&
+            ((clusteredAsReplica && clusterVersion >= 4) || options.Value.UseChangeStreams);
 
         BsonSerializer.TryRegisterSerializer(new MongoHeaderValueSerializer());
     }

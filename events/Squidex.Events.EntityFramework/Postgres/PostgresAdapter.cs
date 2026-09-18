@@ -137,8 +137,8 @@ ON CONFLICT DO NOTHING;");
 
         while (ex != null)
         {
-            // Primary Key and Unique Index constraint
-            if (ex.Message.Contains("23505", StringComparison.OrdinalIgnoreCase))
+            // A deadlock victim has been rolled back and can be retried like a conflict.
+            if (ex is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation or PostgresErrorCodes.DeadlockDetected })
             {
                 return true;
             }

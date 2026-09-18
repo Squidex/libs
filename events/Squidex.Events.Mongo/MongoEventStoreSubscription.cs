@@ -5,7 +5,6 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
-using System.Text.RegularExpressions;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Squidex.Events.Utils;
@@ -14,23 +13,26 @@ namespace Squidex.Events.Mongo;
 
 internal sealed class MongoEventStoreSubscription : IEventSubscription
 {
+    private static readonly TimeSpan CatchUpWindow = TimeSpan.FromMinutes(5);
     private readonly MongoEventStore eventStore;
     private readonly IEventSubscriber<StoredEvent> eventSubscriber;
     private readonly QueryStrategy queryStrategy;
     private readonly CancellationTokenSource stopToken = new CancellationTokenSource();
 
-    public TimeProvider Clock { get; set; } = TimeProvider.System;
+    public TimeProvider Clock { get; }
 
     public MongoEventStoreSubscription(
         MongoEventStore eventStore,
         IEventSubscriber<StoredEvent> eventSubscriber,
         StreamFilter streamFilter,
         StreamPosition position,
-        QueryStrategy queryStrategy)
+        QueryStrategy queryStrategy,
+        TimeProvider clock)
     {
         this.eventStore = eventStore;
         this.eventSubscriber = eventSubscriber;
         this.queryStrategy = queryStrategy;
+        Clock = clock;
         QueryAsync(streamFilter, position).Forget();
     }
 
@@ -61,9 +63,14 @@ internal sealed class MongoEventStoreSubscription : IEventSubscription
             {
                 parsedPosition = Clock.GetUtcNow();
             }
-            else
+            else if (lastRawPosition.Token != null)
             {
                 parsedPosition = lastRawPosition;
+            }
+            else
+            {
+                // Nothing has been read, so we still have to continue after the requested position.
+                parsedPosition = position;
             }
 
             await QueryCurrentAsync(streamFilter, parsedPosition);
@@ -80,12 +87,13 @@ internal sealed class MongoEventStoreSubscription : IEventSubscription
 
     private async Task QueryCurrentAsync(StreamFilter streamFilter, ParsedStreamPosition lastPosition)
     {
-        var watchStartInSeconds =
-            lastPosition.Timestamp.Timestamp > ParsedStreamPosition.Start.Timestamp.Timestamp ?
-            lastPosition.Timestamp.Timestamp :
-            (int)Clock.GetUtcNow().ToUnixTimeSeconds();
+        // Events before the catch up window have been handled by the initial query. Going back further
+        // is not needed and might fail when the oplog does not contain these operations anymore.
+        var catchUpStartInSeconds = (int)Clock.GetUtcNow().Add(-CatchUpWindow).ToUnixTimeSeconds();
 
-        // Start a little bit earlier to get missing events.
+        var watchStartInSeconds = Math.Max(lastPosition.Timestamp.Timestamp, catchUpStartInSeconds);
+
+        // Start a little bit earlier to get missing events. Events before the last position are filtered out.
         watchStartInSeconds -= 30;
 
         var changePipeline = Match(streamFilter);
@@ -139,7 +147,7 @@ internal sealed class MongoEventStoreSubscription : IEventSubscription
 
         await foreach (var storedEvent in eventStore.QueryAllAsync(streamFilter, position, ct: ctc.Token))
         {
-            var queryUntil = Clock.GetUtcNow().UtcDateTime.AddMinutes(-5);
+            var queryUntil = Clock.GetUtcNow().UtcDateTime.Add(-CatchUpWindow);
 
             if (storedEvent.Data.Headers.Timestamp() >= queryUntil)
             {
@@ -165,7 +173,7 @@ internal sealed class MongoEventStoreSubscription : IEventSubscription
             FilterDefinition<ChangeStreamDocument<MongoEventCommit>> byStream;
             if (filter.Kind == StreamFilterKind.MatchStart)
             {
-                byStream = builder.Or(filter.Prefixes.Select(p => builder.Regex(x => x.FullDocument.EventStream, $"^{Regex.Escape(p)}")));
+                byStream = builder.Or(filter.Prefixes.Select(p => builder.Regex(x => x.FullDocument.EventStream, QueryStrategy.PrefixRegex(p))));
             }
             else
             {

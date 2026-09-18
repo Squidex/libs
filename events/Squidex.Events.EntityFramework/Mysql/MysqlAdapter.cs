@@ -5,6 +5,7 @@
 //  All rights reserved. Licensed under the MIT license.
 // ==========================================================================
 
+using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 
 namespace Squidex.Events.EntityFramework.Mysql;
@@ -151,6 +152,12 @@ ON DUPLICATE KEY UPDATE Id = Id;";
         {
             // Primary Key and Unique Index constraint
             if (ex.Message.Contains("Duplicate entry", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            // A deadlock victim has been rolled back and can be retried like a conflict.
+            if (ex is DbException { SqlState: "40001" })
             {
                 return true;
             }
