@@ -6,6 +6,7 @@
 // ==========================================================================
 
 using HtmlPerformanceKit;
+using Squidex.Text.Internal;
 using Squidex.Text.Svg;
 
 namespace Squidex.Text;
@@ -29,7 +30,9 @@ public static class SvgExtensions
         var viewWidth = string.Empty;
         var viewHeight = string.Empty;
 
-        var reader = new HtmlReader(new StringReader(html));
+        using var lease = HtmlReaderPool.Rent(html);
+
+        var reader = lease.Reader;
 
         while (reader.Read())
         {
@@ -72,9 +75,10 @@ public static class SvgExtensions
     public static List<SvgError> GetSvgErrors(this string html)
     {
         var htmlErrors = new List<SvgError>();
-        var htmlReader = new HtmlReader(new StringReader(html));
-
-        AddErrors(htmlReader, htmlErrors);
+        using (var lease = HtmlReaderPool.Rent(html))
+        {
+            AddErrors(lease.Reader, htmlErrors);
+        }
 
         return htmlErrors;
     }

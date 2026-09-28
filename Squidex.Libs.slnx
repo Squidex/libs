@@ -61,6 +61,7 @@
     <Project Path="messaging/Squidex.Messaging/Squidex.Messaging.csproj" />
   </Folder>
   <Folder Name="/text/">
+    <Project Path="text/Benchmarks.Text/Benchmarks.Text.csproj" />
     <Project Path="text/Squidex.Text.Tests/Squidex.Text.Tests.csproj" />
     <Project Path="text/Squidex.Text/Squidex.Text.csproj" />
   </Folder>

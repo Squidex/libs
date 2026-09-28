@@ -7,6 +7,8 @@
 
 using System.Text;
 using HtmlPerformanceKit;
+using Microsoft.Extensions.ObjectPool;
+using Squidex.Text.Internal;
 
 namespace Squidex.Text;
 
@@ -53,35 +55,47 @@ public static class HtmlExtensions
     private static readonly HashSet<string>.AlternateLookup<ReadOnlySpan<char>> BlockElementsLookup =
         BlockElements.GetAlternateLookup<ReadOnlySpan<char>>();
 
+    // Also keep larger builders, because the text of a document is usually larger than the default limit.
+    private static readonly ObjectPool<StringBuilder> StringBuilders =
+        new DefaultObjectPoolProvider().CreateStringBuilderPool(1024, 64 * 1024);
+
     public static string Html2Text(this string html)
     {
-        var htmlWriter = new StringBuilder();
-        var htmlReader = new HtmlReader(new StringReader(html));
-
-        WriteTextTo(htmlReader, htmlWriter);
-
-        static bool IsTrimmed(char value)
+        var htmlWriter = StringBuilders.Get();
+        try
         {
-            return value == ' ' || value == '\n' || value == '\r';
+            using (var lease = HtmlReaderPool.Rent(html))
+            {
+                WriteTextTo(lease.Reader, htmlWriter);
+            }
+
+            static bool IsTrimmed(char value)
+            {
+                return value == ' ' || value == '\n' || value == '\r';
+            }
+
+            // Trim within the builder.
+            // Building the full string first and then trimming it would allocate
+            // the whole result twice.
+            var trimStart = 0;
+            var trimEnd = htmlWriter.Length;
+
+            while (trimStart < trimEnd && IsTrimmed(htmlWriter[trimStart]))
+            {
+                trimStart++;
+            }
+
+            while (trimEnd > trimStart && IsTrimmed(htmlWriter[trimEnd - 1]))
+            {
+                trimEnd--;
+            }
+
+            return htmlWriter.ToString(trimStart, trimEnd - trimStart);
         }
-
-        // Trim within the builder.
-        // Building the full string first and then trimming it would allocate
-        // the whole result twice.
-        var trimStart = 0;
-        var trimEnd = htmlWriter.Length;
-
-        while (trimStart < trimEnd && IsTrimmed(htmlWriter[trimStart]))
+        finally
         {
-            trimStart++;
+            StringBuilders.Return(htmlWriter);
         }
-
-        while (trimEnd > trimStart && IsTrimmed(htmlWriter[trimEnd - 1]))
-        {
-            trimEnd--;
-        }
-
-        return htmlWriter.ToString(trimStart, trimEnd - trimStart);
     }
 
     private static void WriteTextTo(HtmlReader reader, StringBuilder sb)
@@ -129,19 +143,28 @@ public static class HtmlExtensions
 
     private static void WriteText(ReadOnlySpan<char> text, StringBuilder sb)
     {
-        foreach (var c in text)
+        var wordStart = 0;
+
+        for (var i = 0; i <= text.Length; i++)
         {
-            if (!char.IsWhiteSpace(c))
+            if (i < text.Length && !char.IsWhiteSpace(text[i]))
             {
-                sb.Append(c);
                 continue;
             }
 
+            // Append the words at once and not char by char.
+            if (i > wordStart)
+            {
+                sb.Append(text[wordStart..i]);
+            }
+
             // Collapse whitespaces like the browser does, but keep them between inline elements.
-            if (sb.Length > 0 && !char.IsWhiteSpace(sb[^1]))
+            if (i < text.Length && sb.Length > 0 && !char.IsWhiteSpace(sb[^1]))
             {
                 sb.Append(' ');
             }
+
+            wordStart = i + 1;
         }
     }
 

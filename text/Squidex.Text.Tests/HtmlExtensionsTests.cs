@@ -102,6 +102,22 @@ public class HtmlExtensionsTests
     }
 
     [Fact]
+    public void Should_convert_html_in_parallel_with_pooled_readers()
+    {
+        var results = new string[1000];
+
+        Parallel.For(0, results.Length, i =>
+        {
+            results[i] = $"<p>Hello <b>{i}</b></p><script>var x = {i};</script>".Html2Text();
+        });
+
+        for (var i = 0; i < results.Length; i++)
+        {
+            Assert.Equal($"Hello {i}", results[i]);
+        }
+    }
+
+    [Fact]
     public void Should_not_convert_script_with_nested_tags_to_text()
     {
         var html = "<p>Hello</p><script>var x = '<b>bold</b>';</script><p>World</p>";
