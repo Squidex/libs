@@ -12,6 +12,47 @@ namespace Squidex.Text;
 
 public static class HtmlExtensions
 {
+    private static readonly HashSet<string> BlockElements = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "address",
+        "article",
+        "aside",
+        "blockquote",
+        "br",
+        "dd",
+        "div",
+        "dl",
+        "dt",
+        "figcaption",
+        "figure",
+        "footer",
+        "form",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "header",
+        "hr",
+        "li",
+        "main",
+        "nav",
+        "ol",
+        "p",
+        "pre",
+        "section",
+        "table",
+        "td",
+        "th",
+        "tr",
+        "ul",
+    };
+
+    // Lookup the tag names without allocating strings.
+    private static readonly HashSet<string>.AlternateLookup<ReadOnlySpan<char>> BlockElementsLookup =
+        BlockElements.GetAlternateLookup<ReadOnlySpan<char>>();
+
     public static string Html2Text(this string html)
     {
         var htmlWriter = new StringBuilder();
@@ -51,32 +92,75 @@ public static class HtmlExtensions
             switch (reader.TokenKind)
             {
                 case HtmlTokenKind.Text when readText:
-                    var text = reader.TextAsMemory.Trim();
-
-                    if (text.Length > 0)
-                    {
-                        HtmlEntity.Decode(text, sb);
-                    }
-
+                    // The reader has already decoded the entities.
+                    WriteText(reader.TextAsMemory.Span, sb);
                     break;
 
                 case HtmlTokenKind.Tag:
                     var tag = reader.NameAsMemory.Span;
 
-                    readText &= !tag.Equals("script", StringComparison.OrdinalIgnoreCase) && !tag.Equals("style", StringComparison.OrdinalIgnoreCase);
+                    if (IsCode(tag))
+                    {
+                        readText = false;
+                    }
+                    else if (BlockElementsLookup.Contains(tag))
+                    {
+                        WriteLine(sb);
+                    }
+
                     break;
 
                 case HtmlTokenKind.EndTag:
                     var endTag = reader.NameAsMemory.Span;
 
-                    if (endTag.Equals("p", StringComparison.OrdinalIgnoreCase) || endTag.Equals("br", StringComparison.OrdinalIgnoreCase))
+                    if (IsCode(endTag))
                     {
-                        sb.AppendLine();
+                        readText = true;
+                    }
+                    else if (BlockElementsLookup.Contains(endTag))
+                    {
+                        WriteLine(sb);
                     }
 
-                    readText = true;
                     break;
             }
         }
+    }
+
+    private static void WriteText(ReadOnlySpan<char> text, StringBuilder sb)
+    {
+        foreach (var c in text)
+        {
+            if (!char.IsWhiteSpace(c))
+            {
+                sb.Append(c);
+                continue;
+            }
+
+            // Collapse whitespaces like the browser does, but keep them between inline elements.
+            if (sb.Length > 0 && !char.IsWhiteSpace(sb[^1]))
+            {
+                sb.Append(' ');
+            }
+        }
+    }
+
+    private static void WriteLine(StringBuilder sb)
+    {
+        // The whitespace before the line break is not needed.
+        if (sb.Length > 0 && sb[^1] == ' ')
+        {
+            sb.Length--;
+        }
+
+        if (sb.Length > 0 && sb[^1] != '\n')
+        {
+            sb.AppendLine();
+        }
+    }
+
+    private static bool IsCode(ReadOnlySpan<char> tag)
+    {
+        return tag.Equals("script", StringComparison.OrdinalIgnoreCase) || tag.Equals("style", StringComparison.OrdinalIgnoreCase);
     }
 }

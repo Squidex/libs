@@ -287,6 +287,14 @@ public static class HtmlEntity
         {
             var c = source.Span[i];
 
+            if (entityStart >= 0 && IsNoEntity(c, i - entityStart))
+            {
+                // Not an entity, e.g. 'A & B', therefore we keep the text.
+                target.Append(source[entityStart..i]);
+
+                entityStart = -1;
+            }
+
             if (entityStart < 0)
             {
                 if (c == '&')
@@ -302,7 +310,9 @@ public static class HtmlEntity
             {
                 var entity = source[entityStart.. (i + 1)];
 
-                if (entity.Length > MaxEntityLength || entity.Length < 2)
+                entityStart = -1;
+
+                if (entity.Length < 3)
                 {
                     target.Append(entity);
                     continue;
@@ -347,9 +357,24 @@ public static class HtmlEntity
                         target.Append(entity);
                     }
                 }
-
-                entityStart = -1;
             }
         }
+
+        // The text ends with an unterminated entity, e.g. 'A &', which must not be lost.
+        if (entityStart >= 0)
+        {
+            target.Append(source[entityStart..]);
+        }
+    }
+
+    private static bool IsNoEntity(char c, int nameLength)
+    {
+        if (c == '&' || char.IsWhiteSpace(c))
+        {
+            return true;
+        }
+
+        // The name would be longer than the longest known entity.
+        return c != ';' && nameLength > MaxEntityLength;
     }
 }
