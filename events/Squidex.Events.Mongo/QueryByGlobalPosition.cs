@@ -14,6 +14,10 @@ namespace Squidex.Events.Mongo;
 
 internal sealed class QueryByGlobalPosition(IMongoCollection<MongoEventCommit> collection) : QueryStrategy
 {
+    private const int MaxUpdateAttempts = 5;
+
+    // Only happens in ferret-db, when many writers modify the same documents or unique constraint concurrently.
+    private const int DeadlockCode = 16908292;
     private static readonly TimeSpan LockTimeout = TimeSpan.FromMinutes(5);
 
     private IMongoCollection<MongoGlobalPosition> positionCollection;
@@ -114,7 +118,7 @@ internal sealed class QueryByGlobalPosition(IMongoCollection<MongoEventCommit> c
         for (long offset = 0, streamOffset = commit.EventStreamOffset + 1; offset < commit.Events.Length; offset++, streamOffset++)
         {
             var @event = commit.Events[offset];
-            if (offset > position.CommitOffset || commit.GlobalPosition > position.GlobalPosition)
+            if (commit.GlobalPosition > position.GlobalPosition || (commit.GlobalPosition == position.GlobalPosition && offset > position.CommitOffset))
             {
                 yield return Convert(commit, @event, offset, streamOffset);
             }
@@ -140,30 +144,52 @@ internal sealed class QueryByGlobalPosition(IMongoCollection<MongoEventCommit> c
     public override async Task CompleteAsync(Guid[] ids,
         CancellationToken ct)
     {
-        await using var position = await TryAcquirePositionAsync(ids.Length, ct);
         try
         {
+            await using var position = await TryAcquirePositionAsync(ids.Length, ct);
+
             var writes = ids.Select((x, i) =>
                 new UpdateOneModel<MongoEventCommit>(
                     Filters.Eq(x => x.Id, x),
-                    Builders<MongoEventCommit>.Update.Set(x => x.GlobalPosition, position.Position + i)));
+                    Builders<MongoEventCommit>.Update.Set(x => x.GlobalPosition, position.Position + i))).ToList();
 
-            // Do not use a cancellation token, because the hard part is actually done and it would be a waste.
-            await collection.BulkWriteAsync(writes, cancellationToken: default);
+            for (var attempt = 1; ; attempt++)
+            {
+                try
+                {
+                    // Do not use a cancellation token, because the hard part is actually done and it would be a waste.
+                    await collection.BulkWriteAsync(writes, cancellationToken: default);
+                    break;
+                }
+                catch (MongoBulkWriteException ex) when (attempt < MaxUpdateAttempts && ex.WriteErrors.Any(x => x.Code == DeadlockCode))
+                {
+                    // We still own the lock and setting the position again is safe.
+                }
+            }
         }
         catch
         {
-            try
-            {
-                // Do not use a cancellation token to ensure that we get rid of zombies.
-                await collection.DeleteManyAsync(x => x.GlobalPosition == 0, default);
-            }
-            catch
-            {
-                // Throw original exception.
-            }
-
+            await AbortAsync(ids);
             throw;
+        }
+    }
+
+    public override async Task AbortAsync(Guid[] ids)
+    {
+        try
+        {
+            // Only delete our own zombies. Commits of other writers without a position are still in progress.
+            // The position is not stored when it is zero, so we cannot use an equality check.
+            // Do not use a cancellation token to ensure that we get rid of zombies.
+            await collection.DeleteManyAsync(
+                Filters.And(
+                    Filters.In(x => x.Id, ids),
+                    Filters.Not(Filters.Gt(x => x.GlobalPosition, 0))),
+                default);
+        }
+        catch
+        {
+            // Throw original exception.
         }
     }
 
@@ -180,9 +206,11 @@ internal sealed class QueryByGlobalPosition(IMongoCollection<MongoEventCommit> c
             // Exponential Backoff
             var delayMs = 1;
 
-            var now = DateTime.UtcNow;
             while (!ctsLinked.Token.IsCancellationRequested)
             {
+                // Take the time for each attempt, otherwise the lock would expire earlier the longer we wait for it.
+                var now = DateTime.UtcNow;
+
                 position =
                     await positionCollection.FindOneAndUpdateAsync(
                         PositionFilters

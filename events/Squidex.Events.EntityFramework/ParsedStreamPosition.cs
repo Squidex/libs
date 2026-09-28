@@ -52,9 +52,9 @@ internal record struct ParsedStreamPosition(long Position, long CommitOffset, lo
         }
 
         var culture = CultureInfo.InvariantCulture;
-        if (!int.TryParse(parts[0], NumberStyles.Integer, culture, out var position) ||
-            !int.TryParse(parts[1], NumberStyles.Integer, culture, out var commitOffset) ||
-            !int.TryParse(parts[2], NumberStyles.Integer, culture, out var commitSize))
+        if (!long.TryParse(parts[0], NumberStyles.Integer, culture, out var position) ||
+            !long.TryParse(parts[1], NumberStyles.Integer, culture, out var commitOffset) ||
+            !long.TryParse(parts[2], NumberStyles.Integer, culture, out var commitSize))
         {
             return default;
         }

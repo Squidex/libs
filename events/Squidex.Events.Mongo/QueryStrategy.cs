@@ -58,7 +58,7 @@ internal abstract class QueryStrategy
 
         if (filter.Kind == StreamFilterKind.MatchStart)
         {
-            return FiltersIsStream.Or(filter.Prefixes.Select(p => FiltersIsStream.Regex(x => x.FullDocument.EventStream, $"^{Regex.Escape(p)}")));
+            return FiltersIsStream.Or(filter.Prefixes.Select(p => FiltersIsStream.Regex(x => x.FullDocument.EventStream, PrefixRegex(p))));
         }
 
         return FiltersIsStream.In(x => x.FullDocument.EventStream, filter.Prefixes);
@@ -70,19 +70,25 @@ internal abstract class QueryStrategy
         return Task.CompletedTask;
     }
 
+    public virtual Task AbortAsync(Guid[] ids)
+    {
+        return Task.CompletedTask;
+    }
+
+    public static string PrefixRegex(string prefix)
+    {
+        // A leading '%' is a wildcard for the first segment of the stream name, everything else is matched literally.
+        if (prefix.StartsWith('%'))
+        {
+            return $"^([a-zA-Z0-9]+){Regex.Escape(prefix[1..])}";
+        }
+
+        return $"^{Regex.Escape(prefix)}";
+    }
+
     protected static FilterDefinition<MongoEventCommit> ByStream(StreamFilter filter)
     {
         var builder = Builders<MongoEventCommit>.Filter;
-
-        static FilterDefinition<MongoEventCommit> Buildregex(string prefix, FilterDefinitionBuilder<MongoEventCommit> builder)
-        {
-            if (prefix.StartsWith('%'))
-            {
-                prefix = $"([a-zA-Z0-9]+){prefix[1..]}";
-            }
-
-            return builder.Regex(x => x.EventStream, $"^{prefix}");
-        }
 
         if (filter.Prefixes == null)
         {
@@ -91,7 +97,7 @@ internal abstract class QueryStrategy
 
         if (filter.Kind == StreamFilterKind.MatchStart)
         {
-            return builder.Or(filter.Prefixes.Select(p => Buildregex(p, builder)));
+            return builder.Or(filter.Prefixes.Select(p => builder.Regex(x => x.EventStream, PrefixRegex(p))));
         }
 
         return builder.In(x => x.EventStream, filter.Prefixes);

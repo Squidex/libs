@@ -12,28 +12,14 @@ namespace Squidex.Events;
 public sealed class RetrySubscription<T> : IEventSubscription, IEventSubscriber<T>
 {
     private readonly RetryWindow retryWindow = new RetryWindow(TimeSpan.FromMinutes(5), 5);
+    private readonly CancellationTokenSource disposeToken = new CancellationTokenSource();
     private readonly IEventSubscriber<T> eventSubscriber;
     private readonly EventSubscriptionSource<T> eventSource;
-    private SubscriptionHolder? currentSubscription;
+    private IEventSubscription? currentSubscription;
 
     public int ReconnectWaitMs { get; set; } = 5000;
 
     public bool IsSubscribed => currentSubscription != null;
-
-    // Holds all information for a current subscription. Therefore we only have to maintain one reference.
-    private sealed class SubscriptionHolder(IEventSubscription subscription) : IDisposable
-    {
-        public CancellationTokenSource Cancellation { get; } = new CancellationTokenSource();
-
-        public IEventSubscription Subscription { get; } = subscription;
-
-        public void Dispose()
-        {
-            Cancellation.Cancel();
-
-            Subscription.Dispose();
-        }
-    }
 
     public RetrySubscription(IEventSubscriber<T> eventSubscriber,
         EventSubscriptionSource<T> eventSource)
@@ -49,6 +35,11 @@ public sealed class RetrySubscription<T> : IEventSubscription, IEventSubscriber<
 
     public void Dispose()
     {
+        lock (retryWindow)
+        {
+            disposeToken.Cancel();
+        }
+
         Unsubscribe();
     }
 
@@ -56,12 +47,13 @@ public sealed class RetrySubscription<T> : IEventSubscription, IEventSubscriber<
     {
         lock (retryWindow)
         {
-            if (currentSubscription != null)
+            // Never resurrect the subscription after it has been disposed during the reconnect delay.
+            if (currentSubscription != null || disposeToken.IsCancellationRequested)
             {
                 return;
             }
 
-            currentSubscription = new SubscriptionHolder(eventSource(this));
+            currentSubscription = eventSource(this);
         }
     }
 
@@ -81,17 +73,17 @@ public sealed class RetrySubscription<T> : IEventSubscription, IEventSubscriber<
 
     public void WakeUp()
     {
-        currentSubscription?.Subscription.WakeUp();
+        currentSubscription?.WakeUp();
     }
 
     public ValueTask CompleteAsync()
     {
-        return currentSubscription?.Subscription.CompleteAsync() ?? default;
+        return currentSubscription?.CompleteAsync() ?? default;
     }
 
     async ValueTask IEventSubscriber<T>.OnNextAsync(IEventSubscription subscription, T @event)
     {
-        if (!ReferenceEquals(subscription, currentSubscription?.Subscription))
+        if (!ReferenceEquals(subscription, currentSubscription))
         {
             return;
         }
@@ -106,7 +98,7 @@ public sealed class RetrySubscription<T> : IEventSubscription, IEventSubscriber<
             return;
         }
 
-        if (!ReferenceEquals(subscription, currentSubscription?.Subscription))
+        if (!ReferenceEquals(subscription, currentSubscription))
         {
             return;
         }
@@ -121,7 +113,7 @@ public sealed class RetrySubscription<T> : IEventSubscription, IEventSubscriber<
 
         try
         {
-            await Task.Delay(ReconnectWaitMs, currentSubscription?.Cancellation?.Token ?? default);
+            await Task.Delay(ReconnectWaitMs, disposeToken.Token);
         }
         catch (OperationCanceledException)
         {
