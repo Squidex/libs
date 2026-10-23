@@ -13,7 +13,7 @@
     <!-- ImageSharp only searches below the project directory, so point it to the root license. -->
     <SixLaborsLicenseFile>$(MSBuildThisFileDirectory)sixlabors.lic</SixLaborsLicenseFile>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <Version>8.0.5</Version>
+    <Version>8.0.6</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">

@@ -7,20 +7,53 @@
 
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Squidex.Caching;
 
-public sealed class BackgroundCache(IMemoryCache memoryCache, TimeProvider timeProvider) : IBackgroundCache
+public sealed class BackgroundCache(
+    IMemoryCache memoryCache,
+    TimeProvider timeProvider,
+    IOptions<BackgroundCacheOptions> options,
+    ILogger<BackgroundCache> log)
+    : IBackgroundCache
 {
     private static readonly TimeSpan MaxComputionTime = TimeSpan.FromMinutes(2);
-    private readonly object[] locks = CreateLocks(32);
+
+    // Creating values is expensive, so failures are retried with a delay. Otherwise a persistent
+    // error would rebuild the value for every request.
+    private readonly TimeSpan retryDelay = options.Value.RetryDelay;
+    private readonly StripedLock locks = new StripedLock(32);
     private readonly ConcurrentDictionary<object, bool> isUpdating = new ConcurrentDictionary<object, bool>();
 
     private sealed class Entry<T>(Task<T> value, DateTimeOffset expires)
     {
+        // Ticks instead of DateTimeOffset, so that it can be read and written atomically.
+        private long retryAfter;
+
         public Task<T> Value { get; } = value;
 
         public DateTimeOffset Expires { get; } = expires;
+
+        public bool IsFailed => Value.IsFaulted || Value.IsCanceled;
+
+        public void BlockRetry(DateTimeOffset until)
+        {
+            Volatile.Write(ref retryAfter, until.UtcTicks);
+        }
+
+        public bool IsRetryBlocked(DateTimeOffset now)
+        {
+            return Volatile.Read(ref retryAfter) > now.UtcTicks;
+        }
+
+        public bool CanRecreate(DateTimeOffset now)
+        {
+            // A failed creation is served until the retry delay has passed, but not until the entry
+            // expires. Otherwise a single failure would poison the key for the whole expiration.
+            return IsFailed && !IsRetryBlocked(now);
+        }
     }
 
     public Task<T> GetOrCreateAsync<T>(object key, TimeSpan expiration, Func<object, Task<T>> creator, Func<T, Task<bool>>? isValid = null)
@@ -32,32 +65,52 @@ public sealed class BackgroundCache(IMemoryCache memoryCache, TimeProvider timeP
 
         if (memoryCache.TryGetValue(key, out var cached))
         {
-            if (cached is Entry<T> entry)
+            var entry = GetEntry<T>(cached);
+            if (!entry.CanRecreate(now))
             {
-                RefreshInBackground(entry, key, expiration, now, isValid, creator).Forget();
+                RefreshIfNeeded(entry, key, expiration, now, isValid, creator);
                 return entry.Value;
             }
-
-            throw new InvalidOperationException("Another object with the same key but invalid type is already in the cache.");
         }
 
-        lock (GetLock(key))
+        lock (locks.Get(key))
         {
             if (memoryCache.TryGetValue(key, out var cached2))
             {
-                if (cached2 is Entry<T> entry)
+                var entry = GetEntry<T>(cached2);
+                if (!entry.CanRecreate(now))
                 {
                     RefreshIfNeeded(entry, key, expiration, now, isValid, creator);
                     return entry.Value;
                 }
-
-                throw new InvalidOperationException("Another object with the same key but invalid type is already in the cache.");
             }
 
             var newEntry = AddEntry(key, expiration, creator(key), now);
 
+            BlockRetryOnFailure(newEntry);
+
             return newEntry.Value;
         }
+    }
+
+    private void BlockRetryOnFailure<T>(Entry<T> entry)
+    {
+        entry.Value.ContinueWith(
+            _ => entry.BlockRetry(timeProvider.GetUtcNow() + retryDelay),
+            CancellationToken.None,
+            TaskContinuationOptions.NotOnRanToCompletion |
+            TaskContinuationOptions.ExecuteSynchronously,
+            TaskScheduler.Default).Forget();
+    }
+
+    private static Entry<T> GetEntry<T>(object? cached)
+    {
+        if (cached is Entry<T> entry)
+        {
+            return entry;
+        }
+
+        throw new InvalidOperationException("Another object with the same key but invalid type is already in the cache.");
     }
 
     private Entry<T> AddEntry<T>(object key, TimeSpan expiration, Task<T> value, DateTimeOffset now)
@@ -85,19 +138,28 @@ public sealed class BackgroundCache(IMemoryCache memoryCache, TimeProvider timeP
             return;
         }
 
+        if (entry.IsRetryBlocked(now))
+        {
+            return;
+        }
+
         // Without a validator a fresh entry needs no work, which is the common case.
         if (entry.Expires > now && isValid == null)
         {
             return;
         }
 
-        RefreshInBackground(entry, key, expiration, now, isValid, creator).Forget();
+        // The refresh outlives the caller and its result is shared with all other callers. Therefore
+        // it must not see the async local state of the caller, such as request scoped caches.
+        using (ExecutionContext.SuppressFlow())
+        {
+            Task.Run(() => RefreshInBackground(entry, key, expiration, now, isValid, creator)).Forget();
+        }
     }
 
     private async Task RefreshInBackground<T>(Entry<T> entry, object key, TimeSpan expiration, DateTimeOffset now, Func<T, Task<bool>>? isValid, Func<object, Task<T>> creator)
     {
         var snapshot = await entry.Value;
-
         if (entry.Expires > now && (isValid == null || await isValid(snapshot)))
         {
             return;
@@ -113,32 +175,15 @@ public sealed class BackgroundCache(IMemoryCache memoryCache, TimeProvider timeP
             }
             catch (Exception ex)
             {
-                AddEntry(key, expiration, Task.FromException<T>(ex), timeProvider.GetUtcNow());
+                // Keep the previous value, it is better to serve outdated data than an error.
+                entry.BlockRetry(timeProvider.GetUtcNow() + retryDelay);
+
+                LogMessages.FailedToRefreshCacheEntry(log, ex, key);
             }
             finally
             {
                 isUpdating.TryRemove(key, out _);
             }
         }
-    }
-
-    private object GetLock(object key)
-    {
-        // Math.Abs would throw for int.MinValue, so mask the sign bit instead. The length is a power
-        // of two, so the modulo stays uniform.
-        var index = (key.GetHashCode() & int.MaxValue) % locks.Length;
-
-        return locks[index];
-    }
-
-    private static object[] CreateLocks(int count)
-    {
-        var result = new object[count];
-        for (var i = 0; i < count; i++)
-        {
-            result[i] = new object();
-        }
-
-        return result;
     }
 }
