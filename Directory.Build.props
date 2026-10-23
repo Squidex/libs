@@ -10,6 +10,8 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/squidex/squidex</PackageProjectUrl>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <!-- ImageSharp only searches below the project directory, so point it to the root license. -->
+    <SixLaborsLicenseFile>$(MSBuildThisFileDirectory)sixlabors.lic</SixLaborsLicenseFile>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <Version>8.0.5</Version>
   </PropertyGroup>
