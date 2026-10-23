@@ -14,7 +14,9 @@ namespace Squidex.Events.EntityFramework;
 
 public sealed partial class EFEventStore<T>
 {
-    private const int MaxWriteAttempts = 20;
+    private const int MaxWriteAttempts = 100;
+    private const int MaxRetryDelay = 50;
+    private const int ZombieCleanupAttempt = 3;
 
     public async Task AppendUnsafeAsync(IEnumerable<EventCommit> commits,
         CancellationToken ct = default)
@@ -119,10 +121,15 @@ public sealed partial class EFEventStore<T>
                 }
 
                 // A crash between insert and position update leaves a commit without position behind that blocks the slot.
-                await DeleteZombiesAsync(commitSet, streamName, ct);
+                // Only do that once per append, because the cleanup causes lock contention for concurrent writers.
+                if (attempt == ZombieCleanupAttempt)
+                {
+                    await DeleteZombiesAsync(commitSet, streamName, ct);
+                }
 
-                // Reduce the chance that the same writers collide again.
-                await Task.Delay(Random.Shared.Next(attempt * 5), ct);
+                // Reduce the chance that the same writers collide again. Each round only assigns a single slot,
+                // therefore a lot of parallel writers to the same stream need a lot of attempts.
+                await Task.Delay(Random.Shared.Next(1, Math.Min(attempt * 5, MaxRetryDelay)), ct);
                 continue;
             }
             finally
@@ -173,11 +180,18 @@ public sealed partial class EFEventStore<T>
         // Commits without position older than this cannot be in progress anymore and are left over from a crash.
         var zombieTimestamp = timeProvider.GetUtcNow().UtcDateTime.AddHours(-1);
 
-        await commitSet
-            .Where(x => x.EventStream == streamName)
-            .Where(x => x.Position == null)
-            .Where(x => x.Timestamp < zombieTimestamp)
-            .ExecuteDeleteAsync(ct);
+        try
+        {
+            await commitSet
+                .Where(x => x.EventStream == streamName)
+                .Where(x => x.Position == null)
+                .Where(x => x.Timestamp < zombieTimestamp)
+                .ExecuteDeleteAsync(ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // The cleanup is best effort only and the scan can deadlock with writers to the same stream.
+        }
     }
 
     private static async Task<long> GetEventStreamOffsetAsync(DbSet<EFEventCommit> commitSet, string streamName,
