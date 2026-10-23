@@ -13,8 +13,9 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class CachingServiceExtensions
 {
-    public static IServiceCollection AddBackgroundCache(this IServiceCollection services)
+    public static IServiceCollection AddBackgroundCache(this IServiceCollection services, Action<BackgroundCacheOptions>? configure = null)
     {
+        services.ConfigureOptional(configure);
         services.TryAddSingleton<IBackgroundCache, BackgroundCache>();
 
         return services;
